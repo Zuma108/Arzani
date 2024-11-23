@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Page</title>
+
+    <!-- Load Google Identity Services API -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+            margin: 0;
+        }
+
+        .content-wrapper {
+            width: 100%;
+            max-width: 400px;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .title-wrapper {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .login-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .email-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .email-label {
+            position: absolute;
+            top: -10px;
+            left: 15px;
+            font-size: 12px;
+            background-color: white;
+            padding: 0 5px;
+            color: #666;
+        }
+
+        .invalid-email-error-message {
+            font-size: 12px;
+            color: red;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 5px;
+        }
+
+        .error-icon {
+            width: 14px;
+            height: 14px;
+        }
+
+        .continue-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .other-page {
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .other-page-link {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .divider-wrapper {
+            text-align: center;
+            margin: 15px 0;
+        }
+
+        .divider {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .social-section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .social-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 12px;
+            background-color: white;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .social-logo-wrapper {
+            margin-right: 10px;
+        }
+
+        .social-logo {
+            width: 20px;
+            height: 20px;
+        }
+
+        .social-text {
+            font-size: 14px;
+            font-weight: bold;
+        }
+    </style>
+
+    <script>
+        window.onload = function() {
+            google.accounts.id.initialize({
+                client_id: '1039909939855-66mkfud3r7f3bk16besfn49m628q3o85.apps.googleusercontent.com',
+                callback: handleCredentialResponse
+            });
+
+            // Render Google's built-in button
+            google.accounts.id.renderButton(
+                document.getElementById('google-signin-btn'),  // Container element for the button
+                {
+                    theme: 'outline',  // Button theme: 'outline' or 'filled_blue'
+                    size: 'large',  // Button size: 'large', 'medium', 'small'
+                    shape: 'rectangular',  // Button shape: 'rectangular' or 'pill'
+                    text: 'continue_with',  // Button text: 'continue_with' or 'signin_with'
+                    logo_alignment: 'left',  // Logo position: 'left' or 'center'
+                    width: '100%'  // Full-width button
+                }
+            );
+        };
+        document.getElementById('continue-btn').addEventListener('click', function(event) {
+    const emailInput = document.getElementById('email-input');
+    const emailValue = emailInput.value;
+    const emailError = document.getElementById('email-error');
+
+    // Validate the email
+    if (!validateEmail(emailValue)) {
+        // Show error if email is invalid
+        emailError.style.display = 'block';
+    } else {
+        // Hide error if email is valid
+        emailError.style.display = 'none';
+
+        // Save email to localStorage
+        localStorage.setItem('email', emailValue);
+
+        // Redirect to the new login page
+        window.location.href = '/login2.html';  // Redirect as expected
+    }
+});
+
+function validateEmail(email) {
+    // Check if the email contains "@" and does not start with "@"
+    return email.includes('@') && !email.startsWith('@');
+}
+
+        // Handle the Google sign-in response
+        function handleCredentialResponse(response) {
+            console.log('Google ID Token:', response.credential);
+            // Send the ID token to the backend for verification
+            fetch('http://localhost:5000/auth/google', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ id_token: response.credential })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.token) {
+                    console.log('User authenticated:', data.token);
+                    localStorage.setItem('token', data.token);
+                    window.location.href = '/marketplace.html';
+                } else {
+                    console.error('Authentication failed');
+                }
+            })
+            .catch(error => {
+                console.error('Error during authentication:', error);
+            });
+        }
+    </script>
+    <script>
+        
+
+
+        function handleMicrosoftSignIn() {
+            const clientId = '34e0be00-5879-49bb-84f7-b2854723224e';
+            const tenantId = 'common';  // Use 'common' for multi-tenant apps or replace with your tenant ID
+            const redirectUri = 'http://localhost:5000/auth/microsoft/callback';  // Backend route for Microsoft callback
+            const responseType = 'code';
+            const scope = 'openid profile email';
+    
+            // Redirect to Microsoft's OAuth 2.0 authorization endpoint
+            const authUrl = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/authorize` +
+                            `?client_id=${clientId}` +
+                            `&response_type=${responseType}` +
+                            `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+                            `&scope=${encodeURIComponent(scope)}`;
+    
+            window.location.href = authUrl;
+        }
+    </script>
+    
+</head>
+
+<body>
+<section class="content-wrapper">
+    <div class="title-wrapper">
+        <h1 class="title">Welcome back</h1>
+    </div>
+    <div class="login-container">
+        <form id="login-form" method="POST" action="#">
+            <div class="input-wrapper">
+                <!-- Email Input Field -->
+                <input class="email-input" inputmode="email" type="email" id="email-input" name="email" autocomplete="username" autocapitalize="none" spellcheck="false" required placeholder="Email address*">
+                <label class="email-label" for="email-input">Email address*</label>
+                <div class="invalid-email-error-message" id="email-error" style="display: none;">
+                    <img class="error-icon" src="/images/error_icon.svg">Email is not valid.
+                </div>
+            </div>
+
+
+       
+        
+    </form>
+
+    
+    <button type="button" class="continue-btn" id="continue-btn">Continue</button>
+
+        <p class="other-page">Don't have an account? 
+            <a class="other-page-link" href="http://localhost:5000/signup.html">Sign Up</a>
+
+        </p>
+        <script>
+            const emailInput = document.getElementById('email-input');
+            const emailError = document.getElementById('email-error');
+            const continueBtn = document.getElementById('continue-btn');
+        
+            // Email validation function
+            function validateEmail(email) {
+                // Check if the email contains "@" and does not start with "@"
+                return email.includes('@') && !email.startsWith('@');
+            }
+        
+            // Button click handler
+            continueBtn.addEventListener('click', function() {
+                const emailValue = emailInput.value;
+        
+                // Validate the email
+                if (!validateEmail(emailValue)) {
+                    // Show error if email is invalid
+                    emailError.style.display = 'block';
+                } else {
+                    // Hide error if email is valid
+                    emailError.style.display = 'none';
+        
+                    // Save email to localStorage   
+                    localStorage.setItem('email', emailValue);
+        
+                    // Redirect to the new login page
+                    window.location.href = 'http://localhost:5000/login2.html';  // Change the URL as needed
+                }
+            });
+        
+            // Form submission handler (if you're using a form element)
+            const loginForm = document.getElementById('login2');
+            if (loginForm) {
+                loginForm.addEventListener('submit', function(event) {
+                    const emailValue = emailInput.value;
+        
+                    if (!validateEmail(emailValue)) {
+                        // Show the error message if the email is invalid
+                        emailError.style.display = 'block';
+                        event.preventDefault();  // Prevent form submission
+                    }
+                });
+            }
+        </script>
+        
+        
+
+        <div class="divider-wrapper">
+            <span class="divider">Or</span>
+        </div>
+
+        <div class="social-section">
+            <!-- Google provided button -->
+            <div id="google-signin-btn"></div>
+
+            <!-- Microsoft and Apple custom buttons -->
+           <!-- Microsoft Sign-In Button -->
+
+        <button class="social-btn" onclick="handleMicrosoftSignIn()">
+    <span class="social-logo-wrapper">
+        <img class="social-logo" src="/images/Microsoft_logo.svg" alt="Microsoft logo">
+    </span>
+    <span class="social-text">Continue with Microsoft Account</span>
+        </button>
+
+
+            <button class="social-btn apple" onclick="window.location.href='/auth/apple'">
+                <span class="social-logo-wrapper">
+                    <img class="social-logo" src="/images/apple.svg" alt="Apple logo">
+                </span>
+                <span class="social-text">Continue with Apple</span>
+            </button>
+        </div>
+    </div>
+</section>
+</body>
+</html>

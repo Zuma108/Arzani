@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marketplace Listings</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    
+    <style>
+        :root {
+            --main-bg: #f9f6f1;
+            --accent-color: #002b5c;
+            --button-bg: #010d3c;
+        }
+
+        body {
+            background-color: var(--main-bg);
+            font-family: 'Arial', sans-serif;
+        }
+
+        .navbar {
+            background-color: var(--main-bg);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 10px 20px;
+            justify-content: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: absolute;
+            left: 20px;
+        }
+        .navbar-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+      
+
+        .navbar-icons {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            background-color: rgba(146, 135, 115, 0.2);
+            border-radius: 100px;
+            padding: 8px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .navbar-link {
+            color: #1C1C1C;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border-radius: 100px;
+            padding: 8px 20px;
+            text-decoration: none;
+            position: relative;
+            transition: all 0.5s ease;
+        }
+
+        .navbar-link svg {
+            transition: opacity 0.5s ease;
+        }
+
+        .navbar-link span {
+            opacity: 0;
+            transform: translateY(0);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            position: absolute;
+        }
+
+        .navbar-link:hover svg {
+            opacity: 0;
+        }
+
+        .navbar-link:hover span {
+            opacity: 1;
+            transform: translateY(-10px);
+        }
+
+        .navbar-link.active svg {
+            border: 2px solid white;
+            border-radius: 50%;
+        }
+
+        .icon {
+            width: 20px;
+            height: 20px;
+        }
+
+        .section-header {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--accent-color);
+            margin-top: 30px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            border: none;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+        }
+
+        .card-body {
+            text-align: left;
+        }
+
+        .card-title {
+            font-weight: bold;
+            color: var(--accent-color);
+        }
+
+        .button {
+            background-color: var(--button-bg);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .button:hover {
+            background-color: #333333;
+        }
+
+        .section-content {
+            background-color: var(--main-bg);
+            padding: 60px 15px;
+        }
+       
+        .filter-container {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 20px;
+            background-color: #F7F5F2;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            justify-content: center;
+        }
+
+        .filter-input,
+        .filter-button {
+            height: 56px;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 0, 0, 0.2);
+            background-color: #F9F9F8;
+            padding: 0 20px;
+            font-size: 14px;
+            color: #1C1C1C;
+        }
+
+        .filter-button {
+            background-color: #020121;
+            color: #FFFFFF;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .dropdown-menu {
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Modal container styles */
+        .popup-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        /* Modal content */
+        .popup-content {
+            background: #fff;
+            border-radius: 24px;
+            box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
+            padding: 20px;
+        }
+
+        /* Header */
+        .popup-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            padding: 12px;
+        }
+
+        .popup-header h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1C1C1C;
+            margin: 0;
+        }
+
+        .close-btn {
+            background: #EAE6E0;
+            border: none;
+            border-radius: 9px;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .close-btn svg {
+            width: 16px;
+            height: 16px;
+            fill: #000;
+        }
+
+        /* Popup body */
+        .popup-body {
+            max-height: 75vh;
+            overflow-y: auto;
+            padding: 20px 16px;
+        }
+
+        .popup-body h4 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1C1C1C;
+            margin-bottom: 8px;
+        }
+
+        .popup-body span {
+            font-size: 12px;
+            color: #767676;
+            display: block;
+            margin-bottom: 16px;
+        }
+
+        .popup-body .input-group {
+            margin-top: 16px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .popup-body input {
+            border: 1px solid rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .popup-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .clear-btn {
+            background: none;
+            border: none;
+            color: #020E27;
+            text-decoration: underline;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .apply-btn {
+            background: #1C1C1C;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-light">
+        <a class="navbar-brand" href="#">
+            <img src="/images/handshake.svg" alt="Logo" width="80" height="60">
+            <span style="color: #002b5c;">Handshake</span>
+        </a>
+            <div class="navbar-container">
+                <div class="navbar-icons">
+                    <a href="/marketplace2" class="navbar-link" id="marketplace-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256" class="icon" aria-hidden="true">
+                            <path d="M216,36H40A20,20,0,0,0,20,56V200a20,20,0,0,0,20,20H216a20,20,0,0,0,20-20V56A20,20,0,0,0,216,36Zm-4,24V76H44V60ZM44,196V100H212v96Zm136-72a52,52,0,0,1-104,0,12,12,0,0,1,24,0,28,28,0,0,0,56,0,12,12,0,0,1,24,0Z"></path>
+                        </svg>
+                        <span>Marketplace</span>
+                    </a>
+                <a href="/history" class="navbar-link" id="history-link">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256" class="icon" aria-hidden="true">
+                        <path d="M140,80v41.21l34.17,20.5a12,12,0,1,1-12.34,20.58l-40-24A12,12,0,0,1,116,128V80a12,12,0,0,1,24,0ZM128,28A99.38,99.38,0,0,0,57.24,57.34c-4.69,4.74-9,9.37-13.24,14V64a12,12,0,0,0-24,0v40a12,12,0,0,0,12,12H72a12,12,0,0,0,0-24H57.77C63,86,68.37,80.22,74.26,74.26a76,76,0,1,1,1.58,109,12,12,0,0,0-16.48,17.46A100,100,0,1,0,128,28Z"></path>
+                    </svg>
+                    <span>History</span>
+                </a>
+                <a href="/favorites" class="navbar-link" id="favorites-link">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256" class="icon" aria-hidden="true">
+                        <path d="M178,36c-20.09,0-37.92,7.93-50,21.56C115.92,43.93,98.09,36,78,36a66.08,66.08,0,0,0-66,66c0,72.34,105.81,130.14,110.31,132.57a12,12,0,0,0,11.38,0C138.19,232.14,244,174.34,244,102A66.08,66.08,0,0,0,178,36Zm-5.49,142.36A328.69,328.69,0,0,1,128,210.16a328.69,328.69,0,0,1-44.51-31.8C61.82,159.77,36,131.42,36,102A42,42,0,0,1,78,60c17.8,0,32.7,9.4,38.89,24.54a12,12,0,0,0,22.22,0C145.3,69.4,160.2,60,178,60a42,42,0,0,1,42,42C220,131.42,194.18,159.77,172.51,178.36Z"></path>
+                    </svg>
+                    <span>Favorites</span>
+                </a>
+                <a href="/saved-searches" class="navbar-link" id="saved-searches-link">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256" class="icon" aria-hidden="true">
+                        <path d="M184,28H72A20,20,0,0,0,52,48V224a12,12,0,0,0,18.36,10.18l57.63-36,57.65,36A12,12,0,0,0,204,224V48A20,20,0,0,0,184,28Zm-4,174.35-45.65-28.53a12,12,0,0,0-12.72,0L76,202.35V52H180Z"></path>
+                    </svg>
+                    <span>Saved Searches</span>
+                </a>
+                <a href="/leads" class="navbar-link" id="leads-link">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256" class="icon" aria-hidden="true">
+                        <path d="M148,108a12,12,0,0,1,12-12h28a12,12,0,0,1,0,24H160A12,12,0,0,1,148,108Zm40,28H168a12,12,0,0,0,0,24h20a12,12,0,0,0,0-24Zm48-80V200a20,20,0,0,1-20,20H40a20,20,0,0,1-20-20V56A20,20,0,0,1,40,36H216A20,20,0,0,1,236,56Zm-24,4H44V196H212ZM58.28,159.37A43.82,43.82,0,0,1,71.53,142a36,36,0,1,1,56.94,0,43.84,43.84,0,0,1,13.26,17.37,12,12,0,0,1-22.15,9.26C116.48,161.19,108.42,156,100,156s-16.47,5.2-19.59,12.63a12,12,0,1,1-22.13-9.26ZM88,120a12,12,0,1,0,12-12A12,12,0,0,0,88,120Z"></path>
+                    </svg>
+                    <span>Off Market Leads</span>
+                </a>
+            </div>
+    </div>
+    </nav>
+
+<!-- New Sticky Filter Section -->
+<div class="sticky top-0 left-0 right-0 z-10 filter-container">
+    <input type="text" class="filter-input" placeholder="Location">
+
+    <!-- Industries Dropdown -->
+    <div class="dropdown">
+        <button class="filter-input dropdown-toggle" type="button" id="industriesDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            Industries
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="industriesDropdown" style="max-height: 150px; overflow-y: auto;">
+            <li><a class="dropdown-item" href="#">Agriculture</a></li>
+            <li><a class="dropdown-item" href="#">Automotive & Boat</a></li>
+            <li><a class="dropdown-item" href="#">Beauty & Personal Care</a></li>
+            <li><a class="dropdown-item" href="#">Building & Construction</a></li>
+            <li><a class="dropdown-item" href="#">Communication & Media</a></li>
+            <li><a class="dropdown-item" href="#">Education & Children</a></li>
+            <li><a class="dropdown-item" href="#">Entertainment & Recreation</a></li>
+            <li><a class="dropdown-item" href="#">Financial Services</a></li>
+            <li><a class="dropdown-item" href="#">Health Care & Fitness</a></li>
+            <li><a class="dropdown-item" href="#">Manufacturing</a></li>
+            <li><a class="dropdown-item" href="#">Online & Technology</a></li>
+            <li><a class="dropdown-item" href="#">Pet Services</a></li>
+            <li><a class="dropdown-item" href="#">Restaurants & Food</a></li>
+            <li><a class="dropdown-item" href="#">Retail</a></li>
+            <li><a class="dropdown-item" href="#">Service Businesses</a></li>
+            <li><a class="dropdown-item" href="#">Transportation & Storage</a></li>
+            <li><a class="dropdown-item" href="#">Travel</a></li>
+            <li><a class="dropdown-item" href="#">Wholesale & Distributors</a></li>
+            <li><a class="dropdown-item" href="#">Other</a></li>
+        </ul>
+    </div>
+    <div class="dropdown">
+        <button class="filter-input dropdown-toggle" type="button" id="priceRangeDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            Price Range 
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="priceRangeDropdown" style="max-height: 150px; overflow-y: auto;">
+            <li><a class="dropdown-item" href="#">£0 - £100,000</a></li>
+            <li><a class="dropdown-item" href="#">£100,000 - £500,000</a></li>
+            <li><a class="dropdown-item" href="#">£500,000 - £1,000,000</a></li>
+            <li><a class="dropdown-item" href="#">£1,000,000 - £5,000,000</a></li>
+            <li><a class="dropdown-item" href="#">£5,000,000 - £10,000,000</a></li>
+            <li><a class="dropdown-item" href="#">£10,000,000+</a></li>
+        </ul>
+    </div>
+
+    <button id="openPopup" class="filter-input">More</button>
+    <button class="filter-button">Save search</button>
+</div>
+   
+    <!-- Marketplace Section -->
+    <div class="container section-content">
+        <div class="section-header">Businesses for Sale</div>
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <img src="/images/drivingschool.jpeg" class="card-img-top" alt="Business Image">
+                    <div class="card-body">
+                        <span class="badge bg-warning text-dark mb-2">Retail</span>
+                        <h5 class="card-title">£1,549,000</h5>
+                        <p class="card-text">Driving School Company</p>
+                    </div>
+                </div>  
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <img src="/images/granite.jpg" class="card-img-top" alt="Business Image">
+                    <div class="card-body">
+                        <span class="badge bg-warning text-dark mb-2">Building & Construction</span>
+                        <h5 class="card-title">£1,980,000</h5>
+                        <p class="card-text">Thriving Granite Business - Ready for Expansion</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <img src="/images/construction.jpg" class="card-img-top" alt="Business Image">
+                    <div class="card-body">
+                        <span class="badge bg-warning text-dark mb-2">Building & Construction</span>
+                        <h5 class="card-title">£1,000,000</h5>
+                        <p class="card-text">Franchise Restoration Company - Houston, TX</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7"></script>
+    <script>
+        // Highlight the active link
+        const links = document.querySelectorAll('.navbar-link');
+        links.forEach(link => {
+            if (link.href === window.location.href) {
+                link.classList.add('active');
+            }
+        });
+    </script>
+    <div class="popup-modal" id="popupModal">
+        <div class="popup-content">
+            <!-- Popup Header -->
+            <div class="popup-header">
+                <h3>Filters</h3>
+                <button class="close-btn" id="closePopup">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+                        <path d="M208.49,191.51a12,12,0,0,1-17,17L128,145,64.49,208.49a12,12,0,0,1-17-17L111,128,47.51,64.49a12,12,0,0,1,17-17L128,111l63.51-63.52a12,12,0,0,1,17,17L145,128Z"></path>
+                    </svg>
+                </button>
+            </div>
+    
+            <!-- Popup Body -->
+            <div class="popup-body">
+                <div class="filter-section">
+                    <h4>Industries</h4>
+                    <span>Select one or more industries to filter listings by.</span>
+                    <div class="input-group">
+                        <input type="text" placeholder="Search industries">
+                    </div>
+                </div>
+    
+                <div class="filter-section">
+                    <h4>Price Range</h4>
+                    <span>Select a price range to filter listings by their asking price.</span>
+                    <div class="input-group">
+                        <input type="text" placeholder="Minimum">
+                        <input type="text" placeholder="Maximum">
+                    </div>
+                </div>
+            </div>
+    
+            <!-- Popup Footer -->
+            <div class="popup-footer">
+                <button class="clear-btn">Clear All</button>
+                <button class="apply-btn">Apply Filters</button>
+            </div>
+        </div>
+    </div>
+    <script>
+    // Get DOM elements
+    const openPopup = document.getElementById('openPopup');
+    const closePopup = document.getElementById('closePopup');
+    const popupModal = document.getElementById('popupModal');
+
+    // Open popup
+    openPopup.addEventListener('click', () => {
+        popupModal.style.display = 'flex';
+    });
+
+    // Close popup
+    closePopup.addEventListener('click', () => {
+        popupModal.style.display = 'none';
+    });
+
+    // Close popup when clicking outside the content
+    popupModal.addEventListener('click', (e) => {
+        if (e.target === popupModal) {
+            popupModal.style.display = 'none';
+        }
+    });
+</script>
+   <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" crossorigin="anonymous"></script>
+   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+   
+</body>
+
+</html>

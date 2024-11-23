@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+            margin: 0;
+        }
+
+        .content-wrapper {
+            width: 100%;
+            max-width: 400px;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .title-wrapper {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .form-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .label-field {
+            position: absolute;
+            top: -10px;
+            left: 15px;
+            font-size: 12px;
+            background-color: white;
+            padding: 0 5px;
+            color: #666;
+        }
+
+        .error-message {
+            font-size: 12px;
+            color: red;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 5px;
+        }
+
+        .error-icon {
+            width: 14px;
+            height: 14px;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .submit-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .other-page {
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .other-page-link {
+            color: #007bff;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <section class="content-wrapper">
+        <div class="title-wrapper">
+            <h1 class="title">Login</h1>
+        </div>
+
+        <div class="form-container">
+            <form id="login2" method="POST">
+                <!-- Email Input Field -->
+                <div class="input-wrapper">
+                    <input class="input-field" type="email" id="email-input" name="email" autocomplete="username" autocapitalize="none" spellcheck="false" required placeholder="Email">
+                    <label class="label-field" for="email-input">Email*</label>
+                    <div class="error-message" id="email-error" style="display: none;">
+                        <img class="error-icon" src="/images/error_icon.svg">Email is not valid.
+                    </div>
+                </div>
+
+                <!-- Password Input Field -->
+                <div class="input-wrapper">
+                    <input class="input-field" type="password" id="password-input" name="password" autocomplete="current-password" required placeholder="Password">
+                    <label class="label-field" for="password-input">Password*</label>
+                    <div class="error-message" id="password-error" style="display: none;">
+                        <img class="error-icon" src="/images/error_icon.svg">Password must be at least 12 characters.
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="submit-btn">Continue</button>
+            </form>
+
+            <p class="other-page">Don't have an account? <a class="other-page-link" href="/signup.html">Sign Up</a></p>
+         
+        </div>
+    </section>
+
+    <script>
+        const form = document.getElementById('login2');
+        const emailInput = document.getElementById('email-input');
+        const passwordInput = document.getElementById('password-input');
+        const emailError = document.getElementById('email-error');
+        const passwordError = document.getElementById('password-error');
+
+        // Email validation function
+        function validateEmail(email) {
+            // Check if the email contains "@" and does not start with "@"
+            return email.includes('@') && !email.startsWith('@');
+        }
+
+        // Password validation function
+        function validatePassword(password) {
+            return password.length >= 12;
+        }
+
+        form.addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            let isValid = true;
+
+            // Validate email
+            if (!validateEmail(email)) {
+                emailError.style.display = 'block';
+                isValid = false;
+            } else {
+                emailError.style.display = 'none';
+            }
+
+            // Validate password
+            if (!validatePassword(password)) {
+                passwordError.style.display = 'block';
+                isValid = false;
+            } else {
+                passwordError.style.display = 'none';
+            }
+
+            // If not valid, do not proceed
+            if (!isValid) {
+                return;
+            }
+
+            try {
+                // Send the login request to the backend
+                const response = await fetch('http://localhost:5000/auth/login2', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.token) {
+                    // Save JWT token to localStorage
+                    localStorage.setItem('token', data.token);
+                    window.location.href = '/marketplace.html';  // Redirect to marketplace on successful login
+                } else {
+                    alert('Login failed: ' + data.message);  // Handle login failure
+                }
+            } catch (error) {
+                console.error('Error during login:', error);
+                alert('An error occurred. Please try again.');
+            }
+        });
+        document.getElementById('login2').addEventListener('submit', async function (event) {
+    event.preventDefault();  // Prevent form submission
+
+    // Get the email and password inputs    
+    const email = document.getElementById('email-input').value;
+    const password = document.getElementById('password-input').value;
+
+    try {
+        // Send the login request to the backend
+        const response = await fetch('http://localhost:5000/auth/login2', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            // Save JWT token to localStorage
+            localStorage.setItem('token', data.token);
+            window.location.href = '/marketplace.html';  // Redirect to marketplace on successful login
+        } else {
+            alert('Login failed: ' + data.message);  // Handle login failure
+        }
+    } catch (error) {
+        console.error('Error during login:', error);
+        alert('An error occurred. Please try again.');
+    }
+});
+    </script>
+
+</body>
+
+</html>
