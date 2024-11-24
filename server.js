@@ -6,9 +6,12 @@ const path = require('path');
 const bodyParser = require('body-parser');
 const { OAuth2Client } = require('google-auth-library');
 const nodemailer = require('nodemailer');
-const { Sequelize } = require('sequelize');
-const User = require('./models/user'); // Assuming you have a User model
 require('dotenv').config(); // Load environment variables from .env
+
+const Database = require('better-sqlite3');
+const db = new Database('./mydb.sqlite');
+
+module.exports = db;
 
 const app = express();
 
@@ -255,29 +258,13 @@ app.get('/auth/marketplace', (req, res) => {
     }
 });
 
-// Serve marketplace HTML directly if verified
 app.get('/marketplace.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public/marketplace.html'));
 });
 
-// Create a new Sequelize instance
-const sequelize = new Sequelize(process.env.DATABASE_URL, {
-    dialect: 'postgres',
-    logging: false,
-});
-
-// Test the connection
-sequelize.authenticate()
-    .then(() => {
-        console.log('Connection has been established successfully.');
-    })
-    .catch(err => {
-        console.error('Unable to connect to the database:', err);
-    });
-
-// Export the sequelize instance for use in other files
-console.log('Exporting sequelize instance:', sequelize);
-module.exports = sequelize;
+// Create the users table if it doesn't exist
+const { createUserTable } = require('./models/user');
+createUserTable();
 
 // Start the server
 const PORT = process.env.PORT || 5000;

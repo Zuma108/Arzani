@@ -1,46 +1,36 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../server'); // Adjust the path as necessary
+const db = require('../server');
 
-console.log('Imported sequelize instance:', sequelize);
+const createUserTable = () => {
+  const stmt = db.prepare(`
+    CREATE TABLE IF NOT EXISTS users (
+      email TEXT NOT NULL UNIQUE,
+      password TEXT NOT NULL,
+      googleId TEXT UNIQUE,
+      verified BOOLEAN DEFAULT FALSE,
+      picture TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  stmt.run();
+};
 
-const User = sequelize.define('User', {
-    username: {
-        type: DataTypes.STRING,
-        allowNull: false,
-    },
-    email: {
-        type: DataTypes.STRING,
-        allowNull: false,
-        unique: true,
-    },
-    password: {
-        type: DataTypes.STRING,
-        allowNull: false,
-    },
-    googleId: {
-        type: DataTypes.STRING,
-        unique: true,
-        allowNull: true,
-    },
-    verified: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: false,
-    },
-    picture: {
-        type: DataTypes.STRING,
-        allowNull: true,
-    },
-}, {
-    // Other model options go here
-});
+const createUser = (user) => {
+  const stmt = db.prepare(`
+    INSERT INTO users (email, password, googleId, verified, picture)
+    VALUES (?, ?, ?, ?, ?)
+  `);
+  const info = stmt.run(user.email, user.password, user.googleId, user.verified, user.picture);
+  return { id: info.lastInsertRowid, ...user };
+};
 
-// Sync the model with the database
-sequelize.sync()
-    .then(() => {
-        console.log('User table has been created.');
-    })
-    .catch(err => {
-        console.error('Unable to create the table:', err);
-    });
+const getUserByEmail = (email) => {
+  const stmt = db.prepare(`SELECT * FROM users WHERE email = ?`);
+  return stmt.get(email);
+};
 
-module.exports = User;
+module.exports = {
+  createUserTable,
+  createUser,
+  getUserByEmail,
+};
