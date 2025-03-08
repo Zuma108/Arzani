@@ -105,13 +105,26 @@ jobs:
     - name: Verify Azure subscription access
       run: |
         echo "Checking Azure subscription access..."
+        echo "Using subscription ID: bb2425dd-930e-49ca-9a94-189a195fb5f9"
         az account show --query name -o tsv || echo "Failed to retrieve subscription info"
         az account list --output table || echo "Failed to list subscriptions"
         
+        # Switch to the correct subscription
+        echo "Switching to Azure for Students subscription..."
+        az account set --subscription "bb2425dd-930e-49ca-9a94-189a195fb5f9" || echo "Failed to switch subscription"
+        
+        # Verify resource group exists
+        echo "Checking resource group..."
+        az group show --name "my-marketplace" || echo "Resource group not found - please create it in Azure portal"
+        
+        # Verify web app exists
+        echo "Checking if web app exists..."
+        az webapp show --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace || echo "Web app not found - will be created during deployment"
+    
     - name: Stop Azure Web App before deployment
       run: |
         echo "Stopping Azure Web App to release any locks..."
-        az webapp stop --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group Arzani || echo "Could not stop the web app"
+        az webapp stop --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace || echo "Could not stop the web app"
         echo "Waiting for processes to terminate..."
         sleep 15
 
@@ -153,18 +166,24 @@ jobs:
       run: |
         echo "Deployment failed. Checking for conflicts..."
         echo "Checking current deployment status..."
-        az webapp deployment list --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group Arzani || echo "Unable to list deployments"
+        az webapp deployment list --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace || echo "Unable to list deployments"
         
         echo "Checking if the app is running..."
-        az webapp show --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group Arzani --query state || echo "Unable to check app state"
+        az webapp show --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace --query state || echo "Unable to check app state"
         
         echo "Let's try to restart the app and deploy again..."
-        az webapp restart --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group Arzani || echo "Could not restart app"
+        az webapp restart --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace || echo "Could not restart app"
         
         echo "Attempting deployment again with force flag..."
         sleep 30  # Wait for restart to complete
         
-        az webapp deployment source config-zip --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group Arzani --src ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}/release.zip --force || echo "Manual deployment also failed"
+        # Create a zip file for manual deployment if needed
+        echo "Creating deployment package..."
+        zip -r release.zip . || echo "Failed to create zip file"
+        
+        # Try direct deployment with correct subscription and resource group
+        echo "Attempting direct zip deployment..."
+        az webapp deployment source config-zip --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace --src release.zip || echo "Manual deployment also failed"
         
         echo "Please check Azure Portal for more details on the deployment status"
         
@@ -172,4 +191,8 @@ jobs:
     - name: Ensure Azure Web App is running
       run: |
         echo "Ensuring app is started..."
-        az webapp start --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group Arzani || echo "Could not start web app"
+        az webapp start --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace || echo "Could not start web app"
+        
+        # Show deployment logs
+        echo "Latest deployment logs:"
+        az webapp log deployment show --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace || echo "Could not retrieve deployment logs"
