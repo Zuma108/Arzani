@@ -1,0 +1,143 @@
+[
+  {
+    "business_name": "Tech Innovators Inc.",
+    "industry": "Technology",
+    "price": "5000000",
+    "description": "A leading technology company specializing in innovative software solutions. Located in Silicon Valley, CA. Annual revenue of $10 million.",
+    "images": [
+      "images-1732731181591-777341659.jpg"
+    ]
+  },
+  {
+    "business_name": "Amore Cleaning Services",
+    "industry": "Cleaning",
+    "price": "100000",
+    "description": "Industrial and commercial cleaning company. 15 employees. Gross £30,000 a year profit. Located in Ramsgate, Kent. Customers rated 5 star reviews on Bark.",
+    "images": [
+      "images-1732732243989-317324258.jpg"
+    ]
+  },
+  {
+    "business_name": "Coca Cola",
+    "industry": "Beverages",
+    "price": "10000000000",
+    "description": "On May 8, 1886, Dr. John Pemberton served the world's first Coca‑Cola at Jacobs' Pharmacy in Atlanta, GA. From that one iconic drink, we've evolved into a total beverage company. More than 2.1 billion servings of our drinks are enjoyed in more than 200 countries and territories each day.",
+    "images": [
+      "images-1732733416842-221826352.png"
+    ]
+  },
+  {
+    "business_name": "Green Fields Agriculture",
+    "industry": "Agriculture",
+    "price": "750000",
+    "description": "A well-established agricultural business specializing in organic produce. Located in the Midwest. Annual revenue of $1.5 million.",
+    "images": [
+      "images-1732791491201-828904930.jpeg"
+    ]
+  },
+  {
+    "business_name": "Precision Manufacturing Co.",
+    "industry": "Manufacturing",
+    "price": "2000000",
+    "description": "A leading manufacturer of precision components for the automotive industry. Located in Detroit, MI. Annual revenue of $5 million.",
+    "images": [
+      "images-1732792533750-586496600.jpg"
+    ]
+  },
+  {
+    "business_name": "AVA",
+    "industry": "Agriculture",
+    "price": "-56666666",
+    "description": "sjdsbo",
+    "images": [
+      "images-1734137152736-666972873.png"
+    ]
+  },
+  {
+    "business_name": "asa",
+    "industry": "Agriculture",
+    "price": "2542",
+    "description": "45454",
+    "images": [
+      "images-1734481325831-518502254.jpg"
+    ]
+  },
+  {
+    "business_name": "dsd",
+    "industry": "Agriculture",
+    "price": "1000",
+    "description": "4545454",
+    "images": [
+      "images-1734485806130-746962067.jpg"
+    ]
+  },
+  {
+    "business_name": "dsds",
+    "industry": "Agriculture",
+    "price": "56151",
+    "cashFlow": "54",
+    "grossRevenue": "56165",
+    "ebitda": "56",
+    "inventory": "65",
+    "salesMultiple": "56",
+    "profitMargin": "51",
+    "debtService": "651",
+    "cashOnCash": "651",
+    "downPayment": "654",
+    "location": "65",
+    "ffE": "56",
+    "employees": "56",
+    "reasonForSelling": "61",
+    "description": "15",
+    "images": [
+      "images-1734513398957-751551265.jpg"
+    ],
+    "dateListed": "2024-12-18T09:16:38.968Z"
+  },
+  {
+    "business_name": "sds",
+    "industry": "Agriculture",
+    "price": "546",
+    "cashFlow": "56",
+    "grossRevenue": "6",
+    "ebitda": "5",
+    "inventory": "656",
+    "salesMultiple": "56",
+    "profitMargin": "56",
+    "debtService": "5",
+    "cashOnCash": "56",
+    "downPayment": "5",
+    "location": "61",
+    "ffE": "6",
+    "employees": "156",
+    "reasonForSelling": "516",
+    "description": "98",
+    "images": [
+      "images-1734514882397-700582262.jpg"
+    ],
+    "dateListed": "2024-12-18T09:41:22.416Z"
+  },
+  {
+    "business_name": "dsds",
+    "industry": "Agriculture",
+    "price": "5745",
+    "cashFlow": "545",
+    "grossRevenue": "454",
+    "ebitda": "65",
+    "inventory": "65",
+    "salesMultiple": "56",
+    "profitMargin": "6",
+    "debtService": "4",
+    "cashOnCash": "896",
+    "downPayment": "48",
+    "location": "98",
+    "ffE": "48",
+    "employees": "896",
+    "reasonForSelling": "968596",
+    "description": "65",
+    "images": [
+      "images-1734514949234-553412707.jpg"
+    ],
+    "dateListed": "2024-12-18T09:42:29.259Z"
+  }
+]

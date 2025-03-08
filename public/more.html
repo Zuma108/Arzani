@@ -159,16 +159,19 @@
                 <h4>Industries</h4>
                 <span>Select one or more industries to filter listings by.</span>
                 <div class="input-group">
-                    <input type="text" placeholder="Search industries">
+                    <input type="text" placeholder="Search industries" id="industrySearch">
+                    <div id="industryList">
+                        <!-- Industries will be dynamically populated -->
+                    </div>
                 </div>
             </div>
 
             <div class="filter-section">
                 <h4>Price Range</h4>
-                <span>Select a price range to filter listings by their asking price.</span>
+                <span>Enter price range in pounds (£)</span>
                 <div class="input-group">
-                    <input type="text" placeholder="Minimum">
-                    <input type="text" placeholder="Maximum">
+                    <input type="number" placeholder="Minimum" id="minPrice">
+                    <input type="number" placeholder="Maximum" id="maxPrice">
                 </div>
             </div>
         </div>
@@ -204,6 +207,6 @@
         }
     });
 </script>
-
+<script src="/js/filters.js"></script>
 </body>
 </html>

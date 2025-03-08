@@ -1,0 +1,81 @@
+<link rel="stylesheet" href="/css/chatbox.css">
+
+
+<footer class="footer">
+  <div class="footer-container">
+    <div class="footer-left">
+      <span>©<span id="currentYear"></span> Arzani LLC</span>
+<script>
+    document.getElementById('currentYear').textContent = new Date().getFullYear();
+</script>
+      <a href="/terms" class="footer-link" data-no-auth="true">Terms</a>
+      <a href="/privacy" class="footer-link" data-no-auth="true">Privacy</a>
+    </div>
+    <div class="footer-right">
+      <a href="https://docs.google.com/forms/d/16ndZUZxAQtdZJdyEY1v27hhjJiEuZG5tToZufXP23fs/viewform?edit_requested=true" class="footer-link">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" class="icon">
+          <path d="M12 2C8.13 2 5 5.13 5 9c0 3.87 3.13 7 7 7s7-3.13 7-7c0-3.87-3.13-7-7-7zm0 12c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm-1 2h2v2h-2zm0 3h2v2h-2z"/>
+        </svg>
+        Submit an idea
+      </a>
+      <a href="https://docs.google.com/forms/d/e/1FAIpQLSc8SVfNdB6Jjyp_i-JB2v24Tw4SA-r7uN8avwaFGtOAhFZc6g/viewform?usp=header" target="_blank" rel="noopener" class="footer-link">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" class="icon">
+          <path d="M20 8h-3.81c-.45-1.72-1.99-3-3.81-3s-3.36 1.28-3.81 3H4c-1.1 0-2 .9-2 2v2c0 1.1.9 2 2 2h1v2c0 1.1.9 2 2 2h1v2h2v-2h4v2h2v-2h1c1.1 0 2-.9 2-2v-2h1c1.1 0 2-.9 2-2v-2c0-1.1-.9-2-2-2zm-8 0c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm-6 4v-2h2v2H6zm10 0v-2h2v2h-2z"/>
+        </svg>
+        Report a bug
+      </a>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    background-color: #657b90;
+    color: #fff;
+    padding: 10px 20px;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 1000; /* Added high z-index to ensure it overlays other elements */
+  }
+
+  .footer-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 0 20px; /* Add padding to create a gap */
+  }
+
+  .footer-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+
+  .footer-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+
+  .footer-link {
+    color: #fff;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .footer-link:hover {
+    text-decoration: underline;
+  }
+
+  .icon {
+    width: 16px;
+    height: 16px;
+  }
+</style>

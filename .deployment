@@ -1,0 +1,5 @@
+[config]
+SCM_DO_BUILD_DURING_DEPLOYMENT=true
+PROJECT_PATH=.
+NODE_MODULES_CACHE=false
+command = npm install && npm start

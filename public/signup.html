@@ -38,7 +38,7 @@
         }
 
         input {
-            width: 100%;
+            width: 93.4%;
             padding: 10px;
             margin-bottom: 15px;
             font-size: 14px;
@@ -47,7 +47,7 @@
         }
 
         .btn {
-            background-color: #28a745;
+            background-color: #c0816f;
             color: white;
             padding: 12px;
             border: none;
@@ -58,7 +58,7 @@
         }
 
         .btn:hover {
-            background-color: #218838;
+            background-color: #a46854;
         }
 
         p {
@@ -94,46 +94,12 @@
             <button type="submit" class="btn">Sign Up</button>
             
         </form>
-        <p>Already have an account? <a href="http://localhost:5000/login.html">Log in here</a></p>
+        <p>Already have an account? <a href="http://localhost:5000/login">Log in here</a></p>
         <p id="resend-container">
             Didn't receive the email? <button id="resend-email-btn">Resend Verification Email</button>
         </p>
     </section>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const signupForm = document.getElementById('signup-form');
-    
-            signupForm.addEventListener('submit', function(event) {
-                event.preventDefault();
-    
-                const formData = {
-                    username: document.getElementById('username').value,
-                    email: document.getElementById('email').value,
-                    password: document.getElementById('password').value
-                };
-    
-                fetch('http://localhost:5000/auth/signup', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(formData)
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert('Sign-up successful! You can now log in.');
-                        window.location.href = 'http://localhost:5000/login.html';
-                    } else {
-                        alert('Error during sign-up: ' + data.message);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error during sign-up:', error);
-                });
-            });
-        });
-    </script>
+    <script src="/js/signup.js"></script>
 </body>
 </html>

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login</title>
+  <!-- Add meta tag for Google client ID -->
+  <meta name="google-client-id" content="<%= process.env.GOOGLE_CLIENT_ID %>">
+  
+  <style>
+    /* Your existing styles */
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f9f9f9;
+      margin: 0;
+      padding: 20px 0; /* Add padding instead of using height:100vh */
+      min-height: 100vh; /* Use min-height instead of height */
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .content-wrapper {
+      width: 100%;
+      max-width: 400px;
+      background-color: white;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      margin: 0 auto 20px; /* Reduce bottom margin */
+    }
+
+
+    .title-wrapper {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .title {
+      font-size: 32px;
+      font-weight: bold;
+      color: #363309;
+    }
+
+    .form-container {
+      text-align: left;
+    }
+
+    .input-wrapper {
+      margin-bottom: 20px;
+      position: relative;
+    }
+
+    .input-field {
+      width: 93.4%;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .label-field {
+      position: absolute;
+      top: -10px;
+      left: 15px;
+      font-size: 12px;
+      background-color: white;
+      padding: 0 5px;
+      color: #666;
+    }
+
+    .error-message {
+      font-size: 12px;
+      color: red;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 5px;
+    }
+
+    .error-icon {
+      width: 14px;
+      height: 14px;
+    }
+
+    .login-button {
+      width: 100%;
+      padding: 12px;
+      background-color: #c0816f;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .login-button:hover {
+      background-color: #a46854;
+    }
+
+    /* Add style for login error with more visibility */
+    #login-error {
+      color: #d9534f;
+      background-color: #f2dede;
+      border: 1px solid #ebccd1;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+      font-size: 16px;
+      text-align: center;
+      display: none;
+    }
+
+    /* Add style for login success message */
+    #login-success {
+      color: #3c763d;
+      background-color: #dff0d8;
+      border: 1px solid #d6e9c6;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+      font-size: 16px;
+      text-align: center;
+    }
+
+    /* Add styles for alert boxes */
+    .alert {
+      padding: 15px;
+      margin-bottom: 20px;
+      border: 1px solid transparent;
+      border-radius: 4px;
+    }
+    
+    .alert-warning {
+      color: #8a6d3b;
+      background-color: #fcf8e3;
+      border-color: #faebcc;
+    }
+    
+    .alert-success {
+      color: #3c763d;
+      background-color: #dff0d8;
+      border-color: #d6e9c6;
+    }
+    
+    .alert-danger {
+      color: #a94442;
+      background-color: #f2dede;
+      border-color: #ebccd1;
+    }
+    
+    .alert strong {
+      display: block;
+      margin-bottom: 5px;
+    }
+  </style>
+</head>
+<body>
+    <section class="content-wrapper">
+        <div class="title-wrapper">
+          <h1 class="title">Login</h1>
+        </div>
+    
+        <div class="form-container">
+          <% if (locals.error) { %>
+            <div id="login-error" style="display: block;">
+                <% if (error === 'google_auth_failed') { %>
+                    Google authentication failed. Please try again.
+                    <% if (locals.details) { %>
+                        <br>
+                        <small>Details: <%= details %></small>
+                    <% } %>
+                <% } else { %>
+                    <%= error %>
+                <% } %>
+            </div>
+          <% } %>
+          
+          <!-- Make the error message more visible -->
+          <div id="login-error"></div>
+          
+          <!-- Use the /auth/login endpoint that exists in your server -->
+          <form id="login-form" method="POST" action="/auth/login">
+            <div class="input-wrapper">
+              <input class="input-field" type="email" id="email" name="email" value="<%= typeof email !== 'undefined' ? email : '' %>" required autocomplete="email" readonly>
+              <label class="label-field" for="email">Email*</label>
+              <div class="error-message" id="email-error" style="display: none;">
+                <img class="error-icon" src="/images/error_icon.svg" alt="Error Icon">Email is not valid.
+              </div>
+            </div>
+    
+            <div class="input-wrapper">
+              <input class="input-field" type="password" id="password" name="password" required autocomplete="current-password">
+              <label class="label-field" for="password">Password*</label>
+              <div class="error-message" id="password-error" style="display: none;">
+                <img class="error-icon" src="/images/error_icon.svg" alt="Error Icon">Password is required.
+              </div>
+            </div>
+
+            <div class="input-wrapper" style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <input type="checkbox" id="remember" name="remember">
+                <label for="remember">Remember me</label>
+              </div>
+              <a href="/auth/forgot-password" style="color: #c0816f; text-decoration: none; font-size: 14px;">Forgot Password?</a>
+            </div>
+    
+            <button type="submit" class="login-button">Login</button>
+          </form>
+        </div>
+    </section>
+    
+    <script src="/js/login2-handler.js"></script>
+    
+    <% if (typeof include === 'function' && typeof footer !== 'undefined') { %>
+        <%- include('partials/footer') %>
+    <% } %>
+</body>
+</html>

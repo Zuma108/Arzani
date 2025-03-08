@@ -1,0 +1,1633 @@
+:root {
+        --main-bg: #f9f6f1;
+        --accent-color: #064fa3;
+        --button-bg: #041b76;
+    }
+
+    body {
+        background-color: var(--main-bg);
+        font-family: 'Arial', sans-serif;
+    }
+    .handshake-logo-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 20px;
+    }  
+    .logo-img {
+        width: 160px; /* Changed from 200px to 160px */
+        height: auto;
+        border-radius: 8px; /* Add subtle radius */
+        object-fit: contain;
+    }
+
+
+    .handshake-logo-container img {
+        width: 160px; /* Changed from 200px to 160px */
+        height: auto; /* Maintain aspect ratio */
+        margin: 0 10px;
+    }
+    .logo-text {
+        display: none;
+}
+
+    .navbar {
+        background-color: var(--main-bg);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        padding: 10px 40px; /* Reduced from 15px */
+        justify-content: center;
+        display: flex;
+        align-items: center;
+        width: 100%;
+        position: relative;
+    }
+    .navbar-brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        position: absolute;
+        left: 20px;
+    }
+    .navbar-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .nav-buttons {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .navbar-icons {
+        display: flex; 
+        align-items: center;
+        justify-content: space-between;
+        gap: 25px; /* Reduced from 40px */
+        background-color: rgba(146, 135, 115, 0.2);
+        border-radius: 100px;
+        padding: 10px 32px; /* Reduced from 14px */
+        min-width: 850px; /* Adjusted to maintain proper spacing */
+        margin: 0 auto;
+    }
+
+    .navbar-link {
+        color: #1C1C1C;
+        font-size: 15px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 15px; /* Increased from 12px to accommodate larger icons */
+        border-radius: 100px;
+        padding: 12px; /* Reduced from 12px 22px */
+        text-decoration: none;
+        position: relative;
+        transition: all 0.3s ease;
+        width: 48px; /* Fixed width for consistent circle */
+        height: 48px; /* Fixed height for consistent circle */
+    }
+
+    .navbar-link.active {
+        background: rgba(255, 255, 255, 0.9);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .navbar-link .icon {
+        width: 18px;
+        height: 18px;
+        position: absolute;
+        transition: all 0.3s ease;
+    }
+
+    .navbar-link span {
+        opacity: 0;
+        position: absolute;
+        transform: translateY(20px); /* Start below */
+        transition: all 0.3s ease;
+        pointer-events: none;
+        width: max-content; /* Ensure text doesn't wrap */
+    }
+
+    .navbar-link:hover .icon {
+        opacity: 0;
+        transform: translateY(-20px); /* Move up and fade out */
+    }
+
+    .navbar-link:hover span {
+        opacity: 1;
+        transform: translateY(0); /* Move to center */
+    }
+    
+    .navbar-link.active svg {
+        border: 2px solid white;
+        border-radius: 200%;
+    }
+
+    .icon {
+        width: 24px; /* Reduced from 28px */
+        height: 24px; /* Reduced from 28px */
+    }
+
+    .section-header {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--accent-color);
+        margin-top: 30px;
+        margin-bottom: 20px;
+    }
+
+    .card {
+        border: none;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease-in-out;
+    }
+    
+
+    .card:hover {
+        transform: translateY(-10px);
+    }
+
+    .card-body {
+        text-align: left;
+    }
+
+    .card-title {
+        font-weight: bold;
+        color: var(--accent-color);
+    }
+
+    .button {
+        background-color: var(--button-bg);
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        font-weight: bold;
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+    .button:hover {
+        background-color: #333333;
+    }
+
+    .section-content {
+        background-color: var(--main-bg);
+        padding: 60px 15px;
+    }
+   
+    .filter-container {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 24px;
+        background-color: rgba(146, 135, 115, 0.1);
+        border-top: 1px solid rgba(146, 135, 115, 0.2);
+        border-bottom: 1px solid rgba(146, 135, 115, 0.2);
+        justify-content: center;
+        position: sticky;
+        top: 0;
+        z-index: 998;
+    }
+
+    .filter-input,
+    .filter-button {
+        min-width: 160px;
+        height: 48px;
+        border-radius: 8px;
+        border: 1px solid rgba(0, 0, 0, 0.2);
+        background-color: #F9F9F8;
+        padding: 0 16px;
+        font-size: 14px;
+        color: #1C1C1C;
+        position: relative;
+        z-index: 1001;
+    }
+
+    .filter-button {
+        background-color: var(--button-bg);
+        color: white;
+        height: 56px;
+        border-radius: 12px;
+        border: none;
+        padding: 0 20px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .filter-button:hover {
+        background-color: var(--accent-color);
+    }
+
+    .dropdown-menu {
+        min-width: 200px;
+        max-height: 300px;
+        overflow-y: auto;
+        padding: 8px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-top: 4px;
+    }
+
+    .dropdown-item {
+        padding: 8px 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .industry-checkbox {
+        margin-right: 8px;
+    }
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f9f9f9;
+        margin: 0;
+        padding: 0;
+        position: relative; /* Create new stacking context */
+    }
+
+    /* Modal container styles */
+    .popup-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1005; /* Higher than all other elements */
+    }
+
+    /* Modal content */
+    .popup-content {
+        background: #fff;
+        border-radius: 24px;
+        box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+        max-width: 600px;
+        width: 90%;
+        text-align: center;
+        padding: 20px;
+        position: relative;
+        z-index: 1006;
+    }
+
+    /* Header */
+    .popup-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        padding: 12px;
+    }
+
+    .popup-header h3 {
+        font-size: 16px;
+        font-weight: 600;
+        color: #1C1C1C;
+        margin: 0;
+    }
+
+    .close-btn {
+        background: #EAE6E0;
+        border: none;
+        border-radius: 9px;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
+
+    .close-btn svg {
+        width: 16px;
+        height: 16px;
+        fill: #000;
+    }
+
+    /* Popup body */
+    .popup-body {
+        max-height: 75vh;
+        overflow-y: auto;
+        padding: 20px 16px;
+    }
+
+    .popup-body h4 {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1C1C1C;
+        margin-bottom: 8px;
+    }
+
+    .popup-body span {
+        font-size: 12px;
+        color: #767676;
+        display: block;
+        margin-bottom: 16px;
+    }
+
+    .popup-body .input-group {
+        margin-top: 16px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .popup-body input {
+        border: 1px solid rgba(0, 0, 0, 0.2);
+        border-radius: 12px;
+        padding: 12px 16px;
+        font-size: 14px;
+        margin-bottom: 8px;
+    }
+
+    .popup-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px;
+        border-top: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .clear-btn {
+        background: none;
+        border: none;
+        color: #020E27;
+        text-decoration: underline;
+        font-size: 14px;
+        cursor: pointer;
+    }
+
+    .apply-btn {
+        background: #1C1C1C;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 12px 24px;
+        font-size: 14px;
+        cursor: pointer;
+    }
+    .card {
+        border: none;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease-in-out;
+    }
+    
+    .card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .card-body {
+        padding: 1.25rem;
+    }
+    
+    .card .badge {
+        background-color: #e28970;
+        color: #fff;
+        font-weight: 600;
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+    
+    .card-title {
+        font-size: 1.25rem;
+        color: var(--accent-color);
+        margin-top: 0.5rem;
+    }
+    
+    .card-img-top {
+        height: 200px;
+        object-fit: cover;
+    }
+    
+    .btn-primary {
+        background-color: var(--button-bg);
+        border: none;
+    }
+    
+    .btn-primary:hover {
+        background-color: var(--accent-color);
+    }
+
+    .business-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .business-card img {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+    }
+
+    .business-card-content {
+        padding: 1rem;
+    }
+
+    .business-title {
+        font-size: 1.25rem;
+        margin-bottom: 0.5rem;
+        color: var(--accent-color);
+    }
+
+    .business-price {
+        font-size: 1.5rem;
+        color: var(--accent-color);
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+
+    .business-description {
+        color: #666;
+        margin-bottom: 1rem;
+    }
+
+    .view-details-btn {
+        background-color: var(--button-bg);
+        color: #fff;
+        padding: 0.8rem 1rem;  /* Increased vertical padding from 0.5rem */
+        text-decoration: none;
+        border-radius: 4px;
+        display: inline-block;
+        min-height: 45px;      /* Set minimum height */
+        line-height: 1.5;      /* Improve text vertical alignment */
+        text-align: center;
+    }
+    
+    .view-details-btn:hover {
+        background-color: var(--accent-color);
+        color: #fff;
+        text-decoration: none;
+    }
+     /* Assistant Icon */
+    .assistant-icon {
+        position: fixed;
+        bottom: 20px;
+        right: 300px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background-color: #fff;
+        cursor: pointer;
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .assistant-icon img {
+        width: 50%;
+        height: 50%;
+    }
+
+    /* Chat Box */
+    .chat-box {
+        position: fixed;
+        bottom: 90px;
+        right: 20px;
+        width: 600px;
+        max-height: 600px;
+        background-color: #fff;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        display: none; /* Hide chat box initially */
+        flex-direction: column;
+        z-index: 1000;
+        transition: all 0.3s ease;
+    }
+    .chat-header {
+        background-color: #007bff;
+        color: #fff;
+        padding: 10px;
+        position: relative;
+    }
+    .close-chat {
+        background: none;
+        border: none;
+        color: #fff;
+        font-size: 20px;
+        position: absolute;
+        right: 10px;
+        top: 5px;
+        cursor: pointer;
+    }
+    .chat-messages {
+        flex: 1;
+        padding: 10px;
+        overflow-y: auto;
+    }
+    .chat-input {
+        display: flex;
+        border-top: 1px solid #ccc;
+    }
+    .chat-input input {
+        flex: 1;
+        padding: 10px;
+        border: none;
+    }
+    .chat-input button {
+        padding: 10px;
+        border: none;
+        background-color: #007bff;
+        color: #fff;
+        cursor: pointer;
+    }
+
+    .chat-input button:hover {
+        background-color: #0056b3;
+    }
+
+    .message {
+        margin-bottom: 10px;
+    }
+
+    .message.user {
+        text-align: right;
+    }
+
+    .message.assistant {
+        text-align: left;
+    }
+    .message {
+        padding: 10px;
+        margin: 5px;
+        border-radius: 10px;
+        max-width: 80%;
+        }
+
+        .user {
+        background-color: #e3f2fd;
+        align-self: flex-end;
+    }
+
+    .assistant {
+        background-color: #f5f5f5;
+        align-self: flex-start;
+    }
+
+    .error {
+        background-color: #ffebee;
+        color: #c62828;
+        align-self: center;
+    }
+
+    .chat-messages {
+        display: flex;
+        flex-direction: column;
+    }
+    /* Chat Box Responsive Design */
+    /* Default styles for large screens (PC) */
+    .chat-box {
+        width: 600px;
+        max-height: 500px;
+    }
+
+    /* Medium screens (laptops/smaller desktops) */
+    @media screen and (max-width: 1024px) {
+        .chat-box {
+            width: 450px;
+            max-height: 450px;
+            right: 10px;
+        }
+        
+        .assistant-icon {
+            right: 20px;
+        }
+    }
+
+    /* Small screens (tablets) */
+    @media screen and (max-width: 768px) {
+        .chat-box {
+            width: 350px;
+            max-height: 400px;
+            bottom: 80px;
+        }
+        
+        .chat-messages {
+            max-height: 300px;
+        }
+    }
+
+    /* Extra small screens (mobile phones) */
+    @media screen and (max-width: 480px) {
+        .chat-box {
+            width: 90%;
+            max-height: 350px;
+            right: 5%;
+            left: 5%;
+            bottom: 70px;
+        }
+        
+        .assistant-icon {
+            width: 50px;
+            height: 50px;
+            bottom: 10px;
+            right: 10px;
+        }
+        
+        .chat-input input {
+            font-size: 14px;
+        }
+    }
+
+    /* Chat Box Base Styles */
+    .chat-box {
+        position: fixed;
+        bottom: 90px;
+        right: 20px;
+        width: 600px;
+        max-height: 600px;
+        background-color: #fff;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        display: none;
+        flex-direction: column;
+        z-index: 1000;
+        transition: all 0.3s ease;
+    }
+
+    /* Responsive Chat Box */
+    @media screen and (max-width: 1200px) {
+        .chat-box {
+            width: 500px;
+            max-height: 550px;
+        }
+        
+        .assistant-icon {
+            right: 30px;
+        }
+    }
+
+    @media screen and (max-width: 768px) {
+        .chat-box {
+            width: 400px;
+            max-height: 500px;
+            right: 10px;
+            bottom: 80px;
+        }
+        
+        .assistant-icon {
+            right: 20px;
+            bottom: 15px;
+        }
+    }
+
+    @media screen and (max-width: 480px) {
+        .chat-box {
+            width: calc(100% - 20px);
+            max-height: 450px;
+            right: 10px;
+            left: 10px;
+            bottom: 70px;
+        }
+        
+        .assistant-icon {
+            width: 50px;
+            height: 50px;
+            right: 10px;
+            bottom: 10px;
+        }
+    }
+
+    /* Modal styles */
+.modal-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: rgb(54, 51, 48);
+    font-family: '__Lora_d48d41', '__Lora_Fallback_d48d41', serif;
+  }
+  
+  /* Form label styles */
+  .form-label {
+    font-weight: 700;
+  }
+  
+  /* Additional custom styles */
+  .modal-body p {
+    font-size: 16px;
+    color: #363330;
+  }
+  
+  /* Style the submit button */
+  #contactForm .btn-primary {
+    background-color: #002b5c;
+    border-color: #002b5c;
+  }
+  
+  #contactForm .btn-primary:hover {
+    background-color: #010d3c;
+    border-color: #010d3c;
+  }
+  
+  /* Checkbox label */
+  .form-check-label {
+    font-size: 14px;
+  }
+  
+  /* Terms and Privacy Notice */
+  #contactForm p a {
+    color: #002b5c;
+    text-decoration: underline;
+  }
+  
+  #contactForm p {
+    font-size: 12px;
+    color: #666;
+  }
+  .profile-btn {
+    background-color: var(--button-bg);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 7px;
+    text-decoration: none;
+}
+
+.profile-btn:hover {
+    background-color: var(--accent-color);
+    color: white;
+}
+.dropdown-menu {
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 8px;
+    z-index: 1001;
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+}
+
+.industry-checkbox {
+    margin: 0;
+}
+
+.dropdown {
+    position: relative;
+    z-index: 1000;
+}
+
+/* Filter Dropdown Styles */
+.dropdown {
+    position: relative;
+    display: inline-block;
+    z-index: 1002;
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 1003;
+    min-width: 200px;
+    background: white;
+    border: 1px solid rgba(0,0,0,0.15);
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    display: none;
+}
+
+.dropdown-menu.show {
+    display: block;
+}
+
+.filter-input.dropdown-toggle::after {
+    margin-left: 0.5em;
+    vertical-align: middle;
+}
+
+.dropdown-menu {
+    width: 100%;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.dropdown-item {
+    padding: 0.5rem 1rem;
+}
+
+.dropdown-item:hover {
+    background-color: rgba(0,0,0,0.05);
+}
+
+/* Adjust the filter input width */
+.filter-input {
+    width: 250px; /* Increased from default */
+    height: 45px; /* Decreased from 56px */
+    border-radius: 25px; /* Increased from 12px */
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    background-color: #F9F9F8;
+    padding: 0 20px;
+    font-size: 14px;
+    color: #1C1C1C;
+    position: relative;
+    z-index: 1001;
+}
+
+/* Make price range dropdown wider */
+#priceRangeDropdown {
+    width: 280px; /* Slightly wider than industries dropdown */
+}
+
+/* Ensure dropdown menu matches button width */
+.dropdown-menu {
+    width: 100%; /* This makes the dropdown menu match its parent button width */
+    min-width: 250px; /* Minimum width to match the button */
+    padding: 0.5rem;
+    border-radius: 20px; /* Increased from 0.5rem */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    max-height: 300px;
+    overflow-y: auto;
+    margin-top: 8px; /* Add space between button and dropdown */
+}
+
+/* Ensure dropdown items fill the width */
+.dropdown-item {
+    width: 100%;
+    padding: 0.5rem 1rem;
+    white-space: nowrap;
+}
+.marketplace-heading {
+    font-family: 'Arial', sans-serif;
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: var(--accent-color);
+    text-align: center;
+    margin: 2rem 0;
+}
+
+/* Add pagination spacing */
+#pagination {
+    margin: 40px 0 80px 0; /* Top Right Bottom Left */
+    padding: 20px 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.pagination {
+    gap: 10px;
+}
+
+.page-item {
+    margin: 0 5px;
+}
+
+.page-link {
+    padding: 8px 16px;
+    border-radius: 4px;
+    color: var(--accent-color);
+    background-color: #fff;
+    border: 1px solid var(--accent-color);
+}
+
+.page-item.active .page-link {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+    color: #fff;
+}
+
+.page-link:hover {
+    background-color: var(--accent-color);
+    color: #fff;
+}
+
+/* Update contact button styles */
+.contact-btn {
+    background-color: rgba(146, 135, 115, 0.2);
+    color: #01145e;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.contact-btn:hover {
+    background-color: rgba(146, 135, 115, 0.3);
+    color: #01145e;
+}
+
+/* Update modal styles to match */
+#contactForm .btn-primary {
+    background-color: rgba(146, 135, 115, 0.2);
+    color: #01145e;
+    border: none;
+}
+
+#contactForm .btn-primary:hover {
+    background-color: rgba(146, 135, 115, 0.3);
+    color: #01145e;
+}
+
+/* Unified button styles */
+.view-details-btn,
+.contact-btn {
+    width: 140px; /* Fixed width for both buttons */
+    height: 45px; /* Fixed height */
+    padding: 0.8rem 1rem;
+    text-decoration: none;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    margin: 5px;
+    line-height: 1;
+}
+
+.view-details-btn {
+    background-color: var(--button-bg);
+    color: #fff;
+}
+
+.contact-btn {
+    background-color: rgba(146, 135, 115, 0.2);
+    color: #01145e;
+}
+
+.view-details-btn:hover {
+    background-color: var(--accent-color);
+    color: #fff;
+}
+
+.contact-btn:hover {
+    background-color: rgba(146, 135, 115, 0.3);
+    color: #01145e;
+}
+
+/* Ensure buttons match new radius */
+.filter-button {
+    height: 45px; /* Match other inputs */
+    border-radius: 25px; /* Match other inputs */
+}
+
+/* Update dropdown toggle button */
+.filter-input.dropdown-toggle {
+    height: 45px;
+    border-radius: 25px;
+}
+
+.filters-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background-color: rgba(146, 135, 115, 0.2);
+    border-radius: 100px;
+    padding: 10px 32px;
+    min-width: 850px;
+    margin: 0 auto;
+}
+
+.location-dropdown {
+    position: relative;
+}
+
+.location-menu {
+    width: 100%;
+    padding: 8px 0;
+}
+
+.dropdown-header {
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #657b90;
+    text-transform: uppercase;
+}
+
+.location-item {
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.location-item:hover {
+    background-color: rgba(101, 123, 144, 0.1);
+}
+
+.dropdown-divider {
+    margin: 8px 0;
+    border-top: 1px solid rgba(101, 123, 144, 0.2);
+}
+
+/* Add specific styling for Arzani icon */
+.arzani-icon {
+    min-width: 48px !important;
+    min-height: 48px !important;
+    margin: -12px 0; /* Adjust vertical alignment */
+    transform: scale(1.2); /* Smooth scale effect */
+    transition: transform 0.3s ease;
+    opacity: 1; /* Ensure icon is visible by default */
+    transition: opacity 0.3s ease; /* Add transition for opacity */
+}
+
+.arzani-icon:hover {
+    transform: scale(1.3);
+}
+
+.navbar-link:hover .arzani-icon {
+    opacity: 0; /* Make icon disappear on hover */
+}
+
+/* Ensure the text appears on hover */
+#arzani-link span {
+    opacity: 0;
+    position: absolute;
+    transform: translateY(20px);
+    transition: all 0.3s ease;
+    pointer-events: none;
+}
+
+#arzani-link:hover span {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Modern card styling */
+.card {
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    background: #ffffff;
+    transition: opacity 0.3s ease-out;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+}
+
+.financial-metrics {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+}
+
+.metric-item {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+.metric-item:last-child {
+    border-bottom: none;
+}
+
+.metric-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-bottom: 0.25rem;
+    display: flex;
+    align-items: center;
+    cursor: help;
+}
+
+.metric-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #212529;
+    margin: 0;
+}
+
+.price {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent-color);
+    margin: 0;
+}
+
+/* Bootstrap Icons */
+.bi {
+    font-size: 0.875rem;
+}
+
+/* Tooltip styling */
+.tooltip {
+    font-size: 0.875rem;
+}
+
+.tooltip-inner {
+    max-width: 200px;
+    padding: 0.5rem 1rem;
+    background-color: #333;
+    border-radius: 8px;
+}
+
+/* Add these new styles for the metrics */
+.financial-metrics-container {
+    background: none;
+    padding: 0.5rem 0;
+}
+
+.metrics-group {
+    display: flex;
+    align-items: center;
+}
+
+.metric-item {
+    border: none;
+    padding: 0;
+}
+
+.metric-label {
+    font-size: 0.75rem;
+    color: #6c757d;
+    font-weight: 600;
+    display: block;
+    margin-bottom: 2px;
+}
+
+.metric-value {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #212529;
+}
+
+.price {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent-color);
+    margin: 0;
+}
+
+/* Updated card content styles */
+.listing-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;  /* Increased from 0.15rem */
+    margin-bottom: 0.25rem;
+}
+
+.business-name {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+    line-height: 1;
+}
+
+.price-metrics-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.25rem 0 0.5rem 0;
+    margin: 0;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+.price-metrics-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+.price-section {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.15rem;
+}
+
+.price-section .metric-label {
+    font-size: 0.75rem;
+    color: #6c757d;
+    font-weight: 600;
+    margin: 0;
+}
+
+.price-section .price {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent-color);
+    line-height: 1;
+    margin-top: -2px;
+}
+
+.price {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent-color);
+    line-height: 1;
+}
+
+.metrics-group {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.metric-item {
+    text-align: right;
+    min-width: 100px;
+}
+
+.metrics-pair {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: rgba(0, 0, 0, 0.02);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+}
+
+.metric-separator {
+    width: 1px;
+    height: 24px;
+    background: rgba(0, 0, 0, 0.1);
+    margin: 0 0.25rem;
+}
+
+.metric-item {
+    padding: 0;
+    text-align: center;
+    min-width: 80px;
+}
+
+.metric-label {
+    font-size: 0.7rem;
+    color: #6c757d;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.metric-value {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.price-metrics-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    margin: 0.5rem 0;
+}
+
+.container.mt-5 {
+    margin-top: 1.5rem !important;  /* Overrides Bootstrap's mt-5 spacing */
+}
+
+/* ... existing styles ... */
+
+.card-image-carousel {
+    position: relative;
+    height: 200px;
+    overflow: hidden;
+    border-radius: 15px 15px 0 0;
+}
+
+.carousel-inner {
+    height: 100%;
+    position: relative;
+}
+
+.carousel-item {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+    display: none;
+}
+
+.carousel-item.active {
+    opacity: 1;
+    display: block;
+}
+
+.carousel-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.carousel-controls {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background: linear-gradient(to top, rgba(0,0,0,0.5), transparent);
+}
+
+.carousel-control {
+    background: rgba(255,255,255,0.3);
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.carousel-control:hover {
+    background: rgba(255,255,255,0.5);
+}
+
+.carousel-indicators {
+    display: flex;
+    gap: 5px;
+    justify-content: center;
+    align-items: center;
+}
+
+.carousel-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.3);
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.carousel-indicator.active {
+    background: white;
+    transform: scale(1.2);
+}
+
+/* Add hover effect for the entire card */
+.card:hover .carousel-controls {
+    opacity: 1;
+}
+
+.save-business-btn {
+    width: 100px;
+    padding: 0.8rem 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.save-business-btn i {
+    font-size: 1.1rem;
+}
+
+.btn-group {
+    gap: 0.5rem;
+}
+
+// ...existing code...
+
+.card-image-carousel {
+    position: relative;
+}
+
+.save-business-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    z-index: 10;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.save-business-btn i {
+    font-size: 1.2rem;
+    color: #666;
+    transition: all 0.3s ease;
+}
+
+.save-business-btn:hover {
+    transform: scale(1.1);
+    background: #fff;
+}
+
+.save-business-btn.saved {
+    background: var(--accent-color);
+}
+
+.save-business-btn.saved i {
+    color: #fff;
+}
+
+// ...existing code...
+
+/* Professional remove button styling */
+.remove-saved-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 100;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+}
+
+.remove-saved-btn i {
+    color: #dc3545;
+    font-size: 20px;
+    transition: all 0.2s ease;
+    line-height: 1;
+}
+
+.remove-saved-btn:hover {
+    background: #fff;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.2);
+}
+
+.remove-saved-btn:hover i {
+    color: #bb2d3b;
+    transform: rotate(90deg);
+}
+
+.remove-saved-btn:active {
+    transform: scale(0.95);
+    background: rgba(220, 53, 69, 0.1);
+}
+
+.remove-saved-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.3);
+}
+
+/* Add smooth fade animation for button appearance */
+.card:hover .remove-saved-btn {
+    opacity: 1;
+}
+
+.card .remove-saved-btn {
+    opacity: 0.85;
+    transition: opacity 0.2s ease;
+}
+
+// ...existing code...
+
+/* Style for remove button */
+.remove-saved-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 10;
+    background: none;
+    border: none;
+    padding: 5px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.remove-saved-btn i {
+    color: #fff;
+    font-size: 1.5rem;
+    text-shadow: 0 0 3px rgba(0,0,0,0.5);
+}
+
+.remove-saved-btn:hover {
+    transform: scale(1.1);
+}
+
+.remove-saved-btn:active {
+    transform: scale(0.95);
+}
+
+// ...existing code...
+
+.card-image-wrapper {
+    position: relative;
+    overflow: hidden;
+}
+
+.remove-saved-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 100;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.remove-saved-btn i {
+    color: #dc3545;
+    font-size: 1.2rem;
+    transition: all 0.2s ease;
+}
+
+.remove-saved-btn:hover {
+    background: rgba(255, 255, 255, 1);
+    transform: scale(1.1);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+}
+
+.remove-saved-btn:active {
+    transform: scale(0.95);
+    background: rgba(220, 53, 69, 0.1);
+}
+
+.remove-saved-btn:hover i {
+    color: #b02a37;
+}
+
+.remove-saved-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.25);
+}
+
+/* Add ripple effect for feedback */
+.remove-saved-btn::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    border-radius: 50%;
+    background: rgba(220, 53, 69, 0.2);
+    transform: scale(0);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s ease;
+}
+
+.remove-saved-btn:active::after {
+    transform: scale(1.5);
+    opacity: 0;
+    transition: 0s;
+}
+
+/* AI Assistant Z-index Fix */
+.ai-assistant-dialog {
+  z-index: 99999 !important; /* Force highest z-index */
+}
+
+.assistant-buttons {
+  z-index: 99990 !important; /* Below dialog but above other elements */
+}
+
+/* Ensure no other elements have excessive z-index values */
+.navbar, 
+.modal, 
+.popover, 
+.dropdown-menu, 
+.tooltip {
+  z-index: 9000 !important; /* Below our assistant */
+}
+
+/* Fix any potential stacking context issues */
+body {
+  position: relative; /* Create new stacking context */
+}
+
+// ...existing code...

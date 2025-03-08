@@ -1,0 +1,477 @@
+import dotenv from 'dotenv';
+import bcrypt from 'bcrypt';
+import pool from './db.js';
+
+dotenv.config();
+
+// Database functions
+async function createUserTable() {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Check if tables already exist
+    const tableCheck = await client.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_name = 'users'
+      );
+    `);
+
+    if (!tableCheck.rows[0].exists) {
+      // Create users table only if it doesn't exist
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS users (
+          id SERIAL PRIMARY KEY,
+          username VARCHAR(50) NOT NULL,
+          email VARCHAR(100) NOT NULL UNIQUE,
+          google_id VARCHAR(255) UNIQUE,
+          microsoft_id VARCHAR(255) UNIQUE,
+          linkedin_id VARCHAR(255) UNIQUE,
+          auth_provider VARCHAR(50) NOT NULL DEFAULT 'email',
+          profile_picture VARCHAR(255) DEFAULT '/images/default_profile1.png',
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          last_login TIMESTAMP
+        );
+        
+        CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+        CREATE INDEX IF NOT EXISTS idx_users_auth_provider ON users(auth_provider);
+      `);
+
+      // Create users_auth table with foreign key
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS users_auth (
+          user_id INTEGER PRIMARY KEY,
+          password_hash VARCHAR(255) NOT NULL,
+          verified BOOLEAN DEFAULT false,
+          verification_token VARCHAR(255),
+          verification_expires TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_users_auth_user_id ON users_auth(user_id);
+      `);
+
+      console.log('Database tables created successfully');
+    } else {
+      console.log('Tables already exist, skipping creation');
+    }
+
+    // First check if we need to add the provider columns
+    const checkColumnsQuery = `
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = 'users' 
+      AND column_name IN ('google_id', 'microsoft_id', 'linkedin_id');
+    `;
+
+    const existingColumns = await client.query(checkColumnsQuery);
+    const columnsToAdd = [];
+
+    if (!existingColumns.rows.find(col => col.column_name === 'google_id')) {
+      columnsToAdd.push('ADD COLUMN IF NOT EXISTS google_id VARCHAR(255) UNIQUE');
+    }
+    if (!existingColumns.rows.find(col => col.column_name === 'microsoft_id')) {
+      columnsToAdd.push('ADD COLUMN IF NOT EXISTS microsoft_id VARCHAR(255) UNIQUE');
+    }
+    if (!existingColumns.rows.find(col => col.column_name === 'linkedin_id')) {
+      columnsToAdd.push('ADD COLUMN IF NOT EXISTS linkedin_id VARCHAR(255) UNIQUE');
+    }
+
+    // Add provider type column if it doesn't exist
+    if (!existingColumns.rows.find(col => col.column_name === 'auth_provider')) {
+      columnsToAdd.push(`ADD COLUMN IF NOT EXISTS auth_provider VARCHAR(20) DEFAULT 'email'`);
+    }
+
+    // If we have columns to add, alter the table
+    if (columnsToAdd.length > 0) {
+      const alterTableQuery = `
+        ALTER TABLE users
+        ${columnsToAdd.join(', ')};
+      `;
+      await client.query(alterTableQuery);
+    }
+
+    // Add random profile picture assignment trigger
+    await client.query(`
+      CREATE OR REPLACE FUNCTION assign_random_profile_picture()
+      RETURNS TRIGGER AS $$
+      BEGIN
+          IF NEW.profile_picture IS NULL THEN
+              NEW.profile_picture := '/images/default_profile' || 
+                  (floor(random() * 5) + 1)::text || '.png';
+          END IF;
+          RETURN NEW;
+      END;
+      $$ LANGUAGE plpgsql;
+
+      DROP TRIGGER IF EXISTS set_default_profile_picture ON users;
+      
+      CREATE TRIGGER set_default_profile_picture
+          BEFORE INSERT ON users
+          FOR EACH ROW
+          EXECUTE FUNCTION assign_random_profile_picture();
+    `);
+
+    await client.query('COMMIT');
+    console.log('Database schema updated successfully');
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Error managing database tables:', error);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+// Add table persistence check
+async function checkTablePersistence() {
+  try {
+    const result = await pool.query(`
+      SELECT COUNT(*) FROM users;
+    `);
+    console.log(`Current users in database: ${result.rows[0].count}`);
+    return true;
+  } catch (error) {
+    console.error('Database persistence check failed:', error);
+    return false;
+  }
+}
+
+async function createUser({ username, email, password }) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    
+    // First create the user
+    const userResult = await client.query(
+      'INSERT INTO users (username, email) VALUES ($1, $2) RETURNING id',
+      [username, email]
+    );
+    
+    const userId = userResult.rows[0].id;
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    // Then create the auth record
+    await client.query(
+      'INSERT INTO users_auth (user_id, password_hash) VALUES ($1, $2)',
+      [userId, hashedPassword]
+    );
+    
+    await client.query('COMMIT');
+    return { id: userId, username, email };
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+async function getUserByEmail(email) {
+  try {
+    if (!email) {
+      console.error('getUserByEmail called with null or empty email');
+      return null;
+    }
+    
+    const result = await pool.query(
+      'SELECT * FROM users WHERE email = $1',
+      [email.toLowerCase()]
+    );
+    
+    return result.rows[0] || null;
+  } catch (error) {
+    console.error('Error in getUserByEmail:', error);
+    throw error;
+  }
+}
+
+// Update getUserById to handle errors better
+async function getUserById(id) {
+  try {
+    console.log('Fetching user with ID:', id);
+    const result = await pool.query(
+      `SELECT u.*, ua.password_hash, ua.verified 
+       FROM users u 
+       JOIN users_auth ua ON u.id = ua.user_id 
+       WHERE u.id = $1`,
+      [id]
+    );
+    
+    if (result.rows.length === 0) {
+      console.log('No user found with ID:', id);
+      return null;
+    }
+    
+    console.log('User found:', result.rows[0].username);
+    return result.rows[0];
+  } catch (error) {
+    console.error('Database error in getUserById:', error);
+    throw error;
+  }
+}
+
+async function verifyUser(userId) {
+  try {
+    const result = await pool.query(
+      'UPDATE users SET verified = TRUE WHERE id = $1 RETURNING *',
+      [userId]
+    );
+    
+    return result.rows[0] || null;
+  } catch (error) {
+    console.error('Error in verifyUser:', error);
+    throw error;
+  }
+}
+
+async function authenticateUser(email, password) {
+  try {
+    // Join users and users_auth tables to get all necessary info
+    const query = `
+      SELECT 
+        u.id,
+        u.username,
+        u.email,
+        ua.password_hash,
+        ua.verified
+      FROM users u
+      JOIN users_auth ua ON u.id = ua.user_id
+      WHERE u.email = $1
+    `;
+    
+    const result = await pool.query(query, [email]);
+    if (result.rows.length === 0) return null;
+    
+    const user = result.rows[0];
+    const validPassword = await bcrypt.compare(password, user.password_hash);
+    
+    if (validPassword) {
+      // Return user with the correct ID from users table
+      return {
+        id: user.id, // This is the ID from users table
+        username: user.username,
+        email: user.email,
+        verified: user.verified
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error('Authentication error:', error);
+    throw error;
+  }
+}
+
+export async function getUserByLinkedInId(linkedinId) {
+  const query = 'SELECT * FROM users WHERE linkedin_id = $1';
+  const result = await pool.query(query, [linkedinId]);
+  return result.rows[0];
+}
+
+export async function createUserWithLinkedIn(userData) {
+  const { email, username, linkedinId } = userData;
+  const query = `
+    INSERT INTO users (email, username, linkedin_id, verified)
+    VALUES ($1, $2, $3, true)
+    RETURNING *
+  `;
+  const result = await pool.query(query, [email, username, linkedinId]);
+  return result.rows[0];
+}
+
+// Add new function to create or update user with OAuth
+async function createOrUpdateOAuthUser({ 
+  email, 
+  username, 
+  provider, 
+  providerId 
+}) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Check if user exists with this email
+    let user = await getUserByEmail(email);
+
+    if (user) {
+      // Update existing user with provider ID
+      const updateQuery = `
+        UPDATE users 
+        SET 
+          ${provider}_id = $1,
+          auth_provider = COALESCE(auth_provider, $2)
+        WHERE email = $3
+        RETURNING *;
+      `;
+      const result = await client.query(updateQuery, [providerId, provider, email]);
+      user = result.rows[0];
+    } else {
+      // Create new user
+      const insertQuery = `
+        INSERT INTO users (
+          username, 
+          email, 
+          ${provider}_id,
+          auth_provider
+        ) 
+        VALUES ($1, $2, $3, $4)
+        RETURNING *;
+      `;
+      const result = await client.query(insertQuery, [
+        username,
+        email,
+        providerId,
+        provider
+      ]);
+      user = result.rows[0];
+
+      // Create auth record with verified=true for OAuth users
+      await client.query(`
+        INSERT INTO users_auth (
+          user_id, 
+          password_hash,
+          verified
+        ) 
+        VALUES ($1, $2, true)
+      `, [user.id, '']);
+    }
+
+    await client.query('COMMIT');
+    return user;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Error in createOrUpdateOAuthUser:', error);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+// Add provider-specific user fetch functions
+async function getUserByProviderId(provider, providerId) {
+  const query = `
+    SELECT * FROM users 
+    WHERE ${provider}_id = $1
+  `;
+  const result = await pool.query(query, [providerId]);
+  return result.rows[0];
+}
+
+// Add this function to your database.js
+
+async function addProviderColumns() {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Add provider columns
+    await client.query(`
+      DO $$ 
+      BEGIN
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                        WHERE table_name = 'users' AND column_name = 'google_id') THEN
+              ALTER TABLE users ADD COLUMN google_id VARCHAR(255) UNIQUE;
+          END IF;
+
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                        WHERE table_name = 'users' AND column_name = 'microsoft_id') THEN
+              ALTER TABLE users ADD COLUMN microsoft_id VARCHAR(255) UNIQUE;
+          END IF;
+
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                        WHERE table_name = 'users' AND column_name = 'linkedin_id') THEN
+              ALTER TABLE users ADD COLUMN linkedin_id VARCHAR(255) UNIQUE;
+          END IF;
+
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                        WHERE table_name = 'users' AND column_name = 'auth_provider') THEN
+              ALTER TABLE users ADD COLUMN auth_provider VARCHAR(20) DEFAULT 'email';
+          END IF;
+      END $$;
+    `);
+
+    // Create indexes
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_users_google_id ON users(google_id);
+      CREATE INDEX IF NOT EXISTS idx_users_microsoft_id ON users(microsoft_id);
+      CREATE INDEX IF NOT EXISTS idx_users_linkedin_id ON users(linkedin_id);
+      CREATE INDEX IF NOT EXISTS idx_users_auth_provider ON users(auth_provider);
+    `);
+
+    await client.query('COMMIT');
+    console.log('Provider columns added successfully');
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Error adding provider columns:', error);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+// Add business history table creation function
+async function createBusinessHistoryTable() {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS business_history (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        business_id INTEGER REFERENCES businesses(id) ON DELETE CASCADE,
+        viewed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT unique_history_entry UNIQUE (user_id, business_id, viewed_at)
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_business_history_user ON business_history(user_id);
+      CREATE INDEX IF NOT EXISTS idx_business_history_business ON business_history(business_id);
+      CREATE INDEX IF NOT EXISTS idx_business_history_viewed_at ON business_history(viewed_at);
+    `);
+
+    await client.query('COMMIT');
+    console.log('Business history table created successfully');
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Error creating business history table:', error);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+async function addSubscriptionColumns() {
+  const query = `
+    ALTER TABLE users 
+    ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT,
+    ADD COLUMN IF NOT EXISTS subscription_type VARCHAR(50),
+    ADD COLUMN IF NOT EXISTS subscription_status VARCHAR(50),
+    ADD COLUMN IF NOT EXISTS subscription_end TIMESTAMP;
+  `;
+  
+  try {
+    await pool.query(query);
+    console.log('Added subscription columns to users table');
+  } catch (error) {
+    console.error('Error adding subscription columns:', error);
+    throw error;
+  }
+}
+
+// Single export statement
+export {
+  createUserTable,
+  createUser,
+  getUserByEmail,
+  getUserById,
+  verifyUser,
+  authenticateUser,
+  checkTablePersistence,
+  createOrUpdateOAuthUser,
+  getUserByProviderId,
+  addProviderColumns,
+  createBusinessHistoryTable,
+  addSubscriptionColumns,
+};

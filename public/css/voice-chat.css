@@ -1,0 +1,1202 @@
+/* Modern reset and base styles */
+:root {
+    --primary-color: #4f46e5;
+    --secondary-color: #3b82f6;
+    --bg-color: #ffffff;
+    --text-color: #202123;
+    --border-color: #e5e7eb;
+    --sidebar-width: 300px;
+    --chat-radius: 12px;
+    --transition: all 0.3s ease;
+    --accent-color: #6366f1;
+    --hover-color: #4f46e5;
+    --text-primary: #111827;
+    --text-secondary: #4b5563;
+    --bg-hover: #f3f4f6;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: #ffffff;
+    color: var(--text-color);
+    line-height: 1.5;
+}
+
+/* Enhanced container layout */
+.chat-container {
+    display: grid;
+    grid-template-columns: var(--sidebar-width) 1fr;
+    min-height: 100vh;
+    max-width: 1600px;
+    margin: 0 auto;
+    background: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* Improved sidebar styling */
+.sidebar {
+    background: #ffffff;
+    padding: 1.5rem;
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+}
+
+/* Arzani Business Assistant title */
+.sidebar h2 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #01145e;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--border-color);
+    letter-spacing: -0.025em;
+}
+
+.new-chat-btn {
+    background: #041b76;
+    color: white;
+    padding: 0.875rem 1.5rem;
+    border: none;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+}
+
+.new-chat-btn:hover {
+    background: #064fa3;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Quick Actions section */
+.conversation-categories {
+    padding: 1rem 0;
+}
+
+.conversation-categories h3 {
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    font-weight: 600;
+    margin-bottom: 1rem;
+    letter-spacing: 0.05em;
+}
+
+.conversation-categories ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.conversation-categories button {
+    width: 100%;
+    text-align: left;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background: rgba(146, 135, 115, 0.2);
+    color: #01145e;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.conversation-categories button:hover {
+    background: rgba(146, 135, 115, 0.3);
+    border-color: #01145e;
+    color: #01145e;
+}
+
+/* Chat History section */
+.chat-history {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.chat-history h3 {
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    font-weight: 600;
+    margin-bottom: 1rem;
+    letter-spacing: 0.05em;
+}
+
+.chat-history ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* Footer section */
+.sidebar-footer {
+    border-top: 1px solid var(--border-color);
+    padding-top: 1rem;
+    margin-top: auto;
+}
+
+.connection-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #10b981;
+}
+
+#statusText {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+/* Status indicator states */
+.status-indicator.online {
+    background-color: #10b981;
+}
+
+.status-indicator.connecting {
+    background-color: #f59e0b;
+    animation: pulse 1.5s infinite;
+}
+
+.status-indicator.offline {
+    background-color: #ef4444;
+}
+
+.status-indicator.connected {
+    background-color: #10b981;
+}
+
+.status-indicator.disconnected {
+    background-color: #ef4444;
+}
+
+.status-indicator.http {
+    background-color: #f59e0b;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+/* Enhanced main chat area */
+.chat-main {
+    display: flex;
+    flex-direction: column;
+    padding: 2rem;
+    gap: 1.5rem;
+    max-height: 100vh;
+    overflow: hidden;
+}
+
+/* Voice visualization improvements */
+.voice-visualization {
+    background: linear-gradient(to right, #f3f4f6, #ffffff);
+    padding: 1rem;
+    border-radius: var(--chat-radius);
+    height: 80px;
+    position: relative;
+}
+
+#voiceWaveform {
+    width: 100%;
+    height: 100%;
+}
+
+/* Voice status feedback */
+.voice-status {
+    position: absolute;
+    bottom: 0.5rem;
+    left: 0.5rem;
+    font-size: 0.875rem;
+    color: #4b5563;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.voice-status::before {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #10b981;
+    transition: background-color 0.3s ease;
+}
+
+.voice-status.speaking::before {
+    background-color: #3b82f6;
+    animation: pulse 1.5s infinite;
+}
+
+.voice-status.error::before {
+    background-color: #ef4444;
+}
+
+/* Quick actions styling */
+.quick-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin: 1rem 0;
+}
+
+.quick-actions button {
+    background: white;
+    border: 1px solid var(--border-color);
+    padding: 0.75rem 1.5rem;
+    border-radius: 2rem;
+    cursor: pointer;
+    transition: var(--transition);
+    font-weight: 500;
+}
+
+.quick-actions button:hover {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+/* Messages area improvements */
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    scroll-behavior: smooth;
+}
+
+.chat-message {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    max-width: 85%;
+    padding: 1rem;
+    border-radius: var(--chat-radius);
+    animation: messageSlide 0.3s ease;
+    pointer-events: none; /* Make messages unclickable */
+}
+
+.chat-message.user {
+    align-self: flex-end;
+    background: var(--primary-color);
+    color: white;
+    border-bottom-right-radius: 0;
+    flex-direction: row-reverse;
+}
+
+.chat-message.assistant {
+    align-self: flex-start;
+    background: #f3f4f6;
+    border-bottom-left-radius: 0;
+}
+
+.assistant-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.assistant-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.message-content {
+    flex: 1;
+    word-break: break-word;
+}
+
+.chat-message.system {
+    align-self: center;
+    background: #fef3c7;
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+}
+
+/* Input area enhancements */
+.chat-input-area {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 0rem;
+    padding: 1.5rem;
+    background: white;
+    border-top: 1px solid var(--border-color);
+    position: relative;
+}
+
+.voice-controls {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.voice-btn {
+    background: #041b76;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.25rem;
+    border-radius: var(--chat-radius);
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.voice-btn:hover {
+    background: #064fa3;
+}
+
+.voice-btn:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+}
+
+.voice-btn.active {
+    background: #10b981;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+.voice-btn.active:hover {
+    background: #059669;
+}
+
+.voice-btn.active .btn-text {
+    color: white;
+}
+
+/* Add pulse animation for active state */
+.voice-btn.active::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: inherit;
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.voice-btn .audio-icon {
+    width: 16px;
+    height: 16px;
+}
+
+#userInput {
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--chat-radius);
+    resize: none;
+    min-height: 45px;
+    max-height: 150px;
+    font-family: inherit;
+    font-size: 1rem;
+    transition: var(--transition);
+    width: 100%; /* Added to ensure the textarea takes up full available width */
+}
+
+#userInput:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+}
+
+#sendBtn {
+    padding: 0.75rem 1.5rem;
+    background: #041b76;
+    color: white;
+    border: none;
+    border-radius: var(--chat-radius);
+    cursor: pointer;
+    font-weight: 500;
+    transition: var(--transition);
+}
+
+#sendBtn:hover {
+    background: #064fa3;
+}
+
+/* Animations */
+@keyframes messageSlide {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.typing-message {
+    position: relative;
+    min-height: 24px;
+    padding-right: 30px;
+}
+
+.typing-message::after {
+    content: '';
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    width: 4px;
+    height: 4px;
+    background: currentColor;
+    border-radius: 50%;
+    animation: typing 1s infinite;
+}
+
+@keyframes typing {
+    0%, 100% { opacity: 0.2; }
+    50% { opacity: 1; }
+}
+
+/* Responsive improvements */
+@media (max-width: 1024px) {
+    .chat-container {
+        grid-template-columns: 1fr;
+    }
+
+    .sidebar {
+        display: none;
+    }
+
+    .chat-main {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .quick-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .chat-input-area {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+
+    .voice-controls {
+        justify-content: center;
+    }
+}
+
+/* Add this to your existing CSS */
+.voice-debug {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.9);
+    color: #00ff00;
+    padding: 15px;
+    border-radius: 5px;
+    font-family: monospace;
+    z-index: 1000;
+    max-width: 400px;
+    max-height: 600px;
+    overflow: auto;
+}
+
+.debug-entry {
+    border-bottom: 1px solid #333;
+    padding: 5px 0;
+    font-size: 12px;
+}
+
+.debug-timestamp {
+    color: #888;
+    font-size: 10px;
+}
+
+.debug-context {
+    color: #ff9900;
+    margin: 2px 0;
+}
+
+.debug-message {
+    color: #fff;
+    word-wrap: break-word;
+}
+
+.debug-controls {
+    margin-top: 10px;
+    border-top: 1px solid #333;
+    padding-top: 10px;
+}
+
+.debug-controls button {
+    background: #333;
+    color: #fff;
+    border: 1px solid #555;
+    padding: 5px 10px;
+    margin-right: 5px;
+    cursor: pointer;
+}
+
+.debug-controls button:hover {
+    background: #444;
+}
+
+/* Add new styles after existing code */
+
+.permission-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.back-to-marketplace {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: rgba(146, 135, 115, 0.2);
+    color: #01145e;
+    text-decoration: none;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    transition: var(--transition);
+}
+
+.back-to-marketplace svg {
+    width: 20px;
+    height: 20px;
+    stroke: currentColor;
+    stroke-width: 2;
+}
+
+.back-to-marketplace:hover {
+    background: rgba(146, 135, 115, 0.3);
+    color: #01145e;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    text-decoration: none;
+}
+
+/* Toast Notifications */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+.toast {
+    padding: 12px 24px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    color: white;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+.toast.fade-out {
+    opacity: 0;
+}
+
+.toast-info { background-color: #2196F3; }
+.toast-success { background-color: #4CAF50; }
+.toast-warning { background-color: #FF9800; }
+.toast-error { background-color: #F44336; }
+
+.voice-popup {
+    --spring-fast-duration: 667ms;
+    --spring-common-duration: 667ms;
+    --spring-standard: var(--spring-common);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+    display: none;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.voice-popup.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease forwards;
+}
+
+/* Update popup controls positioning */
+.popup-controls {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    margin-top: -120px; /* Position above the canvas */
+    display: flex;
+    gap: 20px;
+    padding: 10px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(5px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    z-index: 1001; /* Ensure controls are above canvas */
+}
+
+.voice-canvas-container {
+    position: relative;
+    height: 300px;
+    width: 300px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, #041b76, #064fa3, #3b82f6);
+    background-size: 400% 400%;
+    animation: gradientFlow 15s ease infinite;
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Add popup control buttons */
+.popup-controls {
+    position: absolute;
+    top: -60px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 20px;
+    padding: 10px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(5px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.popup-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.popup-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: scale(1.05);
+}
+
+.popup-btn svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+}
+
+.popup-btn.mute {
+    background: rgba(59, 130, 246, 0.3);
+}
+
+.popup-btn.mute.active {
+    background: rgba(239, 68, 68, 0.8);
+    border-color: rgba(239, 68, 68, 0.9);
+}
+
+.popup-btn.close {
+    background: rgba(239, 68, 68, 0.3);
+}
+
+.popup-btn.close:hover {
+    background: rgba(239, 68, 68, 0.8);
+    border-color: rgba(239, 68, 68, 0.9);
+}
+
+.voice-canvas {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: transparent;
+}
+
+.voice-status-text {
+    position: absolute;
+    bottom: -40px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 16px;
+    font-weight: 500;
+    color: white;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    white-space: nowrap;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes gradientFlow {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+/* Add new animations */
+@keyframes popIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -48%) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+@keyframes pulseGlow {
+    0%, 100% { filter: drop-shadow(0 0 8px rgba(79, 70, 229, 0.3)); }
+    50% { filter: drop-shadow(0 0 12px rgba(79, 70, 229, 0.5)); }
+}
+
+/* Update voice popup styles */
+.voice-popup {
+    --popup-bg: rgba(255, 255, 255, 0.95);
+    --control-bg: rgba(4, 27, 118, 0.1);
+    --control-hover: rgba(4, 27, 118, 0.2);
+    --control-active: rgba(4, 27, 118, 0.3);
+    
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--popup-bg);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+}
+
+.voice-popup.active {
+    display: flex;
+}
+
+.voice-popup-box {
+    background: white;
+    border: 1px solid rgba(4, 27, 118, 0.1);
+    border-radius: 24px;
+    padding: 40px;
+    position: relative;
+    width: 400px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    animation: popIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.voice-popup-controls {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    display: flex;
+    gap: 12px;
+}
+
+.voice-popup-btn {
+    background: var(--control-bg);
+    border: 1px solid rgba(4, 27, 118, 0.2);
+    color: #041b76;
+    width: 40px;
+    height: 40px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.voice-popup-btn:hover {
+    background: var(--control-hover);
+    transform: scale(1.05);
+}
+
+.voice-popup-btn:active {
+    background: var(--control-active);
+    transform: scale(0.95);
+}
+
+.voice-popup-btn svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+}
+
+.voice-popup-btn.mute.active {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: #ef4444;
+}
+
+.voice-popup-btn.close:hover {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: #ef4444;
+}
+
+.voice-popup-btn.mute {
+    background: var(--control-bg);
+    border: 1px solid rgba(4, 27, 118, 0.2);
+    transition: all 0.3s ease;
+}
+
+.voice-popup-btn.mute.active {
+    background: #ef4444;
+    border-color: #ef4444;
+    color: white;
+}
+
+.voice-popup-btn.mute:hover {
+    background: var(--control-hover);
+}
+
+.voice-popup-btn.mute.active:hover {
+    background: #dc2626;
+    border-color: #dc2626;
+}
+
+.voice-canvas-container {
+    position: relative;
+    height: 300px;
+    width: 300px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, #ffffff, #f3f4f6);
+    border: 2px solid rgba(4, 27, 118, 0.1);
+    box-shadow: 0 0 30px rgba(4, 27, 118, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.voice-status-text {
+    position: absolute;
+    bottom: -40px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 16px;
+    font-weight: 500;
+    color: #041b76;
+    text-shadow: none;
+    white-space: nowrap;
+}
+
+@keyframes popIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Tailwind voice popup and visualizer styles */
+.voice-popup-overlay {
+    @apply fixed inset-0 bg-black/30 backdrop-blur-sm z-50 hidden;
+}
+
+.voice-popup-overlay.active {
+    @apply flex items-center justify-center;
+}
+
+.voice-visualizer-container {
+    @apply relative w-64 h-64 md:w-80 md:h-80 bg-gradient-to-br from-indigo-50 to-blue-100 
+           rounded-full shadow-lg flex items-center justify-center transition-all duration-500
+           border-4 border-white/80;
+}
+
+.voice-visualizer-ring {
+    @apply absolute rounded-full border-4 border-indigo-500/20 transition-all duration-300;
+}
+
+.voice-visualizer-dot {
+    @apply absolute rounded-full bg-gradient-to-r from-indigo-600 to-blue-500 shadow-md shadow-blue-400/30
+           transition-all duration-300 ease-out;
+}
+
+.voice-amplitude-ring {
+    @apply absolute rounded-full border-2 border-dashed border-indigo-300/30 animate-pulse;
+}
+
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.rotating-slow {
+    animation: rotate 30s linear infinite;
+}
+
+.rotating-medium {
+    animation: rotate 20s linear infinite reverse;
+}
+
+.rotating-fast {
+    animation: rotate 10s linear infinite;
+}
+
+/* Voice popup main container */
+.voice-popup {
+    @apply fixed inset-0 z-[60] items-center justify-center hidden;
+}
+
+.voice-popup-box {
+    @apply bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl p-8 w-[350px] md:w-[500px] relative;
+}
+
+.voice-popup-controls {
+    @apply absolute top-4 right-4 flex space-x-2;
+}
+
+.voice-popup-btn {
+    @apply transition-all rounded-full w-10 h-10 flex items-center justify-center;
+}
+
+.voice-popup-btn.mute {
+    @apply hover:bg-indigo-100;
+}
+
+.voice-popup-btn.mute.active {
+    @apply bg-red-500 text-white;
+}
+
+.voice-popup-btn.close {
+    @apply hover:bg-red-100;
+}
+
+/* Voice status text */
+#voiceStatus {
+    @apply text-lg font-medium text-indigo-800;
+}
+
+/* Fluid Circle Visualizer */
+.fluid-circle-container {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 0 30px rgba(37, 99, 235, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 150; /* Above the overlay */
+  opacity: 0;
+  animation: fadeIn 0.3s ease forwards;
+  pointer-events: none; /* Allow clicks to pass through */
+}
+
+/* Animation for showing the container */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* Animation for hiding the container */
+@keyframes fadeOut {
+  from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  to { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+}
+
+/* Simple fluid circle with gradient */
+.fluid-circle {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, #60a5fa 0%, #3b82f6 60%, #2563eb 100%);
+  transition: all 0.3s ease;
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Simple floating animation */
+@keyframes float {
+  0% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-8px) scale(1.02); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+/* Speaking state - more active animation */
+.fluid-circle.user-speaking {
+  background: radial-gradient(circle at center, #60a5fa 0%, #2563eb 70%, #1d4ed8 100%);
+  animation: pulse 1.5s ease-in-out infinite;
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
+}
+
+/* Pulsing animation for speaking */
+@keyframes pulse {
+  0% { transform: scale(0.97); }
+  50% { transform: scale(1.03); }
+  100% { transform: scale(0.97); }
+}
+
+/* Idle state - subtle pulsing */
+.fluid-circle.idle {
+  animation: gentlePulse 4s infinite alternate ease-in-out;
+}
+
+@keyframes gentlePulse {
+  0% { transform: scale(1); }
+  100% { transform: scale(0.98); }
+}
+
+/* Add glow effect when voice is detected */
+.active-voice .fluid-circle {
+  box-shadow: 0 0 30px rgba(59, 130, 246, 0.8);
+}
+
+/* Speaker indicator at bottom of circle */
+.speaker-indicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 8px 0;
+  text-align: center;
+  font-weight: 500;
+  font-size: 14px;
+  color: #fff;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 2;
+}
+
+/* Remove all other complex visualizers */
+.visualization-canvas {
+  display: none;
+}
+
+/* Keep overlay controls above the fluid circle */
+.overlay-controls {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  gap: 12px;
+  z-index: 160;
+  padding: 10px;
+  border-radius: 8px;
+  background-color: rgba(0, 0, 0, 0.2);
+  pointer-events: auto;
+}
+
+/* Voice popup overlay - the backdrop behind everything */
+.voice-popup-overlay {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  z-index: 100; /* Base layer */
+  display: none;
+}
+
+/* Fluid Circle Container - positioned above the overlay */
+.fluid-circle-container {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 0 30px rgba(37, 99, 235, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 150; /* Higher than overlay to appear above it */
+  opacity: 0;
+  animation: fadeIn 0.3s ease forwards;
+  pointer-events: none; /* Important: Let clicks pass through to controls */
+}
+
+/* Overlay controls - must be at the top layer */
+.overlay-controls {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  gap: 12px;
+  z-index: 160; /* Highest z-index to stay above everything */
+  padding: 10px;
+  border-radius: 8px;
+  background-color: rgba(0, 0, 0, 0.2);
+  pointer-events: auto; /* Important: Ensure clicks are captured by controls */
+}
+
+/* Custom width class for the chat input container */
+.w-full1 {
+  width: 165%;
+}

@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Marketplace</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="/css/marketplace2.css">
+    <script src="/js/marketplace-tracking.js"></script>
+    <script type="module" src="/js/marketplace.js"></script>
+    <script type="module" src="/js/filter.js"></script>
+    <script src="/js/loading.js" type="module"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <!-- Add Inter font for the new AI assistant button -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <nav class="navbar navbar-light">
+        <div class="handshake-logo-container">
+            <img src="/public/figma design exports/logos/Arzani-logo.png" alt="Arzani.co.uk" class="logo-img">
+        </div>
+            <div class="navbar-container">
+                <div class="navbar-icons">
+                    <a href="/marketplace2" class="navbar-link" id="marketplace-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256" class="icon" aria-hidden="true">
+                            <path d="M216,36H40A20,20,0,0,0,20,56V200a20,20,0,0,0,20,20H216a20,20,0,0,0,20-20V56A20,20,0,0,0,216,36Zm-4,24V76H44V60ZM44,196V100H212v96Zm136-72a52,52,0,0,1-104,0,12,12,0,0,1,24,0,28,28,0,0,0,56,0,12,12,0,0,1,24,0Z"></path>
+                        </svg>
+                        <span>Marketplace</span>
+                    </a>
+                <a href="/history" class="navbar-link" id="history-link">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256" class="icon" aria-hidden="true">
+                        <path d="M140,80v41.21l34.17,20.5a12,12,0,1,1-12.34,20.58l-40-24A12,12,0,0,1,116,128V80a12,12,0,0,1,24,0ZM128,28A99.38,99.38,0,0,0,57.24,57.34c-4.69,4.74-9,9.37-13.24,14V64a12,12,0,0,0-24,0v40a12,12,0,0,0,12,12H72a12,12,0,0,0,0-24H57.77C63,86,68.37,80.22,74.26,74.26a76,76,0,1,1,1.58,109,12,12,0,0,0-16.48,17.46A100,100,0,1,0,128,28Z"></path>
+                    </svg>
+                    <span>History</span>
+                </a>
+                <a href="/talk-to-Arzani" class="navbar-link" id="arzani-link">
+                    <img src="/images/arzani-icon.svg" alt="Arzani" class="icon arzani-icon" style="width: 48px; height: 48px;" />
+                    <span>Arzani</span>
+                </a>
+                <a href="/saved-searches" class="navbar-link" id="saved-searches-link">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256" class="icon" aria-hidden="true">
+                        <path d="M184,28H72A20,20,0,0,0,52,48V224a12,12,0,0,0,18.36,10.18l57.63-36,57.65,36A12,12,0,0,0,204,224V48A20,20,0,0,0,184,28Zm-4,174.35-45.65-28.53a12,12,0,0,0-12.72,0L76,202.35V52H180Z"></path>
+                    </svg>
+                    <span>Saved Searches</span>
+                </a>
+                <a href="/off-market-leads" class="navbar-link" id="leads-link">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256" class="icon" aria-hidden="true">
+                        <path d="M148,108a12,12,0,0,1,12-12h28a12,12,0,0,1,0,24H160A12,12,0,0,1,148,108Zm40,28H168a12,12,0,0,0,0,24h20a12,12,0,0,0,0-24Zm48-80V200a20,20,0,0,1-20,20H40a20,20,0,0,1-20-20V56A20,20,0,0,1,40,36H216A20,20,0,0,1,236,56Zm-24,4H44V196H212ZM58.28,159.37A43.82,43.82,0,0,1,71.53,142a36,36,0,1,1,56.94,0,43.84,43.84,0,0,1,13.26,17.37,12,12,0,0,1-22.15,9.26C116.48,161.19,108.42,156,100,156s-16.47,5.2-19.59,12.63a12,12,0,1,1-22.13-9.26ZM88,120a12,12,0,1,0,12-12A12,12,0,0,0,88,120Z"></path>
+                    </svg>
+                    <span>Off Market Leads</span>
+                </a>
+            </div>
+            <div>
+                <ul class="navbar-nav"> 
+                    <!-- Check if user is logged in -->
+                    <script>
+                      var isLoggedIn = true; // Replace with actual login check
+                      if (isLoggedIn) {
+                        document.write('<li class="nav-item"><a class="nav-link" href="/post-business">Post a Business</a></li>');
+                      }
+                    </script>
+                  </ul>
+                </div>
+                <a href="/profile" class="btn profile-btn" id="profileBtn">Profile</a>
+    </div>
+    </nav>
+   
+<!-- Replace existing filter container -->
+<div class="sticky top-0 left-0 right-0 z-10 filter-container">
+    <!-- Replace existing location input with this -->
+    <div class="dropdown location-dropdown">
+        <input type="text" class="filter-input dropdown-toggle" 
+               id="locationInput"
+               placeholder="Location" 
+               data-bs-toggle="dropdown"
+               data-bs-auto-close="outside"
+               aria-expanded="false">
+        <ul class="dropdown-menu location-menu" aria-labelledby="locationInput">
+            <li class="dropdown-header">Trending Searches</li>
+            <!-- Major Cities -->
+            <li><button class="dropdown-item location-item">London</button></li>
+            <li><button class="dropdown-item location-item">Manchester</button></li>
+            <li><button class="dropdown-item location-item">Birmingham</button></li>
+            <li><button class="dropdown-item location-item">Leeds</button></li>
+            <li><button class="dropdown-item location-item">Liverpool</button></li>
+            <li><button class="dropdown-item location-item">Edinburgh</button></li>
+            <li><button class="dropdown-item location-item">Glasgow</button></li>
+            <li><button class="dropdown-item location-item">Bristol</button></li>
+            <li><button class="dropdown-item location-item">Oxford</button></li>
+            <li><button class="dropdown-item location-item">Cambridge</button></li>
+        </ul>
+    </div>
+    
+    <div class="dropdown">
+        <button class="filter-input dropdown-toggle" 
+                type="button" 
+                id="industriesDropdown" 
+                data-bs-toggle="dropdown" 
+                data-bs-auto-close="outside"
+                aria-expanded="false">
+            Industries
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="industriesDropdown">
+            <li><label class="dropdown-item">
+                <input type="checkbox" class="industry-checkbox" value="Agriculture"> Agriculture
+            </label></li>
+            <li><label class="dropdown-item">
+                <input type="checkbox" class="industry-checkbox" value="Automotive &amp; Boat"> Automotive & Boat
+            </label></li>
+            <li><label class="dropdown-item">
+                <input type="checkbox" class="industry-checkbox" value="Beauty &amp; Personal Care"> Beauty & Personal Care
+            </label></li>
+            <li><label class="dropdown-item">
+                <input type="checkbox" class="industry-checkbox" value="Building &amp; Construction"> Building & Construction
+            </label></li>
+            <li><label class="dropdown-item">
+                <input type="checkbox" class="industry-checkbox" value="Communication &amp; Media"> Communication & Media
+            </label></li>
+            <li><label class="dropdown-item">
+                <input type="checkbox" class="industry-checkbox" value="Education &amp; Children"> Education & Children
+            </label></li>
+            <li><label class="dropdown-item">
+                <input type="checkbox" class="industry-checkbox" value="Entertainment &amp; Recreation"> Entertainment & Recreation
+            </label></li>
+            <li><label class="dropdown-item">
+                <input type="checkbox" class="industry-checkbox" value="Financial Services"> Financial Services
+            </label></li>
+            <li><label class="dropdown-item">
+                <input type="checkbox" class="industry-checkbox" value="Health Care &amp; Fitness"> Health Care & Fitness
+            </label></li>
+            <li><label class="dropdown-item">
+                <input type="checkbox" class="industry-checkbox" value="Manufacturing"> Manufacturing
+            </label></li>
+            <li><label class="dropdown-item">
+                <input type="checkbox" class="industry-checkbox" value="Online &amp; Technology"> Online & Technology
+            </label></li>
+            <li><label class="dropdown-item">
+                <input type="checkbox" class="industry-checkbox" value="Pet Services"> Pet Services
+            </label></li>
+            <li><label class="dropdown-item">
+                <input type="checkbox" class="industry-checkbox" value="Restaurants &amp; Food"> Restaurants & Food
+            </label></li>
+            <li><label class="dropdown-item">
+                <input type="checkbox" class="industry-checkbox" value="Retail"> Retail
+            </label></li>
+            <li><label class="dropdown-item">
+                <input type="checkbox" class="industry-checkbox" value="Service Businesses"> Service Businesses
+            </label></li>
+            <li><label class="dropdown-item">
+                <input type="checkbox" class="industry-checkbox" value="Transportation &amp; Storage"> Transportation & Storage
+            </label></li>
+            <li><label class="dropdown-item">
+                <input type="checkbox" class="industry-checkbox" value="Travel"> Travel
+            </label></li>
+            <li><label class="dropdown-item">
+                <input type="checkbox" class="industry-checkbox" value="Wholesale &amp; Distributors"> Wholesale & Distributors
+            </label></li>
+            <li><label class="dropdown-item">
+                <input type="checkbox" class="industry-checkbox" value="Other"> Other
+            </label></li>
+        </ul>
+    </div>
+
+    <!-- Price Range -->
+    <div class="dropdown">
+        <button class="filter-input dropdown-toggle" 
+                type="button" 
+                id="priceRangeDropdown" 
+                data-bs-toggle="dropdown" 
+                data-bs-auto-close="outside"
+                aria-expanded="false">
+            Price Range
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="priceRangeDropdown">
+        <li><label class="dropdown-item">
+            <input type="radio" name="priceRange" value="0-100000"> £0 - £100,000
+        </label></li>
+        <li><label class="dropdown-item">
+            <input type="radio" name="priceRange" value="100000-250000"> £100,000 - £250,000
+        </label></li>
+        <li><label class="dropdown-item">
+            <input type="radio" name="priceRange" value="250000-500000"> £250,000 - £500,000
+        </label></li>
+        <li><label class="dropdown-item">
+            <input type="radio" name="priceRange" value="500000-1000000"> £500,000 - £1,000,000
+        </label></li>
+        <li><label class="dropdown-item">
+            <input type="radio" name="priceRange" value="1000000-2500000"> £1,000,000 - £2,500,000
+        </label></li>
+        <li><label class="dropdown-item">
+            <input type="radio" name="priceRange" value="2500000-5000000"> £2,500,000 - £5,000,000
+        </label></li>
+        <li><label class="dropdown-item">
+            <input type="radio" name="priceRange" value="5000000-10000000"> £5,000,000 - £10,000,000
+        </label></li>
+        <li><label class="dropdown-item">
+            <input type="radio" name="priceRange" value="10000000+"> £10,000,000+
+        </label></li>
+    </ul>
+    </div>
+
+    <!-- Gross Revenue -->
+    <div class="dropdown">
+        <button class="filter-input dropdown-toggle" 
+                type="button" 
+                id="revenueDropdown" 
+                data-bs-toggle="dropdown" 
+                data-bs-auto-close="outside"
+                aria-expanded="false">
+            Gross Revenue
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="revenueDropdown">
+            <li><label class="dropdown-item">
+                <input type="radio" name="revenueRange" value="0-100000"> £0 - £100,000
+            </label></li>
+            <li><label class="dropdown-item">
+                <input type="radio" name="revenueRange" value="100000-500000"> £100,000 - £500,000
+            </label></li>
+            <li><label class="dropdown-item">
+                <input type="radio" name="revenueRange" value="500000+"> £500,000+
+            </label></li>
+        </ul>
+    </div>
+
+    <!-- Cashflow -->
+    <div class="dropdown">
+        <button class="filter-input dropdown-toggle" 
+                type="button" 
+                id="cashflowDropdown" 
+                data-bs-toggle="dropdown" 
+                data-bs-auto-close="outside"
+                aria-expanded="false">
+            Cashflow
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="cashflowDropdown">
+            <li><label class="dropdown-item">
+                <input type="radio" name="cashflowRange" value="0-50000"> £0 - £50,000
+            </label></li>
+            <li><label class="dropdown-item">
+                <input type="radio" name="cashflowRange" value="50000-200000"> £50,000 - £200,000
+            </label></li>
+            <li><label class="dropdown-item">
+                <input type="radio" name="cashflowRange" value="200000+"> £200,000+
+            </label></li>
+        </ul>
+    </div>
+</div>
+   
+    <!-- Marketplace Section -->
+    <div class="container mt-5">
+      <h1 class="marketplace-heading">Marketplace Listings</h1>
+    <div id="listings-container" class="row row-cols-1 row-cols-md-3 g-4">
+        <!-- Remove this forEach loop as it's being handled by marketplace.js -->
+    </div>
+    <div id="pagination">
+        <!-- Pagination controls will be loaded here -->
+    </div>
+</div>
+
+    </div>
+    
+    <script>
+        // Highlight the active link
+        const links = document.querySelectorAll('.navbar-link');
+        links.forEach(link => {
+            if (link.href === window.location.href) {
+                link.classList.add('active');
+            }
+        });
+    </script>
+    
+    <div class="popup-modal" id="popupModal">
+        <div class="popup-content">
+            <!-- Popup Header -->
+            <div class="popup-header">
+                <h3>Filters</h3>
+                <button class="close-btn" id="closePopup">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+                        <path d="M208.49,191.51a12,12,0,0,1-17,17L128,145,64.49,208.49a12,12,0,0,1-17-17L111,128,47.51,64.49a12,12,0,0,1,17-17L128,111l63.51-63.52a12,12,0,0,1,17,17L145,128Z"></path>
+                    </svg>
+                </button>
+            </div>
+    
+            <!-- Popup Body -->
+            <div class="popup-body">
+                <div class="filter-section">
+                    <h4>Industries</h4>
+                    <span>Select one or more industries to filter listings by.</span>
+                    <div class="input-group">
+                        <input type="text" placeholder="Search industries">
+                    </div>
+                </div>
+    
+                <div class="filter-section">
+                    <h4>Price Range</h4>
+                    <span>Select a price range to filter listings by their asking price.</span>
+                    <div class="input-group">
+                        <input type="text" placeholder="Minimum">
+                        <input type="text" placeholder="Maximum">
+                    </div>
+                </div>
+            </div>
+    
+            <!-- Popup Footer -->
+            <div class="popup-footer">
+                <button class="clear-btn">Clear All</button>
+                <button class="apply-btn">Apply Filters</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+    // Get DOM elements
+    const openPopup = document.getElementById('openPopup');
+    const closePopup = document.getElementById('closePopup');
+    const popupModal = document.getElementById('popupModal');
+
+    // Open popup
+    openPopup.addEventListener('click', () => {
+        popupModal.style.display = 'flex';
+    });
+
+    // Close popup
+    closePopup.addEventListener('click', () => {
+        popupModal.style.display = 'none';
+    });
+
+    // Close popup when clicking outside the content
+    popupModal.addEventListener('click', (e) => {
+        if (e.target === popupModal) {
+            popupModal.style.display = 'none';
+        }
+    });
+    
+
+    </script>
+    <%- include('partials/chatbox') %>
+  <%- include('partials/footer') %>
+  <div id="pagination">
+  <!-- Pagination controls will be loaded here -->
+</div>
+
+
+
+<!-- Add this near the end of your body tag -->
+<div class="modal fade" id="contactModal" tabindex="-1" aria-labelledby="contactModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="contactModalLabel">Contact Seller</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="contactForm">
+          <input type="hidden" id="businessId" name="businessId">
+          <div class="mb-3">
+            <label for="firstName" class="form-label">First Name</label>
+            <input type="text" class="form-control" id="firstName" required>
+          </div>
+          <div class="mb-3">
+            <label for="lastName" class="form-label">Last Name</label>
+            <input type="text" class="form-control" id="lastName" required>
+          </div>
+          <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <input type="email" class="form-control" id="email" required>
+          </div>
+          <div class="mb-3">
+            <label for="phone" class="form-label">Phone</label>
+            <input type="tel" class="form-control" id="phone">
+          </div>
+          <div class="mb-3">
+            <label for="timeframe" class="form-label">Purchase Timeframe</label>
+            <select class="form-control" id="timeframe">
+              <option value="0-3">0-3 months</option>
+              <option value="3-6">3-6 months</option>
+              <option value="6+">6+ months</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="message" class="form-label">Message</label>
+            <textarea class="form-control" id="message" rows="3"></textarea>
+          </div>
+          <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" id="newsletter">
+            <label class="form-check-label" for="newsletter">Subscribe to newsletter</label>
+          </div>
+          <button type="submit" class="btn btn-primary">Send Message</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Add before closing body tag -->
+<script>
+  function viewDetails(id) {
+    window.location.href = `/business/${id}`;
+  }
+</script>
+<!-- Add this near the bottom, just before closing body tag -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const profileBtn = document.getElementById('profileBtn');
+      if (profileBtn) {
+        profileBtn.addEventListener('click', function(e) {
+          const token = localStorage.getItem('token');
+          if (!token) {
+            e.preventDefault();
+            window.location.href = '/login2';
+          } else {
+            // Set the Authorization header for the next navigation
+            localStorage.setItem('lastAuthAction', Date.now());
+          }
+        });
+      }
+    });
+  </script>
+
+<script>
+function trackAndView(businessId) {
+    console.log('Tracking and viewing business:', businessId);
+    trackBusinessView(businessId).then(() => {
+        window.location.href = `/business/${businessId}`;
+    }).catch(error => {
+        console.error('Error during tracking:', error);
+        window.location.href = `/business/${businessId}`;
+    });
+}
+</script>
+<!-- Update the scripts section near the end of the body tag -->
+<!-- Load tracking script first -->
+<script src="/js/marketplace-tracking.js"></script>
+<!-- Then load marketplace script as a module -->
+<script type="module" src="/js/chatbox.js"></script>
+<script src="/js/profile.js"></script>
+<script>
+// Add a helper function to ensure S3 URLs are properly formatted
+function formatImageUrl(imageUrl, businessId) {
+    if (!imageUrl) return '/images/default-business.jpg';
+    
+    // If it's already a full URL, use it
+    if (imageUrl.startsWith('http')) {
+        return imageUrl;
+    }
+    
+    // Otherwise construct S3 URL
+    return `https://arzani-images.s3.eu-north-1.amazonaws.com/businesses/${businessId}/${imageUrl}`;
+}
+
+// Ensure this function is available globally for the template
+window.formatImageUrl = formatImageUrl;
+</script>
+<script src="/js/modal-fix.js"></script>
+
+<!-- Include the chatbox partial (with integrated assistant icon) -->
+<%- include('partials/chatbox') %>
+
+<!-- Load the marketplace2.js script (without assistant icon creation) -->
+<script src="/js/marketplace2.js"></script>
+
+<!-- Initialize and debug AI assistant -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('Marketplace page loaded, initializing AI Assistant integration');
+    
+    // Check if assistant is properly loaded
+    setTimeout(() => {
+      if (!window.aiAssistant) {
+        console.warn('AI Assistant not initialized yet, checking for missing elements');
+        
+        // Check that required elements exist
+        const elementsCheck = {
+          assistantButton: !!document.querySelector('.assistant-buttons'),
+          assistantDialog: !!document.getElementById('ai-assistant-dialog'),
+          messageContainer: !!document.querySelector('.messages-scroll')
+        };
+        
+        console.log('AI Assistant elements check:', elementsCheck);
+        
+        // Ensure image paths are valid
+        const aiAssistantImages = document.querySelectorAll('img[src="/images/ai-assistant.png"]');
+        console.log('Found AI Assistant images:', aiAssistantImages.length);
+        
+        // Add error handling for assistant icon images
+        aiAssistantImages.forEach(img => {
+          img.onerror = function() {
+            console.error('Failed to load AI Assistant image:', this.src);
+            this.src = 'https://cdn-icons-png.flaticon.com/512/4616/4616734.png'; // Fallback icon
+          };
+        });
+        
+        // Don't try to load the script again - this was causing the double declaration
+      }
+    }, 1000);
+  });
+</script>
+
+<!-- Near the bottom of the file, after the line loading ai-assistant.js, add: -->
+<script>
+  console.log('Marketplace2: Setting up AI integration');
+  
+  // Consolidate all your AI integration code here
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('Marketplace2: DOM loaded, initializing AI integration');
+    
+    // All tracking and event setup code here
+    setupAIIntegrationEvents();
+    
+    function setupAIIntegrationEvents() {
+      // Track business view events
+      const trackBusinessClick = (event) => {
+        if (event.target.closest('.card')) {
+          const card = event.target.closest('.card');
+          const businessId = card.dataset.businessId;
+          
+          if (businessId) {
+            console.log('Business clicked:', businessId);
+            // Create custom event that our AI integration can listen for
+            const viewEvent = new CustomEvent('business_viewed', {
+              detail: { 
+                businessId: businessId,
+                timestamp: new Date().toISOString()
+              }
+            });
+            
+            document.dispatchEvent(viewEvent);
+          }
+        }
+      };
+      
+      // Add listener to the listings container
+      const listingsContainer = document.getElementById('listings-container');
+      if (listingsContainer) {
+        listingsContainer.addEventListener('click', trackBusinessClick);
+        console.log('Added click tracker to listings container');
+      } else {
+        console.warn('Listings container not found');
+      }
+      
+      // The rest of your event setup...
+    }
+  });
+</script>
+
+<script src="/js/ai-assistant.js"></script>
+
+<script>
+// Add tracking for AI integration metrics
+document.addEventListener('DOMContentLoaded', function() {
+  // Track business view events
+  const trackBusinessClick = (event) => {
+    if (event.target.closest('.card')) {
+      const card = event.target.closest('.card');
+      const businessId = card.dataset.businessId;
+      
+      if (businessId) {
+        // Create custom event that our AI integration can listen for
+        const viewEvent = new CustomEvent('business_viewed', {
+          detail: { 
+            businessId: businessId,
+            timestamp: new Date().toISOString()
+          }
+        });
+        
+        document.dispatchEvent(viewEvent);
+      }
+    }
+  };
+  
+  // Add listener to the listings container
+  const listingsContainer = document.getElementById('listings-container');
+  if (listingsContainer) {
+    listingsContainer.addEventListener('click', trackBusinessClick);
+  }
+  
+  // Listen for AI-initiated business saves
+  document.addEventListener('ai_save_business', function(event) {
+    const businessId = event.detail.businessId;
+    console.log('AI requested to save business:', businessId);
+    
+    // Call your existing save business function
+    if (typeof saveBusiness === 'function') {
+      saveBusiness(businessId);
+    } else {
+      // Fallback implementation
+      let savedBusinesses = JSON.parse(localStorage.getItem('savedBusinesses') || '[]');
+      
+      if (!savedBusinesses.includes(businessId)) {
+        savedBusinesses.push(businessId);
+        localStorage.setItem('savedBusinesses', JSON.stringify(savedBusinesses));
+        
+        if (window.aiAssistant) {
+          window.aiAssistant.addSystemMessage(`Business #${businessId} has been saved to your favorites.`);
+        }
+      }
+    }
+  });
+  
+  // Track form submissions for lead generation
+  const contactForm = document.getElementById('contactForm');
+  if (contactForm) {
+    contactForm.addEventListener('submit', function(event) {
+      const businessId = document.getElementById('businessId')?.value;
+      
+      if (businessId) {
+        const contactEvent = new CustomEvent('seller_contacted', {
+          detail: {
+            businessId: businessId,
+            timestamp: new Date().toISOString()
+          }
+        });
+        
+        document.dispatchEvent(contactEvent);
+      }
+    });
+  }
+  
+  // Save search criteria for AI assistant context
+  const filterElements = document.querySelectorAll('.filter-input, .industry-checkbox, input[name="priceRange"]');
+  filterElements.forEach(element => {
+    element.addEventListener('change', function() {
+      // Collect current filter criteria
+      const locationValue = document.getElementById('locationInput')?.value;
+      const industriesChecked = Array.from(document.querySelectorAll('.industry-checkbox:checked')).map(cb => cb.value);
+      const priceRange = document.querySelector('input[name="priceRange"]:checked')?.value;
+      
+      const searchCriteria = {
+        location: locationValue,
+        industries: industriesChecked,
+        priceRange: priceRange,
+        timestamp: new Date().toISOString()
+      };
+      
+      // Save to localStorage for AI assistant to access
+      localStorage.setItem('lastSearchCriteria', JSON.stringify(searchCriteria));
+    });
+  });
+});
+</script>
+</body>
+</html>

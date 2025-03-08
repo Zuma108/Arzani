@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post a Business</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/dropzone.min.css">
+    <link rel="stylesheet" href="/css/post-business.css">
+    <link rel="stylesheet" href="/css/valuation.css">
+</head>
+<body>
+    <a href="/marketplace2" class="back-to-marketplace">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+        </svg>
+        Back to Marketplace
+    </a>
+    <div class="container mt-5">
+        <h1>Post a Business</h1>
+        <div class="alert alert-info">
+            <strong>Important:</strong> To ensure quality listings, please fill out at least 8 of the following fields:
+            <ul>
+                <li>Business Name (Required)</li>
+                <li>Industry (Required)</li>
+                <li>Price (Required)</li>
+                <li>Description (Required)</li>
+                <li>Location</li>
+                <li>Gross Revenue</li>
+                <li>Number of Employees</li>
+                <li>Years in Operation</li>
+                <li>Cash Flow</li>
+                <li>Reason for Selling</li>
+            </ul>
+        </div>
+        <form id="postBusinessForm" class="needs-validation" novalidate method="POST" action="/api/submit-business" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label for="title" class="form-label">Business Name</label>
+                <input type="text" class="form-control" id="title" name="title" required>
+                <div class="invalid-feedback">Please provide the name of your business.</div>
+            </div>
+            <div class="mb-3">
+                <label for="industry">Industry</label>
+                <select id="industry" name="industry">
+                    <option value="Agriculture">Agriculture</option>
+                    <option value="Automotive &amp; Boat">Automotive &amp; Boat</option>
+                    <option value="Beauty &amp; Personal Care">Beauty &amp; Personal Care</option>
+                    <option value="Building &amp; Construction">Building &amp; Construction</option>
+                    <option value="Communication &amp; Media">Communication &amp; Media</option>
+                    <option value="Education &amp; Children">Education &amp; Children</option>
+                    <option value="Entertainment &amp; Recreation">Entertainment &amp; Recreation</option>
+                    <option value="Financial Services">Financial Services</option>
+                    <option value="Health Care &amp; Fitness">Health Care &amp; Fitness</option>
+                    <option value="Manufacturing">Manufacturing</option>
+                    <option value="Online &amp; Technology">Online &amp; Technology</option>
+                    <option value="Pet Services">Pet Services</option>
+                    <option value="Restaurants &amp; Food">Restaurants &amp; Food</option>
+                    <option value="Retail">Retail</option>
+                    <option value="Service Businesses">Service Businesses</option>
+                    <option value="Transportation &amp; Storage">Transportation &amp; Storage</option>
+                    <option value="Travel">Travel</option>
+                    <option value="Wholesale &amp; Distributors">Wholesale &amp; Distributors</option>
+                    <option value="Other">Other</option>
+                    <!-- Add more industries as needed -->
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="price" class="form-label">Asking Price (£)</label>
+                <input type="number" class="form-control" id="price" name="price" required>
+                <div class="invalid-feedback">Please provide a price.</div>
+            </div>
+            <div class="mb-3">
+                <label for="cashFlow" class="form-label">Net Cash Flow (£/Year)</label>
+                <input type="number" class="form-control" id="cashFlow" name="cashFlow">
+            </div>
+            <div class="mb-3">
+                <label for="grossRevenue" class="form-label">Gross Revenue (£/Year)</label>
+                <input type="number" class="form-control" id="grossRevenue" name="grossRevenue">
+            </div>
+            <div class="mb-3">
+                <label for="ebitda" class="form-label">EBITDA (£/Year)</label>
+                <input type="number" class="form-control" id="ebitda" name="ebitda">
+            </div>
+            <div class="mb-3">
+                <label for="inventory" class="form-label">Inventory Value (£)</label>
+                <input type="number" class="form-control" id="inventory" name="inventory">
+            </div>
+            <div class="mb-3">
+                <label for="salesMultiple" class="form-label">Sales Multiple (×)</label>
+                <input type="text" class="form-control" id="salesMultiple" name="salesMultiple">
+            </div>
+            <div class="mb-3">
+                <label for="profitMargin" class="form-label">Profit Margin (%)</label>
+                <input type="text" class="form-control" id="profitMargin" name="profitMargin">
+            </div>
+            <div class="mb-3">
+                <label for="debtService" class="form-label">Annual Debt Service (£)</label>
+                <input type="number" class="form-control" id="debtService" name="debtService">
+            </div>
+            <div class="mb-3">
+                <label for="cashOnCash" class="form-label">Cash-on-Cash Return (%)</label>
+                <input type="text" class="form-control" id="cashOnCash" name="cashOnCash">
+            </div>
+            <div class="mb-3">
+                <label for="downPayment" class="form-label">Down Payment (£)</label>
+                <input type="number" class="form-control" id="downPayment" name="downPayment">
+            </div>
+            <div class="mb-3">
+                <label for="location" class="form-label">Business Location</label>
+                <input type="text" class="form-control" id="location" name="location">
+            </div>
+            <div class="mb-3">
+                <label for="ffE" class="form-label">FF&E Value (£)</label>
+                <input type="text" class="form-control" id="ffE" name="ffE">
+            </div>
+            <div class="mb-3">
+                <label for="employees" class="form-label">Number of Employees</label>
+                <input type="number" class="form-control" id="employees" name="employees">
+            </div>
+            <div class="mb-3">
+                <label for="reasonForSelling" class="form-label">Reason for Selling</label>
+                <textarea class="form-control" id="reasonForSelling" name="reasonForSelling" rows="2"></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label for="yearsInOperation" class="form-label">Years in Operation</label>
+                <input type="number" class="form-control" id="yearsInOperation" name="yearsInOperation">
+            </div>
+
+            <div class="mb-3">
+                <label for="recurringRevenue" class="form-label">Recurring Revenue (%)</label>
+                <input type="number" class="form-control" id="recurringRevenue" name="recurringRevenue" min="0" max="100" step="0.01">
+            </div>
+
+            <div class="mb-3">
+                <label for="growthRate" class="form-label">Annual Growth Rate (%)</label>
+                <input type="number" class="form-control" id="growthRate" name="growthRate" min="-100" max="1000" step="0.01">
+            </div>
+
+            <div class="mb-3">
+                <label for="intellectualProperty" class="form-label">Intellectual Property Assets</label>
+                <input type="text" class="form-control" id="intellectualProperty" name="intellectualProperty" 
+                       placeholder="Separate multiple items with commas">
+            </div>
+
+            <div class="mb-3">
+                <label for="websiteTraffic" class="form-label">Monthly Website Traffic (Visits)</label>
+                <input type="number" class="form-control" id="websiteTraffic" name="websiteTraffic">
+            </div>
+
+            <div class="mb-3">
+                <label for="socialFollowers" class="form-label">Total Social Media Followers</label>
+                <input type="number" class="form-control" id="socialFollowers" name="socialFollowers">
+            </div>
+
+            <div class="mb-3">
+                <label for="description" class="form-label">Description</label>
+                <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+                <div class="invalid-feedback">Please provide a description.</div>
+            </div>  
+            <div class="mb-3">
+                <label for="images" class="form-label">Upload Images</label>
+                <div class="dropzone" id="imageDropzone"></div>
+                <div class="image-requirement-notice">
+                    * You must upload between 3-5 images of your business
+                </div>
+            </div>
+            
+            <div class="business-valuation-container">
+                <div class="valuation-status hidden">
+                    <div class="valuation-header">
+                        <h3>Business Valuation Analysis</h3>
+                        <div class="confidence-meter">
+                            <span class="confidence-label">Confidence:</span>
+                            <div class="confidence-value">0%</div>
+                        </div>
+                    </div>
+                    <div class="valuation-details"></div>
+                </div>
+            </div>
+
+            <!-- New Advanced Valuation Section -->
+            <div class="advanced-valuation-container hidden">
+                <h3>Advanced Business Valuation Analysis</h3>
+                <div class="advanced-valuation-details"></div>
+            </div>
+
+            <!-- New button to trigger advanced valuation -->
+            <button type="button" id="checkAdvancedValuation" class="btn btn-secondary mb-3">
+                Check Advanced Valuation
+            </button>
+            
+            <button type="button" id="checkValuation" class="btn btn-secondary mb-3">
+                Check Market Valuation
+            </button>
+            
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/dropzone.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/post-business.js"></script>
+</body>
+</html>

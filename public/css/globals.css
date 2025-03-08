@@ -1,0 +1,78 @@
+@import url("https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css");
+* {
+  -webkit-font-smoothing: antialiased;
+  box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: #333333 #000000;
+}
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100vh;
+  background-color: #000000; /* Black background to prevent white space */
+  overflow-x: hidden;
+  /* Remove min-width: 1920px; or replace with max-width constraints on key containers */
+  /* force no horizontal scroll */
+  overflow-x: hidden;
+}
+
+
+
+/* Root level design tokens */
+:root {
+  --max-width: 1920px; /* Maximum content width */
+  --container-padding: clamp(1rem, 5vw, 4rem); /* Dynamic padding */
+  --section-spacing: clamp(2rem, 8vh, 8rem);
+  
+  /* Spacing */
+  --space-xs: clamp(0.5rem, 1vw, 1rem);
+  --space-sm: clamp(1rem, 2vw, 2rem);
+  --space-md: clamp(2rem, 4vw, 4rem);
+  --space-lg: clamp(3rem, 6vw, 6rem);
+  --space-xl: clamp(4rem, 8vw, 8rem);
+  
+  /* Typography */
+  --font-size-xs: clamp(11px, 0.8vw, 14px);
+  --font-size-sm: clamp(14px, 1vw, 16px);
+  --font-size-md: clamp(16px, 1.2vw, 20px);
+  --font-size-lg: clamp(20px, 1.5vw, 24px);
+  --font-size-xl: clamp(24px, 2vw, 32px);
+  --font-size-xxl: clamp(32px, 3vw, 58px);
+  
+  /* Heights */
+  --nav-height: clamp(60px, 10vh, 95px);
+  --section-min-height: clamp(400px, 80vh, 1000px);
+}
+
+/* a blue color as a generic focus style */
+button:focus-visible {
+  outline: 2px solid #4a90e2 !important;
+  outline: -webkit-focus-ring-color auto 5px !important;
+}
+a {
+  text-decoration: none;
+}
+
+/* Custom Scrollbar Styles */
+::-webkit-scrollbar {
+    width: 8px;
+    background: transparent;
+}
+
+::-webkit-scrollbar-track {
+    background: #000000;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #333333;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #444444;
+}
+
+
+

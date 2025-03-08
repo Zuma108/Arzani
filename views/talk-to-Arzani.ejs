@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Talk to Arzani - Business Assistant</title>
+    <script src="/js/voiceChatPreloader.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'arzani': {
+                            50: '#f0f7ff',
+                            100: '#e0f0ff',
+                            200: '#c0e0ff',
+                            300: '#80c0ff',
+                            400: '#4099ff',
+                            500: '#0070f3',
+                            600: '#0057d0',
+                            700: '#0047ab',
+                            800: '#003c8f',
+                            900: '#003377',
+                        },
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'bounce-slow': 'bounce 3s infinite',
+                        'gradient': 'gradient 8s ease infinite',
+                        'spin-slow': 'spin 8s linear infinite',
+                    },
+                    keyframes: {
+                        gradient: {
+                            '0%, 100%': {
+                                'background-position': '0% 50%'
+                            },
+                            '50%': {
+                                'background-position': '100% 50%'
+                            },
+                        }
+                    },
+                    backgroundSize: {
+                        '300%': '300%',
+                    },
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="/css/voice-chat.css">
+    <link rel="stylesheet" href="/css/calendar.css">
+    <link rel="stylesheet" href="/css/toast-notifications.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        /* Gradient background for buttons */
+        .btn-gradient {
+            background-size: 300% 300%;
+            animation: gradient 8s ease infinite;
+        }
+
+        /* Custom scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 100px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 100px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        
+        /* Message animation */
+        .message-enter {
+            animation: messageIn 0.3s ease-out forwards;
+        }
+        
+        @keyframes messageIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Floating animation for quick action buttons */
+        .float-animation {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        /* Animation for showing/hiding elements */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+    </style>
+    <script src="/js/loading.js" type="module"></script>
+    <script src="/js/audioService.js" type="module"></script>
+    <script src="/js/voiceChat.js" type="module"></script>
+    <script>
+        // Update OpenAI configuration
+        window.OPENAI_CONFIG = {
+            apiKey: '<%= process.env.OPENAI_API_KEY %>',
+            endpoint: 'https://api.openai.com/v1/chat/completions',
+            wsEndpoint: 'ws://localhost:5000',  // Add WebSocket endpoint
+            model: 'gpt-4',
+            ttsModel: 'tts-1',
+            voice: 'shimmer',
+            whisperModel: 'whisper-1'  // Add Whisper model for speech-to-text
+        };
+    </script>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+    <!-- Error Modal -->
+    <div id="voiceErrorModal" class="fixed inset-0 z-50 items-center justify-center hidden bg-black/50 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-xl p-6 max-w-md w-11/12 mx-auto">
+            <h3 class="text-xl font-semibold mb-3 text-slate-800">Voice Feature Error</h3>
+            <p id="voiceErrorMessage" class="text-slate-600 mb-4"></p>
+            <button onclick="this.parentElement.parentElement.style.display='none'" 
+                    class="px-4 py-2 bg-arzani-600 text-white rounded-lg hover:bg-arzani-700 transition-all">
+                Close
+            </button>
+        </div>
+    </div>
+
+    <!-- Main container -->
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_350px] min-h-screen">
+        <!-- Chat area -->
+        <div class="relative">
+            <!-- Main chat interface -->
+            <div class="max-w-5xl mx-auto p-4 lg:p-8 h-screen flex flex-col">
+                <!-- Header -->
+                <div class="mb-6 flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center shadow-lg overflow-hidden">
+                            <img src="/images/talk-to-azani-icon.png" alt="Arzani Icon" class="w-full h-full object-cover">
+                        </div>
+                        <div>
+                        </div>
+                        <div>
+                            <h1 class="text-xl font-bold text-slate-800">Arzani Assistant</h1>
+                            <div class="flex items-center text-sm text-slate-500">
+                                <span class="inline-block w-2 h-2 rounded-full bg-green-500 mr-2"></span>
+                                <span>Online now</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <a href="/marketplace2" class="flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 hover:border-slate-300 bg-white text-slate-700 transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+                        </svg>
+                        <span>Back to Marketplace</span>
+                    </a>
+                </div>
+                
+                <!-- Quick Actions - Elevated and modernized -->
+                <div class="mb-8">
+                    <h2 class="text-sm font-medium text-slate-500 uppercase tracking-wider mb-4">Quick Actions</h2>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <button data-action="search" class="quick-action-btn group relative overflow-hidden rounded-xl bg-gradient-to-r from-arzani-500 to-blue-500 bg-300% btn-gradient p-1 transition-all duration-300 hover:shadow-lg shadow-sm hover:scale-[1.03]">
+                            <div class="bg-white rounded-lg p-4 h-full flex flex-col items-center justify-center group-hover:bg-opacity-90 transition-all">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mb-2 text-arzani-600" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                                </svg>
+                                <span class="text-sm font-medium text-slate-700">Search Businesses</span>
+                            </div>
+                        </button>
+
+                        <button data-action="schedule" class="quick-action-btn group relative overflow-hidden rounded-xl bg-gradient-to-r from-violet-500 to-purple-500 bg-300% btn-gradient p-1 transition-all duration-300 hover:shadow-lg shadow-sm hover:scale-[1.03]">
+                            <div class="bg-white rounded-lg p-4 h-full flex flex-col items-center justify-center group-hover:bg-opacity-90 transition-all">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mb-2 text-violet-600" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
+                                </svg>
+                                <span class="text-sm font-medium text-slate-700">Book Meeting</span>
+                            </div>
+                        </button>
+
+                        <button data-action="insights" class="quick-action-btn group relative overflow-hidden rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 bg-300% btn-gradient p-1 transition-all duration-300 hover:shadow-lg shadow-sm hover:scale-[1.03]">
+                            <div class="bg-white rounded-lg p-4 h-full flex flex-col items-center justify-center group-hover:bg-opacity-90 transition-all">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mb-2 text-amber-500" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z" />
+                                    <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z" />
+                                </svg>
+                                <span class="text-sm font-medium text-slate-700">Market Insights</span>
+                            </div>
+                        </button>
+
+                        <button data-action="guide" class="quick-action-btn group relative overflow-hidden rounded-xl bg-gradient-to-r from-emerald-400 to-teal-500 bg-300% btn-gradient p-1 transition-all duration-300 hover:shadow-lg shadow-sm hover:scale-[1.03]">
+                            <div class="bg-white rounded-lg p-4 h-full flex flex-col items-center justify-center group-hover:bg-opacity-90 transition-all">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mb-2 text-emerald-500" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                                </svg>
+                                <span class="text-sm font-medium text-slate-700">Get Help</span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Common questions/suggestions -->
+                <div class="mb-6">
+                    <h2 class="text-sm font-medium text-slate-500 uppercase tracking-wider mb-3">Suggested Questions</h2>
+                    <div class="flex flex-wrap gap-2">
+                        <div class="suggestion-chip bg-white border border-slate-200 hover:border-slate-300 px-4 py-2 rounded-full text-sm text-slate-600 cursor-pointer transition-all hover:shadow-sm">
+                            Find businesses under £500,000
+                        </div>
+                        <div class="suggestion-chip bg-white border border-slate-200 hover:border-slate-300 px-4 py-2 rounded-full text-sm text-slate-600 cursor-pointer transition-all hover:shadow-sm">
+                            Show profitable restaurants
+                        </div>
+                        <div class="suggestion-chip bg-white border border-slate-200 hover:border-slate-300 px-4 py-2 rounded-full text-sm text-slate-600 cursor-pointer transition-all hover:shadow-sm">
+                            Book a viewing
+                        </div>
+                        <div class="suggestion-chip bg-white border border-slate-200 hover:border-slate-300 px-4 py-2 rounded-full text-sm text-slate-600 cursor-pointer transition-all hover:shadow-sm">
+                            Market analysis
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Chat messages -->
+                <div id="chatMessages" class="chat-messages flex-1 overflow-y-auto custom-scrollbar bg-white rounded-2xl p-6 shadow-sm border border-slate-200 mb-4">
+                    <!-- Welcome message -->
+                    <div class="chat-message assistant flex gap-3 mb-6 message-enter">
+                        <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center shadow-lg overflow-hidden">
+                            <img src="/images/talk-to-azani-icon.png" alt="Arzani Icon" class="w-full h-full object-cover">
+                        </div>
+                        <div class="flex-1 bg-slate-50 p-4 rounded-xl rounded-tl-none">
+                            <p class="text-slate-800 message-content">Hello! I'm Arzani, your business marketplace assistant. How can I help you today?</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Input area -->
+                <div class="chat-input-area bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+                    <div class="flex items-center gap-3 w-full1">
+                        <button id="startConversationBtn" class="voice-btn flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-lg bg-arzani-600 text-white hover:bg-arzani-700 transition-all duration-300">
+                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 15C13.6569 15 15 13.6569 15 12V6C15 4.34315 13.6569 3 12 3C10.3431 3 9 4.34315 9 6V12C9 13.6569 10.3431 15 12 15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M19 10V12C19 15.866 15.866 19 12 19C8.13401 19 5 15.866 5 12V10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M12 19V22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M8 22H16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span class="btn-text">Start Conversation</span>
+                        </button>
+                        
+                        <!-- Audio controls -->
+                        <div class="flex gap-2">
+                            <button class="user-mute-btn w-10 h-10 rounded-full flex items-center justify-center bg-slate-100 hover:bg-slate-200 transition-all" title="Mute yourself">
+                                <svg class="w-5 h-5 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                                </svg>
+                            </button>
+                            <button class="ai-mute-btn w-10 h-10 rounded-full flex items-center justify-center bg-slate-100 hover:bg-slate-200 transition-all" title="Mute AI voice">
+                                <svg class="w-5 h-5 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15.536a5 5 0 001.414 1.414m0 0l7.072-7.072m0 0a5 5 0 000-7.072m-7.072 7.072a5 5 0 010-7.072m7.072 7.072L5.586 15.536" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div class="flex-1 relative">
+                            <textarea 
+                                id="userInput" 
+                                placeholder="Type your message or click 'Start Conversation' to use voice..."
+                                rows="1"
+                                class="w-full px-4 py-3 pr-12 rounded-lg border border-slate-200 focus:border-arzani-400 focus:ring focus:ring-arzani-100 focus:outline-none resize-none"
+                                aria-label="Message input"
+                            ></textarea>
+                            <button id="sendBtn" class="absolute right-3 top-1/2 -translate-y-1/2 text-arzani-600 hover:text-arzani-800 transition-colors">
+                                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Saved chats sidebar (new) -->
+        <div class="lg:block hidden border-l border-slate-200 h-screen overflow-y-auto bg-white">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-lg font-semibold text-slate-800">Saved Conversations</h2>
+                    <button id="saveCurrentChat" class="flex items-center gap-1 text-sm text-arzani-600 hover:text-arzani-800 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M7 9a2 2 0 012-2h6a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2V9z" />
+                            <path d="M5 3a2 2 0 00-2 2v6a2 2 0 002 2V5h8a2 2 0 00-2-2H5z" />
+                        </svg>
+                        <span>Save Current</span>
+                    </button>
+                </div>
+                
+                <!-- Search saved chats -->
+                <div class="mb-6">
+                    <div class="relative">
+                        <input type="text" 
+                               placeholder="Search saved chats..." 
+                               class="w-full px-4 py-2 pl-10 rounded-lg border border-slate-200 focus:border-arzani-400 focus:ring focus:ring-arzani-100 focus:outline-none text-sm">
+                        <svg class="w-5 h-5 text-slate-400 absolute left-3 top-2.5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                </div>
+                
+                <!-- Saved chat folders -->
+                <div class="mb-6">
+                    <h3 class="text-xs font-medium text-slate-500 uppercase tracking-wider mb-3">Folders</h3>
+                    <div class="space-y-2">
+                        <!-- Folders will be populated via JS -->
+                    </div>
+                </div>
+                
+                <!-- Saved chat history -->
+                <div>
+                    <h3 class="text-xs font-medium text-slate-500 uppercase tracking-wider mb-3">Recent Conversations</h3>
+                    <div class="space-y-3" id="savedConversationsList">
+                        <!-- Conversations will be populated via JS -->
+                    </div>
+                </div>
+                
+                <!-- New folder button -->
+                <button class="mt-6 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-dashed border-slate-300 text-sm text-slate-600 hover:bg-slate-50 hover:border-arzani-300 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                    </svg>
+                    <span>Create New Folder</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Voice popup overlay -->
+    <div id="voicePopupOverlay" class="voice-popup-overlay">
+        <div class="overlay-controls">
+            <button class="overlay-btn mute" title="Mute microphone">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                    <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                    <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+                </svg>
+            </button>
+            <button class="overlay-btn close" title="End conversation">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Fluid circle container -->
+    <div class="fluid-circle-container" id="fluidCircleContainer" style="display: none;">
+        <!-- SVG filters -->
+        <svg width="0" height="0">
+            <defs>
+                <filter id="gooey">
+                    <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur" />
+                    <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7" result="gooey" />
+                    <feBlend in="SourceGraphic" in2="gooey" />
+                </filter>
+            </defs>
+        </svg>
+        
+        <!-- Animated blobs -->
+        <div class="blob"></div>
+        <div class="blob"></div>
+        <div class="blob"></div>
+        
+        <!-- Main fluid circle that reacts to audio -->
+        <div id="fluidCircle" class="fluid-circle idle">
+            <!-- SVG for wave points -->
+            <svg class="fluid-circle-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                <g id="wavePoints"></g>
+            </svg>
+        </div>
+        
+        <!-- Speaker indicator -->
+        <div id="speakerIndicator" class="speaker-indicator">
+            Listening...
+        </div>
+    </div>
+
+    <!-- Voice debug panel -->
+    <div id="voiceDebug" class="voice-debug" style="display: none;">
+        <h3>Voice Debug Info</h3>
+        <div id="voiceDebugInfo"></div>
+    </div>
+
+    <!-- Create new conversation modal (hidden by default) -->
+    <div id="newConversationModal" class="fixed inset-0 z-50 items-center justify-center hidden bg-black/50 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-xl p-6 max-w-md w-11/12 mx-auto">
+            <h3 class="text-xl font-semibold mb-3 text-slate-800">New Conversation</h3>
+            
+            <div class="mb-4">
+                <label for="conversationTitle" class="block text-sm font-medium text-slate-700 mb-1">Title</label>
+                <input type="text" id="conversationTitle" 
+                    class="w-full px-4 py-2 rounded-lg border border-slate-200 focus:border-arzani-400 focus:ring focus:ring-arzani-100 focus:outline-none"
+                    placeholder="e.g. Restaurant Research">
+            </div>
+            
+            <div class="mb-4">
+                <label for="conversationFolder" class="block text-sm font-medium text-slate-700 mb-1">Save to Folder</label>
+                <select id="conversationFolder" 
+                    class="w-full px-4 py-2 rounded-lg border border-slate-200 focus:border-arzani-400 focus:ring focus:ring-arzani-100 focus:outline-none">
+                    <option value="all">All Conversations</option>
+                    <option value="business">Business Inquiries</option>
+                    <option value="market">Market Research</option>
+                    <option value="analytics">Analytics</option>
+                </select>
+            </div>
+            
+            <div class="flex justify-end gap-3 mt-6">
+                <button onclick="document.getElementById('newConversationModal').style.display='none'" 
+                        class="px-4 py-2 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50">
+                    Cancel
+                </button>
+                <button id="createConversationBtn"
+                        class="px-4 py-2 bg-arzani-600 text-white rounded-lg hover:bg-arzani-700 transition-all">
+                    Create
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create new folder modal (hidden by default) -->
+    <div id="newFolderModal" class="fixed inset-0 z-50 items-center justify-center hidden bg-black/50 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-xl p-6 max-w-md w-11/12 mx-auto">
+            <h3 class="text-xl font-semibold mb-3 text-slate-800">Create New Folder</h3>
+            
+            <div class="mb-4">
+                <label for="folderName" class="block text-sm font-medium text-slate-700 mb-1">Folder Name</label>
+                <input type="text" id="folderName" 
+                    class="w-full px-4 py-2 rounded-lg border border-slate-200 focus:border-arzani-400 focus:ring focus:ring-arzani-100 focus:outline-none"
+                    placeholder="e.g. Market Research">
+            </div>
+            
+            <div class="flex justify-end gap-3 mt-6">
+                <button onclick="document.getElementById('newFolderModal').style.display='none'" 
+                        class="px-4 py-2 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50">
+                    Cancel
+                </button>
+                <button id="createFolderBtn"
+                        class="px-4 py-2 bg-arzani-600 text-white rounded-lg hover:bg-arzani-700 transition-all">
+                    Create
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Move conversation modal (hidden by default) -->
+    <div id="moveConversationModal" class="fixed inset-0 z-50 items-center justify-center hidden bg-black/50 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-xl p-6 max-w-md w-11/12 mx-auto">
+            <h3 class="text-xl font-semibold mb-3 text-slate-800">Move Conversation</h3>
+            
+            <div class="mb-4">
+                <label for="moveConversationFolder" class="block text-sm font-medium text-slate-700 mb-1">Select Folder</label>
+                <select id="moveConversationFolder" 
+                    class="w-full px-4 py-2 rounded-lg border border-slate-200 focus:border-arzani-400 focus:ring focus:ring-arzani-100 focus:outline-none">
+                </select>
+            </div>
+            
+            <div class="flex justify-end gap-3 mt-6">
+                <button onclick="document.getElementById('moveConversationModal').style.display='none'" 
+                        class="px-4 py-2 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50">
+                    Cancel
+                </button>
+                <button id="moveConversationBtn"
+                        class="px-4 py-2 bg-arzani-600 text-white rounded-lg hover:bg-arzani-700 transition-all">
+                    Move
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module">
+        import { VoiceChat } from '/js/voiceChat.js';
+        import { AudioService } from '/js/audioService.js';
+        import { ConversationManager } from '/js/conversationManager.js';
+        import toasts from '/js/toastNotifications.js';
+
+        // Make toast notifications available globally
+        window.toasts = toasts;
+
+        // Update OpenAI configuration
+        window.OPENAI_CONFIG = {
+            apiKey: '<%= process.env.OPENAI_API_KEY %>',
+            endpoint: 'https://api.openai.com/v1/chat/completions',
+            wsEndpoint: 'ws://localhost:5000',
+            model: 'gpt-4',
+            ttsModel: 'tts-1',
+            voice: 'shimmer',
+            whisperModel: 'whisper-1'
+        };
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // Initialize conversation manager
+                window.conversationManager = new ConversationManager();
+                
+                // Initialize chat saving functionality
+                initializeChatSaving();
+                
+                // Initialize voice chat
+                window.voiceChat = new VoiceChat();
+                
+                // Add conversation toggle functionality with fluid circle visualization
+                const startConversationBtn = document.getElementById('startConversationBtn');
+                const fluidCircleContainer = document.getElementById('fluidCircleContainer');
+                
+                if (startConversationBtn) {
+                    startConversationBtn.addEventListener('click', () => {
+                        if (!window.voiceChat.isListening) {
+                            // Start conversation
+                            startConversationBtn.classList.add('active');
+                            startConversationBtn.querySelector('.btn-text').textContent = 'End Conversation';
+                            
+                            // Show fluid circle visualizer
+                            if (fluidCircleContainer) {
+                                fluidCircleContainer.style.display = 'flex';
+                                fluidCircleContainer.style.animation = 'fadeIn 0.3s ease forwards';
+                            }
+                            
+                            window.voiceChat.startConversation();
+                        } else {
+                            // End conversation
+                            startConversationBtn.classList.remove('active');
+                            startConversationBtn.querySelector('.btn-text').textContent = 'Start Conversation';
+                            
+                            // Hide fluid circle visualizer
+                            if (fluidCircleContainer) {
+                                fluidCircleContainer.style.animation = 'fadeOut 0.3s ease forwards';
+                                setTimeout(() => {
+                                    fluidCircleContainer.style.display = 'none';
+                                }, 300);
+                            }
+                            
+                            window.voiceChat.endConversation();
+                        }
+                    });
+                }
+                
+                // Add AI mute button functionality
+                const aiMuteBtn = document.querySelector('.ai-mute-btn');
+                if (aiMuteBtn) {
+                    aiMuteBtn.addEventListener('click', () => {
+                        if (window.voiceChat) {
+                            // Toggle AI voice mute state
+                            const isMuted = window.voiceChat.toggleAIMute();
+                            
+                            // Update button appearance
+                            if (isMuted) {
+                                aiMuteBtn.classList.add('bg-red-100', 'text-red-600');
+                                aiMuteBtn.classList.remove('bg-slate-100', 'text-slate-600');
+                                aiMuteBtn.setAttribute('title', 'Unmute AI voice');
+                            } else {
+                                aiMuteBtn.classList.remove('bg-red-100', 'text-red-600');
+                                aiMuteBtn.classList.add('bg-slate-100', 'text-slate-600');
+                                aiMuteBtn.setAttribute('title', 'Mute AI voice');
+                            }
+                            
+                            // Show toast notification
+                            if (window.toasts) {
+                                window.toasts.info(isMuted ? 'AI voice muted' : 'AI voice unmuted');
+                            }
+                        }
+                    });
+                }
+                
+                // Add user mute button functionality
+                const userMuteBtn = document.querySelector('.user-mute-btn');
+                if (userMuteBtn) {
+                    userMuteBtn.addEventListener('click', () => {
+                        if (window.voiceChat) {
+                            // Toggle user microphone mute state
+                            const isMuted = window.voiceChat.toggleUserMute();
+                            
+                            // Update button appearance
+                            if (isMuted) {
+                                userMuteBtn.classList.add('bg-red-100', 'text-red-600');
+                                userMuteBtn.classList.remove('bg-slate-100', 'text-slate-600');
+                                userMuteBtn.setAttribute('title', 'Unmute yourself');
+                            } else {
+                                userMuteBtn.classList.remove('bg-red-100', 'text-red-600');
+                                userMuteBtn.classList.add('bg-slate-100', 'text-slate-600');
+                                userMuteBtn.setAttribute('title', 'Mute yourself');
+                            }
+                        }
+                    });
+                }
+                
+                // Add suggestion chip functionality
+                document.querySelectorAll('.suggestion-chip').forEach(chip => {
+                    chip.addEventListener('click', () => {
+                        document.getElementById('userInput').value = chip.textContent;
+                        document.getElementById('sendBtn').click();
+                    });
+                });
+                
+                // Auto-resize textarea
+                const textarea = document.getElementById('userInput');
+                textarea.addEventListener('input', () => {
+                    textarea.style.height = 'auto';
+                    textarea.style.height = textarea.scrollHeight + 'px';
+                });
+                
+                // Add smooth scroll for quick action buttons
+                document.querySelectorAll('.quick-action-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        document.querySelector('.chat-messages').scrollIntoView({ 
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                        
+                        const action = btn.dataset.action;
+                        // Trigger appropriate action based on button clicked
+                        let message = '';
+                        switch(action) {
+                            case 'search':
+                                message = "I want to search for businesses";
+                                break;
+                            case 'schedule':
+                                message = "I'd like to schedule a meeting";
+                                break;
+                            case 'insights':
+                                message = "Show me market analysis for business sales";
+                                break;
+                            case 'guide':
+                                message = "How can you help me find a business?";
+                                break;
+                        }
+                        
+                        if (message) {
+                            document.getElementById('userInput').value = message;
+                            document.getElementById('sendBtn').click();
+                        }
+                    });
+                });
+                
+                // Setup visualizer dots
+                setupVisualizer();
+                
+            } catch (error) {
+                console.error("Error initializing application:", error);
+            }
+        });
+
+        // Create voice visualization dots
+        function setupVisualizer() {
+            const visualizerDots = document.getElementById('visualizerDots');
+            if (!visualizerDots) return;
+            
+            // Create dots for visualizer
+            const numDots = 24;
+            for (let i = 0; i < numDots; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'voice-visualizer-dot absolute';
+                dot.style.width = '8px';
+                dot.style.height = '8px';
+                
+                // Position dots in a circle
+                const angle = (i / numDots) * 2 * Math.PI;
+                const radius = 110; // Base radius
+                const x = Math.cos(angle) * radius + 110; // Center offset
+                const y = Math.sin(angle) * radius + 110; // Center offset
+                
+                dot.style.left = `${x}px`;
+                dot.style.top = `${y}px`;
+                visualizerDots.appendChild(dot);
+            }
+        }
+        
+        // Chat saving functionality
+        function initializeChatSaving() {
+            // Initialize conversation manager if not already done
+            if (!window.conversationManager) {
+                window.conversationManager = new ConversationManager();
+            }
+            
+            const manager = window.conversationManager;
+            
+            // Load saved conversations and folders
+            renderFolders();
+            renderConversations(manager.selectedFolder);
+            
+            // Setup save button
+            const saveBtn = document.getElementById('saveCurrentChat');
+            if (saveBtn) {
+                saveBtn.addEventListener('click', () => {
+                    document.getElementById('newConversationModal').style.display = 'flex';
+                    
+                    // Populate folder select with available folders
+                    const folderSelect = document.getElementById('conversationFolder');
+                    if (folderSelect) {
+                        // Clear existing options
+                        folderSelect.innerHTML = '';
+                        
+                        // Add available folders
+                        manager.folders.forEach(folder => {
+                            const option = document.createElement('option');
+                            option.value = folder.id;
+                            option.textContent = folder.name;
+                            folderSelect.appendChild(option);
+                        });
+                    }
+                });
+            }
+            
+            // Setup create button in conversation modal
+            const createBtn = document.getElementById('createConversationBtn');
+            if (createBtn) {
+                createBtn.addEventListener('click', saveCurrentConversation);
+            }
+            
+            // Create new folder button
+            const newFolderBtn = document.querySelector('button.mt-6'); // The "Create New Folder" button
+            if (newFolderBtn) {
+                newFolderBtn.addEventListener('click', () => {
+                    document.getElementById('newFolderModal').style.display = 'flex';
+                    document.getElementById('folderName').value = '';
+                    document.getElementById('folderName').focus();
+                });
+            }
+            
+            // Handle folder creation
+            const createFolderBtn = document.getElementById('createFolderBtn');
+            if (createFolderBtn) {
+                createFolderBtn.addEventListener('click', () => {
+                    const folderName = document.getElementById('folderName').value.trim();
+                    if (folderName) {
+                        // Create folder
+                        manager.createFolder(folderName);
+                        
+                        // Close modal
+                        document.getElementById('newFolderModal').style.display = 'none';
+                        
+                        // Re-render folders
+                        renderFolders();
+                    }
+                });
+            }
+            
+            // Add keyboard handling to folder modal
+            const folderNameInput = document.getElementById('folderName');
+            if (folderNameInput) {
+                folderNameInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        document.getElementById('createFolderBtn').click();
+                    }
+                });
+            }
+            
+            // Add event handlers for the move conversation modal
+            const moveConversationBtn = document.getElementById('moveConversationBtn');
+            if (moveConversationBtn) {
+                moveConversationBtn.addEventListener('click', () => {
+                    const conversationId = moveConversationBtn.dataset.conversationId;
+                    const targetFolder = document.getElementById('moveConversationFolder').value;
+                    
+                    if (conversationId && targetFolder) {
+                        manager.moveConversation(conversationId, targetFolder);
+                        document.getElementById('moveConversationModal').style.display = 'none';
+                        renderConversations(manager.selectedFolder);
+                    }
+                });
+            }
+        }
+        
+        // Prepare to move a conversation to another folder
+        function prepareToMoveConversation(conversationId) {
+            const manager = window.conversationManager;
+            const moveModal = document.getElementById('moveConversationModal');
+            const moveSelect = document.getElementById('moveConversationFolder');
+            const moveBtn = document.getElementById('moveConversationBtn');
+            
+            if (!moveModal || !moveSelect || !moveBtn) {
+                console.error('Move conversation modal elements not found');
+                return;
+            }
+            
+            // Set the conversation ID on the button for later use
+            moveBtn.dataset.conversationId = conversationId;
+            
+            // Clear and populate the folder select
+            moveSelect.innerHTML = '';
+            manager.folders.forEach(folder => {
+                const option = document.createElement('option');
+                option.value = folder.id;
+                option.textContent = folder.name;
+                moveSelect.appendChild(option);
+            });
+            
+            // Get current folder for the conversation
+            const conversation = manager.getConversation(conversationId);
+            if (conversation && conversation.folder) {
+                moveSelect.value = conversation.folder;
+            }
+            
+            // Show the modal
+            moveModal.style.display = 'flex';
+        }
+        
+        // Render folders in the sidebar
+        function renderFolders() {
+            const manager = window.conversationManager;
+            const foldersContainer = document.querySelector('.space-y-2'); // The folders container
+            
+            if (!foldersContainer) return;
+            
+            // Clear existing folders
+            foldersContainer.innerHTML = '';
+            
+            // Sort folders (always keep "All Conversations" first)
+            const sortedFolders = [...manager.folders].sort((a, b) => {
+                if (a.id === 'all') return -1;
+                if (b.id === 'all') return 1;
+                return a.name.localeCompare(b.name);
+            });
+            
+            // Render each folder
+            sortedFolders.forEach(folder => {
+                const isSelected = manager.selectedFolder === folder.id;
+                
+                const folderBtn = document.createElement('button');
+                folderBtn.className = `w-full flex items-center justify-between px-3 py-2 rounded-lg ${isSelected ? 'bg-arzani-50 text-arzani-700' : 'hover:bg-slate-50 text-slate-700'} text-sm font-medium transition-colors`;
+                folderBtn.dataset.folderId = folder.id;
+                
+                // Check if this is a default folder (don't allow deletion)
+                const isDefaultFolder = folder.default;
+                
+                folderBtn.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+                        </svg>
+                        <span>${manager.escapeHTML(folder.name)}</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span class="${isSelected ? 'bg-arzani-100 text-arzani-700' : 'bg-slate-100 text-slate-600'} px-2 py-0.5 rounded-full text-xs">${folder.count}</span>
+                        ${!isDefaultFolder ? `
+                            <button class="delete-folder-btn p-1 ml-1 text-slate-400 hover:text-red-500 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+                
+                // Add click handler
+                folderBtn.addEventListener('click', (e) => {
+                    // Don't handle click if the delete button was clicked
+                    if (e.target.closest('.delete-folder-btn')) return;
+                    
+                    manager.selectedFolder = folder.id;
+                    renderFolders(); // Re-render folders to update selection
+                    renderConversations(folder.id); // Update conversations list
+                });
+                
+                // Add delete handler for folder if it's not a default folder
+                if (!isDefaultFolder) {
+                    const deleteBtn = folderBtn.querySelector('.delete-folder-btn');
+                    if (deleteBtn) {
+                        deleteBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            if (confirm(`Are you sure you want to delete the folder "${folder.name}"? All conversations will be moved to "All Conversations".`)) {
+                                manager.deleteFolder(folder.id);
+                                renderFolders();
+                                renderConversations(manager.selectedFolder);
+                            }
+                        });
+                    }
+                }
+                
+                foldersContainer.appendChild(folderBtn);
+            });
+        }
+        
+        // Render conversations in the sidebar
+        function renderConversations(folderId = 'all') {
+            const manager = window.conversationManager;
+            const conversationsContainer = document.getElementById('savedConversationsList');
+            
+            if (!conversationsContainer) return;
+            
+            // Clear existing conversations
+            conversationsContainer.innerHTML = '';
+            
+            // Get conversations for the selected folder
+            const conversations = manager.getConversationsByFolder(folderId);
+            
+            if (conversations.length === 0) {
+                // Show empty state
+                const emptyState = document.createElement('div');
+                emptyState.className = 'text-center py-8 text-slate-400 text-sm';
+                emptyState.textContent = folderId === 'all' 
+                    ? 'No conversations saved yet' 
+                    : 'No conversations in this folder';
+                conversationsContainer.appendChild(emptyState);
+                return;
+            }
+            
+            // Render each conversation
+            conversations.forEach(conv => {
+                const timeAgo = manager.getTimeAgo(conv.timestamp);
+                const messageCount = conv.messages ? conv.messages.length : 0;
+                
+                const convElement = document.createElement('div');
+                convElement.className = 'saved-conversation border border-slate-200 rounded-lg p-3 bg-white hover:shadow-sm transition-all cursor-pointer';
+                convElement.dataset.id = conv.id;
+                
+                convElement.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <h4 class="font-medium text-slate-800">${manager.escapeHTML(conv.title)}</h4>
+                        <div class="text-xs text-slate-400">${timeAgo}</div>
+                    </div>
+                    <p class="text-xs text-slate-500 line-clamp-2">${manager.escapeHTML(conv.summary)}</p>
+                    <div class="flex justify-between items-center mt-3">
+                        <div class="flex items-center gap-1 text-xs text-arzani-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                            </svg>
+                            <span>${messageCount} message${messageCount === 1 ? '' : 's'}</span>
+                        </div>
+                        <div class="flex gap-1">
+                            <button class="move-btn p-1 text-slate-400 hover:text-arzani-600 transition-colors" title="Move to folder">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
+                                </svg>
+                            </button>
+                            <button class="delete-btn p-1 text-slate-400 hover:text-red-500 transition-colors" title="Delete conversation">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                // Add click handler to load conversation
+                convElement.addEventListener('click', (e) => {
+                    if (!e.target.closest('button')) {
+                        loadConversation(conv.id);
+                    }
+                });
+                
+                // Add move button handler
+                const moveBtn = convElement.querySelector('.move-btn');
+                if (moveBtn) {
+                    moveBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        prepareToMoveConversation(conv.id);
+                    });
+                }
+                
+                // Add delete button handler
+                const deleteBtn = convElement.querySelector('.delete-btn');
+                if (deleteBtn) {
+                    deleteBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (confirm('Are you sure you want to delete this conversation?')) {
+                            deleteConversation(conv.id);
+                        }
+                    });
+                }
+                
+                conversationsContainer.appendChild(convElement);
+            });
+        }
+        
+        // Save current conversation
+        function saveCurrentConversation() {
+            try {
+                const title = document.getElementById('conversationTitle').value.trim();
+                const folder = document.getElementById('conversationFolder').value;
+                
+                // Get all messages from the chat
+                const messages = Array.from(document.querySelectorAll('.chat-message'))
+                    .map(msg => {
+                        const content = msg.querySelector('.message-content') || msg.querySelector('.flex-1');
+                        return content ? content.textContent.trim() : '';
+                    })
+                    .filter(text => text); // Filter out empty messages
+                
+                if (!title || messages.length === 0) {
+                    toasts.warning("Please provide a title and ensure there are messages to save.");
+                    return;
+                }
+                
+                // Generate summary from the first message or two
+                const summary = messages.slice(0, 2).join(' ').substring(0, 100) + (messages.length > 2 ? '...' : '');
+                
+                // Create the conversation
+                window.conversationManager.createConversation(title, folder, messages, summary);
+                
+                // Close modal
+                document.getElementById('newConversationModal').style.display = 'none';
+                
+                // Update UI
+                renderConversations(window.conversationManager.selectedFolder);
+                
+                // Show success message
+                toasts.success('Conversation saved successfully');
+            } catch (error) {
+                console.error("Error saving conversation:", error);
+                toasts.error('Failed to save conversation');
+            }
+        }
+        
+        // Load a specific conversation
+        function loadConversation(conversationId) {
+            try {
+                const manager = window.conversationManager;
+                const conversation = manager.getConversation(conversationId);
+                
+                if (!conversation) {
+                    toasts.error("Conversation not found");
+                    return;
+                }
+                
+                const chatMessages = document.getElementById('chatMessages');
+                chatMessages.innerHTML = '';
+                
+                // Add conversation title at the top
+                const titleElement = document.createElement('div');
+                titleElement.className = 'text-center mb-4 p-2 bg-arzani-50 rounded-lg';
+                titleElement.innerHTML = `
+                    <h3 class="font-medium text-arzani-800">${manager.escapeHTML(conversation.title)}</h3>
+                    <p class="text-xs text-arzani-600">${manager.getTimeAgo(conversation.timestamp)}</p>
+                `;
+                chatMessages.appendChild(titleElement);
+                
+                // Add messages
+                conversation.messages.forEach((msg, index) => {
+                    // Alternate between assistant and user messages
+                    const role = index % 2 === 0 ? 'assistant' : 'user';
+                    
+                    const msgElement = document.createElement('div');
+                    msgElement.className = `chat-message ${role} flex gap-3 mb-6 message-enter`;
+                    
+                    if (role === 'assistant') {
+                        msgElement.innerHTML = `
+                            <div class="flex-shrink-0 w-8 h-8 bg-gradient-to-r from-arzani-500 to-blue-500 rounded-full flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M8 14C8 14 9.5 16 12 16C14.5 16 16 14 16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M9 9H9.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M15 9H15.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                            <div class="flex-1 bg-slate-50 p-4 rounded-xl rounded-tl-none">
+                                <p class="text-slate-800 message-content">${manager.escapeHTML(msg)}</p>
+                            </div>
+                        `;
+                    } else {
+                        msgElement.innerHTML = `
+                            <div class="flex-1 bg-arzani-600 p-4 rounded-xl rounded-tr-none text-white">
+                                <p class="message-content">${manager.escapeHTML(msg)}</p>
+                            </div>
+                        `;
+                    }
+                    
+                    chatMessages.appendChild(msgElement);
+                });
+                
+                // Scroll to top
+                chatMessages.scrollTop = 0;
+                toasts.info('Conversation loaded');
+            } catch (error) {
+                console.error("Error loading conversation:", error);
+                toasts.error('Failed to load conversation');
+            }
+        }
+        
+        // Delete a specific conversation
+        function deleteConversation(conversationId) {
+            try {
+                window.conversationManager.deleteConversation(conversationId);
+                renderConversations(window.conversationManager.selectedFolder);
+                toasts.success('Conversation deleted');
+            } catch (error) {
+                console.error("Error deleting conversation:", error);
+                toasts.error('Failed to delete conversation');
+            }
+        }
+        
+        // Utility function to escape HTML
+        function escapeHTML(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+        
+        // Utility function to get time ago string
+        function getTimeAgo(date) {
+            const now = new Date();
+            const diff = now - date;
+            
+            const seconds = Math.floor(diff / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const hours = Math.floor(minutes / 60);
+            const days = Math.floor(hours / 24);
+            
+            if (days > 0) {
+                return `${days} day${days > 1 ? 's' : ''} ago`;
+            } else if (hours > 0) {
+                return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+            } else if (minutes > 0) {
+                return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+            } else {
+                return `${seconds} second${seconds > 1 ? 's' : ''} ago`;
+            }
+        }
+    </script>
+    <style>
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+    </style>
+    <script>
+    // Audio troubleshooting script
+    document.addEventListener('click', function() {
+        // Try to resume any suspended audio contexts on user interaction
+        if (window._preInitializedAudioContext && 
+            window._preInitializedAudioContext.state === 'suspended') {
+            window._preInitializedAudioContext.resume().then(() => {
+                console.log('Audio context resumed by troubleshooter');
+            });
+        }
+        
+        // Check if audio is enabled in the browser
+        if (window.voiceChat && window.voiceChat.audioService && 
+            window.voiceChat.audioService.currentAudioContext) {
+            const context = window.voiceChat.audioService.currentAudioContext;
+            if (context.state === 'suspended') {
+                context.resume().then(() => {
+                    console.log('VoiceChat audio context resumed by troubleshooter');
+                });
+            }
+        }
+    });
+    </script>
+</body>
+</html>

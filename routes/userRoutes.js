@@ -1,0 +1,13 @@
+// ...existing code...
+
+// AFTER:
+import { authenticateUser } from '../middleware/auth.js';
+
+// ...existing code...
+
+// Update middleware usage
+router.get('/profile', authenticateUser, async (req, res) => {
+  // ...existing code...
+});
+
+// ...existing code...

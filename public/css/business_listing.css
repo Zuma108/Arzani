@@ -1,0 +1,130 @@
+/* 
+   Google-inspired minimalist swiper design
+   Emphasizing clean lines, subtle animations, and a grey/white palette
+*/
+
+/* Reset and hide default swiper button backgrounds */
+.swiper-button-next,
+.swiper-button-prev {
+    background: none;
+    width: 48px;
+    height: 48px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0.7;
+}
+
+/* Style the arrow icons with cleaner, thinner design */
+.swiper-button-next:after,
+.swiper-button-prev:after {
+    font-size: 18px;
+    font-weight: 300;
+    color: rgba(117, 117, 117, 0.87); /* Material Design grey-600 with opacity */
+    text-shadow: 0px 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+/* Modern hover effects */
+.swiper-button-next:hover,
+.swiper-button-prev:hover {
+    opacity: 1;
+    transform: scale(1.05);
+}
+
+/* Remove the hover:before pseudo-element that created the oval circle */
+
+/* Clean, modern pagination bullets */
+.swiper-pagination-bullet {
+    width: 6px;
+    height: 6px;
+    background: rgba(189, 189, 189, 0.7); /* Material Design grey-400 */
+    opacity: 1;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    margin: 0 4px;
+}
+
+.swiper-pagination-bullet-active {
+    width: 18px; /* Elongated active bullet */
+    border-radius: 3px; /* Pill shape */
+    background: rgba(117, 117, 117, 0.87); /* Material Design grey-600 */
+    transform: none;
+}
+
+/* Fade-in controls on slide hover */
+.swiper-container {
+    position: relative;
+}
+
+.swiper-button-next,
+.swiper-button-prev,
+.swiper-pagination {
+    opacity: 0;
+    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.swiper-container:hover .swiper-button-next,
+.swiper-container:hover .swiper-button-prev,
+.swiper-container:hover .swiper-pagination {
+    opacity: 1;
+}
+
+/* Redesigned image counter with clean Material Design styling */
+.image-counter {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 13px;
+    color: rgba(0, 0, 0, 0.67);
+    z-index: 10;
+    font-family: 'Google Sans', 'Roboto', sans-serif;
+    font-weight: 500;
+    letter-spacing: 0.25px;
+    box-shadow: 0 1px 2px rgba(60, 64, 67, 0.3);
+}
+
+/* Thumbnail styling with modern hover effects */
+.thumbnail {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 2px solid transparent;
+    filter: saturate(0.85);
+}
+
+.thumbnail:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 1px 6px rgba(60, 64, 67, 0.15);
+    filter: saturate(1);
+}
+
+.thumbnail.active {
+    border-color: #e0e0e0;
+    box-shadow: 0 1px 3px rgba(60, 64, 67, 0.2);
+    filter: saturate(1.05);
+}
+
+/* Light background for slide content */
+.swiper-slide {
+    background: #fafafa;
+}
+
+/* CSS variables for consistent colors */
+:root {
+    --primary-color: #064fa3;
+    --secondary-color: #041b76;
+    --accent-color: #c0816f;
+    --light-color: #f9f6f1;
+    --google-grey-500: #9e9e9e;
+    --google-grey-700: #616161;
+}
+
+/* Remove the loading animation styles */
+.swiper-lazy-preloader {
+    display: none;
+}
+
+/* Focus state for accessibility */
+.swiper-button-next:focus,
+.swiper-button-prev:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(117, 117, 117, 0.4);
+}

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- ...existing code... -->
+  
+  <!-- Add meta tag for Google client ID -->
+  <meta name="google-client-id" content="<%= process.env.GOOGLE_CLIENT_ID %>">
+  
+  <!-- Load the new signup handler script -->
+  <script src="/js/signup-handler.js" defer></script>
+</head>
+<body>
+  <!-- ...existing code... -->
+  
+  <!-- At the end of the file, right before the closing body tag -->
+  <script>
+    // Add form submission handler for signup
+    document.addEventListener('DOMContentLoaded', function() {
+      // The main functionality is now in signup-handler.js
+      console.log('Signup form initialized');
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,86 @@
+.faq-accordion {
+  flex: 0 0 60%;
+  margin-top: 30px;
+  padding-left: 20px;
+}
+
+.Horizontalborder {
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.5) !important;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  width: 100%;
+  max-width: 685px;
+}
+
+.faq-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 15px 0;
+}
+
+.Svg1 {
+  transition: transform 0.3s ease;
+}
+
+.faq-content {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: all 0.3s ease;
+  padding-left: 10px;
+}
+
+.Horizontalborder.active {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.8) !important;
+}
+
+.Horizontalborder.active .Svg1 {
+  transform: rotate(180deg);
+}
+
+.Horizontalborder.active .faq-content {
+  max-height: 300px;
+  opacity: 1;
+  padding-bottom: 15px;
+}
+
+.faq-container {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  width: 100%;
+  padding: 0 50px;
+  margin: 0 auto;
+  max-width: 1440px;
+}
+
+.faq-intro {
+  flex: 0 0 40%;
+  padding-right: 20px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .faq-container {
+    padding: 0 30px;
+  }
+}
+
+@media (max-width: 768px) {
+  .faq-intro, .faq-accordion {
+    flex: 0 0 100%;
+    padding: 0;
+  }
+  
+  .faq-accordion {
+    margin-top: 30px;
+  }
+  
+  .Horizontalborder {
+    max-width: 100%;
+  }
+}

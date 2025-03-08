@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Market Trends Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#041b76',
+                        secondary: '#064fa3',
+                        accent: '#2a9d8f',
+                        neutral: '#f7f5f2',
+                        'chart-blue': '#3b82f6',
+                        'chart-indigo': '#6366f1',
+                        'chart-purple': '#8b5cf6',
+                        'chart-pink': '#ec4899',
+                        'chart-orange': '#f97316',
+                        'chart-green': '#10b981',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        card: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .logo-img {
+            width: 140px;
+            height: auto;
+            border-radius: 8px;
+            object-fit: contain;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans antialiased">
+    <!-- Navigation Bar -->
+    <nav class="bg-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex">
+                    <div class="flex-shrink-0 flex items-center">
+                        <!-- Replace text with Arzani logo image -->
+                        <a href="/" class="flex items-center">
+                            <img src="/public/figma design exports/logos/Arzani-logo.png" alt="Arzani.co.uk" class="logo-img">
+                        </a>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/marketplace2" class="px-4 py-2 rounded-lg bg-primary text-white hover:bg-secondary transition-colors duration-200">Back to Marketplace</a>
+                    <a href="/profile" class="px-4 py-2 rounded-lg border border-gray-300 hover:border-gray-400 transition-colors duration-200">Profile</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Error Container -->
+    <div id="errorContainer" class="hidden max-w-7xl mx-auto mt-4 p-4 bg-red-100 text-red-700 rounded-lg"></div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header Section -->
+        <header class="bg-white rounded-xl shadow-card p-6 mb-8">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+                <h1 class="text-3xl font-bold text-primary">Market Trends Analysis</h1>
+                <div class="mt-4 md:mt-0 px-4 py-2 rounded-lg bg-neutral text-gray-800">
+                    Welcome, <%= user.username %>
+                    <span class="ml-2 px-3 py-1 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-sm font-medium"><%= user.subscription %></span>
+                </div>
+            </div>
+            
+            <!-- Filter Controls with Modern UI -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="relative">
+                    <select id="timeRange" class="block w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 pr-8 appearance-none focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent transition-all duration-200">
+                        <% chartConfig.timeRanges.forEach(function(range) { %>
+                            <option value="<%= range.value %>"><%= range.label %></option>
+                        <% }); %>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                            <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                        </svg>
+                    </div>
+                </div>
+                
+                <div class="relative">
+                    <select id="industryFilter" class="block w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 pr-8 appearance-none focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent transition-all duration-200">
+                        <option value="">All Industries</option>
+                        <!-- Will be populated by JS -->
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                            <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                        </svg>
+                    </div>
+                </div>
+                
+                <div class="relative">
+                    <select id="locationFilter" class="block w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 pr-8 appearance-none focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent transition-all duration-200">
+                        <option value="">All Locations</option>
+                        <!-- Will be populated by JS -->
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                            <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                        </svg>
+                    </div>
+                </div>
+                
+                <div class="flex space-x-2">
+                    <button class="flex-1 bg-white hover:bg-gray-100 text-gray-800 font-semibold py-2 px-4 border border-gray-300 rounded-lg shadow-sm transition-all duration-200 flex items-center justify-center" onclick="exportToFormat('pdf')">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        PDF
+                    </button>
+                    <button class="flex-1 bg-white hover:bg-gray-100 text-gray-800 font-semibold py-2 px-4 border border-gray-300 rounded-lg shadow-sm transition-all duration-200 flex items-center justify-center" onclick="exportToFormat('csv')">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        CSV
+                    </button>
+                    <button class="flex-1 bg-white hover:bg-gray-100 text-gray-800 font-semibold py-2 px-4 border border-gray-300 rounded-lg shadow-sm transition-all duration-200 flex items-center justify-center" onclick="exportTrendsToGoogleDrive()">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                        </svg>
+                        Drive
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Restructured Layout - First Row with Market Overview and Chat side by side -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 mb-8">
+            <!-- Market Overview - Takes 3/4 of the width on large screens -->
+            <div class="lg:col-span-3">
+                <div class="bg-white rounded-xl shadow-card overflow-hidden">
+                    <div class="p-6">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">Market Overview</h2>
+                        
+                        <!-- Modern Tab Buttons -->
+                        <div class="flex flex-wrap gap-2 md:gap-4 mb-6 border-b border-gray-200">
+                            <button class="tab-btn active px-4 py-3 font-medium text-sm rounded-t-lg transition-all duration-200 border-b-2 border-primary text-primary" data-chart="valuationChart">Valuation Trends</button>
+                            <button class="tab-btn px-4 py-3 font-medium text-sm rounded-t-lg transition-all duration-200 border-b-2 border-transparent text-gray-500 hover:text-gray-800" data-chart="priceDistChart">Price Distribution</button>
+                            <button class="tab-btn px-4 py-3 font-medium text-sm rounded-t-lg transition-all duration-200 border-b-2 border-transparent text-gray-500 hover:text-gray-800" data-chart="revenueVsEbitdaChart">Revenue vs EBITDA</button>
+                            <button class="tab-btn px-4 py-3 font-medium text-sm rounded-t-lg transition-all duration-200 border-b-2 border-transparent text-gray-500 hover:text-gray-800" data-chart="growthTrendsChart">Growth Trends</button>
+                        </div>
+                        
+                        <!-- Charts Container with Modern Styling -->
+                        <div class="chart-container bg-white rounded-lg p-4 h-80">
+                            <canvas id="valuationChart" class="active-chart"></canvas>
+                            <canvas id="priceDistChart" style="display:none;"></canvas>
+                            <canvas id="revenueVsEbitdaChart" style="display:none;"></canvas>
+                            <canvas id="growthTrendsChart" style="display:none;"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Section - Takes 1/4 of the width on large screens -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-xl shadow-card h-full">
+                    <div class="p-6 flex flex-col h-full">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-1">Chat with AI Assistant</h3>
+                        <div class="text-sm text-gray-500 mb-4">Ask questions about market trends</div>
+                        
+                        <div id="chatMessages" class="flex-grow bg-gray-50 rounded-lg p-4 mb-4 overflow-y-auto max-h-[300px]">
+                            <div class="message assistant">
+                                <div class="bg-white rounded-lg p-3 shadow-sm inline-block max-w-[85%]">
+                                    Hello! I'm your market trends analyst. How can I help you understand the data today?
+                                </div>
+                            </div>
+                            <!-- Chat messages will be displayed here -->
+                        </div>
+                        
+                        <div class="chat-input flex items-center">
+                            <input type="text" id="messageInput" placeholder="Ask about trends..." class="flex-grow rounded-l-lg border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent py-2 px-3 text-sm">
+                            <button onclick="window.marketTrendsChat.sendMessage()" class="bg-primary hover:bg-secondary text-white font-bold py-2 px-4 rounded-r-lg transition-colors duration-200">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-2 mt-4">
+                            <button onclick="suggestQuery('Highest growth rate?')" class="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-xs text-gray-700 transition-colors duration-200">Growth rates</button>
+                            <button onclick="suggestQuery('EBITDA multiples?')" class="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-xs text-gray-700 transition-colors duration-200">EBITDA multiples</button>
+                            <button onclick="suggestQuery('Recent price trends?')" class="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-xs text-gray-700 transition-colors duration-200">Price trends</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Second Row with Key Insights and Market Trends Table -->
+        <div class="bg-white rounded-xl shadow-card overflow-hidden">
+            <!-- Key Insights with Modern Cards -->
+            <div class="px-6 pt-6 pb-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Key Insights</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-white rounded-lg p-4 border border-gray-100 hover:shadow-md transition-shadow duration-200">
+                        <div class="text-sm text-gray-500 font-medium">Avg. Valuation</div>
+                        <div id="avgValuation" class="text-2xl font-bold text-primary mt-1">£0</div>
+                        <div id="valuationChange" class="text-xs text-green-600 mt-1 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                            </svg>
+                            0%
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg p-4 border border-gray-100 hover:shadow-md transition-shadow duration-200">
+                        <div class="text-sm text-gray-500 font-medium">Top Industry</div>
+                        <div id="topIndustry" class="text-xl font-bold text-primary mt-1 truncate">-</div>
+                        <div id="topIndustryDesc" class="text-xs text-gray-500 mt-1">by average price</div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg p-4 border border-gray-100 hover:shadow-md transition-shadow duration-200">
+                        <div class="text-sm text-gray-500 font-medium">Growth Rate</div>
+                        <div id="avgGrowth" class="text-2xl font-bold text-primary mt-1">0%</</div>
+                        <div id="growthChange" class="text-xs text-green-600 mt-1 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                            </svg>
+                            0%
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg p-4 border border-gray-100 hover:shadow-md transition-shadow duration-200">
+                        <div class="text-sm text-gray-500 font-medium">Recent Listings</div>
+                        <div id="recentListings" class="text-2xl font-bold text-primary mt-1">0</div>
+                        <div class="text-xs text-gray-500 mt-1">last 7 days</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Market Trends Table with Modern Styling -->
+            <div class="px-6 pb-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Market Trends Data</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Industry</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Price</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Listings Count</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Multiple</th>
+                            </tr>
+                        </thead>
+                        <tbody id="trendsTableBody" class="bg-white divide-y divide-gray-200">
+                            <!-- Data will be populated here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/market_trends.js"></script>
+    <script src="/js/market_trends_chat.js"></script>
+    <script>
+        // Function to populate the table
+        async function populateTable(data) {
+            if (!data) {
+                const timeRange = document.getElementById('timeRange').value;
+                const industry = document.getElementById('industryFilter').value;
+                const location = document.getElementById('locationFilter').value;
+                
+                data = await fetchMarketTrends({
+                    timeRange,
+                    industry,
+                    location
+                });
+            }
+            
+            const tableBody = document.getElementById('trendsTableBody');
+            tableBody.innerHTML = ''; // Clear existing data
+
+            data.forEach(item => {
+                const row = document.createElement('tr');
+                row.className = "hover:bg-gray-50 transition-colors duration-150";
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${new Date(item.date).toLocaleDateString()}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.industry}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.location}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">£${parseInt(item.avg_price).toLocaleString()}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.listings_count}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${parseFloat(item.avg_multiple).toFixed(2)}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Helper function for suggested queries
+        function suggestQuery(query) {
+            document.getElementById('messageInput').value = query;
+        }
+        
+        // Initialize everything when the DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            // Chat interface is initialized by market_trends_chat.js
+            
+            // Ensure tab switching works
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // Remove active class from all tabs
+                    document.querySelectorAll('.tab-btn').forEach(b => {
+                        b.classList.remove('active');
+                        b.classList.remove('border-primary');
+                        b.classList.remove('text-primary');
+                        b.classList.add('border-transparent');
+                        b.classList.add('text-gray-500');
+                    });
+                    
+                    // Hide all charts
+                    document.querySelectorAll('.chart-container canvas').forEach(chart => {
+                        chart.style.display = 'none';
+                    });
+                    
+                    // Add active class to clicked tab
+                    this.classList.remove('border-transparent');
+                    this.classList.remove('text-gray-500');
+                    this.classList.add('active');
+                    this.classList.add('border-primary');
+                    this.classList.add('text-primary');
+                    
+                    // Show the corresponding chart
+                    const chartId = this.getAttribute('data-chart');
+                    document.getElementById(chartId).style.display = 'block';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

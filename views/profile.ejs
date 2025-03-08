@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="auth-token" content="<%= locals.token || '' %>">
+    <title><%= user.username %>'s Profile</title>
+    <style>
+        :root {
+            --primary-color: #041b76;
+            --secondary-color: #f7f5f2;
+            --text-color: #363309;
+            --border-color: rgba(0, 0, 0, 0.1);
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --transition-speed: 0.3s;
+            --accent-color: #064fa3;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', Arial, sans-serif;
+            background-color: #f9f9f9;
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        /* Layout */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Profile Header */
+        .profile-header {
+            grid-column: span 12;
+            background-color: var(--secondary-color);
+            padding: 3rem 2rem;
+            text-align: center;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px var(--shadow-color);
+            transition: transform var(--transition-speed);
+            position: relative;
+        }
+
+        .profile-header:hover {
+            transform: translateY(-2px);
+        }
+
+        .profile-picture {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin: 0 auto 1.5rem;
+            border: 4px solid #fff;
+            box-shadow: 0 0 15px var(--shadow-color);
+            transition: transform var(--transition-speed);
+        }
+
+        .profile-picture:hover {
+            transform: scale(1.05);
+        }
+
+        /* Profile Sections */
+        .profile-sections {
+            grid-column: span 8;
+            background-color: #fff;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 4px 6px var(--shadow-color);
+        }
+
+        /* Update the subscription section styles */
+        .subscription-section {
+            grid-column: span 4;
+            background-color: #fff;
+            border-radius: 1rem;
+            padding: 3rem 2rem;  /* Increased padding */
+            box-shadow: 0 4px 6px var(--shadow-color);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;        /* Added gap between elements */
+        }
+
+        .subscription-section p {
+            margin: 0;          /* Reset margins */
+            font-size: 1.1rem;  /* Slightly larger text */
+            color: #666;        /* Softer text color */
+        }
+
+        .subscription-section h2 {
+            font-size: 2rem;    /* Larger plan name */
+            margin: 1.5rem 0;   /* Added vertical margin */
+            color: var(--primary-color);
+        }
+
+        .upgrade-button {
+            margin-top: 2rem;   /* Added space above button */
+            width: 100%;        /* Full width button */
+            padding: 1rem;      /* Increased padding */
+            font-size: 1.1rem;  /* Larger button text */
+        }
+
+        /* Common Elements */
+        .button {
+            background-color: var(--primary-color);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all var(--transition-speed);
+        }
+
+        .button:hover {
+            background-color: #333;
+            transform: translateY(-1px);
+        }
+
+        .section-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .section-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Forms */
+        .upload-form {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: #fff;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        input[type="file"] {
+            width: 100%;
+            padding: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Custom File Input Styling */
+        .custom-file-upload {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+
+        .file-input {
+            position: absolute;
+            left: -9999px;
+            opacity: 0;
+            width: 1px;
+            height: 1px;
+        }
+
+        .file-label {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .file-button {
+            display: inline-block;
+            padding: 0.8rem 1.5rem;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all var(--transition-speed);
+            white-space: nowrap;
+        }
+
+        .file-button:hover {
+            background-color: var(--accent-color);
+            transform: translateY(-1px);
+        }
+
+        .file-name {
+            color: #6c757d;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 200px;
+            transition: color var(--transition-speed);
+        }
+
+        .file-name.file-selected {
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        .mt-3 {
+            margin-top: 1rem;
+        }
+
+        /* Error Messages */
+        .error-message {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 1rem;
+            margin: 1rem 0;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+            display: none;
+        }
+
+        /* Typography */
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-color);
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-color);
+        }
+
+        /* Links */
+        a {
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: color var(--transition-speed);
+        }
+
+        a:hover {
+            color: #333;
+        }
+
+        /* User Details */
+        .user-details {
+            margin-top: 2rem;
+            padding: 2rem;
+            background-color: #fff;
+            border-radius: 1rem;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .user-details:hover {
+            transform: translateY(-5px);
+        }
+
+        .user-details h2 {
+            font-size: 1.8rem;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .user-details p {
+            display: flex;
+            align-items: center;
+            margin: 1.2rem 0;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+        }
+
+        .user-details p:hover {
+            background-color: #f0f2f5;
+        }
+
+        .user-details strong {
+            min-width: 120px;
+            color: #666;
+            font-weight: 600;
+        }
+
+        /* Navigation buttons */
+        .nav-buttons {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        /* Update the back to marketplace button styles */
+        .back-to-marketplace {
+            background-color: var(--primary-color);
+            color: #fff;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all var(--transition-speed);
+            display: inline-block;
+            border: none;
+            cursor: pointer;
+        }
+
+        .back-to-marketplace:hover {
+            background-color: var(--accent-color);
+            color: #fff;
+            transform: translateY(-2px);
+            text-decoration: none;
+        }
+
+        /* Sign out button */
+        .sign-out-button {
+            background-color: #f8f9fa;
+            color: #dc3545;
+            border: 1px solid #dc3545;
+            width: 100%;
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all var(--transition-speed);
+        }
+
+        .sign-out-button:hover {
+            background-color: #dc3545;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="grid">
+            <!-- Profile Header -->
+            <div class="profile-header">
+                <div class="nav-buttons">
+                    <a href="/marketplace2" class="back-to-marketplace">Back to Marketplace</a>
+                    <a href="/market-trends" class="back-to-marketplace">Market Trends</a>
+                </div>
+                <div class="profile-picture-container">
+                    <img 
+                        class="profile-picture" 
+                        src="<%= user.profile_picture || '/images/default-profile.png' %>" 
+                        alt="Profile picture"
+                        onerror="this.src='/images/default-profile.png'"
+                    >
+                    <div class="upload-overlay">
+                        <label for="profile-picture-input" class="upload-button">
+                            <i class="bi bi-camera"></i>
+                            Change Picture
+                        </label>
+                        <input 
+                            type="file" 
+                            id="profile-picture-input" 
+                            accept="image/jpeg,image/png" 
+                            style="display: none;"
+                        >
+                    </div>
+                </div>
+                <h1><%= user.username %></h1>
+                <p class="member-since">Member since <%= new Date(user.created_at).toLocaleDateString() %></p>
+            </div>
+
+            <!-- Main Content -->
+            <div class="profile-sections">
+                <h2>Account Details</h2>
+                <div class="section-item">
+                    <h3>Saved Searches</h3>
+                    <a href="/saved-searches" class="button">View All</a>
+                </div>
+                <div class="section-item">
+                    <h3>Favorite Listings</h3>
+                    <a href="/history" class="button">History</a>
+                </div>
+                <div class="section-item">
+                    <h3>Account Settings</h3>
+                    <button class="button">Edit</button>
+                </div>
+
+                <!-- Upload Form -->
+                <div class="upload-form">
+                    <h2>Update Profile Picture</h2>
+                    <form id="picture-form" enctype="multipart/form-data">
+                        <div class="form-group">
+                            <div class="custom-file-upload">
+                                <input type="file" name="profile_picture" id="profile_picture" accept="image/*" class="file-input" required>
+                                <label for="profile_picture" class="file-label">
+                                    <span class="file-button">Choose File</span>
+                                    <span class="file-name">No file chosen</span>
+                                </label>
+                            </div>
+                            <button type="submit" class="button mt-3">Upload</button>
+                        </div>
+                    </form>
+                    <div id="upload-error" class="error-message"></div>
+                </div>
+            </div>
+
+            <!-- Update the subscription section HTML structure -->
+            <div class="subscription-section">
+                <p>You are currently on the</p>
+                <h2>Free Plan</h2>
+                <p>Upgrade to access premium features</p>
+                <button class="button upgrade-button">Upgrade your plan</button>
+                <button class="sign-out-button" id="signOutBtn">Sign Out</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/profile.js"></script>
+   
+    <%- include('partials/footer') %>
+</body>
+</html>

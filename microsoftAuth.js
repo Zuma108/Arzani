@@ -7,7 +7,7 @@ require('dotenv').config();
 const clientId = process.env.MICROSOFT_CLIENT_ID;
 const clientSecret = process.env.MICROSOFT_CLIENT_SECRET;
 const redirectUri = 'http://localhost:5000/auth/microsoft/callback';
-const JWT_SECRET = process.env.JWT_SECRET || '61a8f2d6-536a-4ab5-8696-c7615069e969';
+const JWT_SECRET = process.env.JWT_SECRET || 'supersecureandrandomkeythatnoonecanguess123456';
 
 module.exports = (app) => {
   // Route to handle Microsoft OAuth2 callback
