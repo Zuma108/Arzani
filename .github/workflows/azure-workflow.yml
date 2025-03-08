@@ -9,6 +9,7 @@ env:
   AZURE_WEBAPP_NAME: Arzani    # set to your application's name
   AZURE_WEBAPP_PACKAGE_PATH: '.'  # repository root
   NODE_VERSION: '18.x'  # matches your engine requirements in package.json
+  AZURE_RESOURCE_GROUP: my-marketplace  # resource group name
 
 permissions:
   contents: read
@@ -90,6 +91,26 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: node-app
+
+    # Add Azure login step
+    - name: Log in to Azure
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    # Add step to clean up previous deployments
+    - name: Clean up previous deployments
+      run: |
+        echo "Stopping any running processes on the web app..."
+        az webapp stop --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }}
+        
+        echo "Waiting for processes to stop..."
+        sleep 10
+        
+        echo "Starting web app again..."
+        az webapp start --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }}
+        
+        echo "Preparation for deployment complete"
 
     # Minimal diagnostic check
     - name: Check module system
