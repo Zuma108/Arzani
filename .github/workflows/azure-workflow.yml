@@ -28,7 +28,7 @@ jobs:
 
     # Install node-pre-gyp globally to fix canvas build issues
     - name: Install global dependencies
-      run: npm install -g node-pre-gyp
+      run: sudo npm install -g node-pre-gyp
 
     # Split into individual steps for better error reporting
     - name: Install dependencies
@@ -36,7 +36,7 @@ jobs:
         # Set proper permissions
         mkdir -p ~/.npm
         chmod -R 777 ~/.npm
-        npm ci
+        sudo npm ci
 
     - name: Build project
       run: npm run build --if-present
@@ -97,7 +97,7 @@ jobs:
 
     # Install node-pre-gyp globally in deployment phase too
     - name: Install global dependencies
-      run: npm install -g node-pre-gyp
+      run: sudo npm install -g node-pre-gyp
       
     - name: Install production dependencies
       run: |
@@ -105,7 +105,7 @@ jobs:
         mkdir -p ~/.npm
         chmod -R 777 ~/.npm
         # Install dependencies with detailed logs
-        npm ci --only=production --loglevel verbose
+        sudo npm ci --only=production --loglevel verbose
         # List installed modules
         echo "Installed node_modules:"
         find node_modules -type d -maxdepth 1 | sort
