@@ -31,8 +31,7 @@ jobs:
       run: |
         npm ci
         npm run build --if-present
-        # Skip tests if they're failing during deployment
-        npm run test --if-present || echo "Tests failed but continuing deployment"
+        npm test -- --passWithNoTests
       env:
         # Set up environment variables for testing
         NODE_ENV: test
