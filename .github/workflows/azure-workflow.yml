@@ -76,6 +76,17 @@ jobs:
     - name: Check package.json after download
       run: cat package.json
 
+    # Add this step to ensure module mode matches your code
+    - name: Check module system
+      run: |
+        if grep -q "\"type\":\s*\"module\"" package.json; then
+          echo "Project uses ES modules"
+        else
+          echo "Project uses CommonJS modules"
+        fi
+        echo "First 5 lines of server.js:"
+        head -n 5 server.js
+
     - name: Install production dependencies
       run: |
         # Install dependencies with detailed logs
@@ -84,23 +95,54 @@ jobs:
         echo "Installed node_modules:"
         find node_modules -type d -maxdepth 1 | sort
 
-    # Add module debug script
+    # Add module debug script - with correct ES modules syntax
     - name: Create module debug script
       run: |
         mkdir -p scripts
-        cat > scripts/azure-debug.js << 'EOL'
-        // Debug script content - see above
-        EOL
-        
-    - name: Add debug script to package.json
-      run: |
-        node -e "
-          const fs = require('fs');
-          const pkg = JSON.parse(fs.readFileSync('package.json'));
-          pkg.scripts = pkg.scripts || {};
-          pkg.scripts.debug = 'node scripts/azure-debug.js';
-          fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));
-        "
+        cat > scripts/azure-debug.js << 'EOF'
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const rootDir = path.resolve(__dirname, '..');
+
+console.log('=== Azure Module Debug ===');
+console.log('Running in ES modules mode');
+
+// Define packageJson at the top level so it's available throughout the script
+let packageJson;
+
+// Check package.json for type field
+const packageJsonPath = path.join(rootDir, 'package.json');
+try {
+  packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+  console.log(`Package name: ${packageJson.name}`);
+  console.log(`Package type: ${packageJson.type || 'not set (default: commonjs)'}`);
+  console.log(`Dependencies: ${Object.keys(packageJson.dependencies || {}).length}`);
+  console.log(`Dev Dependencies: ${Object.keys(packageJson.devDependencies || {}).length}`);
+} catch (err) {
+  console.error(`Error reading package.json: ${err.message}`);
+  process.exit(1);
+}
+
+// Check if server.js exists
+const serverJsPath = path.join(rootDir, 'server.js');
+if (!fs.existsSync(serverJsPath)) {
+  console.error('server.js not found in root directory!');
+  process.exit(1);
+}
+
+try {
+  const serverCode = fs.readFileSync(serverJsPath, 'utf8');
+  console.log('Server.js found and analyzed');
+} catch (err) {
+  console.error(`Error reading server.js: ${err.message}`);
+}
+
+console.log('=== Debug Complete ===');
+EOF
         
     - name: Check server.js for import syntax
       run: |
