@@ -34,9 +34,20 @@ jobs:
     - name: npm install
       run: sudo npm install
 
-    # Rebuild canvas with the globally installed node-pre-gyp
+    # Explicitly set executable permissions for node-pre-gyp
+    - name: Grant execute permissions for node-pre-gyp
+      run: |
+        if [ -f ./node_modules/.bin/node-pre-gyp ]; then
+          sudo chmod +x ./node_modules/.bin/node-pre-gyp
+          echo "Made node-pre-gyp executable"
+        else
+          echo "node-pre-gyp binary not found in expected location"
+          find ./node_modules -name "node-pre-gyp" | xargs ls -la
+        fi
+
+    # Rebuild canvas with executable node-pre-gyp
     - name: Rebuild canvas module
-      run: npm rebuild canvas --update-binary
+      run: sudo npm rebuild canvas --update-binary
 
     # Continue with build and test
     - name: Build and test
@@ -91,11 +102,22 @@ jobs:
       
     # Install production dependencies with fixed permissions
     - name: Install production dependencies
+      run: sudo npm install --production
+      
+    # Explicitly set executable permissions for node-pre-gyp in deployment
+    - name: Grant execute permissions for node-pre-gyp
       run: |
-        sudo npm install --production
+        if [ -f ./node_modules/.bin/node-pre-gyp ]; then
+          sudo chmod +x ./node_modules/.bin/node-pre-gyp
+          echo "Made node-pre-gyp executable"
+        else
+          echo "node-pre-gyp binary not found in expected location"
+          find ./node_modules -name "node-pre-gyp" | xargs ls -la
+        fi
         
-        # Rebuild canvas with the globally installed node-pre-gyp
-        npm rebuild canvas --update-binary
+    # Rebuild canvas with executable node-pre-gyp
+    - name: Rebuild canvas module
+      run: sudo npm rebuild canvas --update-binary
 
     - name: 'Deploy to Azure WebApp'
       id: deploy-to-webapp
