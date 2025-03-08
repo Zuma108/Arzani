@@ -69,6 +69,10 @@ jobs:
     - name: Install production dependencies
       run: npm ci --only=production
 
+    # Add debugging to see what files are being deployed
+    - name: List files
+      run: ls -R
+
     - name: 'Deploy to Azure WebApp'
       id: deploy-to-webapp
       uses: azure/webapps-deploy@v2
