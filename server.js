@@ -3,7 +3,6 @@ import session from 'express-session';
 import multer from 'multer';
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
-import { RealtimeClient } from '@openai/realtime-api-beta';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import path from 'path';
@@ -32,7 +31,7 @@ import { OAuth2Client } from 'google-auth-library';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import BusinessMetricsService from './services/businessMetricsService.js';
-// Remove unused import
+// Remove realtime-api-beta import
 import RateLimiter from './utils/rateLimit.js';
 import OpenAI from 'openai';
 import fetch from 'node-fetch';
@@ -469,20 +468,8 @@ export { app, server };
 const router = express.Router();
 
 (async () => {
-  const { RealtimeClient } = await import('@openai/realtime-api-beta');
-
-  const realtimeClient = new RealtimeClient({ url: process.env.RELAY_SERVER_URL });
-
-  realtimeClient.on('connect', () => {
-    console.log('Connected to relay server');
-  });
-
-  realtimeClient.on('message', (message) => {
-    console.log('Received message:', message);
-  });
-
-  realtimeClient.on('disconnect', () => {
-    console.log('Disconnected from relay server');
+  const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
   });
 
   app.post('/send-message', (req, res) => {
@@ -901,11 +888,6 @@ app.post('/api/business/listings/filter', async (req, res) => {
       }
       res.render('business', { business });
   });
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 
 // API endpoint for chat messages
 app.post('/api/chat', async (req, res) => {
@@ -1959,10 +1941,6 @@ async function getMarketplaceListings() {
     return [];
   }
 }
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
 
 // Update WebSocket connection handler
 wss.on('connection', async (ws) => {
