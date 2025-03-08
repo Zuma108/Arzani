@@ -27,10 +27,27 @@ jobs:
         cache-dependency-path: '**/package-lock.json'
 
     # Install dependencies with sudo to avoid permission issues
-    - name: npm install, build, and test
+    - name: npm install
+      run: sudo npm install
+
+    # Add specific permission fix for node-pre-gyp
+    - name: Fix permissions for node-pre-gyp
       run: |
-        sudo npm install -g node-pre-gyp  # Fix for canvas module
-        sudo npm install
+        if [ -d "node_modules/node-pre-gyp/bin" ]; then
+          sudo chmod -R 755 node_modules/node-pre-gyp/bin
+          echo "Fixed permissions for node-pre-gyp"
+        else
+          echo "node-pre-gyp directory not found"
+          find node_modules -name "node-pre-gyp" -type d
+        fi
+
+    # Explicitly rebuild canvas with permissions fixed
+    - name: Rebuild canvas module
+      run: sudo npm rebuild canvas --update-binary
+
+    # Continue with build and test
+    - name: Build and test
+      run: |
         npm run build --if-present
         npm test -- --passWithNoTests
       env:
@@ -75,9 +92,16 @@ jobs:
           echo "Project uses CommonJS modules"
         fi
 
-    # Install production dependencies
+    # Install production dependencies with fixed permissions
     - name: Install production dependencies
-      run: sudo npm install --production
+      run: |
+        sudo npm install --production
+        
+        # Fix permissions for node-pre-gyp in production install
+        if [ -d "node_modules/node-pre-gyp/bin" ]; then
+          sudo chmod -R 755 node_modules/node-pre-gyp/bin
+          sudo npm rebuild canvas --update-binary
+        fi
 
     - name: 'Deploy to Azure WebApp'
       id: deploy-to-webapp
