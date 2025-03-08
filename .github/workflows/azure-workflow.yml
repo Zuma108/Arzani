@@ -120,13 +120,30 @@ jobs:
         # Verify web app exists
         echo "Checking if web app exists..."
         az webapp show --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace || echo "Web app not found - will be created during deployment"
+        
+    - name: Stop Azure Web App before deployment
+      run: | "Checking for existing deployment slots..."
+        az webapp deployment slot list --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace || echo "No deployment slots found or unable to list slots"
+        az webapp stop --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace || echo "Could not stop the web app"
+        echo "Waiting for processes to terminate..."t
+        sleep 15ecking for problematic b7d3ekf5fkedcsg9 slot..."
+        az webapp deployment slot show --name ${{ env.AZURE_WEBAPP_NAME }} --slot b7d3ekf5fkedcsg9 --resource-group my-marketplace && echo "Found problematic slot, will delete it" || echo "Slot not found"
+        
+        # Delete the problematic slot if it exists
+        echo "Attempting to delete problematic slot..."
+        az webapp deployment slot delete --name ${{ env.AZURE_WEBAPP_NAME }} --slot b7d3ekf5fkedcsg9 --resource-group my-marketplace || echo "Could not delete slot (may not exist)"
     
     - name: Stop Azure Web App before deployment
       run: |
-        echo "Stopping Azure Web App to release any locks..."
+        # Stop the production slot first
+        echo "Stopping Azure Web App production slot to release any locks..."
         az webapp stop --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace || echo "Could not stop the web app"
         echo "Waiting for processes to terminate..."
         sleep 15
+        
+        # Clear existing deployments
+        echo "Clearing any pending or stuck deployments..."
+        az webapp deployment source delete --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace || echo "No source deployment to delete"
 
     # Minimal diagnostic check
     - name: Check module system
@@ -140,7 +157,7 @@ jobs:
     # Install node-pre-gyp globally for deployment
     - name: Install node-pre-gyp globally
       run: sudo npm install -g node-pre-gyp
-
+lot
     # Install production dependencies
     - name: Install production dependencies
       run: npm install --production
@@ -169,7 +186,7 @@ jobs:
         az webapp deployment list --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace || echo "Unable to list deployments"
         
         # Get detailed diagnostic information
-        echo "Getting detailed deployment logs..."
+        az webapp restart --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace || echo "Could not restart app"
         az webapp log deployment show --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace || echo "Unable to fetch deployment logs"
         
         # Check for locks on the web app
@@ -192,7 +209,7 @@ jobs:
         sleep 30  # Wait for restart to complete
         
         # Create a zip file for manual deployment if needed
-        echo "Creating deployment package..."
+          az webapp deployment slot swap --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace --slot staging --target-slot production || echo "Slot swap failed"
         zip -r release.zip . || echo "Failed to create zip file"
         
         # Try direct deployment with correct subscription and resource group
