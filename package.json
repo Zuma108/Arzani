@@ -15,7 +15,8 @@
     "postinstall": "npm rebuild canvas --update-binary",
     "prepare-deploy": "node scripts/clean-for-deploy.js",
     "add-market-trends-index": "node migrations/add-unique-index-to-market-trends-mv.js",
-    "build": "echo 'Add your build commands here if needed'"
+    "build": "echo 'Add your build commands here if needed'",
+    "security-check": "node scripts/security-check.js"
   },
   "engines": {
     "node": ">=18.0.0"
