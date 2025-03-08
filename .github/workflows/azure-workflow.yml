@@ -7,8 +7,8 @@ on:
 
 env:
   AZURE_WEBAPP_NAME: Arzani    # set to your application's name
-  AZURE_WEBAPP_PACKAGE_PATH: '.'           # repository root
-  NODE_VERSION: '18.x'                     # matches your engine requirements in package.json
+  AZURE_WEBAPP_PACKAGE_PATH: '.'  # repository root
+  NODE_VERSION: '18.x'  # matches your engine requirements in package.json
 
 permissions:
   contents: read
@@ -26,31 +26,17 @@ jobs:
         cache: 'npm'
         cache-dependency-path: '**/package-lock.json'
 
-    # Install node-pre-gyp globally to fix canvas build issues
-    - name: Install global dependencies
-      run: sudo npm install -g node-pre-gyp
-
-    # Split into individual steps for better error reporting
-    - name: Install dependencies
+    # Install dependencies with sudo to avoid permission issues
+    - name: npm install, build, and test
       run: |
-        # Set proper permissions
-        mkdir -p ~/.npm
-        chmod -R 777 ~/.npm
-        sudo npm ci
-
-    - name: Build project
-      run: npm run build --if-present
-
-    - name: Run tests
-      run: npm test -- --passWithNoTests
+        sudo npm install -g node-pre-gyp  # Fix for canvas module
+        sudo npm install
+        npm run build --if-present
+        npm test -- --passWithNoTests
       env:
         NODE_ENV: test
         DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
         JWT_SECRET: ${{ secrets.JWT_SECRET }}
-
-    # Debug step to check package.json contents
-    - name: Check package.json
-      run: cat package.json
 
     - name: Upload artifact for deployment job
       uses: actions/upload-artifact@v4
@@ -80,11 +66,7 @@ jobs:
       with:
         name: node-app
 
-    # Debug step to check package.json after download
-    - name: Check package.json after download
-      run: cat package.json
-
-    # Add this step to ensure module mode matches your code
+    # Minimal diagnostic check
     - name: Check module system
       run: |
         if grep -q "\"type\":\s*\"module\"" package.json; then
@@ -92,84 +74,10 @@ jobs:
         else
           echo "Project uses CommonJS modules"
         fi
-        echo "First 5 lines of server.js:"
-        head -n 5 server.js
 
-    # Install node-pre-gyp globally in deployment phase too
-    - name: Install global dependencies
-      run: sudo npm install -g node-pre-gyp
-      
+    # Install production dependencies
     - name: Install production dependencies
-      run: |
-        # Set proper permissions
-        mkdir -p ~/.npm
-        chmod -R 777 ~/.npm
-        # Install dependencies with detailed logs
-        sudo npm ci --only=production --loglevel verbose
-        # List installed modules
-        echo "Installed node_modules:"
-        find node_modules -type d -maxdepth 1 | sort
-
-    # Add module debug script - with correct ES modules syntax
-    - name: Create module debug script
-      run: |
-        mkdir -p scripts
-        cat > scripts/azure-debug.js << 'EOF'
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const rootDir = path.resolve(__dirname, '..');
-
-console.log('=== Azure Module Debug ===');
-console.log('Running in ES modules mode');
-
-// Define packageJson at the top level so it's available throughout the script
-let packageJson;
-
-// Check package.json for type field
-const packageJsonPath = path.join(rootDir, 'package.json');
-try {
-  packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-  console.log(`Package name: ${packageJson.name}`);
-  console.log(`Package type: ${packageJson.type || 'not set (default: commonjs)'}`);
-  console.log(`Dependencies: ${Object.keys(packageJson.dependencies || {}).length}`);
-  console.log(`Dev Dependencies: ${Object.keys(packageJson.devDependencies || {}).length}`);
-} catch (err) {
-  console.error(`Error reading package.json: ${err.message}`);
-  process.exit(1);
-}
-
-// Check if server.js exists
-const serverJsPath = path.join(rootDir, 'server.js');
-if (!fs.existsSync(serverJsPath)) {
-  console.error('server.js not found in root directory!');
-  process.exit(1);
-}
-
-try {
-  const serverCode = fs.readFileSync(serverJsPath, 'utf8');
-  console.log('Server.js found and analyzed');
-} catch (err) {
-  console.error(`Error reading server.js: ${err.message}`);
-}
-
-console.log('=== Debug Complete ===');
-EOF
-        
-    - name: Check server.js for import syntax
-      run: |
-        echo "First 20 lines of server.js:"
-        head -n 20 server.js
-        echo "Looking for import statements:"
-        grep -n "import " server.js || echo "No import statements found"
-        echo "Looking for require statements:"
-        grep -n "require(" server.js || echo "No require statements found"
-
-    - name: List files for debugging
-      run: ls -la && ls -la node_modules || echo "No node_modules directory found"
+      run: sudo npm install --production
 
     - name: 'Deploy to Azure WebApp'
       id: deploy-to-webapp
