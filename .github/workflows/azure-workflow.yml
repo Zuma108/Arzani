@@ -173,7 +173,3 @@ jobs:
       run: |
         echo "Ensuring app is started..."
         az webapp start --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group Arzani || echo "Could not start web app"
-
-    # Run the remove-slot script
-    - name: Remove slot
-      run: bash scripts/remove-slot.sh
