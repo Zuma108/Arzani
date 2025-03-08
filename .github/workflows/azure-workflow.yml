@@ -69,9 +69,9 @@ jobs:
     - name: Install production dependencies
       run: npm ci --only=production
       
-    # Add brief delay before deployment to ensure any in-progress operations complete
+    # Add longer delay before deployment to ensure any in-progress operations complete
     - name: Wait before deployment
-      run: sleep 30
+      run: sleep 60  # Increased delay from 30 to 60 seconds
       
     - name: 'Deploy to Azure WebApp'
       id: deploy-to-webapp
@@ -86,12 +86,12 @@ jobs:
           WEBSITE_NODE_DEFAULT_VERSION=~18.19.0
           WEBSITE_WEBDEPLOY_USE_SCM=true
     
-    # Add retry logic in case of initial deployment failure
+    # Add retry logic with longer delay in case of initial deployment failure
     - name: 'Retry deployment if needed'
       if: failure() && steps.deploy-to-webapp.conclusion == 'failure'
       run: |
-        echo "First deployment attempt failed, waiting 60 seconds before retry..."
-        sleep 60
+        echo "First deployment attempt failed, waiting 120 seconds before retry..."
+        sleep 120  # Increased delay from 60 to 120 seconds
     
     - name: 'Retry Azure WebApp Deployment'
       if: failure() && steps.deploy-to-webapp.conclusion == 'failure'
