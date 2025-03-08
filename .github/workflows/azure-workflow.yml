@@ -68,13 +68,11 @@ jobs:
 
     - name: Install production dependencies
       run: npm ci --only=production
-
-    # Add step to stop any running processes (optional)
-    - name: Stop webapp (if needed)
-      run: |
-        echo "Ensuring clean deployment target"
-        # No actual stop command executed - Azure handles this automatically
-
+      
+    # Add brief delay before deployment to ensure any in-progress operations complete
+    - name: Wait before deployment
+      run: sleep 30
+      
     - name: 'Deploy to Azure WebApp'
       id: deploy-to-webapp
       uses: azure/webapps-deploy@v2
@@ -86,3 +84,24 @@ jobs:
         app-settings: |
           SCM_DO_BUILD_DURING_DEPLOYMENT=true
           WEBSITE_NODE_DEFAULT_VERSION=~18.19.0
+          WEBSITE_WEBDEPLOY_USE_SCM=true
+    
+    # Add retry logic in case of initial deployment failure
+    - name: 'Retry deployment if needed'
+      if: failure() && steps.deploy-to-webapp.conclusion == 'failure'
+      run: |
+        echo "First deployment attempt failed, waiting 60 seconds before retry..."
+        sleep 60
+    
+    - name: 'Retry Azure WebApp Deployment'
+      if: failure() && steps.deploy-to-webapp.conclusion == 'failure'
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: ${{ env.AZURE_WEBAPP_NAME }}
+        publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+        package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+        enable-oryx-build: true
+        app-settings: |
+          SCM_DO_BUILD_DURING_DEPLOYMENT=true
+          WEBSITE_NODE_DEFAULT_VERSION=~18.19.0
+          WEBSITE_WEBDEPLOY_USE_SCM=true
