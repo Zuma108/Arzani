@@ -168,8 +168,22 @@ jobs:
         echo "Checking current deployment status..."
         az webapp deployment list --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace || echo "Unable to list deployments"
         
+        # Get detailed diagnostic information
+        echo "Getting detailed deployment logs..."
+        az webapp log deployment show --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace || echo "Unable to fetch deployment logs"
+        
+        # Check for locks on the web app
+        echo "Checking for resource locks..."
+        az lock list --resource-group my-marketplace --resource-name ${{ env.AZURE_WEBAPP_NAME }} --resource-type Microsoft.Web/sites || echo "No locks found or unable to check"
+        
         echo "Checking if the app is running..."
         az webapp show --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace --query state || echo "Unable to check app state"
+        
+        # Force stop with extended timeout before retry
+        echo "Forcefully stopping the app with extended timeout..."
+        az webapp stop --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace || echo "Could not stop the web app"
+        echo "Waiting for processes to terminate..."
+        sleep 45  # Extended wait time
         
         echo "Let's try to restart the app and deploy again..."
         az webapp restart --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace || echo "Could not restart app"
@@ -182,8 +196,21 @@ jobs:
         zip -r release.zip . || echo "Failed to create zip file"
         
         # Try direct deployment with correct subscription and resource group
-        echo "Attempting direct zip deployment..."
-        az webapp deployment source config-zip --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace --src release.zip || echo "Manual deployment also failed"
+        echo "Attempting direct zip deployment with force flag..."
+        az webapp deployment source config-zip --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace --src release.zip --force true || echo "Manual deployment also failed"
+        
+        # If direct deployment fails, try with slot swap approach
+        if [ $? -ne 0 ]; then
+          echo "Attempting slot-based deployment..."
+          # Try to create a deployment slot if it doesn't exist
+          az webapp deployment slot create --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace --slot staging || echo "Could not create staging slot"
+          
+          # Deploy to staging slot
+          az webapp deployment source config-zip --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace --src release.zip --slot staging || echo "Slot deployment failed"
+          
+          # Attempt to swap slots
+          az webapp deployment slot swap --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace --slot staging --target-slot production || echo "Slot swap failed"
+        fi
         
         echo "Please check Azure Portal for more details on the deployment status"
         
