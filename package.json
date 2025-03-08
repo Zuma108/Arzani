@@ -9,6 +9,7 @@
     "dev": "nodemon server.js",
     "test": "jest --passWithNoTests",
     "test:watch": "jest --watch",
+    "lint": "echo 'Linting not configured yet'",
     "migrate": "node scripts/run-migrations.js",
     "tunnel": "ngrok http 5000 --config=ngrok.config.js",
     "postinstall": "npm rebuild canvas --update-binary",
