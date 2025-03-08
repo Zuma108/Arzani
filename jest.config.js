@@ -1,7 +1,8 @@
 export default {
   testEnvironment: 'node',
-  transform: {},
-  // Remove extensionsToTreatAsEsm since .js is already inferred from package.json type:module
+  transform: {
+    '^.+\\.jsx?$': 'babel-jest'
+  },
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },
