@@ -26,9 +26,17 @@ jobs:
         cache: 'npm'
         cache-dependency-path: '**/package-lock.json'
 
+    # Install node-pre-gyp globally to fix canvas build issues
+    - name: Install global dependencies
+      run: npm install -g node-pre-gyp
+
     # Split into individual steps for better error reporting
     - name: Install dependencies
-      run: npm ci
+      run: |
+        # Set proper permissions
+        mkdir -p ~/.npm
+        chmod -R 777 ~/.npm
+        npm ci
 
     - name: Build project
       run: npm run build --if-present
@@ -87,8 +95,15 @@ jobs:
         echo "First 5 lines of server.js:"
         head -n 5 server.js
 
+    # Install node-pre-gyp globally in deployment phase too
+    - name: Install global dependencies
+      run: npm install -g node-pre-gyp
+      
     - name: Install production dependencies
       run: |
+        # Set proper permissions
+        mkdir -p ~/.npm
+        chmod -R 777 ~/.npm
         # Install dependencies with detailed logs
         npm ci --only=production --loglevel verbose
         # List installed modules
