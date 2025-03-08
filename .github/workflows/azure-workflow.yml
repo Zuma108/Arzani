@@ -23,20 +23,26 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ env.NODE_VERSION }}
-        # Improve caching mechanism
         cache: 'npm'
         cache-dependency-path: '**/package-lock.json'
 
-    - name: npm install, build, and test
-      run: |
-        npm ci
-        npm run build --if-present
-        npm test -- --passWithNoTests
+    # Split into individual steps for better error reporting
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build project
+      run: npm run build --if-present
+
+    - name: Run tests
+      run: npm test -- --passWithNoTests
       env:
-        # Set up environment variables for testing
         NODE_ENV: test
         DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
         JWT_SECRET: ${{ secrets.JWT_SECRET }}
+
+    # Debug step to check package.json contents
+    - name: Check package.json
+      run: cat package.json
 
     - name: Upload artifact for deployment job
       uses: actions/upload-artifact@v4
@@ -66,12 +72,47 @@ jobs:
       with:
         name: node-app
 
-    - name: Install production dependencies
-      run: npm ci --only=production
+    # Debug step to check package.json after download
+    - name: Check package.json after download
+      run: cat package.json
 
-    # Add debugging to see what files are being deployed
-    - name: List files
-      run: ls -R
+    - name: Install production dependencies
+      run: |
+        # Install dependencies with detailed logs
+        npm ci --only=production --loglevel verbose
+        # List installed modules
+        echo "Installed node_modules:"
+        find node_modules -type d -maxdepth 1 | sort
+
+    # Add module debug script
+    - name: Create module debug script
+      run: |
+        mkdir -p scripts
+        cat > scripts/azure-debug.js << 'EOL'
+        // Debug script content - see above
+        EOL
+        
+    - name: Add debug script to package.json
+      run: |
+        node -e "
+          const fs = require('fs');
+          const pkg = JSON.parse(fs.readFileSync('package.json'));
+          pkg.scripts = pkg.scripts || {};
+          pkg.scripts.debug = 'node scripts/azure-debug.js';
+          fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));
+        "
+        
+    - name: Check server.js for import syntax
+      run: |
+        echo "First 20 lines of server.js:"
+        head -n 20 server.js
+        echo "Looking for import statements:"
+        grep -n "import " server.js || echo "No import statements found"
+        echo "Looking for require statements:"
+        grep -n "require(" server.js || echo "No require statements found"
+
+    - name: List files for debugging
+      run: ls -la && ls -la node_modules || echo "No node_modules directory found"
 
     - name: 'Deploy to Azure WebApp'
       id: deploy-to-webapp
