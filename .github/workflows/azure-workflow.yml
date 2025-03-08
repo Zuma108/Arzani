@@ -26,33 +26,17 @@ jobs:
         cache: 'npm'
         cache-dependency-path: '**/package-lock.json'
 
-    # First, install node-pre-gyp as a direct dependency
-    - name: Add node-pre-gyp as dependency
-      run: |
-        echo "Adding node-pre-gyp to package.json..."
-        if grep -q "node-pre-gyp" package.json; then
-          echo "node-pre-gyp already in package.json"
-        else
-          npm install node-pre-gyp --save-dev
-        fi
-
-    # Regular install with no sudo
+    # Install global dependencies first
+    - name: Install node-pre-gyp globally
+      run: sudo npm install -g node-pre-gyp
+      
+    # Regular npm install
     - name: npm install
       run: npm install
 
-    # Critical step: Fix node-pre-gyp permissions BEFORE rebuild
-    - name: Fix node-pre-gyp permissions
-      run: |
-        find node_modules -name "node-pre-gyp" -type f -exec chmod +x {} \;
-        if [ -f "./node_modules/.bin/node-pre-gyp" ]; then
-          chmod +x ./node_modules/.bin/node-pre-gyp
-          ls -la ./node_modules/.bin/node-pre-gyp
-          echo "Made node-pre-gyp executable"
-        fi
-
-    # Rebuild canvas now that permissions are correct
+    # Rebuild canvas using sudo
     - name: Rebuild canvas module
-      run: npm rebuild canvas --update-binary
+      run: sudo npm rebuild canvas --update-binary
 
     # Continue with build and test
     - name: Build and test
@@ -101,28 +85,17 @@ jobs:
           echo "Project uses CommonJS modules"
         fi
 
-    # Same pattern in deployment - install as dependency first
-    - name: Add node-pre-gyp as dependency
-      run: |
-        echo "Adding node-pre-gyp to package.json..."
-        npm install node-pre-gyp --save-dev
+    # Install node-pre-gyp globally for deployment
+    - name: Install node-pre-gyp globally
+      run: sudo npm install -g node-pre-gyp
 
-    # Regular install, no sudo
+    # Install production dependencies
     - name: Install production dependencies
       run: npm install --production
       
-    # Fix permissions again in deployment context
-    - name: Fix node-pre-gyp permissions
-      run: |
-        find node_modules -name "node-pre-gyp" -type f -exec chmod +x {} \;
-        if [ -f "./node_modules/.bin/node-pre-gyp" ]; then
-          chmod +x ./node_modules/.bin/node-pre-gyp
-          ls -la ./node_modules/.bin/node-pre-gyp
-        fi
-        
-    # Rebuild canvas now that permissions are correct
+    # Rebuild canvas with sudo
     - name: Rebuild canvas module
-      run: npm rebuild canvas --update-binary
+      run: sudo npm rebuild canvas --update-binary
 
     - name: 'Deploy to Azure WebApp'
       id: deploy-to-webapp
