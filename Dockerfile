@@ -4,17 +4,18 @@ WORKDIR /usr/src/app
 
 # Install dependencies
 COPY package*.json ./
-RUN npm ci --only=production
 
-# Install specific dependencies for canvas if needed
+# Install build dependencies for canvas first
 RUN apk add --no-cache \
     build-base \
     g++ \
     cairo-dev \
     jpeg-dev \
     pango-dev \
-    giflib-dev \
-    && npm rebuild canvas --update-binary
+    giflib-dev
+
+# Install production dependencies with unsafe-perm
+RUN npm ci --only=production --unsafe-perm
 
 # Copy app source
 COPY . .
