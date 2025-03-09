@@ -16,16 +16,28 @@ jobs:
       contents: read #This is required for actions/checkout
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies for canvas
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev g++
 
       - name: Set up Node.js version
         uses: actions/setup-node@v3
         with:
           node-version: '18.x'
 
-      - name: npm install, build, and test
+      - name: Install npm dependencies
+        run: npm install --legacy-peer-deps --unsafe-perm
+
+      - name: Rebuild canvas package
         run: |
-          npm install
+          npm rebuild canvas --update-binary --unsafe-perm || echo 'Canvas rebuild failed but continuing'
+
+      - name: Build and test
+        run: |
           npm run build --if-present
           npm run test --if-present
 
@@ -71,4 +83,3 @@ jobs:
           app-name: 'Arzani'
           slot-name: 'Production'
           package: .
-          
