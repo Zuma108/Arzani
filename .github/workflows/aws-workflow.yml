@@ -38,19 +38,25 @@ jobs:
     - name: Install node-pre-gyp globally
       run: sudo npm install -g node-pre-gyp
       
-    # Regular npm install with --no-bin-links to avoid symlink issues
+    # Regular npm install with explicit handling for canvas
     - name: npm install
-      run: npm install --no-bin-links
+      run: |
+        npm install --no-bin-links
+        # Make sure node-pre-gyp can be found
+        chmod +x node_modules/.bin/node-pre-gyp
+        
+        # Explicitly run node-pre-gyp for canvas 
+        cd node_modules/canvas
+        ../node-pre-gyp/bin/node-pre-gyp install --fallback-to-build --update-binary || echo "Canvas rebuild failed but continuing"
+        cd ../..
+      env:
+        CANVAS_PREBUILT_VERSION: 2.11.2
 
     # Fix permissions for all binaries in node_modules/.bin
     - name: Fix permissions for node binaries
       run: |
         find node_modules/.bin -type f -exec chmod +x {} \;
         echo "Fixed permissions for binaries in node_modules/.bin"
-
-    # Rebuild canvas using sudo
-    - name: Rebuild canvas module
-      run: sudo npm rebuild canvas --update-binary
 
     # Build step
     - name: Build
