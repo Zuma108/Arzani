@@ -12,7 +12,7 @@
     "lint": "echo 'Linting not configured yet'",
     "migrate": "node scripts/run-migrations.js",
     "tunnel": "ngrok http 5000 --config=ngrok.config.js",
-    "postinstall": "npm rebuild canvas --update-binary --unsafe-perm || echo 'Canvas rebuild failed but continuing'",
+    "postinstall": "npm rebuild canvas --update-binary --unsafe-perm=true --build-from-source=true || echo 'Canvas rebuild failed but continuing'",
     "prepare-deploy": "node scripts/clean-for-deploy.js",
     "add-market-trends-index": "node migrations/add-unique-index-to-market-trends-mv.js",
     "build": "echo 'Add your build commands here if needed'"
@@ -85,5 +85,13 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "canvas": {
+    "svgBackend": "svg2pdf"
+  },
+  "config": {
+    "canvas": {
+      "build-from-source": true
+    }
+  }
 }
