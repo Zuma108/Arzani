@@ -28,6 +28,12 @@ jobs:
         cache: 'npm'
         cache-dependency-path: '**/package-lock.json'
 
+    # Install canvas dependencies before any npm operations
+    - name: Install dependencies for canvas
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev
+
     # Install global dependencies first
     - name: Install node-pre-gyp globally
       run: sudo npm install -g node-pre-gyp
