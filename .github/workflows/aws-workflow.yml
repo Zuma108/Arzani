@@ -1,4 +1,4 @@
-name: AWS Deployment
+name: Deploy to Amazon EC2 - London
 
 on:
   push:
@@ -6,11 +6,10 @@ on:
   workflow_dispatch:
 
 env:
-  NODE_VERSION: '18.x'
-  AWS_REGION: 'us-east-1'  # Change to your preferred AWS region
-  EB_APP_NAME: 'my-marketplace'  # Name for your Elastic Beanstalk application
-  EB_ENV_NAME: 'MyMarketplace-env'  # Name for your Elastic Beanstalk environment
-  S3_BUCKET: 'my-marketplace-deployments'  # S3 bucket for deployment artifacts
+  AWS_REGION: eu-west-2                     # London region
+  EC2_HOST: 13.42.54.24                     # Your EC2 instance public IP
+  EC2_INSTANCE_ID: i-019286270466a5ea6      # Your EC2 instance ID
+  NODE_VERSION: '18.x'                      # matches your engine requirements in package.json
 
 permissions:
   contents: read
@@ -66,27 +65,37 @@ jobs:
         DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
         JWT_SECRET: ${{ secrets.JWT_SECRET }}
         
-    # Create ZIP deployment package for AWS
-    - name: Generate deployment package
+    # Create deployment package
+    - name: Create deployment package
       run: |
-        zip -r deploy.zip . -x "node_modules/*" "tests/*" ".git/*" ".github/*" "*.md" "*.env"
-        echo "Created deployment package: deploy.zip"
+        # Create a directory for production files
+        mkdir -p dist
+        
+        # Copy necessary files for deployment (excluding development files)
+        rsync -av --exclude='.git' --exclude='.github' --exclude='node_modules' --exclude='tests' \
+          --exclude='*.md' --exclude='*.env' --exclude='*.log' . dist/
+        
+        # Create package.json without dev dependencies for production
+        jq 'del(.devDependencies)' package.json > dist/package.json
+        
+        # Create deployment archive
+        cd dist && zip -r ../deployment.zip .
+        cd ..
+        echo "Created deployment package: deployment.zip"
 
     - name: Upload artifact for deployment job
       uses: actions/upload-artifact@v4
       with:
         name: node-app
-        path: deploy.zip
+        path: deployment.zip
 
   deploy:
-    permissions:
-      contents: read
-      id-token: write  # Required for requesting the JWT
-    runs-on: ubuntu-latest
+    name: Deploy
     needs: build
+    runs-on: ubuntu-latest
     environment:
       name: 'Production'
-      url: ${{ steps.deploy.outputs.webapp-url }}
+      url: ${{ format('http://{0}:3000', env.EC2_HOST) }}
 
     steps:
     - name: Download artifact from build job
@@ -109,152 +118,114 @@ jobs:
         aws sts get-caller-identity
         echo "Successfully authenticated with AWS"
         
-    # Check if Elastic Beanstalk application exists
-    - name: Check Elastic Beanstalk application
-      id: check-eb-app
+    # Check EC2 instance status
+    - name: Check EC2 instance status
       run: |
-        if aws elasticbeanstalk describe-applications --application-names ${{ env.EB_APP_NAME }} &>/dev/null; then
-          echo "Application ${{ env.EB_APP_NAME }} exists"
-          echo "exists=true" >> $GITHUB_OUTPUT
-        else
-          echo "Application ${{ env.EB_APP_NAME }} does not exist"
-          echo "exists=false" >> $GITHUB_OUTPUT
-        fi
+        echo "Checking EC2 instance status..."
+        aws ec2 describe-instance-status --instance-id ${{ env.EC2_INSTANCE_ID }} --output json
         
-    # Create Elastic Beanstalk application if it doesn't exist
-    - name: Create Elastic Beanstalk application
-      if: steps.check-eb-app.outputs.exists == 'false'
-      run: |
-        aws elasticbeanstalk create-application \
-          --application-name ${{ env.EB_APP_NAME }} \
-          --description "My Marketplace Application"
-        echo "Created Elastic Beanstalk application: ${{ env.EB_APP_NAME }}"
+        # Get instance state
+        INSTANCE_STATE=$(aws ec2 describe-instances --instance-id ${{ env.EC2_INSTANCE_ID }} \
+          --query "Reservations[0].Instances[0].State.Name" --output text)
           
-    # Check if S3 bucket exists
-    - name: Check S3 bucket
-      id: check-s3-bucket
-      run: |
-        if aws s3api head-bucket --bucket ${{ env.S3_BUCKET }} 2>/dev/null; then
-          echo "S3 bucket ${{ env.S3_BUCKET }} exists"
-          echo "exists=true" >> $GITHUB_OUTPUT
-        else
-          echo "S3 bucket ${{ env.S3_BUCKET }} does not exist"
-          echo "exists=false" >> $GITHUB_OUTPUT
-        fi
-        
-    # Create S3 bucket if it doesn't exist
-    - name: Create S3 bucket
-      if: steps.check-s3-bucket.outputs.exists == 'false'
-      run: |
-        aws s3api create-bucket \
-          --bucket ${{ env.S3_BUCKET }} \
-          --region ${{ env.AWS_REGION }} \
-          $( [[ "${{ env.AWS_REGION }}" != "us-east-1" ]] && echo "--create-bucket-configuration LocationConstraint=${{ env.AWS_REGION }}" )
-        echo "Created S3 bucket: ${{ env.S3_BUCKET }}"
-        
-    # Upload deployment package to S3
-    - name: Upload deployment package to S3
-      run: |
-        aws s3 cp deploy.zip s3://${{ env.S3_BUCKET }}/deploy-${{ github.sha }}.zip
-        echo "Uploaded deployment package to S3"
-        
-    # Check if Elastic Beanstalk environment exists
-    - name: Check Elastic Beanstalk environment
-      id: check-eb-env
-      run: |
-        if aws elasticbeanstalk describe-environments --environment-names ${{ env.EB_ENV_NAME }} --application-name ${{ env.EB_APP_NAME }} | grep -q "\"Status\": \"Ready\|Launching\|Updating\""; then
-          echo "Environment ${{ env.EB_ENV_NAME }} exists"
-          echo "exists=true" >> $GITHUB_OUTPUT
-        else
-          echo "Environment ${{ env.EB_ENV_NAME }} does not exist or is in an invalid state"
-          echo "exists=false" >> $GITHUB_OUTPUT
-        fi
-        
-    # Create Elastic Beanstalk environment if it doesn't exist
-    - name: Create Elastic Beanstalk environment
-      if: steps.check-eb-env.outputs.exists == 'false'
-      run: |
-        # Check if platform exists
-        PLATFORM=$(aws elasticbeanstalk list-available-solution-stacks | grep -m1 "64bit Amazon Linux 2.*running Node.js" | sed 's/^.*"\(.*\)".*$/\1/')
-        
-        if [ -n "$PLATFORM" ]; then
-          echo "Using platform: $PLATFORM"
+        if [ "$INSTANCE_STATE" != "running" ]; then
+          echo "Instance is not running. Current state: $INSTANCE_STATE"
+          echo "Starting the instance..."
+          aws ec2 start-instances --instance-id ${{ env.EC2_INSTANCE_ID }}
           
-          aws elasticbeanstalk create-environment \
-            --application-name ${{ env.EB_APP_NAME }} \
-            --environment-name ${{ env.EB_ENV_NAME }} \
-            --solution-stack-name "$PLATFORM" \
-            --option-settings file://eb-options.json || echo "Failed to create environment with options file"
-            
-          # If the above command fails, try without options file
-          if [ $? -ne 0 ]; then
-            aws elasticbeanstalk create-environment \
-              --application-name ${{ env.EB_APP_NAME }} \
-              --environment-name ${{ env.EB_ENV_NAME }} \
-              --solution-stack-name "$PLATFORM"
+          echo "Waiting for instance to be running..."
+          aws ec2 wait instance-running --instance-id ${{ env.EC2_INSTANCE_ID }}
+          
+          echo "Instance is now running. Waiting 30 seconds for services to start..."
+          sleep 30
+        else
+          echo "Instance is already running."
+        fi
+
+    # Setup SSH
+    - name: Setup SSH key
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/ec2_key.pem
+        chmod 600 ~/.ssh/ec2_key.pem
+        
+        # Add the host to known_hosts to avoid prompt during connection
+        ssh-keyscan -H ${{ env.EC2_HOST }} >> ~/.ssh/known_hosts
+
+    # Deploy to EC2
+    - name: Deploy to EC2
+      run: |
+        echo "Deploying application to EC2 instance..."
+        
+        # Transfer deployment package to the server
+        scp -i ~/.ssh/ec2_key.pem deployment.zip ec2-user@${{ env.EC2_HOST }}:~/deployment.zip
+        
+        # Connect to server and deploy
+        ssh -i ~/.ssh/ec2_key.pem ec2-user@${{ env.EC2_HOST }} << 'EOF'
+          echo "Connected to EC2 instance in London region"
+          
+          # Create directory for the app if it doesn't exist
+          mkdir -p ~/app
+          
+          # Backup current deployment if it exists
+          if [ -d ~/app/current ]; then
+            timestamp=$(date +%Y%m%d%H%M%S)
+            mkdir -p ~/app/backup
+            mv ~/app/current ~/app/backup/backup_$timestamp
           fi
           
-          echo "Created Elastic Beanstalk environment: ${{ env.EB_ENV_NAME }}"
-          echo "Waiting for environment to be ready..."
-          aws elasticbeanstalk wait environment-exists \
-            --application-name ${{ env.EB_APP_NAME }} \
-            --environment-name ${{ env.EB_ENV_NAME }}
-        else
-          echo "No suitable Node.js platform found!"
-          exit 1
-        fi
-        
-    # Deploy to Elastic Beanstalk
-    - name: Deploy to Elastic Beanstalk
-      id: deploy
-      run: |
-        # Create a new application version
-        aws elasticbeanstalk create-application-version \
-          --application-name ${{ env.EB_APP_NAME }} \
-          --version-label "ver-${{ github.sha }}" \
-          --source-bundle S3Bucket="${{ env.S3_BUCKET }}",S3Key="deploy-${{ github.sha }}.zip" \
-          --description "Deployment from GitHub Actions"
+          # Create new deployment directory
+          mkdir -p ~/app/current
           
-        # Update the environment to use the new version
-        aws elasticbeanstalk update-environment \
-          --application-name ${{ env.EB_APP_NAME }} \
-          --environment-name ${{ env.EB_ENV_NAME }} \
-          --version-label "ver-${{ github.sha }}"
+          # Extract deployment package
+          unzip -o ~/deployment.zip -d ~/app/current
           
-        # Wait for deployment to complete
-        echo "Waiting for environment update to complete..."
-        aws elasticbeanstalk wait environment-updated \
-          --application-name ${{ env.EB_APP_NAME }} \
-          --environment-name ${{ env.EB_ENV_NAME }}
+          # Install production dependencies
+          cd ~/app/current
+          npm install --production
           
-        # Get environment URL
-        ENV_URL=$(aws elasticbeanstalk describe-environments \
-          --environment-names ${{ env.EB_ENV_NAME }} \
-          --application-name ${{ env.EB_APP_NAME }} \
-          --query "Environments[0].CNAME" \
-          --output text)
+          # Install PM2 if not already installed
+          if ! command -v pm2 &> /dev/null; then
+            echo "Installing PM2..."
+            npm install -g pm2
+          fi
           
-        echo "Application deployed successfully to $ENV_URL"
-        echo "webapp-url=http://$ENV_URL" >> $GITHUB_OUTPUT
-        
-    # Verify deployment status
+          # Stop existing PM2 process if running
+          pm2 stop marketplace 2>/dev/null || true
+          
+          # Start application with PM2
+          echo "Starting application..."
+          pm2 start server.js --name marketplace
+          
+          # Save PM2 process list to resurrect after reboot
+          pm2 save
+          
+          # Setup PM2 to start on system startup if not already set
+          pm2 startup | grep -v "sudo" | sh
+          
+          # Clean up deployment package
+          rm ~/deployment.zip
+          
+          echo "Deployment completed successfully!"
+        EOF
+
+    # Verify deployment
     - name: Verify deployment
       run: |
-        ENV_HEALTH=$(aws elasticbeanstalk describe-environments \
-          --environment-names ${{ env.EB_ENV_NAME }} \
-          --application-name ${{ env.EB_APP_NAME }} \
-          --query "Environments[0].Health" \
-          --output text)
-          
-        ENV_STATUS=$(aws elasticbeanstalk describe-environments \
-          --environment-names ${{ env.EB_ENV_NAME }} \
-          --application-name ${{ env.EB_APP_NAME }} \
-          --query "Environments[0].Status" \
-          --output text)
-          
-        echo "Deployment status: $ENV_STATUS"
-        echo "Environment health: $ENV_HEALTH"
+        echo "Verifying deployment..."
+        sleep 5
         
-        if [ "$ENV_HEALTH" != "Green" ]; then
-          echo "Warning: Environment health is not optimal. Check AWS Console for details."
+        # Use curl to check if the application is responding
+        response_code=$(curl -s -o /dev/null -w "%{http_code}" http://${{ env.EC2_HOST }}:3000 || echo "failed")
+        
+        if [[ $response_code == "200" ]]; then
+          echo "✅ Application successfully deployed and responding with status code 200"
+          echo "Application URL: http://${{ env.EC2_HOST }}:3000"
+        else
+          echo "⚠️ Application check returned status code: $response_code"
+          echo "It may take a few moments for the application to fully start"
+          echo "Application URL: http://${{ env.EC2_HOST }}:3000"
+          
+          # Don't fail the workflow, as the app might just need more time to start
+          echo "Deployment completed, but application verification needs manual check"
         fi
