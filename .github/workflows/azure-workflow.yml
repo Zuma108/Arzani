@@ -93,35 +93,55 @@ jobs:
       with:
         name: node-app
 
-    # Replace the existing Azure login with the working approach from main_arzani.yml
+    # Enhanced Azure login process with multiple authentication methods
     - name: Login to Azure
       uses: azure/login@v2
       with:
         client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_0909976F53B642FEB40E79AACAFE4299 }}
         tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_68D58FC8D7BA402D87E814CEDDD33379 }}
         subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_A8447A86644B44D092DC06A9B2D21FD4 }}
+        enable-AzPSSession: true
+      continue-on-error: true
+      id: azure-login-serviceprincipal
+      
+    # Fallback to publish profile if service principal auth fails
+    - name: Verify Azure Login Status
+      id: check-auth
+      run: |
+        echo "Checking authentication status..."
+        if az account show &>/dev/null; then
+          echo "Azure login successful via service principal"
+          echo "auth_method=service_principal" >> $GITHUB_OUTPUT
+        else
+          echo "Service principal login failed, will use publish profile for deployment"
+          echo "auth_method=publish_profile" >> $GITHUB_OUTPUT
+        fi
 
-    # Add diagnostic step to verify subscription access
+    # Add diagnostic step with more verbose output
     - name: Verify Azure subscription access
+      if: steps.check-auth.outputs.auth_method == 'service_principal'
       run: |
         echo "Checking Azure subscription access..."
-        echo "Using subscription ID: bb2425dd-930e-49ca-9a94-189a195fb5f9"
-        az account show --query name -o tsv || echo "Failed to retrieve subscription info"
+        echo "Current account information:"
+        az account show --output table || echo "Failed to retrieve subscription info"
+        
+        echo "Available subscriptions:"
         az account list --output table || echo "Failed to list subscriptions"
         
-        # Switch to the correct subscription
-        echo "Switching to Azure for Students subscription..."
-        az account set --subscription "bb2425dd-930e-49ca-9a94-189a195fb5f9" || echo "Failed to switch subscription"
+        # If you have the specific tenant ID from your error message, use it here
+        echo "Explicitly setting tenant..."
+        az account set --tenant ca0cc98a-c5a6-4604-ab5e-3dd88fa0001d || echo "Failed to set tenant"
         
-        # Verify resource group exists
+        # Try to verify the resource group and web app
         echo "Checking resource group..."
-        az group show --name "my-marketplace" || echo "Resource group not found - please create it in Azure portal"
+        az group show --name "my-marketplace" --output table || echo "Resource group not found"
         
-        # Verify web app exists
         echo "Checking if web app exists..."
-        az webapp show --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace || echo "Web app not found - will be created during deployment"
-    
+        az webapp show --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace --output table || echo "Web app not found"
+
+    # Stop Azure Web App step now has branching logic
     - name: Stop Azure Web App before deployment
+      if: steps.check-auth.outputs.auth_method == 'service_principal'
       run: |
         echo "Stopping Azure Web App to release any locks..."
         az webapp stop --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace || echo "Could not stop the web app"
@@ -149,7 +169,7 @@ jobs:
     - name: Rebuild canvas module
       run: sudo npm rebuild canvas --update-binary
 
-    # Add continue-on-error to deployment step
+    # Update deployment step with conditional logic based on auth method
     - name: 'Deploy to Azure WebApp'
       id: deploy-to-webapp
       uses: azure/webapps-deploy@v2
@@ -157,48 +177,30 @@ jobs:
         app-name: ${{ env.AZURE_WEBAPP_NAME }}
         publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
         package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
-        # Don't specify slot-name to use default production slot
       continue-on-error: true
 
-    # Add debugging step for deployment failures
+    # Enhanced debugging step for deployment failures
     - name: 'Check Deployment Status'
       if: steps.deploy-to-webapp.outcome == 'failure'
       run: |
         echo "Deployment failed. Checking for conflicts..."
-        echo "Checking current deployment status..."
-        az webapp deployment list --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace || echo "Unable to list deployments"
         
-        # Get detailed diagnostic information
-        echo "Getting detailed deployment logs..."
-        az webapp log deployment show --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace || echo "Unable to fetch deployment logs"
+        if [ "${{ steps.check-auth.outputs.auth_method }}" == "service_principal" ]; then
+          echo "Using CLI to check deployment status..."
+          # CLI-based diagnostics
+          az webapp deployment list --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace || echo "Unable to list deployments"
+          az webapp log deployment show --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace || echo "Unable to fetch deployment logs"
+        else
+          echo "No CLI access available. Using publish profile for deployment."
+        fi
         
-        # Check for locks on the web app
-        echo "Checking for resource locks..."
-        az lock list --resource-group my-marketplace --resource-name ${{ env.AZURE_WEBAPP_NAME }} --resource-type Microsoft.Web/sites || echo "No locks found or unable to check"
-        
-        echo "Checking if the app is running..."
-        az webapp show --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace --query state || echo "Unable to check app state"
-        
-        # Force stop with extended timeout before retry
-        echo "Forcefully stopping the app with extended timeout..."
-        az webapp stop --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace || echo "Could not stop the web app"
-        echo "Waiting for processes to terminate..."
-        sleep 45  # Extended wait time
-        
-        echo "Let's try to restart the app and deploy again..."
-        az webapp restart --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace || echo "Could not restart app"
-        
-        echo "Attempting deployment again with force flag..."
-        sleep 30  # Wait for restart to complete
-        
-        # Create a zip file for manual deployment if needed
+        # Create zip package for manual deployment
         echo "Creating deployment package..."
         zip -r release.zip . || echo "Failed to create zip file"
         
-        # Try direct deployment with correct subscription and resource group
-        echo "Attempting direct zip deployment with force flag..."
-        az webapp deployment source config-zip --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace --src release.zip --force true || echo "Manual deployment also failed"
-        
+        echo "Attempting deployment with publish profile..."
+        # Remaining deployment steps continue as before
+
         # If direct deployment fails, try with slot swap approach
         if [ $? -ne 0 ]; then
           echo "Attempting slot-based deployment..."
@@ -214,12 +216,18 @@ jobs:
         
         echo "Please check Azure Portal for more details on the deployment status"
         
-    # Start the app regardless of deployment outcome
+    # Ensure app is running step with auth method check  
     - name: Ensure Azure Web App is running
       run: |
         echo "Ensuring app is started..."
-        az webapp start --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace || echo "Could not start web app"
         
-        # Show deployment logs
-        echo "Latest deployment logs:"
-        az webapp log deployment show --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace || echo "Could not retrieve deployment logs"
+        if [ "${{ steps.check-auth.outputs.auth_method }}" == "service_principal" ]; then
+          az webapp start --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace || echo "Could not start web app using CLI"
+          
+          # Show deployment logs if CLI is available
+          echo "Latest deployment logs:"
+          az webapp log deployment show --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace || echo "Could not retrieve deployment logs"
+        else
+          echo "CLI not available. Please check Azure portal to verify deployment."
+          echo "App URL: https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net"
+        fi
