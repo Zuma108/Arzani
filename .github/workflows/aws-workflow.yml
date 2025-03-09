@@ -38,25 +38,19 @@ jobs:
     - name: Install node-pre-gyp globally
       run: sudo npm install -g node-pre-gyp
       
-    # Regular npm install with explicit handling for canvas
+    # Regular npm install with --no-bin-links to avoid symlink issues
     - name: npm install
-      run: |
-        npm install --no-bin-links
-        # Make sure node-pre-gyp can be found
-        chmod +x node_modules/.bin/node-pre-gyp
-        
-        # Explicitly run node-pre-gyp for canvas 
-        cd node_modules/canvas
-        ../node-pre-gyp/bin/node-pre-gyp install --fallback-to-build --update-binary || echo "Canvas rebuild failed but continuing"
-        cd ../..
-      env:
-        CANVAS_PREBUILT_VERSION: 2.11.2
+      run: npm install --no-bin-links
 
     # Fix permissions for all binaries in node_modules/.bin
     - name: Fix permissions for node binaries
       run: |
         find node_modules/.bin -type f -exec chmod +x {} \;
         echo "Fixed permissions for binaries in node_modules/.bin"
+
+    # Rebuild canvas using sudo
+    - name: Rebuild canvas module
+      run: sudo npm rebuild canvas --update-binary
 
     # Build step
     - name: Build
@@ -202,21 +196,12 @@ jobs:
             npm install -g pm2
           fi
           
-          # Create .env file with required environment variables
-          echo "Creating environment variables file..."
-          cat > ~/app/current/.env << 'ENVFILE'
-OPENAI_API_KEY='${{ secrets.OPENAI_API_KEY }}'
-NODE_ENV=production
-PORT=3000
-ENVFILE
-          
           # Stop existing PM2 process if running
           pm2 stop marketplace 2>/dev/null || true
           
-          # Start application with PM2 and environment variables
+          # Start application with PM2
           echo "Starting application..."
-          cd ~/app/current
-          pm2 start ecosystem.config.js --env production
+          pm2 start server.js --name marketplace
           
           # Save PM2 process list to resurrect after reboot
           pm2 save
