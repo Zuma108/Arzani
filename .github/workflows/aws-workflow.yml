@@ -7,8 +7,8 @@ on:
 
 env:
   AWS_REGION: eu-west-2                     # London region
-  EC2_HOST: 13.42.54.24                     # Your EC2 instance public IP
-  EC2_INSTANCE_ID: i-019286270466a5ea6      # Your EC2 instance ID
+  EC2_HOST: 13.41.78.175                    # Updated EC2 instance public IP
+  EC2_INSTANCE_ID: i-09eac96a568a22f1c      # Updated EC2 instance ID
   NODE_VERSION: '18.x'                      # matches your engine requirements in package.json
 
 permissions:
@@ -86,7 +86,7 @@ jobs:
         
         # Create deployment archive
         cd dist && zip -r ../deployment.zip . 
-        cd ..
+        cd .. 
         echo "Created deployment package: deployment.zip"
 
     - name: Upload artifact for deployment job
