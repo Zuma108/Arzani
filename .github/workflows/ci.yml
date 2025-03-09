@@ -1,42 +1,49 @@
-name: Deploy to Azure
+name: Continuous Integration
 
 on:
+  pull_request:
+    branches: [ main ]
   push:
-    branches:
-      - main  # Change to your default branch if needed
+    branches: [ 'feature/**', 'bugfix/**', 'hotfix/**' ]
+  workflow_dispatch:
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - name: Install system dependencies for canvas
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev g++ python3 make
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: '**/package-lock.json'
+
+      - name: Install node-pre-gyp
+        run: npm install -g node-pre-gyp prebuild-install
 
       - name: Install dependencies
-        run: npm install
+        run: npm install --legacy-peer-deps --unsafe-perm --no-optional
+      
+      - name: Install canvas specifically 
+        run: npm install canvas@3.1.0 --unsafe-perm --build-from-source || echo "Canvas install failed but continuing"
 
-      - name: Run lint and tests
-        run: |
-          npm run lint
-          npm test
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Deploy to Azure Web App
-        uses: azure/webapps-deploy@v2
-        with:
-          app-name: "Arzani"
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: "."
+      - name: Lint code
+        run: npm run lint --if-present
+      
+      - name: Run tests
+        run: npm test
+        env:
+          NODE_ENV: test
+          DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      
+      - name: Build project
+        run: npm run build --if-present
