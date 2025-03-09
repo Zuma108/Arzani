@@ -196,12 +196,21 @@ jobs:
             npm install -g pm2
           fi
           
+          # Create .env file with required environment variables
+          echo "Creating environment variables file..."
+          cat > ~/app/current/.env << 'ENVFILE'
+OPENAI_API_KEY='${{ secrets.OPENAI_API_KEY }}'
+NODE_ENV=production
+PORT=3000
+ENVFILE
+          
           # Stop existing PM2 process if running
           pm2 stop marketplace 2>/dev/null || true
           
-          # Start application with PM2
+          # Start application with PM2 and environment variables
           echo "Starting application..."
-          pm2 start server.js --name marketplace
+          cd ~/app/current
+          pm2 start ecosystem.config.js --env production
           
           # Save PM2 process list to resurrect after reboot
           pm2 save
