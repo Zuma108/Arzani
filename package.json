@@ -12,7 +12,7 @@
     "lint": "echo 'Linting not configured yet'",
     "migrate": "node scripts/run-migrations.js",
     "tunnel": "ngrok http 5000 --config=ngrok.config.js",
-    "postinstall": "npm rebuild canvas --update-binary --unsafe-perm || echo 'Canvas rebuild failed but continuing'",
+    "postinstall": "exit 0 || npm rebuild canvas --update-binary --unsafe-perm || echo 'Canvas rebuild failed but continuing'",
     "prepare-deploy": "node scripts/clean-for-deploy.js",
     "add-market-trends-index": "node migrations/add-unique-index-to-market-trends-mv.js",
     "build": "echo 'Add your build commands here if needed'"
@@ -32,7 +32,7 @@
     "better-sqlite3": "^11.5.0",
     "body-parser": "^1.x",
     "bootstrap": "^5.3.3",
-    "canvas": "^3.1.0",
+    "canvas": "2.11.2",
     "chart.js": "^3.9.1",
     "chartjs-node-canvas": "^4.1.6",
     "compression": "^1.8.0",
