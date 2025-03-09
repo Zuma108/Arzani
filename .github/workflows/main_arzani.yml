@@ -40,12 +40,12 @@ jobs:
       - name: Install npm dependencies
         run: |
           npm install --legacy-peer-deps --unsafe-perm --no-optional
-          npm install canvas@2.11.2 --unsafe-perm --build-from-source || echo "Canvas install failed but continuing"
+          npm install canvas@3.1.0 --unsafe-perm --build-from-source || echo "Canvas install failed but continuing"
 
       # Separate step to rebuild canvas
       - name: Rebuild canvas package
         run: |
-          npm rebuild canvas --update-binary --unsafe-perm || echo 'Canvas rebuild failed but continuing'
+          npm rebuild canvas@3.1.0 --update-binary --unsafe-perm || echo 'Canvas rebuild failed but continuing'
 
       - name: Build and test
         run: |
