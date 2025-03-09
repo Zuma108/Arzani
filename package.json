@@ -24,6 +24,7 @@
     "@aws-sdk/client-s3": "^3.758.0",
     "@aws-sdk/lib-storage": "^3.758.0",
     "@aws-sdk/s3-request-presigner": "^3.758.0",
+    "@mapbox/node-pre-gyp": "^1.0.11",
     "@sendgrid/mail": "^8.1.4",
     "apple-signin-auth": "^1.7.6",
     "axios": "^1.8.2",
@@ -65,8 +66,7 @@
     "stripe": "^12.18.0",
     "uuid": "^9.0.1",
     "web-vitals": "^4.2.4",
-    "ws": "^8.x",
-    "@mapbox/node-pre-gyp": "^1.0.11"
+    "ws": "^8.x"
   },
   "devDependencies": {
     "@babel/core": "^7.26.9",
