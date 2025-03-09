@@ -27,6 +27,13 @@ jobs:
         cache: 'npm'
         cache-dependency-path: '**/package-lock.json'
 
+    # Install system dependencies for canvas module
+    - name: Install system dependencies for canvas
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev
+        echo "Installed system dependencies for canvas module"
+
     # Install global dependencies first
     - name: Install node-pre-gyp globally
       run: sudo npm install -g node-pre-gyp
@@ -41,10 +48,21 @@ jobs:
         find node_modules/.bin -type f -exec chmod +x {} \;
         echo "Fixed permissions for binaries in node_modules/.bin"
 
-    # Rebuild canvas using sudo
+    # Rebuild canvas using sudo with necessary dependencies
     - name: Rebuild canvas module
-      run: sudo npm rebuild canvas --update-binary
-
+      run: |
+        # Check environment
+        echo "Checking node-pre-gyp installation..."
+        which node-pre-gyp || echo "node-pre-gyp not found"
+        
+        # Verify system dependencies
+        echo "Checking system dependencies..."
+        dpkg -l | grep -E 'libcairo|libpango|libjpeg|libgif|librsvg'
+        
+        # Rebuild with sudo
+        echo "Rebuilding canvas module..."
+        sudo npm rebuild canvas --update-binary
+      
     # Build step
     - name: Build
       run: npm run build --if-present
@@ -63,19 +81,18 @@ jobs:
         NODE_ENV: test
         DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
         JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        
+    # Create deployment package with node_modules included
+    - name: Create deployment package
+      run: |
+        echo "Creating deployment package including node_modules..."
+        zip -r deploy-package.zip . -x "*.git*" "*.github*" "tests/*" "*.md" "*.env"
 
     - name: Upload artifact for deployment job
       uses: actions/upload-artifact@v4
       with:
         name: node-app
-        path: |
-          .
-          !node_modules
-          !tests
-          !.git
-          !.github
-          !*.md
-          !*.env
+        path: deploy-package.zip
 
   deploy:
     permissions:
@@ -92,6 +109,12 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: node-app
+
+    # Unzip the deployment package
+    - name: Unzip deployment package
+      run: |
+        unzip -o deploy-package.zip
+        echo "Deployment package unzipped"
 
     # Replace the existing Azure login with the working approach from main_arzani.yml
     - name: Login to Azure
@@ -126,7 +149,7 @@ jobs:
         echo "Stopping Azure Web App to release any locks..."
         az webapp stop --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace || echo "Could not stop the web app"
         echo "Waiting for processes to terminate..."
-        sleep 15
+        sleep 30  # Extended wait time
 
     # Minimal diagnostic check
     - name: Check module system
@@ -137,32 +160,34 @@ jobs:
           echo "Project uses CommonJS modules"
         fi
 
-    # Install node-pre-gyp globally for deployment
-    - name: Install node-pre-gyp globally
-      run: sudo npm install -g node-pre-gyp
+    # Configure app settings to ensure modules can be found
+    - name: Configure Azure App Settings for Node.js
+      run: |
+        echo "Configuring App Service for Node.js..."
+        az webapp config appsettings set --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace --settings SCM_DO_BUILD_DURING_DEPLOYMENT=false WEBSITE_NODE_DEFAULT_VERSION=~18 NODE_ENV=production NODE_OPTIONS="--experimental-specifier-resolution=node" || echo "Could not set app settings"
 
-    # Install production dependencies
-    - name: Install production dependencies
-      run: npm install --production
-      
-    # Rebuild canvas with sudo
-    - name: Rebuild canvas module
-      run: sudo npm rebuild canvas --update-binary
+    # Try direct deployment with az cli first to avoid conflicts
+    - name: Direct Azure CLI deployment
+      id: direct-deploy
+      run: |
+        echo "Deploying directly with Azure CLI..."
+        az webapp deployment source config-zip --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace --src deploy-package.zip
+      continue-on-error: true
 
-    # Add continue-on-error to deployment step
-    - name: 'Deploy to Azure WebApp'
+    # Fallback to traditional deployment method if direct method fails
+    - name: 'Deploy to Azure WebApp (Fallback)'
       id: deploy-to-webapp
+      if: steps.direct-deploy.outcome == 'failure'
       uses: azure/webapps-deploy@v2
       with:
         app-name: ${{ env.AZURE_WEBAPP_NAME }}
         publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
         package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
-        # Don't specify slot-name to use default production slot
       continue-on-error: true
 
     # Add debugging step for deployment failures
     - name: 'Check Deployment Status'
-      if: steps.deploy-to-webapp.outcome == 'failure'
+      if: steps.direct-deploy.outcome == 'failure' && steps.deploy-to-webapp.outcome == 'failure'
       run: |
         echo "Deployment failed. Checking for conflicts..."
         echo "Checking current deployment status..."
@@ -191,28 +216,9 @@ jobs:
         echo "Attempting deployment again with force flag..."
         sleep 30  # Wait for restart to complete
         
-        # Create a zip file for manual deployment if needed
-        echo "Creating deployment package..."
-        zip -r release.zip . || echo "Failed to create zip file"
-        
         # Try direct deployment with correct subscription and resource group
-        echo "Attempting direct zip deployment with force flag..."
-        az webapp deployment source config-zip --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace --src release.zip --force true || echo "Manual deployment also failed"
-        
-        # If direct deployment fails, try with slot swap approach
-        if [ $? -ne 0 ]; then
-          echo "Attempting slot-based deployment..."
-          # Try to create a deployment slot if it doesn't exist
-          az webapp deployment slot create --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace --slot staging || echo "Could not create staging slot"
-          
-          # Deploy to staging slot
-          az webapp deployment source config-zip --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace --src release.zip --slot staging || echo "Slot deployment failed"
-          
-          # Attempt to swap slots
-          az webapp deployment slot swap --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace --slot staging --target-slot production || echo "Slot swap failed"
-        fi
-        
-        echo "Please check Azure Portal for more details on the deployment status"
+        echo "Attempting final direct zip deployment with force flag..."
+        az webapp deployment source config-zip --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace --src deploy-package.zip --force true || echo "Manual deployment also failed"
         
     # Start the app regardless of deployment outcome
     - name: Ensure Azure Web App is running
