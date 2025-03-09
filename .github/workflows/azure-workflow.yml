@@ -128,92 +128,14 @@ jobs:
         echo "Waiting for processes to terminate..."
         sleep 15
 
-    # Create proper web.config for ES modules
-    - name: Create web.config for ESM support
+    # Minimal diagnostic check
+    - name: Check module system
       run: |
-        cat > web.config << 'EOL'
-        <?xml version="1.0" encoding="utf-8"?>
-        <configuration>
-          <system.webServer>
-            <webSocket enabled="false" />
-            <handlers>
-              <add name="iisnode" path="server.js" verb="*" modules="iisnode"/>
-            </handlers>
-            <rewrite>
-              <rules>
-                <rule name="StaticContent">
-                  <action type="Rewrite" url="public{REQUEST_URI}"/>
-                </rule>
-                <rule name="DynamicContent">
-                  <conditions>
-                    <add input="{REQUEST_FILENAME}" matchType="IsFile" negate="True"/>
-                  </conditions>
-                  <action type="Rewrite" url="server.js"/>
-                </rule>
-              </rules>
-            </rewrite>
-            <iisnode 
-              node_env="production" 
-              nodeProcessCommandLine="node --experimental-specifier-resolution=node" 
-              watchedFiles="*.js;node_modules\*;routes\*.js;views\*.html;views\*.ejs" 
-              loggingEnabled="true" 
-              logDirectory="iisnode" 
-            />
-          </system.webServer>
-        </configuration>
-        EOL
-        echo "Created web.config with ES module support"
-
-    # Check for missing dependencies
-    - name: Check for missing dependencies
-      run: |
-        echo "Analyzing imports in server.js..."
-        grep -r "import .* from" server.js || echo "No imports found"
-        
-        echo "Checking package.json type..."
-        grep "\"type\":" package.json || echo "No type field found"
-        
-        # Create a simple script to check module resolution
-        cat > check-modules.js << 'EOL'
-        import fs from 'fs';
-
-        try {
-          // Read server.js to parse imports
-          const serverCode = fs.readFileSync('./server.js', 'utf8');
-          const importRegex = /import\s+.*?from\s+['"]([^'"]+)['"]/g;
-          
-          let match;
-          const imports = new Set();
-          
-          while ((match = importRegex.exec(serverCode)) !== null) {
-            imports.add(match[1]);
-          }
-          
-          console.log('Found imports:', Array.from(imports));
-          
-          // Try to resolve each import
-          for (const modulePath of imports) {
-            try {
-              if (!modulePath.startsWith('.')) {
-                // For npm packages
-                require.resolve(modulePath);
-                console.log(`✅ Module ${modulePath} can be resolved`);
-              } else {
-                // For local files
-                const fullPath = require.resolve(modulePath, { paths: ['.'] });
-                console.log(`✅ File ${modulePath} resolved to ${fullPath}`);
-              }
-            } catch (err) {
-              console.error(`❌ Failed to resolve: ${modulePath}`, err.message);
-            }
-          }
-        } catch (err) {
-          console.error('Error analyzing imports:', err);
-        }
-        EOL
-        
-        echo "Checking module resolution with Node.js..."
-        node --experimental-specifier-resolution=node --input-type=module check-modules.js || echo "Failed to check modules"
+        if grep -q "\"type\":\s*\"module\"" package.json; then
+          echo "Project uses ES modules"
+        else
+          echo "Project uses CommonJS modules"
+        fi
 
     # Install node-pre-gyp globally for deployment
     - name: Install node-pre-gyp globally
@@ -226,14 +148,6 @@ jobs:
     # Rebuild canvas with sudo
     - name: Rebuild canvas module
       run: sudo npm rebuild canvas --update-binary
-    
-    # Set Azure environment variables for ESM support
-    - name: Configure Azure App Settings for ESM
-      run: |
-        echo "Configuring Azure App Settings for ES Modules..."
-        az webapp config appsettings set --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace --settings NODE_OPTIONS="--experimental-specifier-resolution=node" || echo "Could not set app settings"
-        az webapp config set --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace --node-version 18-lts || echo "Could not set Node.js version"
-        az webapp config set --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace --startup-file server.js || echo "Could not set startup file"
 
     # Add continue-on-error to deployment step
     - name: 'Deploy to Azure WebApp'
@@ -309,7 +223,3 @@ jobs:
         # Show deployment logs
         echo "Latest deployment logs:"
         az webapp log deployment show --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace || echo "Could not retrieve deployment logs"
-        
-        # Display app logs to check for module errors
-        echo "Checking application logs for module errors..."
-        az webapp log tail --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace || echo "Could not tail logs"
