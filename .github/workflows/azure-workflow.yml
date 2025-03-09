@@ -27,37 +27,56 @@ jobs:
         cache: 'npm'
         cache-dependency-path: '**/package-lock.json'
 
-    # Install global dependencies first
+    # Install global dependencies first with proper permissions
     - name: Install node-pre-gyp globally
       run: sudo npm install -g node-pre-gyp
       
-    # Regular npm install with --no-bin-links to avoid symlink issues
-    - name: npm install
-      run: npm install --no-bin-links
+    # Install dependencies with --unsafe-perm to avoid permission issues
+    - name: npm install with unsafe-perm
+      run: npm install --unsafe-perm=true --allow-root
 
-    # Fix permissions for all binaries in node_modules/.bin
-    - name: Fix permissions for node binaries
+    # Fix permissions for all binaries including canvas
+    - name: Fix permissions
       run: |
+        # Fix general node binary permissions
         find node_modules/.bin -type f -exec chmod +x {} \;
         echo "Fixed permissions for binaries in node_modules/.bin"
-        # Make sure node-pre-gyp is executable
-        chmod +x $(npm bin)/node-pre-gyp || echo "node-pre-gyp not found in npm bin"
+        
+        # Ensure node-pre-gyp is executable wherever it might be
+        sudo chmod -R 755 /usr/local/lib/node_modules || echo "Could not change permissions on global node modules"
         sudo chmod -R 755 node_modules/.bin/ || echo "Could not change permissions on node_modules/.bin"
+        sudo chmod -R 755 node_modules/canvas/ || echo "Could not change permissions on canvas directory"
+        
+        # Show permissions for debugging
+        ls -la node_modules/.bin/
+        ls -la $(npm bin)
 
-    # Rebuild canvas using sudo with explicit path to node-pre-gyp
+    # Rebuild canvas with safer approach
     - name: Rebuild canvas module
       run: |
-        # Ensure node-pre-gyp can be found and executed
-        export PATH="$PATH:$(npm bin)"
+        # First ensure the path includes npm bin
+        export PATH="$PATH:$(npm bin):/usr/local/lib/node_modules/.bin"
         echo "Current PATH: $PATH"
         which node-pre-gyp || echo "node-pre-gyp not found in PATH"
         
-        # Try rebuild with sudo and explicit path
-        sudo $(npm bin)/node-pre-gyp install --fallback-to-build --update-binary || echo "Failed to run node-pre-gyp directly"
-        sudo npm rebuild canvas --update-binary
+        # Rebuild with unsafe-perm to avoid permission issues
+        sudo npm rebuild canvas --update-binary --unsafe-perm=true --allow-root
       continue-on-error: true  # Allow the build to continue even if canvas fails
 
-    # Build step
+    # Alternative approach if the above fails
+    - name: Alternative canvas rebuild approach
+      if: ${{ failure() }}
+      run: |
+        echo "Trying alternative canvas rebuild approach..."
+        # Install canvas dependencies
+        sudo apt-get update
+        sudo apt-get install -y build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev
+        
+        # Try direct install with global permissions
+        sudo npm install canvas --unsafe-perm=true --allow-root
+      continue-on-error: true
+
+    # Build step 
     - name: Build
       run: npm run build --if-present
       env:
@@ -128,20 +147,30 @@ jobs:
         echo "Switching to Azure for Students subscription..."
         az account set --subscription "bb2425dd-930e-49ca-9a94-189a195fb5f9" || echo "Failed to switch subscription"
 
-    # Force stop and clear any deployment locks
+    # Force stop and clear any deployment locks - Extended stopping time
     - name: Force stop Azure Web App and clear locks
       run: |
         echo "Forcefully stopping the app to release any locks..."
         az webapp stop --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace || echo "Could not stop the web app"
         
-        echo "Waiting for processes to terminate..."
-        sleep 20
+        echo "Waiting extended time for processes to terminate..."
+        sleep 60  # Extended wait time to ensure all processes are terminated
         
-        echo "Checking for any deployment locks..."
-        az webapp deployment list --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace || echo "Could not list deployments"
+        # Check any running processes and kill them
+        echo "Checking and terminating any lingering processes..."
+        az webapp ssh --resource-group my-marketplace --name ${{ env.AZURE_WEBAPP_NAME }} --command "ps aux | grep node" || echo "Could not check processes via SSH"
         
         echo "Checking app state..."
         az webapp show --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace --query state || echo "Could not check app state"
+
+    # Clean up any deployment locks before proceeding
+    - name: Clear deployment locks
+      run: |
+        echo "Clearing any deployment locks..."
+        az webapp deployment list --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace || echo "Could not list deployments"
+        
+        # Delete any in-progress or failed deployments
+        az webapp deployment list --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace --query "[?status=='Failed' || status=='Pending'].id" -o tsv | xargs -I {} az webapp deployment delete --ids {} || echo "No deployments to delete"
 
     # Configure app settings to ensure modules can be found
     - name: Configure Azure App Settings for Node.js
@@ -154,10 +183,22 @@ jobs:
       run: |
         echo "Setting startup command to install dependencies and run app..."
         az webapp config set --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace --startup-file "npm install && node --experimental-specifier-resolution=node azure-startup.js" || echo "Could not set startup command"
+    
+    # Try direct deployment with az cli first to avoid conflicts
+    - name: Direct Azure CLI deployment
+      id: direct-deploy
+      run: |
+        echo "Creating zip package for deployment..."
+        zip -r deploy.zip . -x "*.git*" "*.github*" "tests/*" "*.md" "*.env"
+        
+        echo "Deploying directly with Azure CLI to avoid conflicts..."
+        az webapp deploy --resource-group my-marketplace --name ${{ env.AZURE_WEBAPP_NAME }} --src-path deploy.zip --type zip
+      continue-on-error: true
 
-    # Deploy with additional restart between attempts
-    - name: 'Deploy to Azure Web App - First attempt'
+    # Only use webapps-deploy if direct deployment failed
+    - name: 'Deploy to Azure Web App - Fallback method'
       id: deploy-to-webapp
+      if: steps.direct-deploy.outcome == 'failure'
       uses: azure/webapps-deploy@v2
       with:
         app-name: ${{ env.AZURE_WEBAPP_NAME }}
@@ -165,21 +206,35 @@ jobs:
         package: .
       continue-on-error: true
 
-    # If first deployment fails, try again after a restart
-    - name: 'Retry deployment if needed'
-      if: steps.deploy-to-webapp.outcome == 'failure'
+    # If both methods fail, try with conflict resolution
+    - name: 'Retry deployment with conflict resolution'
+      if: steps.direct-deploy.outcome == 'failure' && steps.deploy-to-webapp.outcome == 'failure'
       run: |
-        echo "First deployment attempt failed. Restarting app and trying again..."
+        echo "Both deployment attempts failed. Starting conflict resolution..."
+        
+        # Perform a complete restart cycle with extended wait
+        echo "Performing complete restart cycle..."
+        az webapp stop --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace || echo "Could not stop app"
+        sleep 45  # Extended wait time
+        
+        echo "Restarting app..."
         az webapp restart --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace || echo "Could not restart app"
         sleep 30  # Wait for restart to complete
         
-        # Package the app again for manual deployment
-        echo "Creating deployment package for retry..."
-        zip -r retry-package.zip . -x "*.git*" "*.github*" "tests/*" "*.md" "*.env"
+        # Try the deployment again with force flag
+        echo "Creating final deployment package..."
+        zip -r final-deploy.zip . -x "*.git*" "*.github*" "tests/*" "*.md" "*.env"
         
-        # Try direct deployment with zip
-        echo "Attempting direct zip deployment..."
-        az webapp deployment source config-zip --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace --src retry-package.zip --force true
+        # Use the force option with az webapp deployment
+        echo "Attempting final deployment with force option..."
+        az webapp deploy --resource-group my-marketplace --name ${{ env.AZURE_WEBAPP_NAME }} --src-path final-deploy.zip --type zip --clean true --timeout 1800 || echo "Final direct deploy attempt failed"
+
+    # Final fallback to zip deploy if all else fails
+    - name: 'Last resort zip deployment'
+      if: steps.direct-deploy.outcome == 'failure' && steps.deploy-to-webapp.outcome == 'failure'
+      run: |
+        echo "Attempting last resort deployment method..."
+        az webapp deployment source config-zip --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group my-marketplace --src final-deploy.zip --force true || echo "Last resort deployment also failed"
         
     # Ensure the web app is started after deployment
     - name: Ensure Azure Web App is running
