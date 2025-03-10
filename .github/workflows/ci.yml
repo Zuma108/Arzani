@@ -42,7 +42,7 @@ jobs:
         run: npm test
         env:
           NODE_ENV: test
-          DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
       
       - name: Build project
