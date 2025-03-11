@@ -311,71 +311,49 @@ jobs:
           exit 1
         fi
         
-        # Transfer deployment package to the server
+        # Create environment file locally
+        echo "NODE_ENV=production" > env_file
+        echo "DATABASE_URL=$DB_URL" >> env_file
+        echo "DATABASE_SSL=true" >> env_file
+        echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> env_file
+        echo "PORT=3000" >> env_file
+        
+        # Transfer files to EC2
         scp -i ~/.ssh/ec2_key.pem deployment.zip ec2-user@${{ env.EC2_HOST }}:~/deployment.zip
+        scp -i ~/.ssh/ec2_key.pem env_file ec2-user@${{ env.EC2_HOST }}:~/env_file
         
-        if [ $? -ne 0 ]; then
-          echo "Error: Failed to transfer deployment package to EC2"
-          exit 1
-        fi
-        
-        # Connect to server and deploy
-        ssh -i ~/.ssh/ec2_key.pem ec2-user@${{ env.EC2_HOST }} << EOF
-          echo "Connected to EC2 instance in London region"
-          
-          # Create directory for the app if it doesn't exist
-          mkdir -p ~/app
+        # Execute deployment commands on EC2
+        ssh -i ~/.ssh/ec2_key.pem ec2-user@${{ env.EC2_HOST }} "
+          echo 'Connected to EC2 instance in London region' &&
+          mkdir -p ~/app &&
           
           # Backup current deployment if it exists
           if [ -d ~/app/current ]; then
-            timestamp=\$(date +%Y%m%d%H%M%S)
-            mkdir -p ~/app/backup
+            timestamp=\$(date +%Y%m%d%H%M%S) &&
+            mkdir -p ~/app/backup &&
             mv ~/app/current ~/app/backup/backup_\$timestamp
-          fi
+          fi &&
           
-          # Create new deployment directory
-          mkdir -p ~/app/current
+          # Deploy new version
+          mkdir -p ~/app/current &&
+          unzip -o ~/deployment.zip -d ~/app/current &&
+          mv ~/env_file ~/app/current/.env &&
+          cd ~/app/current &&
+          npm install --production &&
           
-          # Extract deployment package
-          unzip -o ~/deployment.zip -d ~/app/current
-          
-          # Create .env file with database connection info
-          cat > ~/app/current/.env << EOL
-NODE_ENV=production
-DATABASE_URL=${DB_URL}
-DATABASE_SSL=true
-JWT_SECRET=${{ secrets.JWT_SECRET }}
-PORT=3000
-EOL
-          
-          # Install production dependencies
-          cd ~/app/current
-          npm install --production
-          
-          # Install PM2 if not already installed
+          # Setup and start PM2
           if ! command -v pm2 &> /dev/null; then
-            echo "Installing PM2..."
             npm install -g pm2
-          fi
+          fi &&
+          pm2 stop marketplace 2>/dev/null || true &&
+          pm2 start server.js --name marketplace &&
+          pm2 save &&
+          pm2 startup | grep -v 'sudo' | sh &&
           
-          # Stop existing PM2 process if running
-          pm2 stop marketplace 2>/dev/null || true
-          
-          # Start application with PM2
-          echo "Starting application..."
-          pm2 start server.js --name marketplace
-          
-          # Save PM2 process list to resurrect after reboot
-          pm2 save
-          
-          # Setup PM2 to start on system startup if not already set
-          pm2 startup | grep -v "sudo" | sh
-          
-          # Clean up deployment package
-          rm ~/deployment.zip
-          
-          echo "Deployment completed successfully!"
-EOF
+          # Cleanup
+          rm ~/deployment.zip &&
+          echo 'Deployment completed successfully!'
+        "
 
     # Verify deployment
     - name: Verify deployment
