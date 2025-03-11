@@ -13,7 +13,7 @@ env:
   RDS_DB_INSTANCE: marketplace-db           # RDS instance identifier
   RDS_DB_NAME: marketplace                  # Database name
   RDS_DB_USER: marketplace_user             # Database user
-  # Password now moved to GitHub secrets
+  RDS_DB_PASSWORD: Olumide123!              # Database password - MUST be moved to GitHub secrets
   RDS_BACKUP_RETENTION: 7                   # Days to keep automated backups
 
 permissions:
@@ -214,11 +214,24 @@ jobs:
         else
           echo "Creating new RDS PostgreSQL instance..."
           
-          # Create a security group for the RDS instance
-          RDS_SG_ID=$(aws ec2 create-security-group \
-            --group-name marketplace-db-sg \
-            --description "Security group for Marketplace RDS" \
-            --output text --query 'GroupId')
+          # Create a security group for the RDS instance - add error handling
+          RDS_SG_NAME="marketplace-db-sg"
+          
+          # Check if security group already exists
+          SG_CHECK=$(aws ec2 describe-security-groups --filters "Name=group-name,Values=$RDS_SG_NAME" --query 'SecurityGroups[0].GroupId' --output text)
+          
+          if [[ "$SG_CHECK" == "None" || -z "$SG_CHECK" ]]; then
+            echo "Creating new security group $RDS_SG_NAME"
+            RDS_SG_ID=$(aws ec2 create-security-group \
+              --group-name $RDS_SG_NAME \
+              --description "Security group for Marketplace RDS" \
+              --output text --query 'GroupId')
+          else
+            echo "Security group $RDS_SG_NAME already exists, using existing one"
+            RDS_SG_ID=$SG_CHECK
+          fi
+          
+          echo "Using security group: $RDS_SG_ID"
           
           # Allow access from the EC2 instance
           EC2_PUBLIC_IP=$(aws ec2 describe-instances \
@@ -230,14 +243,16 @@ jobs:
             --group-id $RDS_SG_ID \
             --protocol tcp \
             --port 5432 \
-            --cidr $EC2_PUBLIC_IP/32
+            --cidr $EC2_PUBLIC_IP/32 \
+            || echo "Rule for EC2 instance already exists"
           
           # Allow public access for pgAdmin connections
           aws ec2 authorize-security-group-ingress \
             --group-id $RDS_SG_ID \
             --protocol tcp \
             --port 5432 \
-            --cidr 0.0.0.0/0
+            --cidr 0.0.0.0/0 \
+            || echo "Rule for public access already exists"
           
           # Create the RDS instance with public access
           aws rds create-db-instance \
@@ -247,7 +262,7 @@ jobs:
             --engine-version 15 \
             --allocated-storage 20 \
             --master-username ${{ env.RDS_DB_USER }} \
-            --master-user-password "${{ secrets.RDS_DB_PASSWORD }}" \
+            --master-user-password "${{ env.RDS_DB_PASSWORD }}" \
             --vpc-security-group-ids $RDS_SG_ID \
             --backup-retention-period ${{ env.RDS_BACKUP_RETENTION }} \
             --publicly-accessible \
@@ -266,8 +281,13 @@ jobs:
           echo "RDS_ENDPOINT=$RDS_ENDPOINT" >> $GITHUB_ENV
         fi
         
-        # Create database URL for the application
-        DB_URL="postgresql://${{ env.RDS_DB_USER }}:${{ secrets.RDS_DB_PASSWORD }}@$RDS_ENDPOINT:5432/${{ env.RDS_DB_NAME }}"
+        # Create database URL for the application - ensure RDS_ENDPOINT is set
+        if [ -z "$RDS_ENDPOINT" ]; then
+          echo "Error: RDS_ENDPOINT is not set, cannot create database URL"
+          exit 1
+        fi
+        
+        DB_URL="postgresql://${{ env.RDS_DB_USER }}:${{ env.RDS_DB_PASSWORD }}@$RDS_ENDPOINT:5432/${{ env.RDS_DB_NAME }}"
         echo "DB_URL=$DB_URL" >> $GITHUB_ENV
         
         # Print connection info for pgAdmin
@@ -277,7 +297,7 @@ jobs:
         echo "Port: 5432"
         echo "Database: ${{ env.RDS_DB_NAME }}"
         echo "Username: ${{ env.RDS_DB_USER }}"
-        echo "Password: Use the value from GitHub Secret RDS_DB_PASSWORD"
+        echo "Password: ${{ env.RDS_DB_PASSWORD }}"
         echo "---------------------------------------------"
 
     # Deploy to EC2
@@ -285,8 +305,19 @@ jobs:
       run: |
         echo "Deploying application to EC2 instance..."
         
+        # Verify that DB_URL is set
+        if [ -z "$DB_URL" ]; then
+          echo "Error: Database URL is not set"
+          exit 1
+        fi
+        
         # Transfer deployment package to the server
         scp -i ~/.ssh/ec2_key.pem deployment.zip ec2-user@${{ env.EC2_HOST }}:~/deployment.zip
+        
+        if [ $? -ne 0 ]; then
+          echo "Error: Failed to transfer deployment package to EC2"
+          exit 1
+        fi
         
         # Connect to server and deploy
         ssh -i ~/.ssh/ec2_key.pem ec2-user@${{ env.EC2_HOST }} << EOF
