@@ -199,22 +199,116 @@ jobs:
           echo "Instance is already running."
         fi
 
-    # Setup SSH
+    # Improved SSH key setup with better error handling and key verification
     - name: Setup SSH key
       run: |
         mkdir -p ~/.ssh
+        
+        # Check if SSH key secret exists and has content
+        if [ -z "${{ secrets.EC2_SSH_KEY }}" ]; then
+          echo "ERROR: EC2_SSH_KEY secret is empty or not set"
+          echo "Please add your private SSH key (content of .ssh\myec2keypair2.pem) as a GitHub secret named EC2_SSH_KEY"
+          exit 1
+        fi
+        
+        # Write the key with proper formatting
         echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/ec2_key.pem
+        
+        # Verify the key was written properly
+        if [ ! -s ~/.ssh/ec2_key.pem ]; then
+          echo "ERROR: SSH key file is empty after writing"
+          exit 1
+        fi
+        
+        # Set proper permissions
         chmod 600 ~/.ssh/ec2_key.pem
         
-        # Add the host to known_hosts to avoid prompt during connection
-        ssh-keyscan -H ${{ env.EC2_HOST }} >> ~/.ssh/known_hosts
+        # Verify key format (should start with -----BEGIN)
+        if ! grep -q "BEGIN" ~/.ssh/ec2_key.pem; then
+          echo "ERROR: SSH key appears to be invalid - missing BEGIN line"
+          echo "Make sure you added the ENTIRE private key including BEGIN and END lines"
+          exit 1
+        fi
+        
+        echo "SSH key appears to be valid"
+        
+        # Verify EC2_HOST is set
+        if [ -z "${{ env.EC2_HOST }}" ]; then
+          echo "ERROR: EC2_HOST is empty or not set"
+          exit 1
+        fi
+        
+        # Add host to known_hosts safely
+        ssh-keyscan -H ${{ env.EC2_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || {
+          echo "ERROR: Could not scan host key for ${{ env.EC2_HOST }}"
+          echo "Make sure the EC2_HOST value is correct and the instance is running"
+          exit 1
+        }
+        
+        # Test SSH connection with verbose output for debugging
+        echo "Testing SSH connection..."
+        ssh -v -i ~/.ssh/ec2_key.pem -o BatchMode=yes -o ConnectTimeout=10 ec2-user@${{ env.EC2_HOST }} "echo 'SSH connection successful'" || {
+          echo "ERROR: SSH connection failed"
+          echo "Possible issues:"
+          echo "1. EC2 instance may not be running"
+          echo "2. Security group may not allow SSH connections from GitHub Actions IP"
+          echo "3. SSH key in GitHub secrets may not match the key authorized on EC2"
+          echo "4. EC2_HOST may be incorrect or the key not authorized for ec2-user"
+          
+          # Try another common EC2 username if ec2-user fails
+          echo "Trying alternative username (ubuntu)..."
+          ssh -v -i ~/.ssh/ec2_key.pem -o BatchMode=yes -o ConnectTimeout=5 ubuntu@${{ env.EC2_HOST }} "echo 'SSH connection successful'" && \
+          echo "Connection successful with ubuntu user - please update your workflow to use ubuntu instead of ec2-user" || \
+          echo "Connection also failed with ubuntu user"
+          
+          exit 1
+        }
+
+    # First deployment step - Ensure SSH key is authorized on EC2 instance
+    - name: Authorize SSH key (if needed)
+      run: |
+        # This step tries to use AWS Systems Manager (SSM) to authorize the key
+        # Make sure your IAM role has permissions for SSM
+        echo "Attempting to authorize SSH key on EC2 instance..."
+        
+        # Get public key from the private key
+        ssh-keygen -y -f ~/.ssh/ec2_key.pem > ~/.ssh/ec2_key.pub
+        PUBLIC_KEY=$(cat ~/.ssh/ec2_key.pub)
+        
+        # Use SSM to add the key to authorized_keys
+        aws ssm send-command \
+          --instance-ids ${{ secrets.EC2_INSTANCE_ID }} \
+          --document-name "AWS-RunShellScript" \
+          --comment "Add SSH key to authorized_keys" \
+          --parameters commands="[ \"mkdir -p /home/ec2-user/.ssh\", \"echo '$PUBLIC_KEY' >> /home/ec2-user/.ssh/authorized_keys\", \"chmod 700 /home/ec2-user/.ssh\", \"chmod 600 /home/ec2-user/.ssh/authorized_keys\", \"chown -R ec2-user:ec2-user /home/ec2-user/.ssh\" ]" \
+          --output text || echo "SSM command failed - may need to authorize key manually"
+        
+        # Wait a bit for the command to complete
+        sleep 10
+        
+        # Test SSH connection again
+        echo "Testing SSH connection after key authorization..."
+        ssh -i ~/.ssh/ec2_key.pem -o BatchMode=yes -o ConnectTimeout=5 ec2-user@${{ env.EC2_HOST }} "echo 'SSH connection successful'" || {
+          echo "SSH still failing. You may need to manually authorize the key on the EC2 instance."
+          echo "Instructions:"
+          echo "1. Log into your EC2 instance using the AWS console"
+          echo "2. Run the following commands:"
+          echo "   mkdir -p ~/.ssh"
+          echo "   # Add your public key to authorized_keys" 
+          echo "   # (Public key from your local .ssh\\myec2keypair2.pem file)"
+          echo "   chmod 700 ~/.ssh"
+          echo "   chmod 600 ~/.ssh/authorized_keys"
+          
+          # Continue workflow despite error - future steps will fail if SSH still doesn't work
+          echo "Continuing workflow, but deployment may fail if SSH authorization is not fixed"
+        }
 
     # Check if RDS instance exists, create if it doesn't
     - name: Check RDS instance
       run: |
         echo "Checking if RDS instance exists..."
         
-        # Check if the RDS instance already exists - without logging details
+        # Check if the RDS instance already exists
         if aws rds describe-db-instances --db-instance-identifier ${{ env.RDS_DB_INSTANCE }} > /dev/null 2>&1; then
           echo "RDS instance ${{ env.RDS_DB_INSTANCE }} already exists"
           
@@ -223,6 +317,7 @@ jobs:
             --db-instance-identifier ${{ env.RDS_DB_INSTANCE }} \
             --query 'DBInstances[0].Endpoint.Address' --output text)
           
+          echo "RDS endpoint: $RDS_ENDPOINT"
           echo "RDS_ENDPOINT=$RDS_ENDPOINT" >> $GITHUB_ENV
           
           # Modify the RDS instance to be publicly accessible if it's not already
@@ -256,10 +351,11 @@ jobs:
             --port 5432 \
             --cidr 0.0.0.0/0 \
             || echo "Rule for public access already exists"
+            
         else
           echo "Creating new RDS PostgreSQL instance..."
           
-          # Create a security group for the RDS instance - add error handling
+          # Create a security group for the RDS instance
           RDS_SG_NAME="marketplace-db-sg"
           
           # Check if security group already exists
@@ -339,10 +435,10 @@ jobs:
         echo "---------------------------------------------"
         echo "RDS Connection Info for pgAdmin:"
         echo "Hostname: $RDS_ENDPOINT"
-        echo "Port: 5432"
+        echo "Port: 5432" 
         echo "Database: ${{ env.RDS_DB_NAME }}"
         echo "Username: ${{ env.RDS_DB_USER }}"
-        echo "Password: [REDACTED - Stored in GitHub Secrets]"
+        echo "Password: [REDACTED - Stored in GitHub Secrets]" 
         echo "---------------------------------------------"
 
     # Deploy to EC2 with improved error handling
