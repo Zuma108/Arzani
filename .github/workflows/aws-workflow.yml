@@ -122,16 +122,24 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
 
-    # Verify AWS CLI setup with better debugging
+    # Enhanced AWS CLI verification with detailed output
     - name: Verify AWS CLI
       run: |
         set -x  # Print commands before execution
         aws --version
-        aws sts get-caller-identity || {
+        echo "AWS CLI version check passed"
+        
+        echo "Verifying AWS authentication..."
+        aws sts get-caller-identity --output json
+        if [ $? -ne 0 ]; then
           echo "Failed to authenticate with AWS. Check your AWS credentials."
+          echo "Secrets configured: AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY"
+          echo "Region configured: ${{ env.AWS_REGION }}"
           exit 1
-        }
-        echo "Successfully authenticated with AWS"
+        fi
+        
+        echo "AWS authentication successful!"
+        echo "Current authenticated identity: $(aws sts get-caller-identity --query 'Arn' --output text)"
         
     # Check EC2 instance status with better error handling
     - name: Check EC2 instance status
@@ -139,12 +147,26 @@ jobs:
         set -x  # Print commands before execution
         echo "Checking EC2 instance status..."
         
-        # Directly use the secret for more reliable access
+        echo "Instance ID used: ${{ secrets.EC2_INSTANCE_ID }}"
+        
+        # First validate the EC2 instance ID format
+        if [[ ! "${{ secrets.EC2_INSTANCE_ID }}" =~ ^i-[a-z0-9]+$ ]]; then
+          echo "ERROR: Malformed EC2 instance ID. Should start with 'i-' followed by alphanumeric characters."
+          exit 1
+        fi
+        
         # Verify instance ID is correct
         if ! aws ec2 describe-instances --instance-ids ${{ secrets.EC2_INSTANCE_ID }} > /dev/null 2>&1; then
           echo "Error: Invalid instance ID. Check EC2_INSTANCE_ID secret."
+          echo "Current value: ${{ secrets.EC2_INSTANCE_ID }}"
           exit 1
         fi
+        
+        # Get detailed instance info for debugging
+        echo "Instance details:"
+        aws ec2 describe-instances --instance-ids ${{ secrets.EC2_INSTANCE_ID }} \
+          --query "Reservations[0].Instances[0].{InstanceId:InstanceId,State:State.Name,PublicIP:PublicIpAddress,PrivateIP:PrivateIpAddress,Type:InstanceType}" \
+          --output json
         
         # Get instance state
         INSTANCE_STATE=$(aws ec2 describe-instances --instance-id ${{ secrets.EC2_INSTANCE_ID }} \
