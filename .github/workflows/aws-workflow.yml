@@ -139,23 +139,24 @@ jobs:
         set -x  # Print commands before execution
         echo "Checking EC2 instance status..."
         
+        # Directly use the secret for more reliable access
         # Verify instance ID is correct
-        if ! aws ec2 describe-instances --instance-ids ${{ env.EC2_INSTANCE_ID }} > /dev/null 2>&1; then
+        if ! aws ec2 describe-instances --instance-ids ${{ secrets.EC2_INSTANCE_ID }} > /dev/null 2>&1; then
           echo "Error: Invalid instance ID. Check EC2_INSTANCE_ID secret."
           exit 1
         fi
         
         # Get instance state
-        INSTANCE_STATE=$(aws ec2 describe-instances --instance-id ${{ env.EC2_INSTANCE_ID }} \
+        INSTANCE_STATE=$(aws ec2 describe-instances --instance-id ${{ secrets.EC2_INSTANCE_ID }} \
           --query "Reservations[0].Instances[0].State.Name" --output text)
           
         if [ "$INSTANCE_STATE" != "running" ]; then
           echo "Instance is not running. Current state: $INSTANCE_STATE"
           echo "Starting the instance..."
-          aws ec2 start-instances --instance-id ${{ env.EC2_INSTANCE_ID }}
+          aws ec2 start-instances --instance-id ${{ secrets.EC2_INSTANCE_ID }}
           
           echo "Waiting for instance to be running..."
-          aws ec2 wait instance-running --instance-id ${{ env.EC2_INSTANCE_ID }}
+          aws ec2 wait instance-running --instance-id ${{ secrets.EC2_INSTANCE_ID }}
           
           echo "Instance is now running. Waiting 30 seconds for services to start..."
           sleep 30
