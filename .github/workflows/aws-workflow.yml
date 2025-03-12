@@ -10,8 +10,8 @@ env:
   EC2_HOST: 18.168.205.177                    # Updated EC2 instance public IP
   EC2_INSTANCE_ID: i-09eac96a568a22f1c      # Updated EC2 instance ID
   NODE_VERSION: '18.x'                      # matches your engine requirements in package.json
-  RDS_DB_INSTANCE: marketplace-db           # RDS instance identifier
-  RDS_DB_NAME: marketplace                  # Database name
+  RDS_DB_INSTANCE: my-database          # RDS instance identifier
+  RDS_DB_NAME: my-marketplace           # Database name
   RDS_DB_USER: marketplace_user             # Database user
   RDS_DB_PASSWORD: Olumide123!              # Database password - MUST be moved to GitHub secrets
   RDS_BACKUP_RETENTION: 7                   # Days to keep automated backups
