@@ -7,14 +7,14 @@ on:
 
 env:
   AWS_REGION: eu-west-2                     # London region
-  EC2_HOST: 18.168.205.177                    # Updated EC2 instance public IP
-  EC2_INSTANCE_ID: i-09eac96a568a22f1c      # Updated EC2 instance ID
+  EC2_HOST: ${{ secrets.EC2_HOST }}         # Get from secrets instead of hardcoding
+  EC2_INSTANCE_ID: ${{ secrets.EC2_INSTANCE_ID }} # Get from secrets instead of hardcoding
   NODE_VERSION: '18.x'                      # matches your engine requirements in package.json
-  RDS_DB_INSTANCE: my-database          # RDS instance identifier
-  RDS_DB_NAME: my-marketplace           # Database name
+  RDS_DB_INSTANCE: my-database              # RDS instance identifier
+  RDS_DB_NAME: my-marketplace               # Database name
   RDS_DB_USER: marketplace_user             # Database user
-  RDS_DB_PASSWORD: Olumide123!              # Database password - MUST be moved to GitHub secrets
   RDS_BACKUP_RETENTION: 7                   # Days to keep automated backups
+  # RDS_DB_PASSWORD moved to secrets
 
 permissions:
   contents: read
@@ -62,7 +62,7 @@ jobs:
       run: npm run build --if-present
       env:
         NODE_ENV: test
-        DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        TEST_DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
         JWT_SECRET: ${{ secrets.JWT_SECRET }}
 
     # Separate test step with explicit path to Jest binary
@@ -73,7 +73,7 @@ jobs:
         node_modules/.bin/jest --passWithNoTests
       env:
         NODE_ENV: test
-        DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        TEST_DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
         JWT_SECRET: ${{ secrets.JWT_SECRET }}
         
     # Create deployment package
@@ -106,7 +106,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: 'Production'
-      url: ${{ format('http://{0}:3000', env.EC2_HOST) }}
+      url: http://${{ secrets.EC2_HOST }}:3000  # Use secrets reference here
 
     steps:
     - name: Download artifact from build job
@@ -114,7 +114,7 @@ jobs:
       with:
         name: node-app
         
-    # Configure AWS credentials
+    # Configure AWS credentials with improved error handling
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
@@ -122,18 +122,28 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
 
-    # Verify AWS CLI setup
+    # Verify AWS CLI setup with better debugging
     - name: Verify AWS CLI
       run: |
+        set -x  # Print commands before execution
         aws --version
-        aws sts get-caller-identity
+        aws sts get-caller-identity || {
+          echo "Failed to authenticate with AWS. Check your AWS credentials."
+          exit 1
+        }
         echo "Successfully authenticated with AWS"
         
-    # Check EC2 instance status
+    # Check EC2 instance status with better error handling
     - name: Check EC2 instance status
       run: |
+        set -x  # Print commands before execution
         echo "Checking EC2 instance status..."
-        aws ec2 describe-instance-status --instance-id ${{ env.EC2_INSTANCE_ID }} --output json
+        
+        # Verify instance ID is correct
+        if ! aws ec2 describe-instances --instance-ids ${{ env.EC2_INSTANCE_ID }} > /dev/null 2>&1; then
+          echo "Error: Invalid instance ID. Check EC2_INSTANCE_ID secret."
+          exit 1
+        fi
         
         # Get instance state
         INSTANCE_STATE=$(aws ec2 describe-instances --instance-id ${{ env.EC2_INSTANCE_ID }} \
@@ -166,6 +176,7 @@ jobs:
     # Check if RDS instance exists, create if it doesn't
     - name: Check RDS instance
       run: |
+        set -x  # Print commands before execution
         echo "Checking if RDS instance exists..."
         
         # Check if the RDS instance already exists
@@ -262,7 +273,7 @@ jobs:
             --engine-version 15 \
             --allocated-storage 20 \
             --master-username ${{ env.RDS_DB_USER }} \
-            --master-user-password "${{ env.RDS_DB_PASSWORD }}" \
+            --master-user-password "${{ secrets.RDS_DB_PASSWORD }}" \
             --vpc-security-group-ids $RDS_SG_ID \
             --backup-retention-period ${{ env.RDS_BACKUP_RETENTION }} \
             --publicly-accessible \
@@ -287,7 +298,7 @@ jobs:
           exit 1
         fi
         
-        DB_URL="postgresql://${{ env.RDS_DB_USER }}:${{ env.RDS_DB_PASSWORD }}@$RDS_ENDPOINT:5432/${{ env.RDS_DB_NAME }}"
+        DB_URL="postgresql://${{ env.RDS_DB_USER }}:${{ secrets.RDS_DB_PASSWORD }}@$RDS_ENDPOINT:5432/${{ env.RDS_DB_NAME }}"
         echo "DB_URL=$DB_URL" >> $GITHUB_ENV
         
         # Print connection info for pgAdmin
@@ -297,13 +308,20 @@ jobs:
         echo "Port: 5432"
         echo "Database: ${{ env.RDS_DB_NAME }}"
         echo "Username: ${{ env.RDS_DB_USER }}"
-        echo "Password: ${{ env.RDS_DB_PASSWORD }}"
+        echo "Password: ${{ secrets.RDS_DB_PASSWORD }}"
         echo "---------------------------------------------"
 
-    # Deploy to EC2
+    # Deploy to EC2 with improved error handling
     - name: Deploy to EC2
       run: |
+        set -x  # Print commands before execution
         echo "Deploying application to EC2 instance..."
+        
+        # Verify essential variables
+        if [ -z "${{ env.EC2_HOST }}" ]; then
+          echo "Error: EC2_HOST is not set. Check your GitHub secrets."
+          exit 1
+        fi
         
         # Verify that DB_URL is set
         if [ -z "$DB_URL" ]; then
@@ -313,14 +331,21 @@ jobs:
         
         # Create environment file locally
         echo "NODE_ENV=production" > env_file
-        echo "DATABASE_URL=$DB_URL" >> env_file
+        echo "TEST_DATABASE_URL=$DB_URL" >> env_file
         echo "DATABASE_SSL=true" >> env_file
         echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> env_file
         echo "PORT=3000" >> env_file
         
         # Transfer files to EC2
-        scp -i ~/.ssh/ec2_key.pem deployment.zip ec2-user@${{ env.EC2_HOST }}:~/deployment.zip
-        scp -i ~/.ssh/ec2_key.pem env_file ec2-user@${{ env.EC2_HOST }}:~/env_file
+        scp -i ~/.ssh/ec2_key.pem deployment.zip ec2-user@${{ env.EC2_HOST }}:~/deployment.zip || {
+          echo "Failed to transfer deployment package. Check EC2_HOST and SSH key."
+          exit 1
+        }
+        
+        scp -i ~/.ssh/ec2_key.pem env_file ec2-user@${{ env.EC2_HOST }}:~/env_file || {
+          echo "Failed to transfer env file. Check EC2_HOST and SSH key."
+          exit 1
+        }
         
         # Execute deployment commands on EC2
         ssh -i ~/.ssh/ec2_key.pem ec2-user@${{ env.EC2_HOST }} "
