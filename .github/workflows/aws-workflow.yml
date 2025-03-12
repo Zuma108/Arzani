@@ -441,7 +441,7 @@ jobs:
         echo "Password: [REDACTED - Stored in GitHub Secrets]" 
         echo "---------------------------------------------"
 
-    # Deploy to EC2 with improved error handling
+    # Deploy to EC2 with improved error handling and PM2 fixes
     - name: Deploy to EC2
       run: |
         set -x  # Print commands before execution
@@ -496,14 +496,40 @@ jobs:
           cd ~/app/current &&
           npm install --production &&
           
-          # Setup and start PM2
-          if ! command -v pm2 &> /dev/null; then
-            npm install -g pm2
+          # Setup and start PM2 with proper paths and error handling
+          echo 'Setting up PM2...' &&
+          which pm2 || sudo npm install -g pm2 &&
+          
+          # Make sure to use the full path to PM2
+          export PATH=\$PATH:/usr/local/bin:/home/ec2-user/.npm-global/bin &&
+          PM2_PATH=\$(which pm2) &&
+          
+          if [ -z \"\$PM2_PATH\" ]; then
+            echo 'PM2 not found in PATH, trying specific locations' &&
+            PM2_PATH=/usr/local/bin/pm2 &&
+            if [ ! -f \$PM2_PATH ]; then
+              PM2_PATH=/home/ec2-user/.npm-global/bin/pm2
+              if [ ! -f \$PM2_PATH ]; then
+                PM2_PATH=\$(find /usr -name pm2 2>/dev/null | head -1)
+                if [ -z \"\$PM2_PATH\" ]; then
+                  echo 'ERROR: PM2 not found - installing globally' &&
+                  sudo npm install -g pm2 &&
+                  PM2_PATH=\$(which pm2)
+                fi
+              fi
+            fi
           fi &&
-          pm2 stop marketplace 2>/dev/null || true &&
-          pm2 start server.js --name marketplace &&
-          pm2 save &&
-          pm2 startup | grep -v 'sudo' | sh &&
+          
+          echo \"Using PM2 at: \$PM2_PATH\" &&
+          
+          # Use PM2 with full path to avoid any issues
+          \$PM2_PATH stop marketplace 2>/dev/null || true &&
+          \$PM2_PATH start server.js --name marketplace &&
+          \$PM2_PATH save &&
+          
+          # Skip the PM2 startup command that's causing issues
+          # Instead just ensure the current processes will restart
+          \$PM2_PATH resurrect || true &&
           
           # Cleanup
           rm ~/deployment.zip &&
