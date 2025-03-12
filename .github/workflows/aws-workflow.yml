@@ -115,57 +115,83 @@ jobs:
       with:
         name: node-app
         
-    # Configure AWS credentials with improved error handling
+    # Configure AWS credentials with explicit error handling
     - name: Configure AWS credentials
+      id: aws-credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
-        # Mask the credentials in logs
         mask-aws-account-id: true
 
-    # Enhanced AWS CLI verification with minimal output to avoid exposing info
+    # Enhanced AWS CLI verification with better error messages
     - name: Verify AWS CLI
       run: |
+        # Print AWS CLI version for debugging
         aws --version
         
-        # Verify AWS authentication without logging details
-        if ! aws sts get-caller-identity --output text > /dev/null 2>&1; then
-          echo "Failed to authenticate with AWS. Check your AWS credentials."
+        echo "Testing AWS credentials with basic command..."
+        if ! aws sts get-caller-identity --query "Account" --output text > /dev/null 2>&1; then
+          echo "ERROR: AWS authentication failed. Possible causes:"
+          echo "1. AWS_ACCESS_KEY_ID or AWS_SECRET_ACCESS_KEY may be incorrect"
+          echo "2. The IAM user/role may not have sufficient permissions"
+          echo "3. AWS_REGION (${{ env.AWS_REGION }}) may be incorrect"
           exit 1
         fi
         
         echo "AWS authentication successful!"
         
-    # Check EC2 instance status with better security
+        # Print last few characters of the account ID for verification without exposing full ID
+        ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
+        echo "Connected to AWS account ending in: ...${ACCOUNT_ID: -4}"
+        
+    # Simplified EC2 instance status check with better error handling
     - name: Check EC2 instance status
       run: |
-        echo "Checking EC2 instance status..."
+        echo "Checking EC2 instance ID format..."
+        EC2_ID="${{ secrets.EC2_INSTANCE_ID }}"
         
-        # First validate the EC2 instance ID format
-        if [[ ! "${{ secrets.EC2_INSTANCE_ID }}" =~ ^i-[a-z0-9]+$ ]]; then
+        # Echo part of the ID for debugging without exposing full ID
+        echo "Instance ID ends with: ...${EC2_ID: -4}"
+        
+        # Validate format first
+        if [[ ! "$EC2_ID" =~ ^i-[a-z0-9]+$ ]]; then
           echo "ERROR: Malformed EC2 instance ID. Should start with 'i-' followed by alphanumeric characters."
           exit 1
         fi
         
-        # Verify instance ID is correct - don't output actual results
-        if ! aws ec2 describe-instances --instance-ids ${{ secrets.EC2_INSTANCE_ID }} > /dev/null 2>&1; then
-          echo "Error: Invalid instance ID. Check EC2_INSTANCE_ID secret."
+        echo "Verifying EC2 instance exists..."
+        if ! aws ec2 describe-instance-status --instance-ids "$EC2_ID" > /dev/null 2>&1; then
+          echo "ERROR: EC2 instance validation failed. Possible causes:"
+          echo "1. Instance ID may not exist"
+          echo "2. Instance may be in a different region than ${{ env.AWS_REGION }}"
+          echo "3. IAM credentials may not have ec2:DescribeInstances permission"
+          
+          # Try listing available instances to help debugging
+          echo "Available instances in region ${{ env.AWS_REGION }}:"
+          aws ec2 describe-instances --query "Reservations[*].Instances[*].[InstanceId]" --output text
+          
           exit 1
         fi
+
+        echo "EC2 instance validation successful!"
         
-        # Get instance state without printing other details
-        INSTANCE_STATE=$(aws ec2 describe-instances --instance-id ${{ secrets.EC2_INSTANCE_ID }} \
-          --query "Reservations[0].Instances[0].State.Name" --output text)
+        # Get and check instance state more carefully
+        echo "Getting instance state..."
+        INSTANCE_STATE=$(aws ec2 describe-instances --instance-ids "$EC2_ID" \
+          --query "Reservations[0].Instances[0].State.Name" --output text || echo "error")
           
-        if [ "$INSTANCE_STATE" != "running" ]; then
+        if [ "$INSTANCE_STATE" = "error" ]; then
+          echo "ERROR: Failed to get instance state"
+          exit 1
+        elif [ "$INSTANCE_STATE" != "running" ]; then
           echo "Instance is not running. Current state: $INSTANCE_STATE"
           echo "Starting the instance..."
-          aws ec2 start-instances --instance-id ${{ secrets.EC2_INSTANCE_ID }} > /dev/null
+          aws ec2 start-instances --instance-ids "$EC2_ID" > /dev/null
           
           echo "Waiting for instance to be running..."
-          aws ec2 wait instance-running --instance-id ${{ secrets.EC2_INSTANCE_ID }}
+          aws ec2 wait instance-running --instance-ids "$EC2_ID"
           
           echo "Instance is now running. Waiting 30 seconds for services to start..."
           sleep 30
