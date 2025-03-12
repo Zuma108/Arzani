@@ -104,9 +104,10 @@ jobs:
     name: Deploy
     needs: build
     runs-on: ubuntu-latest
+    # Fix for "Skip setting environment url" error
     environment:
       name: 'Production'
-      url: 'http://${{ env.EC2_HOST }}:3000'  # Use env reference, not secrets
+      url: http://18.168.205.177:3000  # Use hardcoded URL instead of env reference
 
     steps:
     - name: Download artifact from build job
@@ -121,33 +122,26 @@ jobs:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
+        # Mask the credentials in logs
+        mask-aws-account-id: true
 
-    # Enhanced AWS CLI verification with detailed output
+    # Enhanced AWS CLI verification with minimal output to avoid exposing info
     - name: Verify AWS CLI
       run: |
-        set -x  # Print commands before execution
         aws --version
-        echo "AWS CLI version check passed"
         
-        echo "Verifying AWS authentication..."
-        aws sts get-caller-identity --output json
-        if [ $? -ne 0 ]; then
+        # Verify AWS authentication without logging details
+        if ! aws sts get-caller-identity --output text > /dev/null 2>&1; then
           echo "Failed to authenticate with AWS. Check your AWS credentials."
-          echo "Secrets configured: AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY"
-          echo "Region configured: ${{ env.AWS_REGION }}"
           exit 1
         fi
         
         echo "AWS authentication successful!"
-        echo "Current authenticated identity: $(aws sts get-caller-identity --query 'Arn' --output text)"
         
-    # Check EC2 instance status with better error handling
+    # Check EC2 instance status with better security
     - name: Check EC2 instance status
       run: |
-        set -x  # Print commands before execution
         echo "Checking EC2 instance status..."
-        
-        echo "Instance ID used: ${{ secrets.EC2_INSTANCE_ID }}"
         
         # First validate the EC2 instance ID format
         if [[ ! "${{ secrets.EC2_INSTANCE_ID }}" =~ ^i-[a-z0-9]+$ ]]; then
@@ -155,27 +149,20 @@ jobs:
           exit 1
         fi
         
-        # Verify instance ID is correct
+        # Verify instance ID is correct - don't output actual results
         if ! aws ec2 describe-instances --instance-ids ${{ secrets.EC2_INSTANCE_ID }} > /dev/null 2>&1; then
           echo "Error: Invalid instance ID. Check EC2_INSTANCE_ID secret."
-          echo "Current value: ${{ secrets.EC2_INSTANCE_ID }}"
           exit 1
         fi
         
-        # Get detailed instance info for debugging
-        echo "Instance details:"
-        aws ec2 describe-instances --instance-ids ${{ secrets.EC2_INSTANCE_ID }} \
-          --query "Reservations[0].Instances[0].{InstanceId:InstanceId,State:State.Name,PublicIP:PublicIpAddress,PrivateIP:PrivateIpAddress,Type:InstanceType}" \
-          --output json
-        
-        # Get instance state
+        # Get instance state without printing other details
         INSTANCE_STATE=$(aws ec2 describe-instances --instance-id ${{ secrets.EC2_INSTANCE_ID }} \
           --query "Reservations[0].Instances[0].State.Name" --output text)
           
         if [ "$INSTANCE_STATE" != "running" ]; then
           echo "Instance is not running. Current state: $INSTANCE_STATE"
           echo "Starting the instance..."
-          aws ec2 start-instances --instance-id ${{ secrets.EC2_INSTANCE_ID }}
+          aws ec2 start-instances --instance-id ${{ secrets.EC2_INSTANCE_ID }} > /dev/null
           
           echo "Waiting for instance to be running..."
           aws ec2 wait instance-running --instance-id ${{ secrets.EC2_INSTANCE_ID }}
@@ -199,10 +186,9 @@ jobs:
     # Check if RDS instance exists, create if it doesn't
     - name: Check RDS instance
       run: |
-        set -x  # Print commands before execution
         echo "Checking if RDS instance exists..."
         
-        # Check if the RDS instance already exists
+        # Check if the RDS instance already exists - without logging details
         if aws rds describe-db-instances --db-instance-identifier ${{ env.RDS_DB_INSTANCE }} > /dev/null 2>&1; then
           echo "RDS instance ${{ env.RDS_DB_INSTANCE }} already exists"
           
@@ -211,7 +197,6 @@ jobs:
             --db-instance-identifier ${{ env.RDS_DB_INSTANCE }} \
             --query 'DBInstances[0].Endpoint.Address' --output text)
           
-          echo "RDS endpoint: $RDS_ENDPOINT"
           echo "RDS_ENDPOINT=$RDS_ENDPOINT" >> $GITHUB_ENV
           
           # Modify the RDS instance to be publicly accessible if it's not already
@@ -324,14 +309,14 @@ jobs:
         DB_URL="postgresql://${{ env.RDS_DB_USER }}:${{ secrets.RDS_DB_PASSWORD }}@$RDS_ENDPOINT:5432/${{ env.RDS_DB_NAME }}"
         echo "DB_URL=$DB_URL" >> $GITHUB_ENV
         
-        # Print connection info for pgAdmin
+        # Print connection info for pgAdmin without exposing password
         echo "---------------------------------------------"
         echo "RDS Connection Info for pgAdmin:"
         echo "Hostname: $RDS_ENDPOINT"
         echo "Port: 5432"
         echo "Database: ${{ env.RDS_DB_NAME }}"
         echo "Username: ${{ env.RDS_DB_USER }}"
-        echo "Password: ${{ secrets.RDS_DB_PASSWORD }}"
+        echo "Password: [REDACTED - Stored in GitHub Secrets]"
         echo "---------------------------------------------"
 
     # Deploy to EC2 with improved error handling
