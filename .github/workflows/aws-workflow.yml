@@ -106,7 +106,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: 'Production'
-      url: http://${{ secrets.EC2_HOST }}:3000  # Use secrets reference here
+      url: 'http://${{ env.EC2_HOST }}:3000'  # Use env reference, not secrets
 
     steps:
     - name: Download artifact from build job
