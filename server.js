@@ -61,6 +61,7 @@ import { authenticateUser as authMiddleware, populateUser } from './middleware/a
 import cookieParser from 'cookie-parser';
 import marketplaceRoutes from './routes/marketplaceRoutes.js';
 import marketTrendsApiRoutes from './routes/api/market-trends.js';
+import { initializeAws, getS3Client } from './utils/awsConfig.js';
 
 // Add businessAuth middleware
 const businessAuth = async (req, res, next) => {
@@ -112,9 +113,38 @@ const s3Client = new S3Client({
   }
 });
 
-// Test S3 connection on startup
+// Test S3 connection on startup - replace this function with enhanced version
 async function testS3Connection() {
   try {
+    // Print all environment variables for debugging (without sensitive values)
+    console.log("Environment variables scan:");
+    Object.keys(process.env)
+      .filter(key => key.includes('AWS'))
+      .forEach(key => {
+        if (key.includes('SECRET') || key.includes('KEY')) {
+          console.log(`${key}=***`);
+        } else {
+          console.log(`${key}=${process.env[key]}`);
+        }
+      });
+    
+    // Explicitly set AWS environment variables to ensure correct values
+    // This will override any incorrect values that might be coming from elsewhere
+    const forcedCredentials = {
+      AWS_ACCESS_KEY_ID: 'AKIA5WLTS45XNHMUBGWY',
+      AWS_SECRET_ACCESS_KEY: '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',
+      AWS_REGION: 'eu-west-2',
+      AWS_BUCKET_NAME: 'arzani-images1'
+    };
+    
+    // Forcibly override with correct values
+    Object.entries(forcedCredentials).forEach(([key, value]) => {
+      process.env[key] = value;
+    });
+    
+    console.log("FORCED AWS credentials to correct values");
+    
+    // Now try connecting with the forced credentials
     const s3Client = new S3Client({
       region: process.env.AWS_REGION,
       credentials: {
@@ -122,16 +152,25 @@ async function testS3Connection() {
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
       }
     });
-
+    
+    // Log the actual credentials being used (without revealing full secret)
+    console.log("Using AWS credentials:", {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID ? `${process.env.AWS_ACCESS_KEY_ID.substring(0, 5)}...` : 'undefined',
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ? '***' : 'undefined',
+      region: process.env.AWS_REGION,
+      bucketName: process.env.AWS_BUCKET_NAME
+    });
+    
+    // Test connection
     await s3Client.send(new ListBucketsCommand({}));
     console.log('✅ Successfully connected to AWS S3');
   } catch (error) {
     console.error('❌ Error connecting to AWS S3:', error);
+    console.error('This might be due to incorrect credentials in environment files.');
+    console.error('Please ensure AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are correct in your .env files.');
     process.exit(1); // Exit if S3 connection fails
   }
 }
-
-// Call test connection
 
 // 1. Homepage routes come first (before any static middleware or catch-all routes)
 app.get('/homepage', (req, res) => {

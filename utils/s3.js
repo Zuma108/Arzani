@@ -2,6 +2,7 @@ import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3
 import { getSignedUrl as awsGetSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Upload } from '@aws-sdk/lib-storage';
 import dotenv from 'dotenv';
+import { getS3Client } from './awsConfig.js';
 
 dotenv.config();
 
@@ -21,6 +22,11 @@ const s3Client = new S3Client({
  */
 export async function uploadToS3(file, key) {
   try {
+    const s3Client = getS3Client();
+    
+    // Log the S3 upload operation (without sensitive data)
+    console.log(`Uploading to S3: ${key} to bucket ${process.env.AWS_BUCKET_NAME}`);
+    
     // Handle both multer file objects and direct buffers
     const fileBuffer = file.buffer || file.buffer;
     const contentType = file.mimetype || 'application/octet-stream';
