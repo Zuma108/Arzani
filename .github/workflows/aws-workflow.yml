@@ -232,18 +232,48 @@ jobs:
         
         echo "SSH key appears to be valid"
         
-        # Verify EC2_HOST is set
-        if [ -z "${{ env.EC2_HOST }}" ]; then
-          echo "ERROR: EC2_HOST is empty or not set"
+        # Verify EC2 instance is reachable first
+        echo "Verifying EC2 instance is reachable at ${{ env.EC2_HOST }}..."
+        if ! timeout 5 bash -c "</dev/tcp/${{ env.EC2_HOST }}/22"; then
+          echo "ERROR: Cannot connect to EC2 host on port 22 (SSH)"
+          echo "Check if:"
+          echo "1. The EC2 instance is running"
+          echo "2. The EC2_HOST value is correct: ${{ env.EC2_HOST }}"
+          echo "3. The security group allows inbound SSH (port 22)"
+          
+          # Additional check: Try to ping the host
+          echo "Trying to ping the host..."
+          ping -c 3 ${{ env.EC2_HOST }} || echo "Ping failed, host may be unreachable"
+          
+          # Check if this is running in GitHub Actions and if so, show their outgoing IP
+          echo "GitHub Actions runner outgoing IP address:"
+          curl -s https://api.ipify.org || echo "Could not determine IP"
+          
           exit 1
         fi
         
-        # Add host to known_hosts safely
-        ssh-keyscan -H ${{ env.EC2_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || {
-          echo "ERROR: Could not scan host key for ${{ env.EC2_HOST }}"
-          echo "Make sure the EC2_HOST value is correct and the instance is running"
-          exit 1
-        }
+        echo "EC2 instance is reachable on port 22"
+        
+        # Add host to known_hosts safely with retries
+        echo "Adding host key to known_hosts..."
+        RETRY=0
+        MAX_RETRIES=3
+        
+        while [ $RETRY -lt $MAX_RETRIES ]; do
+          if ssh-keyscan -H ${{ env.EC2_HOST }} >> ~/.ssh/known_hosts 2>/dev/null; then
+            echo "Host key added successfully"
+            break
+          else
+            RETRY=$((RETRY+1))
+            if [ $RETRY -eq $MAX_RETRIES ]; then
+              echo "ERROR: Failed to scan host key for ${{ env.EC2_HOST }} after $MAX_RETRIES attempts"
+              echo "Make sure the EC2_HOST value is correct and the instance is running"
+              exit 1
+            fi
+            echo "Retry $RETRY/$MAX_RETRIES: Waiting 5 seconds before next attempt..."
+            sleep 5
+          fi
+        done
         
         # Test SSH connection with verbose output for debugging
         echo "Testing SSH connection..."
