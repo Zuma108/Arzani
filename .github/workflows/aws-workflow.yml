@@ -228,8 +228,7 @@ jobs:
             --group-id "$EC2_SG" \
             --protocol tcp \
             --port 22 \
-            --cidr "$GITHUB_RUNNER_IP/32" \
-            --description "GitHub Actions Runner SSH Access"
+            --cidr "$GITHUB_RUNNER_IP/32"
             
           echo "Added SSH rule for GitHub Actions runner IP: $GITHUB_RUNNER_IP"
           echo "Waiting 10 seconds for rule to propagate..."
@@ -254,8 +253,7 @@ jobs:
             --group-id "$EC2_SG" \
             --protocol tcp \
             --port 22 \
-            --cidr "0.0.0.0/0" \
-            --description "General SSH Access"
+            --cidr "0.0.0.0/0"
             
           echo "Added general SSH access rule"
           echo "Waiting 10 seconds for rule to propagate..."
