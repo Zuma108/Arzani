@@ -198,6 +198,71 @@ jobs:
         else
           echo "Instance is already running."
         fi
+        
+        # Get EC2 instance security group information
+        echo "Checking EC2 security group configuration..."
+        EC2_SG=$(aws ec2 describe-instances \
+          --instance-ids "${{ secrets.EC2_INSTANCE_ID }}" \
+          --query "Reservations[0].Instances[0].SecurityGroups[0].GroupId" \
+          --output text)
+          
+        echo "EC2 instance security group: $EC2_SG"
+        
+        # Get GitHub Actions runner IP address
+        GITHUB_RUNNER_IP=$(curl -s https://api.ipify.org)
+        echo "GitHub Actions runner IP: $GITHUB_RUNNER_IP"
+        
+        # Check if security group has an SSH rule for the GitHub runner IP
+        echo "Checking if security group allows SSH from GitHub Actions IP..."
+        if ! aws ec2 describe-security-groups \
+          --group-ids "$EC2_SG" \
+          --filters "Name=ip-permission.protocol,Values=tcp" \
+                   "Name=ip-permission.from-port,Values=22" \
+                   "Name=ip-permission.to-port,Values=22" \
+                   "Name=ip-permission.cidr,Values=$GITHUB_RUNNER_IP/32" \
+          --query "SecurityGroups[*]" \
+          --output text | grep -q .; then
+          
+          echo "Adding SSH rule for GitHub Actions runner IP to security group..."
+          aws ec2 authorize-security-group-ingress \
+            --group-id "$EC2_SG" \
+            --protocol tcp \
+            --port 22 \
+            --cidr "$GITHUB_RUNNER_IP/32" \
+            --description "GitHub Actions Runner SSH Access"
+            
+          echo "Added SSH rule for GitHub Actions runner IP: $GITHUB_RUNNER_IP"
+          echo "Waiting 10 seconds for rule to propagate..."
+          sleep 10
+        else
+          echo "Security group already allows SSH from GitHub Actions IP"
+        fi
+        
+        # Check if general SSH access is allowed
+        echo "Checking if general SSH access is allowed..."
+        if ! aws ec2 describe-security-groups \
+          --group-ids "$EC2_SG" \
+          --filters "Name=ip-permission.protocol,Values=tcp" \
+                   "Name=ip-permission.from-port,Values=22" \
+                   "Name=ip-permission.to-port,Values=22" \
+                   "Name=ip-permission.cidr,Values=0.0.0.0/0" \
+          --query "SecurityGroups[*]" \
+          --output text | grep -q .; then
+          
+          echo "Adding general SSH access rule to security group..."
+          aws ec2 authorize-security-group-ingress \
+            --group-id "$EC2_SG" \
+            --protocol tcp \
+            --port 22 \
+            --cidr "0.0.0.0/0" \
+            --description "General SSH Access"
+            
+          echo "Added general SSH access rule"
+          echo "Waiting 10 seconds for rule to propagate..."
+          sleep 10
+        else
+          echo "Security group already allows SSH from any IP"
+        fi
 
     # Improved SSH key setup with better error handling and key verification
     - name: Setup SSH key
