@@ -559,73 +559,118 @@ jobs:
         echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> env_file
         echo "PORT=3000" >> env_file
         
-        # Transfer files to EC2
-        scp -i ~/.ssh/ec2_key.pem deployment.zip ec2-user@${{ env.EC2_HOST }}:~/deployment.zip || {
-          echo "Failed to transfer deployment package. Check EC2_HOST and SSH key."
-          exit 1
-        }
+        # Configure SSH to be more resilient
+        mkdir -p ~/.ssh/config.d
+        cat > ~/.ssh/config <<EOF
+        Host ${{ env.EC2_HOST }}
+          ServerAliveInterval 60
+          ServerAliveCountMax 10
+          TCPKeepAlive yes
+          ConnectTimeout 180
+          StrictHostKeyChecking no
+        EOF
         
-        scp -i ~/.ssh/ec2_key.pem env_file ec2-user@${{ env.EC2_HOST }}:~/env_file || {
-          echo "Failed to transfer env file. Check EC2_HOST and SSH key."
-          exit 1
-        }
+        chmod 600 ~/.ssh/config
         
-        # Execute deployment commands on EC2
+        # Transfer files to EC2 with retry
+        echo "Transferring deployment files to EC2..."
+        for i in {1..3}; do
+          if scp -i ~/.ssh/ec2_key.pem deployment.zip ec2-user@${{ env.EC2_HOST }}:~/deployment.zip; then
+            echo "Deployment package transferred successfully"
+            break
+          else
+            echo "Transfer failed, attempt $i of 3"
+            if [ $i -eq 3 ]; then
+              echo "Failed to transfer deployment package after 3 attempts. Exiting."
+              exit 1
+            fi
+            sleep 5
+          fi
+        done
+        
+        # Transfer env file with retry
+        for i in {1..3}; do
+          if scp -i ~/.ssh/ec2_key.pem env_file ec2-user@${{ env.EC2_HOST }}:~/env_file; then
+            echo "Environment file transferred successfully"
+            break
+          else
+            echo "Transfer failed, attempt $i of 3"
+            if [ $i -eq 3 ]; then
+              echo "Failed to transfer environment file after 3 attempts. Exiting."
+              exit 1
+            fi
+            sleep 5
+          fi
+        done
+        
+        # Execute deployment commands on EC2 in smaller batches to prevent disconnection
+        echo "Connecting to EC2 and creating app directory..."
+        ssh -i ~/.ssh/ec2_key.pem ec2-user@${{ env.EC2_HOST }} "mkdir -p ~/app"
+        
+        echo "Backing up current deployment if it exists..."
         ssh -i ~/.ssh/ec2_key.pem ec2-user@${{ env.EC2_HOST }} "
-          echo 'Connected to EC2 instance in London region' &&
-          mkdir -p ~/app &&
-          
-          # Backup current deployment if it exists
           if [ -d ~/app/current ]; then
-            timestamp=\$(date +%Y%m%d%H%M%S) &&
-            mkdir -p ~/app/backup &&
+            timestamp=\$(date +%Y%m%d%H%M%S)
+            mkdir -p ~/app/backup
             mv ~/app/current ~/app/backup/backup_\$timestamp
-          fi &&
-          
-          # Deploy new version
-          mkdir -p ~/app/current &&
-          unzip -o ~/deployment.zip -d ~/app/current &&
-          mv ~/env_file ~/app/current/.env &&
-          cd ~/app/current &&
-          npm install --production &&
+          fi
+        "
+        
+        echo "Preparing new deployment directory..."
+        ssh -i ~/.ssh/ec2_key.pem ec2-user@${{ env.EC2_HOST }} "
+          mkdir -p ~/app/current
+          unzip -o ~/deployment.zip -d ~/app/current
+          mv ~/env_file ~/app/current/.env
+          cd ~/app/current
+          echo 'Deployment files extracted successfully'
+        "
+        
+        echo "Installing dependencies..."
+        ssh -i ~/.ssh/ec2_key.pem ec2-user@${{ env.EC2_HOST }} "
+          cd ~/app/current
+          # Use updated npm flag syntax
+          npm install --omit=dev
+          echo 'Dependencies installed successfully'
+        "
+        
+        echo "Setting up and starting PM2..."
+        ssh -i ~/.ssh/ec2_key.pem ec2-user@${{ env.EC2_HOST }} "
+          cd ~/app/current
           
           # Setup and start PM2 with proper paths and error handling
-          echo 'Setting up PM2...' &&
-          which pm2 || sudo npm install -g pm2 &&
+          echo 'Setting up PM2...'
+          which pm2 || sudo npm install -g pm2
           
           # Make sure to use the full path to PM2
-          export PATH=\$PATH:/usr/local/bin:/home/ec2-user/.npm-global/bin &&
-          PM2_PATH=\$(which pm2) &&
+          export PATH=\$PATH:/usr/local/bin:/home/ec2-user/.npm-global/bin
+          PM2_PATH=\$(which pm2)
           
           if [ -z \"\$PM2_PATH\" ]; then
-            echo 'PM2 not found in PATH, trying specific locations' &&
-            PM2_PATH=/usr/local/bin/pm2 &&
+            echo 'PM2 not found in PATH, trying specific locations'
+            PM2_PATH=/usr/local/bin/pm2
             if [ ! -f \$PM2_PATH ]; then
               PM2_PATH=/home/ec2-user/.npm-global/bin/pm2
               if [ ! -f \$PM2_PATH ]; then
                 PM2_PATH=\$(find /usr -name pm2 2>/dev/null | head -1)
                 if [ -z \"\$PM2_PATH\" ]; then
-                  echo 'ERROR: PM2 not found - installing globally' &&
-                  sudo npm install -g pm2 &&
+                  echo 'ERROR: PM2 not found - installing globally'
+                  sudo npm install -g pm2
                   PM2_PATH=\$(which pm2)
                 fi
               fi
             fi
-          fi &&
+          fi
           
-          echo \"Using PM2 at: \$PM2_PATH\" &&
+          echo \"Using PM2 at: \$PM2_PATH\"
           
           # Use PM2 with full path to avoid any issues
-          \$PM2_PATH stop marketplace 2>/dev/null || true &&
-          \$PM2_PATH start server.js --name marketplace &&
-          \$PM2_PATH save &&
-          
-          # Skip the PM2 startup command that's causing issues
-          # Instead just ensure the current processes will restart
-          \$PM2_PATH resurrect || true &&
+          \$PM2_PATH stop marketplace 2>/dev/null || true
+          \$PM2_PATH start server.js --name marketplace
+          \$PM2_PATH save
+          \$PM2_PATH resurrect || true
           
           # Cleanup
-          rm ~/deployment.zip &&
+          rm ~/deployment.zip
           echo 'Deployment completed successfully!'
         "
 
