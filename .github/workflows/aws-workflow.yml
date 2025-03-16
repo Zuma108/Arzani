@@ -461,7 +461,7 @@ jobs:
         
         # Create environment file locally
         echo "NODE_ENV=production" > env_file
-        echo "TEST_DATABASE_URL=$DB_URL" >> env_file
+        echo "DATABASE_URL=$DB_URL" >> env_file
         echo "DATABASE_SSL=true" >> env_file
         echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> env_file
         echo "PORT=3000" >> env_file

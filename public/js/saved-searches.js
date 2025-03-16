@@ -1,3 +1,152 @@
+/**
+ * JavaScript file for saved-searches functionality
+ */
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Ensure authentication state is synced between localStorage and cookies
+  syncAuthenticationState();
+  
+  // Setup event listeners for saved items
+  setupEventListeners();
+  
+  // Load saved businesses
+  loadSavedBusinesses();
+});
+
+/**
+ * Sync authentication state between localStorage and cookies
+ */
+function syncAuthenticationState() {
+  const token = localStorage.getItem('token');
+  if (token) {
+    // Set token as cookie for server-side auth
+    document.cookie = `token=${token}; path=/; max-age=7200; SameSite=Lax`;
+    console.log('Token synced from localStorage to cookie');
+    
+    // Ensure all API requests include the token
+    setupAuthHeaders(token);
+  } else {
+    console.log('No token found in localStorage');
+    // Check if we have the token as a cookie
+    const tokenCookie = document.cookie.split('; ')
+      .find(row => row.startsWith('token='));
+    
+    if (tokenCookie) {
+      const cookieToken = tokenCookie.split('=')[1];
+      localStorage.setItem('token', cookieToken);
+      console.log('Token synced from cookie to localStorage');
+      
+      // Ensure all API requests include the token
+      setupAuthHeaders(cookieToken);
+    } else {
+      // No authentication found, redirect to login
+      console.log('No authentication found, redirecting to login');
+      window.location.href = `/login2?returnTo=${encodeURIComponent(window.location.pathname)}`;
+    }
+  }
+}
+
+/**
+ * Set up auth headers for API requests
+ */
+function setupAuthHeaders(token) {
+  if (!token) return;
+  
+  // Add Authorization header to all fetch requests
+  const originalFetch = window.fetch;
+  window.fetch = function(url, options = {}) {
+    // Create headers if they don't exist
+    if (!options.headers) {
+      options.headers = {};
+    }
+    
+    // Add Authorization header if not already present
+    if (!options.headers['Authorization']) {
+      options.headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    return originalFetch(url, options);
+  };
+}
+
+/**
+ * Set up event listeners for saved searches functionality
+ */
+function setupEventListeners() {
+  // Handle remove saved item buttons
+  document.querySelectorAll('.remove-saved-btn').forEach(button => {
+    button.addEventListener('click', async function(e) {
+      e.preventDefault();
+      
+      const businessId = this.dataset.businessId;
+      if (!businessId) return;
+      
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/saved-businesses/${businessId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (response.ok) {
+          // Remove the item from the UI
+          const itemCard = this.closest('.saved-item-card');
+          if (itemCard) {
+            itemCard.remove();
+            
+            // Show success message
+            showNotification('Business removed from saved items', 'success');
+            
+            // If no items left, show empty state
+            const remainingItems = document.querySelectorAll('.saved-item-card');
+            if (remainingItems.length === 0) {
+              const container = document.querySelector('.saved-items-container');
+              if (container) {
+                container.innerHTML = '<div class="empty-state"><p>You don\'t have any saved businesses yet.</p><a href="/marketplace2" class="btn btn-primary">Browse businesses</a></div>';
+              }
+            }
+          }
+        } else {
+          throw new Error('Failed to remove saved business');
+        }
+      } catch (error) {
+        console.error('Error removing saved business:', error);
+        showNotification('Error removing saved business', 'error');
+      }
+    });
+  });
+}
+
+/**
+ * Display a notification message
+ */
+function showNotification(message, type = 'info') {
+  const notification = document.createElement('div');
+  notification.className = `alert alert-${type === 'error' ? 'danger' : type}`;
+  notification.style.position = 'fixed';
+  notification.style.top = '20px';
+  notification.style.right = '20px';
+  notification.style.zIndex = '9999';
+  notification.textContent = message;
+  
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    notification.style.opacity = '0';
+    notification.style.transition = 'opacity 0.5s';
+    
+    setTimeout(() => {
+      notification.remove();
+    }, 500);
+  }, 3000);
+}
+
+// Expose important functions
+window.syncSavedSearchesAuth = syncAuthenticationState;
+
 async function loadSavedBusinesses() {
     try {
         const token = localStorage.getItem('token');
@@ -91,7 +240,7 @@ async function loadSavedBusinesses() {
                         <div class="mt-auto d-flex justify-content-between gap-2">
                             <button class="btn btn-primary flex-grow-1 view-details-btn" 
                                     data-business-id="${business.id}"
-                                    onclick="window.location.href='/businesses/${business.id}'">
+                                    onclick="window.location.href='/business/${business.id}'">
                                 View Details
                             </button>
                             <button class="btn btn-outline-secondary flex-grow-1 contact-btn" 

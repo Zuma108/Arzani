@@ -1,35 +1,222 @@
 // Check authentication on page load
 document.addEventListener('DOMContentLoaded', async function() {
-    try {
-        const token = sessionStorage.getItem('token') || localStorage.getItem('token');
-        if (!token) {
-            window.location.href = '/login2?redirect=/post-business';
-            return;
+    console.log('Post business page loaded');
+    
+    // Add immediate auth check to prevent even trying to load if not authenticated
+    if (!getAuthToken()) {
+        console.error('No authentication token found, redirecting to login');
+        window.location.href = `/login2?returnTo=${encodeURIComponent(window.location.pathname)}`;
+        return;
+    }
+    
+    // Log auth debug info
+    console.log('Auth debug info:', {
+        hasTokenInput: !!document.getElementById('auth-token'),
+        tokenInputValue: document.getElementById('auth-token')?.value,
+        localStorageToken: localStorage.getItem('token'),
+        cookieToken: getCookie('token')
+    });
+    
+    // Get token from various sources
+    let token = getAuthToken();
+    if (!token) {
+        // Try to extract token from URL if present
+        const urlParams = new URLSearchParams(window.location.search);
+        token = urlParams.get('token');
+        if (token) {
+            // Store token in localStorage for future requests
+            localStorage.setItem('token', token);
+            console.log('Token found in URL and saved to localStorage');
+            
+            // Clean URL
+            const cleanUrl = window.location.pathname;
+            window.history.replaceState({}, document.title, cleanUrl);
         }
+    }
+    
+    // If we still don't have a token, redirect to login
+    if (!token) {
+        console.log('No authentication token found, redirecting to login');
+        window.location.href = `/login2?returnTo=${encodeURIComponent(window.location.pathname)}`;
+        return;
+    }
 
-        // Verify token validity
-        const response = await fetch('/api/verify-token', {
+    try {
+        // Make verification mandatory - use our debug endpoint
+        console.log('Verifying token...');
+        const response = await fetch('/api/token-debug/', { // Note the trailing slash to be safe
             headers: {
-                'Authorization': `Bearer ${token}`
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json'
             }
         });
 
         if (!response.ok) {
-            throw new Error('Token invalid');
+            throw new Error(`Token verification failed: ${response.status}`);
         }
 
-        // Initialize form if token is valid
+        const data = await response.json();
+        console.log('Token verification result:', data);
+        
+        if (data.authHeader.status !== 'valid') {
+            throw new Error('Invalid token: ' + data.authHeader.status);
+        }
+        
+        console.log('Token verified successfully for user:', data.authHeader.userId);
+        
+        // Initialize form now that we have a valid token
         initializeForm(token);
+        
+        // Initialize Google Maps with proper error handling
+        initializeGoogleMaps();
+        
     } catch (error) {
-        console.error('Auth check failed:', error);
-        window.location.href = '/login2?redirect=/post-business';
+        console.error('Authentication check failed:', error);
+        // Clear invalid tokens
+        localStorage.removeItem('token');
+        sessionStorage.removeItem('token');
+        
+        // Redirect to login
+        window.location.href = `/login2?returnTo=${encodeURIComponent(window.location.pathname)}&error=invalid_token`;
     }
 });
 
+// Helper function to initialize Google Maps with error handling
+function initializeGoogleMaps() {
+    // If Google Maps already initialized via callback, don't do it again
+    if (window.googleMapsLoaded) {
+        console.log('Google Maps already initialized via callback');
+        return;
+    }
+    
+    // If we're in a known error state, don't try again
+    if (window.mapsApiState && window.mapsApiState.error) {
+        console.log('Maps API has already failed with error:', window.mapsApiState.error);
+        enableManualLocationEntry();
+        return;
+    }
+    
+    // Check if Google Maps API is loaded
+    if (typeof google !== 'undefined' && google.maps) {
+        console.log('Google Maps API loaded successfully');
+        
+        try {
+            // Check specifically for Places API
+            if (google.maps.places && google.maps.places.Autocomplete) {
+                console.log('Places API available, initializing autocomplete');
+                initializeLocationAutocomplete();
+            } else {
+                console.warn('Places API not available despite Maps API loading');
+                document.getElementById('maps-error').textContent = 
+                    'Google Places API not activated. Please enable it in your Google Cloud Console.';
+                document.getElementById('maps-error').style.display = 'block';
+                enableManualLocationEntry();
+            }
+        } catch (error) {
+            console.error('Error initializing location autocomplete:', error);
+            document.getElementById('maps-error').style.display = 'block';
+            enableManualLocationEntry();
+        }
+    } else {
+        console.warn('Google Maps API not available. Location autocomplete will be disabled.');
+        document.getElementById('maps-error').style.display = 'block';
+        enableManualLocationEntry();
+    }
+}
+
+// Helper function for enabling manual location entry when maps fails
+function enableManualLocationEntry() {
+    const locationInput = document.getElementById('location');
+    if (locationInput) {
+        locationInput.setAttribute('placeholder', 'Enter location manually (e.g., London, UK)');
+        locationInput.removeAttribute('readonly');
+        // Optional: Add a class to style the input differently
+        locationInput.classList.add('manual-entry');
+    }
+}
+
+// Helper function to initialize location autocomplete with Google Places API
+function initializeLocationAutocomplete() {
+    const locationInput = document.getElementById('location');
+    if (!locationInput) {
+        console.error('Location input not found');
+        return;
+    }
+
+    console.log('Setting up location autocomplete');
+    try {
+        const autocomplete = new google.maps.places.Autocomplete(locationInput, {
+            types: ['(cities)'],
+            componentRestrictions: { country: 'gb' }
+        });
+
+        autocomplete.addListener('place_changed', function() {
+            const place = autocomplete.getPlace();
+            console.log('Place selected:', place.formatted_address);
+            
+            // Optional: Store latitude and longitude if needed
+            if (place.geometry && place.geometry.location) {
+                const lat = place.geometry.location.lat();
+                const lng = place.geometry.location.lng();
+                console.log(`Selected location coordinates: ${lat}, ${lng}`);
+                
+                // You could store these in hidden fields if needed
+                // document.getElementById('latitude').value = lat;
+                // document.getElementById('longitude').value = lng;
+            }
+        });
+    } catch (error) {
+        console.error('Failed to initialize autocomplete:', error);
+        enableManualLocationEntry();
+    }
+}
+
+// Helper function to get authentication token from any available source
+function getAuthToken() {
+    // First check hidden input field in the page
+    const tokenInput = document.getElementById('auth-token');
+    if (tokenInput && tokenInput.value) {
+        console.log('Found token in hidden input field');
+        return tokenInput.value;
+    }
+    
+    // Try localStorage
+    const localToken = localStorage.getItem('token');
+    if (localToken) {
+        console.log('Found token in localStorage');
+        return localToken;
+    }
+    
+    // Then try sessionStorage
+    const sessionToken = sessionStorage.getItem('token');
+    if (sessionToken) {
+        console.log('Found token in sessionStorage');
+        return sessionToken;
+    }
+    
+    // Finally try cookie
+    const cookieToken = getCookie('token');
+    if (cookieToken) {
+        console.log('Found token in cookie');
+        return cookieToken;
+    }
+    
+    return null;
+}
+
+// Helper function to get a cookie value by name
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
 function initializeForm(token) {
+    console.log('Initializing form with valid token');
+    
     // Update Dropzone configuration with valid token
     imageDropzone = new Dropzone("#imageDropzone", {
-        url: "/business/submit-business", // Updated path
+        url: "/api/submit-business", // Updated endpoint path
         autoProcessQueue: false, // Prevent auto upload
         uploadMultiple: true,
         parallelUploads: 5,
@@ -50,7 +237,7 @@ function initializeForm(token) {
             
             this.on("sending", function(file, xhr, formData) {
                 // Always use the current token
-                const currentToken = sessionStorage.getItem('token') || localStorage.getItem('token');
+                const currentToken = getAuthToken();
                 xhr.setRequestHeader('Authorization', `Bearer ${currentToken}`);
             });
 
@@ -80,29 +267,57 @@ function initializeForm(token) {
                 file.s3url = response.url;
                 console.log('File uploaded to S3:', response.url);
             });
+            
             this.on("error", function(file, response) {
-                if (response === 'Unauthorized') {
+                if (typeof response === 'string' && response.includes('Unauthorized')) {
+                    alert('Your session has expired. Please log in again.');
                     window.location.href = '/login2';
+                    return;
                 }
                 console.error("File upload error:", response);
             });
         }
     });
+    
+    // Initialize form event listeners after we know authentication is valid
+    const form = document.getElementById('postBusinessForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (form.checkValidity()) {
+                handleFormSubmission();
+            } else {
+                e.stopPropagation();
+                form.classList.add('was-validated');
+            }
+        });
+    }
+    
+    // Add event listeners for valuation checks
+    document.getElementById('checkValuation')?.addEventListener('click', checkValuation);
+    document.getElementById('checkAdvancedValuation')?.addEventListener('click', async () => {
+        const advValuationBtn = document.getElementById('checkAdvancedValuation');
+        advValuationBtn.classList.add('loading');
+        await checkAdvancedValuation();
+        advValuationBtn.classList.remove('loading');
+    });
 }
 
 // Add token refresh before form submission
 async function verifyAndRefreshToken() {
-    const token = sessionStorage.getItem('token') || localStorage.getItem('token');
+    const token = getAuthToken();
     
     if (!token) {
-        window.location.href = '/login2?redirect=/post-business';
+        console.log('No token found, redirecting to login');
+        window.location.href = `/login2?returnTo=${encodeURIComponent(window.location.pathname)}`;
         return null;
     }
 
     try {
         const response = await fetch('/api/verify-token', {
             headers: {
-                'Authorization': `Bearer ${token}`
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json'
             }
         });
 
@@ -111,12 +326,16 @@ async function verifyAndRefreshToken() {
         }
 
         const data = await response.json();
+        console.log('Token verified for user:', data.userId);
         return token;
     } catch (error) {
         console.error('Token verification failed:', error);
-        sessionStorage.removeItem('token');
+        // Clear invalid tokens
         localStorage.removeItem('token');
-        window.location.href = '/login2?redirect=/post-business';
+        sessionStorage.removeItem('token');
+        
+        // Redirect to login
+        window.location.href = `/login2?returnTo=${encodeURIComponent(window.location.pathname)}&error=auth_required`;
         return null;
     }
 }
@@ -154,11 +373,7 @@ async function handleFormSubmission() {
         }
 
         // Debug form fields
-        console.log('Form data before submission:', {
-            business_name: document.getElementById('title').value,
-            industry: document.getElementById('industry').value,
-            // ... log other fields
-        });
+        console.log('Form validation passed, preparing submission');
 
         const formData = new FormData();
         
@@ -206,11 +421,7 @@ async function handleFormSubmission() {
             'business_name',
             'industry',
             'price',
-            'description',
-            'location',
-            'gross_revenue',
-            'employees',
-            'years_in_operation'
+            'description'
         ];
 
         const missingFields = requiredFields.filter(field => !fields[field]);
@@ -235,7 +446,10 @@ async function handleFormSubmission() {
         // Add a request timestamp to help prevent duplicate submissions
         formData.append('requestTimestamp', Date.now().toString());
 
-        const response = await fetch('/business/submit-business', {
+        console.log('Submitting business listing...');
+        
+        // Update the endpoint to the correct one
+        const response = await fetch('/api/submit-business', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -243,19 +457,22 @@ async function handleFormSubmission() {
             body: formData
         });
 
-        const data = await response.json();
-        
         if (!response.ok) {
-            if (response.status === 409) {
-                console.warn('Duplicate submission detected');
-                alert('Your business listing was already submitted. Redirecting to marketplace.');
-                window.location.href = '/marketplace2';
+            const errorText = await response.text();
+            console.error('Submission response error:', response.status, errorText);
+            
+            if (response.status === 401) {
+                // Authentication issue
+                alert('Your session has expired. Please log in again.');
+                window.location.href = `/login2?returnTo=${encodeURIComponent(window.location.pathname)}`;
                 return;
             }
-            console.error('Submission error details:', data);
-            throw new Error(data.error || 'Submission failed');
+            
+            throw new Error(`Submission failed with status: ${response.status}`);
         }
 
+        const data = await response.json();
+        
         if (data.success) {
             alert('Business posted successfully!');
             window.location.href = '/marketplace2';

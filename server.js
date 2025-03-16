@@ -62,6 +62,22 @@ import cookieParser from 'cookie-parser';
 import marketplaceRoutes from './routes/marketplaceRoutes.js';
 import marketTrendsApiRoutes from './routes/api/market-trends.js';
 import { initializeAws, getS3Client } from './utils/awsConfig.js';
+import { refreshMarketTrends, initializeMarketTrends } from './services/marketTrendsService.js'; // Add this import
+
+// Import the assistant monitoring routes
+import assistantMonitorRoutes from './routes/api/assistant-monitor.js';
+
+// Import for AI assistant routes (if not already there)
+import aiAssistantRoutes from './routes/ai-assistant.js';
+
+// Add this import at the top with other imports
+import { createAssistantTables } from './migrations/create_assistant_interactions.js';
+
+// Import routes
+import postBusinessRoutes from './routes/post-business.js';
+import { debugAuth } from './middleware/authDebug.js';
+
+import tokenDebugRoutes from './routes/api/token-debug.js'; // Add this import
 
 // Add businessAuth middleware
 const businessAuth = async (req, res, next) => {
@@ -234,6 +250,9 @@ app.use('/checkout-platinum', (req, res, next) => {
   next();
 });
 
+// Make sure cookie parser runs early (before session middleware)
+app.use(cookieParser());
+
 // Update session configuration - move this before any routes
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your-secret-key',
@@ -381,15 +400,24 @@ app.use('/checkout-platinum', (req, res) => res.redirect('/checkout/platinum'));
 app.use('/api/subscription', subscriptionApiRoutes);
 app.use('/api/market-trends', marketTrendsApiRoutes);
 
+// Add the token debug routes - make sure it's before the catch-all handler
+app.use('/api/token-debug', tokenDebugRoutes); // ADD THIS LINE
+
+// Add assistant monitoring routes
+app.use('/api/assistant-monitor', assistantMonitorRoutes);
+
+// Register the AI assistant routes
+app.use('/api/assistant', aiAssistantRoutes);
+
 // Use the new auth middleware where needed
 app.use('/api/protected', authMiddleware);
 app.use('/dashboard', authMiddleware);
 app.use('/marketplace/edit', authMiddleware);
 app.use('/', populateUser); // Optional: populate user for all routes
 
-// Set view engine
+// Set view engine (ensure the public folder is included)
 app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
+app.set('views', [path.join(__dirname, 'views'), path.join(__dirname, 'public')]);
 
 // Serve static files
 app.use(express.static('public'));
@@ -419,11 +447,6 @@ app.use('/api', (req, res, next) => {
   res.setHeader('Content-Type', 'application/json');
   next();
 });
-
-
-// Remove any duplicate route registrations like:
-// app.use('/business', businessRoutes);
-// app.use('/', indexRoutes);
 
 // Add a general API verification endpoint directly
 app.get('/api/verify-token', async (req, res) => {
@@ -555,6 +578,32 @@ app.use((req, res, next) => {
   next();
 });
 
+
+// Add specific token middleware for post-business routes
+app.use('/post-business*', (req, res, next) => {
+  // If no Authorization header but we have a token cookie, use it
+  if (!req.headers['authorization'] && req.cookies?.token) {
+    req.headers['authorization'] = `Bearer ${req.cookies.token}`;
+    console.log('Added Authorization header from token cookie for post-business');
+  }
+  next();
+});
+
+// Standard debug middleware for post-business routes
+app.use('/post-business*', (req, res, next) => {
+  console.log('Post-business request debug:', {
+    path: req.path,
+    sessionID: req.sessionID,
+    hasSession: !!req.session,
+    sessionUserId: req.session?.userId,
+    hasAuthHeader: !!req.headers['authorization'],
+    hasCookieToken: !!req.cookies?.token
+  });
+  next();
+});
+
+
+
 app.get('/terms', (req, res) => {
   try {
     res.render('terms');
@@ -563,10 +612,6 @@ app.get('/terms', (req, res) => {
     res.status(500).send('Error loading terms page');
   }
 });
-
-  app.get('/post-business', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'post-business.html'));
-  });
 
   app.get('/auth/verifyemail', async (req, res) => {
     try {
@@ -702,7 +747,7 @@ app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) =
   createUserTable();
 
   app.set('view engine', 'ejs');
-  app.set('views', path.join(__dirname, 'views'));
+  app.set('views', [path.join(__dirname, 'views'), path.join(__dirname, 'public')]);
 
   // Add template debugging
   app.use((err, req, res, next) => {
@@ -1315,39 +1360,21 @@ app.use('/api/*', (req, res) => {
 });
 
 // Add this BEFORE the catch-all route
-app.get('/market-trends', async (req, res) => {
+app.get('/market-trends', authenticateToken, async (req, res) => {
     try {
-        // Check for token in Authorization header
-        const authHeader = req.headers['authorization'];
-        let userId = null;
-
-        // Try to get userId from token
-        if (authHeader?.startsWith('Bearer ')) {
-            try {
-                const token = authHeader.split(' ')[1];
-                const decoded = jwt.verify(token, process.env.JWT_SECRET);
-                userId = decoded.userId;
-            } catch (error) {
-                console.error('Token verification failed:', error);
-                return res.redirect('/login2?redirect=/market-trends');
-            }
-        }
-
-        // If no valid token, try session
-        if (!userId && req.session?.userId) {
-            userId = req.session.userId;
-        }
-
-        // If still no userId, redirect to login
-        if (!userId) {
+        console.log('Market trends page requested, user:', req.user);
+        
+        // Check user authentication
+        if (!req.user?.userId) {
             console.log('No user ID found, redirecting to login');
             return res.redirect('/login2?redirect=/market-trends');
         }
 
         // Get user data for personalization
+        console.log('Fetching user data for ID:', req.user.userId);
         const userQuery = await pool.query(
             'SELECT username, subscription_type FROM users WHERE id = $1',
-            [userId]
+            [req.user.userId]
         );
         
         if (userQuery.rows.length === 0) {
@@ -1356,6 +1383,7 @@ app.get('/market-trends', async (req, res) => {
         }
 
         const user = userQuery.rows[0];
+        console.log('User found:', user.username);
 
         // Render the market trends page
         res.render('market_trends', {
@@ -1392,7 +1420,7 @@ app.use('/api/market', authenticateToken, marketTrendsRoutes);
 
 // If you need a catch-all, make it the last route and exclude /market-trends
 app.get('*', (req, res, next) => {
-    if (req.path === '/market-trends') {
+    if (req.path === '/market-trends' || req.path === '/saved-searches' || req.path === '/history' || req.path.startsWith('/post-business')) {
         next();
     } else {
         res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -2199,9 +2227,30 @@ app.use((req, res, next) => {
     await createBusinessHistoryTable();
     await addProviderColumns();
     
+    // Initialize market trends materialized view
+    console.log('Initializing market trends materialized view...');
+    const trendsInit = await initializeMarketTrends();
+    if (trendsInit.success) {
+      console.log('Market trends materialized view initialized successfully');
+    } else {
+      console.warn('Warning: Market trends initialization had issues:', trendsInit.error);
+      console.warn('Some market trend features may not work correctly');
+    }
+    
     // Test S3 connection only in development
     if (process.env.NODE_ENV !== 'production') {
       await testS3Connection();
+    }
+
+    // Ensure AI assistant tables exist before starting server
+    try {
+      console.log('Ensuring AI assistant database tables exist...');
+      await createAssistantTables();
+      console.log('AI assistant tables verified');
+    } catch (error) {
+      console.error('Warning: Error ensuring AI assistant tables:', error);
+      console.error('AI assistant functionality may not work. Run scripts/fix-ai-tables.js to fix.');
+      // Continue with startup - non-fatal error
     }
 
     // Start server with updated port handling
@@ -2321,11 +2370,7 @@ app.get('/api/migrate-profile-pictures', adminAuth, async (req, res) => {
 // After all routes are registered, print them
 console.log("All registered routes:");
 printRoutes(app);
-
-
-// AI Assistant Routes
-import aiAssistantRoutes from './routes/ai-assistant.js';
-app.use('/api/assistant', aiAssistantRoutes);
+ 
 
 // Document handling endpoints
 app.post('/api/documents/share', authenticateToken, async (req, res) => {
@@ -2390,4 +2435,223 @@ app.post('/api/analytics/events', async (req, res) => {
   }
 });
 
+// Apply routes
+app.use('/post-business', postBusinessRoutes);
+
+// Fix for post-business authentication - add fallback handler
+app.get('/post-business/*', (req, res, next) => {
+  // If this route is hit, it means the postBusinessRoutes didn't handle it
+  // This could happen if authentication failed but didn't properly redirect
+  console.log('Fallback handler for post-business route activated');
+  
+  const token = req.cookies?.token || req.headers['authorization']?.split(' ')[1];
+  if (!token) {
+    return res.redirect('/login2?returnTo=' + encodeURIComponent(req.originalUrl));
+  }
+  
+  // If we got here with a token, try the post-business routes again
+  next();
+});
+
+// Apply routes
+app.use('/saved-searches', savedBusinessesRoutes);
+
+// Fix for saved-searches authentication issues
+app.get('/saved-searches/*', (req, res, next) => {
+  // If this route is hit, it means the savedBusinessesRoutes didn't handle it
+  // This could happen if authentication failed but didn't properly redirect
+  console.log('Fallback handler for saved-searches route activated');
+  
+  const token = req.cookies?.token || req.headers['authorization']?.split(' ')[1];
+  if (!token) {
+    return res.redirect('/login2?returnTo=' + encodeURIComponent(req.originalUrl));
+  }
+  
+  // If we got here with a token, try the saved-searches routes again
+  next();
+});
+
+// Add these middleware functions BEFORE any route registration
+app.use(cookieParser()); // Make sure cookie parser runs early
+
+// Enhanced token debugging middleware - add this before route registrations
+app.use('/post-business*', (req, res, next) => {
+  console.log('POST-BUSINESS AUTH DEBUG:', {
+    path: req.path,
+    method: req.method,
+    cookies: Object.keys(req.cookies || {}),
+    hasTokenCookie: !!req.cookies?.token,
+    sessionID: req.sessionID,
+    sessionUserId: req.session?.userId,
+    hasAuthHeader: !!req.headers['authorization'],
+    authHeader: req.headers['authorization'] ? req.headers['authorization'].substring(0, 15) + '...' : 'none'
+  });
+
+  // If there's a session but no auth header, create one from the session
+  if (req.session?.userId && !req.headers['authorization']) {
+    console.log('Creating auth header from session userId:', req.session.userId);
+    try {
+      const token = jwt.sign(
+        { userId: req.session.userId },
+        process.env.JWT_SECRET,
+        { expiresIn: '1h' }
+      );
+      req.headers['authorization'] = `Bearer ${token}`;
+    } catch (err) {
+      console.error('Failed to create token from session:', err);
+    }
+  }
+  
+  next();
+});
+
+// Direct post-business GET route - add before using the router
+app.get('/post-business', async (req, res, next) => {
+  console.log('Direct post-business GET route handler');
+  
+  try {
+    // Find user ID from multiple sources
+    let userId = null;
+    
+    // 1. Try session
+    if (req.session?.userId) {
+      userId = req.session.userId;
+      console.log('User ID from session:', userId);
+    }
+    
+    // 2. Try token in Authorization header
+    if (!userId && req.headers['authorization']?.startsWith('Bearer ')) {
+      const token = req.headers['authorization'].split(' ')[1];
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        userId = decoded.userId;
+        console.log('User ID from Authorization header:', userId);
+      } catch (err) {
+        console.error('Error decoding token from header:', err.message);
+      }
+    }
+    
+    // 3. Try token in cookie
+    if (!userId && req.cookies?.token) {
+      try {
+        const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+        userId = decoded.userId;
+        console.log('User ID from token cookie:', userId);
+      } catch (err) {
+        console.error('Error decoding token from cookie:', err.message);
+      }
+    }
+    
+    // If no valid user ID found, redirect to login
+    if (!userId) {
+      console.log('No valid user ID found, redirecting to login');
+      return res.redirect(`/login2?returnTo=${encodeURIComponent('/post-business')}`);
+    }
+    
+    // User ID found, verify in database
+    const userCheck = await pool.query(
+      'SELECT id FROM users WHERE id = $1',
+      [userId]
+    );
+    
+    if (userCheck.rows.length === 0) {
+      console.log('User ID not found in database:', userId);
+      return res.redirect(`/login2?returnTo=${encodeURIComponent('/post-business')}`);
+    }
+    
+    // Valid user found, update session
+    req.session.userId = userId;
+    req.user = { userId };
+    
+    // Generate token for the template
+    const token = jwt.sign(
+      { userId },
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+
+    // Get Google Maps API key (log the key for debugging but don't expose in production)
+    const googleMapsApiKey = process.env.GOOGLE_MAPS_API_KEY || '';
+    console.log('Google Maps API key status:', googleMapsApiKey ? 'Available' : 'Missing');
+    const hasGoogleMapsKey = !!googleMapsApiKey;
+    
+    // Render the template directly
+    console.log('Rendering post-business template for user:', userId);
+    res.render('post-business', {
+      title: 'Post Your Business',
+      user: { userId },
+      token,
+      googleMapsApiKey,
+      hasGoogleMapsKey
+    });
+  } catch (error) {
+    console.error('Error in direct post-business handler:', error);
+    return res.redirect(`/login2?returnTo=${encodeURIComponent('/post-business')}`);
+  }
+});
+
+
+// Add token verification endpoint - add this before existing verify-token endpoint
+app.get('/api/token-debug', (req, res) => {
+  const authHeader = req.headers['authorization'];
+  const cookieToken = req.cookies?.token;
+  const sessionUserId = req.session?.userId;
+  
+  let headerTokenStatus = 'missing';
+  let headerTokenUserId = null;
+  let headerTokenExpiry = null;
+  
+  let cookieTokenStatus = 'missing';
+  let cookieTokenUserId = null;
+  let cookieTokenExpiry = null;
+  
+  // Check Authorization header token
+  if (authHeader?.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1];
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      headerTokenStatus = 'valid';
+      headerTokenUserId = decoded.userId;
+      headerTokenExpiry = new Date(decoded.exp * 1000).toISOString();
+    } catch (err) {
+      headerTokenStatus = `invalid: ${err.message}`;
+    }
+  }
+  
+  // Check cookie token
+  if (cookieToken) {
+    try {
+      const decoded = jwt.verify(cookieToken, process.env.JWT_SECRET);
+      cookieTokenStatus = 'valid';
+      cookieTokenUserId = decoded.userId;
+      cookieTokenExpiry = new Date(decoded.exp * 1000).toISOString();
+    } catch (err) {
+      cookieTokenStatus = `invalid: ${err.message}`;
+    }
+  }
+  
+  res.json({
+    authHeader: {
+      present: !!authHeader,
+      status: headerTokenStatus,
+      userId: headerTokenUserId,
+      expiry: headerTokenExpiry
+    },
+    cookieToken: {
+      present: !!cookieToken,
+      status: cookieTokenStatus,
+      userId: cookieTokenUserId,
+      expiry: cookieTokenExpiry
+    },
+    session: {
+      id: req.sessionID,
+      userId: sessionUserId
+    },
+    timestamp: new Date().toISOString()
+  });
+});
+
+// ...existing code...
+
 export default app;
+

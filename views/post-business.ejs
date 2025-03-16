@@ -8,8 +8,162 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/dropzone.min.css">
     <link rel="stylesheet" href="/css/post-business.css">
     <link rel="stylesheet" href="/css/valuation.css">
+    
+    <!-- Only load Google Maps API if key is available -->
+    <% if (locals.hasGoogleMapsKey && locals.googleMapsApiKey) { %>
+        <script>
+            // Track API loading state
+            window.mapsApiState = {
+                loading: true,
+                initialized: false,
+                error: null
+            };
+            
+            function initMap() {
+                console.log('Google Maps API initialized successfully');
+                window.mapsApiState.initialized = true;
+                window.mapsApiState.loading = false;
+                
+                // This function will be called when Google Maps loads successfully
+                window.googleMapsLoaded = true;
+                
+                try {
+                    // Initialize location autocomplete if input exists
+                    const locationInput = document.getElementById('location');
+                    if (locationInput && google && google.maps && google.maps.places) {
+                        console.log('Setting up location autocomplete');
+                        const autocomplete = new google.maps.places.Autocomplete(locationInput, {
+                            types: ['(cities)'],
+                            componentRestrictions: { country: 'gb' }
+                        });
+
+                        autocomplete.addListener('place_changed', function() {
+                            const place = autocomplete.getPlace();
+                            console.log('Place selected:', place.formatted_address);
+                        });
+                    } else {
+                        console.warn('Location input or Places API not available');
+                    }
+                } catch (err) {
+                    console.error('Error initializing Places autocomplete:', err);
+                    enableManualLocationEntry();
+                }
+            }
+            
+            function gm_authFailure() {
+                console.error('Google Maps authentication failed');
+                window.mapsApiState.error = 'auth_failure';
+                window.mapsApiState.loading = false;
+                document.getElementById('maps-error').textContent = 
+                    'Google Maps API authentication failed. You can still enter location manually.';
+                document.getElementById('maps-error').style.display = 'block';
+                enableManualLocationEntry();
+            }
+            
+            function handleGoogleMapsError() {
+                console.error('Google Maps API failed to load');
+                window.mapsApiState.error = 'load_failure';
+                window.mapsApiState.loading = false;
+                document.getElementById('maps-error').textContent = 
+                    'Google Maps location services are currently unavailable. You can still enter your location manually.';
+                document.getElementById('maps-error').style.display = 'block';
+                enableManualLocationEntry();
+            }
+            
+            function enableManualLocationEntry() {
+                const locationInput = document.getElementById('location');
+                if (locationInput) {
+                    locationInput.setAttribute('placeholder', 'Enter location manually (e.g., London, UK)');
+                    locationInput.removeAttribute('readonly');
+                    // Optional: Add a class to style the input differently
+                    locationInput.classList.add('manual-entry');
+                }
+            }
+            
+            // Add a timeout to detect if the API takes too long to load
+            setTimeout(function() {
+                if (window.mapsApiState.loading && !window.mapsApiState.initialized) {
+                    console.warn('Google Maps API taking too long to load, enabling manual entry');
+                    handleGoogleMapsError();
+                }
+            }, 5000);
+        </script>
+        <script src="https://maps.googleapis.com/maps/api/js?key=<%= googleMapsApiKey %>&libraries=places&callback=initMap" 
+                async defer onerror="handleGoogleMapsError()"></script>
+    <% } else { %>
+        <script>
+            console.warn('Google Maps API key not available');
+            document.addEventListener('DOMContentLoaded', function() {
+                document.getElementById('maps-error').textContent = 'Google Maps API key not configured.';
+                document.getElementById('maps-error').style.display = 'block';
+                
+                // Enable manual location entry
+                const locationInput = document.getElementById('location');
+                if (locationInput) {
+                    locationInput.setAttribute('placeholder', 'Enter location manually (e.g., London, UK)');
+                    locationInput.removeAttribute('readonly');
+                }
+            });
+        </script>
+    <% } %>
+    
+    <script>
+        // Store user info and token in localStorage
+        const authInfo = {
+            userId: "<%= user?.userId %>",
+            token: "<%= token %>"
+        };
+        
+        console.log("Auth info on page load:", {
+            userId: authInfo.userId,
+            hasToken: !!authInfo.token
+        });
+        
+        // Make token available to JavaScript and store in localStorage
+        if (authInfo.token) {
+            window.authToken = authInfo.token;
+            localStorage.setItem('token', authInfo.token);
+            console.log("Auth token stored in localStorage");
+        } else {
+            console.warn("No auth token provided to the template");
+            // Try to get from localStorage if not in template
+            const storedToken = localStorage.getItem('token');
+            if (storedToken) {
+                window.authToken = storedToken;
+                console.log("Using token from localStorage");
+            }
+        }
+        
+        // Add auth debugging info
+        window.addEventListener('DOMContentLoaded', () => {
+            fetch('/api/token-debug')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Token debug info:', data);
+                    
+                    // Update token if needed
+                    if (data.authHeader.status === 'valid' && !window.authToken) {
+                        window.authToken = data.authHeader.token;
+                        localStorage.setItem('token', data.authHeader.token);
+                        console.log("Updated token from debug endpoint");
+                    }
+                })
+                .catch(error => console.error('Token debug error:', error));
+        });
+    </script>
 </head>
 <body>
+
+
+    <div id="maps-error" style="display:none" class="alert alert-warning mt-2">
+        <strong>Note:</strong> Google Maps location services are currently unavailable. You can still enter your location manually.
+      </div>
+   
+
+
+    <!-- Store auth token in hidden input for JavaScript access -->
+    <input type="hidden" id="auth-token" value="<%= token %>">
+    
     <a href="/marketplace2" class="back-to-marketplace">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
@@ -59,7 +213,7 @@
                     <option value="Service Businesses">Service Businesses</option>
                     <option value="Transportation &amp; Storage">Transportation &amp; Storage</option>
                     <option value="Travel">Travel</option>
-                    <option value="Wholesale &amp; Distributors">Wholesale &amp; Distributors</option>
+                    <option value="Wholesale &amp; Distributors">Wholesale & Distributors</option>
                     <option value="Other">Other</option>
                     <!-- Add more industries as needed -->
                 </select>
@@ -172,7 +326,7 @@
                         <h3>Business Valuation Analysis</h3>
                         <div class="confidence-meter">
                             <span class="confidence-label">Confidence:</span>
-                            <div class="confidence-value">0%</div>
+                            <div class="confidence-value">0%</</div>
                         </div>
                     </div>
                     <div class="valuation-details"></div>
@@ -200,5 +354,15 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/dropzone.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/js/post-business.js"></script>
+    <script>
+        // Add additional auth check on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            // If no auth token is available, redirect to login
+            if (!window.authToken && !localStorage.getItem('token')) {
+                console.error('No authentication token available, redirecting to login');
+                window.location.href = '/login2?returnTo=' + encodeURIComponent('/post-business');
+            }
+        });
+    </script>
 </body>
 </html>

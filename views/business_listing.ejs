@@ -30,7 +30,6 @@
   </script>
   <!-- Custom CSS -->
   <link rel="stylesheet" href="/css/marketplace2.css">
-  <link rel="stylesheet" href="/css/chatbox.css">
   <!-- Add this line after the other CSS files -->
   <link rel="stylesheet" href="/css/business_listing.css">
   <!-- Swiper CSS -->
@@ -302,12 +301,9 @@
     </div>
   </div>
 
-  <!-- Add chatbox and footer -->
-  <%- include('partials/chatbox') %>
+  <!-- Add footer only, remove chatbox -->
   <%- include('partials/footer') %>
 
-  <!-- Add required scripts for chatbox functionality -->
-  <script src="/js/chatbox.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Initialize Swiper

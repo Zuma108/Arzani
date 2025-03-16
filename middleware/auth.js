@@ -84,7 +84,64 @@ export const authenticateUser = async (req, res, next) => {
     res.redirect('/auth/login?error=internal');
   }
 };
-export const authenticateToken = authenticateUser; // Add this alias for backward compatibility
+
+// UPDATED: Enhanced authenticateToken middleware with better token handling
+export function authenticateToken(req, res, next) {
+  try {
+    // First check session
+    if (req.session?.userId) {
+      req.user = { userId: req.session.userId };
+      return next();
+    }
+
+    // Check for token in cookie if header isn't present
+    let token = null;
+    const authHeader = req.headers['authorization'];
+    
+    if (authHeader?.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    } else if (req.cookies?.token) {
+      // Use token from cookie
+      token = req.cookies.token;
+    }
+
+    if (!token) {
+      console.log('No authentication token found');
+      
+      // For API requests, return JSON error
+      if (req.path.startsWith('/api/')) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+      
+      // For HTML requests, redirect to login with return URL
+      const returnUrl = encodeURIComponent(req.originalUrl || req.url);
+      return res.redirect(`/login2?returnTo=${returnUrl}`);
+    }
+
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      req.user = { userId: decoded.userId };
+      
+      // Set session for future requests
+      req.session.userId = decoded.userId;
+      req.session.save();
+      
+      next();
+    } catch (error) {
+      console.error('Token verification failed:', error);
+      if (req.headers.accept?.includes('application/json')) {
+        return res.status(401).json({ error: 'Invalid token' });
+      }
+      return res.redirect(`/login2?returnTo=${encodeURIComponent(req.originalUrl)}`);
+    }
+  } catch (error) {
+    console.error('Auth middleware error:', error);
+    if (req.headers.accept?.includes('application/json')) {
+      return res.status(500).json({ error: 'Authentication failed' });
+    }
+    res.redirect('/login2');
+  }
+}
 
 // Optional middleware that populates user but doesn't require authentication
 export const populateUser = async (req, res, next) => {

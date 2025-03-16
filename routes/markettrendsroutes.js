@@ -1,70 +1,41 @@
 import express from 'express';
 import pool from '../db.js';
-import PDFDocument from 'pdfkit';
-import { stringify } from 'csv-stringify/sync';
+import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Simple auth middleware
-const authCheck = (req, res, next) => {
-    if (!req.session?.userId) {
-        return res.status(401).json({ error: 'Authentication required' });
-    }
-    next();
-};
-
-// Get market trends data - enhanced with additional metrics
-router.get('/data', authCheck, async (req, res) => {
-    console.log('Market trends data request received');
+// Get market trends by time period
+router.get('/trends/:period', authenticateToken, async (req, res) => {
     try {
-        const { timeRange = 30, industry, location } = req.query;
-
-        let query = `
-            SELECT 
-                created_at,
-                industry,
-                location,
-                avg_price,
-                listings_count,
-                avg_multiple,
-                avg_gross_revenue,
-                avg_ebitda,
-                growth_rate
-            FROM market_trends_mv
-            WHERE created_at >= NOW() - INTERVAL '${timeRange} days'
+        const { period } = req.params;
+        let interval;
+        
+        // Determine SQL interval based on requested period
+        switch (period) {
+            case 'week':
+                interval = '7 days';
+                break;
+            case 'month':
+                interval = '30 days';
+                break;
+            case 'quarter':
+                interval = '90 days';
+                break;
+            case 'year':
+                interval = '365 days';
+                break;
+            default:
+                interval = '30 days'; // Default to month
+        }
+        
+        // Update to use the correct date column
+        const query = `
+            SELECT * FROM market_trends_mv
+            WHERE date_listed >= NOW() - INTERVAL '${interval}'
+            ORDER BY date_listed ASC
         `;
-
-        const params = [];
-        if (industry) {
-            params.push(industry);
-            query += ` AND industry = $${params.length}`;
-        }
-        if (location) {
-            params.push(location);
-            query += ` AND location = $${params.length}`;
-        }
-
-        query += ` ORDER BY created_at ASC`;
-
-        const result = await pool.query(query, params);
-
-        // Add additional query for growth trends
-        if (req.query.includeGrowth) {
-            const growthQuery = `
-                SELECT 
-                    industry,
-                    AVG(growth_rate) as avg_growth_rate
-                FROM business_growth_metrics
-                WHERE created_at >= NOW() - INTERVAL '${timeRange} days'
-                GROUP BY industry
-                ORDER BY avg_growth_rate DESC
-                LIMIT 10
-            `;
-            
-            const growthData = await pool.query(growthQuery);
-            result.growthTrends = growthData.rows;
-        }
-
+        
+        const result = await pool.query(query);
         res.json(result.rows);
     } catch (error) {
         console.error('Market trends error:', error);
@@ -72,106 +43,83 @@ router.get('/data', authCheck, async (req, res) => {
     }
 });
 
-// Get available filters
-router.get('/filters', authCheck, async (req, res) => {
-    console.log('Market trends filters request received');
+// Get available industries for filtering
+router.get('/industries', authenticateToken, async (req, res) => {
     try {
-        const filters = await pool.query(`
-            SELECT 
-                ARRAY_AGG(DISTINCT industry) as industries,
-                ARRAY_AGG(DISTINCT location) as locations
-            FROM businesses
-            WHERE industry IS NOT NULL 
-            AND location IS NOT NULL
-        `);
+        const query = `
+            SELECT DISTINCT industry FROM market_trends_mv
+            WHERE industry IS NOT NULL
+            ORDER BY industry
+        `;
         
-        res.json(filters.rows[0]);
+        const result = await pool.query(query);
+        res.json(result.rows.map(row => row.industry));
     } catch (error) {
-        console.error('Filters error:', error);
-        res.status(500).json({ error: 'Failed to fetch filters' });
+        console.error('Industries fetch error:', error);
+        res.status(500).json({ error: 'Failed to fetch industries' });
     }
 });
 
-// Export market trends data in various formats
-router.get('/export', authCheck, async (req, res) => {
+// Get available locations for filtering
+router.get('/locations', authenticateToken, async (req, res) => {
     try {
-        const { format, timeRange = 30, industry, location } = req.query;
-        
-        // Fetch data using existing query logic
-        let query = `
-            SELECT 
-                created_at,
-                industry,
-                location,
-                avg_price,
-                listings_count,
-                avg_multiple,
-                avg_gross_revenue,
-                avg_ebitda
-            FROM market_trends_mv
-            WHERE created_at >= NOW() - INTERVAL '${timeRange} days'
+        const query = `
+            SELECT DISTINCT location FROM market_trends_mv
+            WHERE location IS NOT NULL
+            ORDER BY location
         `;
+        
+        const result = await pool.query(query);
+        res.json(result.rows.map(row => row.location));
+    } catch (error) {
+        console.error('Locations fetch error:', error);
+        res.status(500).json({ error: 'Failed to fetch locations' });
+    }
+});
 
-        const params = [];
+// Get trends with filters
+router.post('/filtered', authenticateToken, async (req, res) => {
+    try {
+        const { timeRange = '30', industry, location } = req.body;
+        
+        // Build query conditions
+        let conditions = [];
+        let params = [];
+        let paramCounter = 1;
+        
+        // Update to use the correct date column
+        if (timeRange) {
+            conditions.push(`date_listed >= NOW() - INTERVAL '${timeRange} days'`);
+        }
+        
         if (industry) {
+            conditions.push(`industry = $${paramCounter}`);
             params.push(industry);
-            query += ` AND industry = $${params.length}`;
+            paramCounter++;
         }
+        
         if (location) {
+            conditions.push(`location = $${paramCounter}`);
             params.push(location);
-            query += ` AND location = $${params.length}`;
+            paramCounter++;
         }
-
-        query += ` ORDER BY created_at ASC`;
+        
+        // Build WHERE clause
+        const whereClause = conditions.length > 0 
+            ? `WHERE ${conditions.join(' AND ')}` 
+            : '';
+        
+        const query = `
+            SELECT * FROM market_trends_mv
+            ${whereClause}
+            ORDER BY date_listed ASC
+        `;
         
         const result = await pool.query(query, params);
-        const data = result.rows;
-        
-        if (format === 'csv') {
-            // Generate simple CSV without csv-stringify package
-            const header = 'Date,Industry,Location,Average Price,Listings Count,Average Multiple,Average Gross Revenue,Average EBITDA\n';
-            const rows = data.map(item => {
-                return [
-                    new Date(item.created_at).toISOString().split('T')[0],
-                    item.industry.replace(/,/g, ' '), // Replace commas to avoid CSV parsing issues
-                    item.location.replace(/,/g, ' '),
-                    item.avg_price,
-                    item.listings_count,
-                    item.avg_multiple,
-                    item.avg_gross_revenue,
-                    item.avg_ebitda
-                ].join(',');
-            }).join('\n');
-            
-            const csvContent = header + rows;
-            
-            res.setHeader('Content-Type', 'text/csv');
-            res.setHeader('Content-Disposition', `attachment; filename=market_trends_${new Date().toISOString().split('T')[0]}.csv`);
-            res.send(csvContent);
-            
-        } else if (format === 'json') {
-            // Provide JSON format as an alternative to PDF
-            res.setHeader('Content-Type', 'application/json');
-            res.setHeader('Content-Disposition', `attachment; filename=market_trends_${new Date().toISOString().split('T')[0]}.json`);
-            res.json({
-                generatedAt: new Date().toISOString(),
-                filters: {
-                    timeRange,
-                    industry: industry || 'All',
-                    location: location || 'All'
-                },
-                data
-            });
-            
-        } else {
-            res.status(400).json({ 
-                error: 'Unsupported export format', 
-                message: 'Currently supported formats: csv, json. PDF support requires installing the pdfkit package.'
-            });
-        }
+        res.json(result.rows);
     } catch (error) {
-        console.error('Export error:', error);
-        res.status(500).json({ error: 'Failed to export data' });
+        console.error('Filtered trends error:', error);
+        res.status(500).json({ error: 'Failed to fetch filtered trends' });
     }
 });
 

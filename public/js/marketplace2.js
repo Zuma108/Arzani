@@ -267,53 +267,26 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Function to verify and fix AI Assistant buttons
   function ensureAIAssistantWorks() {
-    const aiButton = document.querySelector('.ai-button');
-    const assistantIcon = document.getElementById('assistant-icon');
-    const aiAssistantDialog = document.getElementById('ai-assistant-dialog');
+    const aiButton = document.getElementById('ai-assistant-button');
     
-    console.log('AI Assistant elements:', {
-      aiButton: !!aiButton,
-      assistantIcon: !!assistantIcon,
-      dialog: !!aiAssistantDialog
-    });
-    
-    // Force re-binding of click handlers
     if (aiButton) {
       console.log('Reinforcing AI button click handler');
       aiButton.onclick = function(e) {
         console.log('AI button clicked from marketplace2.js');
         e.preventDefault();
         e.stopPropagation();
+        
+        // Use the global showDialog function or fallback to manually toggling
         if (typeof window.showDialog === 'function') {
           window.showDialog();
+        } else if (window.aiAssistant && typeof window.aiAssistant.toggleAssistant === 'function') {
+          window.aiAssistant.toggleAssistant(true);
         } else {
           console.error('showDialog function not found!');
-          // Fallback to manually showing the dialog
-          if (aiAssistantDialog) {
-            aiAssistantDialog.style.display = 'block';
-            aiAssistantDialog.style.visibility = 'visible';
-            aiAssistantDialog.classList.add('show');
-          }
-        }
-        return false;
-      };
-    }
-    
-    if (assistantIcon) {
-      console.log('Reinforcing assistant icon click handler');
-      assistantIcon.onclick = function(e) {
-        console.log('Assistant icon clicked from marketplace2.js');
-        e.preventDefault();
-        e.stopPropagation();
-        if (typeof window.showDialog === 'function') {
-          window.showDialog();
-        } else {
-          console.error('showDialog function not found!');
-          // Fallback to manually showing the dialog
-          if (aiAssistantDialog) {
-            aiAssistantDialog.style.display = 'block';
-            aiAssistantDialog.style.visibility = 'visible';
-            aiAssistantDialog.classList.add('show');
+          // Manual fallback
+          const assistantContainer = document.getElementById('ai-assistant-container');
+          if (assistantContainer) {
+            assistantContainer.classList.remove('ai-assistant-hidden');
           }
         }
         return false;
@@ -324,6 +297,20 @@ document.addEventListener('DOMContentLoaded', function() {
   // Call immediately and after a short delay to ensure it works
   ensureAIAssistantWorks();
   setTimeout(ensureAIAssistantWorks, 1000);
+  
+  // Make sure we're not accidentally adding event listeners to navigation links
+  // that would interfere with our auth-check.js functionality
+  const initNavigation = () => {
+    // If there are any existing event listeners on navigation links that
+    // might interfere with the auth check behavior, remove them here
+    
+    // For example, if you had code like this:
+    // document.querySelector('a[href="/post-business"]')
+    //   .addEventListener('click', someHandler);
+    // Make sure it's not overriding the auth-check.js behavior
+  };
+  
+  initNavigation();
 });
 
 // ...existing code...

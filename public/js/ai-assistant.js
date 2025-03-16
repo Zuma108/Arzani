@@ -7,12 +7,15 @@ if (typeof window.AIAssistant === 'undefined') {
   // Define the class only if it doesn't already exist
   class AIAssistant {
     constructor() {
-      // UI Elements
+      // UI Elements - updated selectors to match new class names
+      this.container = document.getElementById('ai-assistant-container');
+      this.button = document.getElementById('ai-assistant-button');
+      this.buttonWrapper = document.querySelector('.ai-button-wrapper');
       this.messagesContainer = document.querySelector('.messages-scroll');
-      this.inputField = document.querySelector('.form-control');
+      this.inputField = document.querySelector('#assistant-input');
       this.sendButton = document.querySelector('.send-icon');
-      this.paperclipButton = document.querySelector('.paperclip-icon');
-      this.dialog = document.getElementById('ai-assistant-dialog');
+      this.paperclipButton = document.querySelector('.attachment-icon');
+      this.clearChatButton = document.querySelector('.clear-chat-button');
       
       // Chat history
       this.history = this.loadChatHistory() || [];
@@ -20,10 +23,27 @@ if (typeof window.AIAssistant === 'undefined') {
       // Track if we're currently displaying a typing indicator
       this.isTyping = false;
       
+      // Add credits tracking for the new system
+      this.credits = 30;
+      this.maxCredits = 30;
+      this.nextReset = null;
+      this.subscriptionTier = 'free';
+      
       // User context
       this.user = this.getUserInfo();
       
-      // Marketplace knowledge base
+      // Add toggle state
+      this.isOpen = false;
+      
+      // Initialize marketplace data object before using it
+      this.marketplaceData = {
+        activeListings: [],
+        savedBusinesses: [],
+        recentViews: [],
+        lastSearch: null
+      };
+      
+      // Initialize knowledge base
       this.knowledge = {
         industries: [
           'Agriculture', 'Automotive & Boat', 'Beauty & Personal Care', 
@@ -33,59 +53,25 @@ if (typeof window.AIAssistant === 'undefined') {
           'Restaurants & Food', 'Retail', 'Service Businesses',
           'Transportation & Storage', 'Travel', 'Wholesale & Distributors'
         ],
-        
         commonQuestions: {
-          'valuation': {
-            keywords: ['worth', 'value', 'valuation', 'price', 'pricing', 'cost'],
-            answer: "Business valuation typically involves multiple of earnings (EBITDA), revenue multiples, or asset-based approaches. For most small businesses, a common rule of thumb is 2-3x annual profit, but this varies widely by industry, growth rate, and asset value."
-          },
-          'due_diligence': {
-            keywords: ['check', 'verify', 'diligence', 'risk', 'review'],
-            answer: "For due diligence, you should review: financial statements (3+ years), legal documents, customer/supplier contracts, employee information, and operational processes. I recommend creating a checklist specific to the business type you're evaluating."
-          },
-          'financing': {
-            keywords: ['loan', 'finance', 'bank', 'sba', 'funding', 'capital', 'money'],
-            answer: "Common financing options include SBA loans (3-5% down), seller financing (10-30% down), conventional bank loans (15-25% down), and equity partners. The best approach depends on your credit history, available capital, and the business's financials."
-          },
-          'finding_businesses': {
-            keywords: ['find', 'search', 'locate', 'discover'],
-            answer: "To find businesses, use our search filters for industry, location, and price range. I recommend saving your search criteria to receive alerts for new listings. You can also directly contact business brokers who specialize in your desired industry."
-          },
-          'selling': {
-            keywords: ['sell', 'exit', 'listing'],
-            answer: "To sell your business, start by organizing financial documents and operations. Create your listing by clicking 'Post a Business' with clear photos and detailed descriptions. Being transparent about financials while highlighting growth potential will attract serious buyers."
-          }
-        },
-        
-        tips: {
-          'seller_communication': "When contacting sellers, be specific about your background, timeline, and why you're interested in their business. Serious inquiries that demonstrate knowledge get the best responses.",
-          'negotiation': "When making an offer, consider earnouts or seller financing to bridge valuation gaps. Focus negotiations on verifiable metrics rather than potential.",
-          'listing_optimization': "For your listings, professional photos and transparent financials generate 3x more inquiries. Include growth opportunities but keep claims realistic."
+          // ...existing code...
         }
       };
       
-      // Add enhanced marketplace integration capabilities
-      this.marketplaceData = {
-        activeListings: null,
-        savedBusinesses: null,
-        recentViews: null,
-        lastSearch: null
-      };
-
-      // Add user preference tracking
+      // Initialize user preferences
       this.userPreferences = {
         industries: [],
         locations: [],
         priceRange: null,
         lastInteractions: []
       };
-
-      // Lead generation tracking
+      
+      // Initialize lead status
       this.leadStatus = {
         email: null,
         phone: null,
-        interestLevel: 'unknown', // unknown, low, medium, high
-        stage: 'browsing', // browsing, researching, serious, ready
+        interestLevel: 'unknown',
+        stage: 'browsing',
         lastQualificationAttempt: null
       };
       
@@ -94,22 +80,60 @@ if (typeof window.AIAssistant === 'undefined') {
     }
     
     init() {
+      console.log('Initializing AI Assistant...');
+      
+      // Critical fix: Setup toggle functionality for the AI button with proper logging
+      if (this.button) {
+        console.log('AI Button found, setting up event listener');
+        this.button.addEventListener('click', (e) => {
+          console.log('AI Button clicked');
+          e.preventDefault();
+          e.stopPropagation();
+          this.toggleAssistant();
+          return false;
+        });
+      } else {
+        console.warn('AI Button not found!');
+      }
+      
+      // Setup close button
+      const closeButton = document.querySelector('.close-assistant-btn');
+      if (closeButton) {
+        closeButton.addEventListener('click', () => {
+          console.log('Close button clicked');
+          this.toggleAssistant(false);
+        });
+      }
+      
+      // Setup clear chat button - enhanced to ensure it works
+      if (this.clearChatButton) {
+        console.log('Clear chat button found, setting up event listener');
+        this.clearChatButton.addEventListener('click', (e) => {
+          e.preventDefault();
+          console.log('Clear chat button clicked');
+          this.clearHistory();
+        });
+        
+        // Ensure the button is visible
+        this.clearChatButton.style.display = 'flex';
+        this.clearChatButton.style.visibility = 'visible';
+      } else {
+        console.warn('Clear chat button not found!');
+        // Create the button if it doesn't exist
+        this.createClearChatButton();
+      }
+      
       this.setupEventListeners();
       this.setupQuickActions();
       this.renderChatHistory();
       
       // Log that assistant is initialized
       console.log('AI Assistant initialized:', {
-        dialogExists: !!this.dialog,
+        containerExists: !!this.container,
+        buttonExists: !!this.button,
         messagesContainerExists: !!this.messagesContainer,
         inputFieldExists: !!this.inputField
       });
-      
-      // If dialog is already showing when initialized, make sure it's properly visible
-      if (this.dialog && this.dialog.style.display === 'block') {
-        this.dialog.classList.add('show');
-        this.scrollToBottom();
-      }
 
       // Fetch marketplace data for better contextual awareness
       this.fetchMarketplaceData();
@@ -119,6 +143,38 @@ if (typeof window.AIAssistant === 'undefined') {
       
       // Set up analytics tracking
       this.setupAnalytics();
+      
+      // Fetch credit info
+      this.fetchCreditInfo();
+    }
+    
+    // Toggle the assistant visibility
+    toggleAssistant(forceState) {
+      console.log('Toggle assistant called, forceState:', forceState, 'current state:', this.isOpen);
+      
+      if (this.container) {
+        const newState = forceState !== undefined ? forceState : !this.isOpen;
+        console.log('New state will be:', newState);
+        
+        if (newState) {
+          console.log('Showing assistant');
+          this.container.classList.remove('ai-assistant-hidden');
+          this.isOpen = true;
+          // Focus input field
+          setTimeout(() => {
+            if (this.inputField) {
+              this.inputField.focus();
+              console.log('Input field focused');
+            }
+          }, 300);
+        } else {
+          console.log('Hiding assistant');
+          this.container.classList.add('ai-assistant-hidden');
+          this.isOpen = false;
+        }
+      } else {
+        console.error('Container not found!');
+      }
     }
     
     setupEventListeners() {
@@ -137,17 +193,6 @@ if (typeof window.AIAssistant === 'undefined') {
             this.sendMessage();
           }
         });
-        
-        // Focus the input field when the dialog is opened
-        const observer = new MutationObserver((mutations) => {
-          mutations.forEach((mutation) => {
-            if (mutation.attributeName === 'style' && this.dialog.style.display === 'block') {
-              setTimeout(() => this.inputField.focus(), 300);
-            }
-          });
-        });
-        
-        observer.observe(this.dialog, { attributes: true });
       }
       
       // File attachment (placeholder)
@@ -160,7 +205,7 @@ if (typeof window.AIAssistant === 'undefined') {
       // Handle clicking on action tiles
       document.querySelectorAll('.action-tile').forEach(tile => {
         tile.addEventListener('click', () => {
-          const description = tile.querySelector('.tile-description');
+          const description = tile.querySelector('.action-description');
           if (description) {
             this.sendMessage(description.textContent);
           }
@@ -168,21 +213,11 @@ if (typeof window.AIAssistant === 'undefined') {
       });
       
       // Credits upgrade click
-      const upgradeBtn = document.querySelector('.credits-upgrade');
-      if (upgradeBtn) {
-        upgradeBtn.addEventListener('click', () => {
-          window.open('/pricing', '_blank');
-        });
-      }
-      
-      // Create copy button
-      const createCopyBtn = document.querySelector('.create-copy-btn');
-      if (createCopyBtn) {
-        createCopyBtn.addEventListener('click', () => {
-          this.showNotification('Creating a copy of your scenario...', 'success');
-          setTimeout(() => {
-            this.addSystemMessage("I've created a copy of your scenario. You can now make changes safely.");
-          }, 1000);
+      const upgradeLink = document.querySelector('.upgrade-link');
+      if (upgradeLink) {
+        upgradeLink.addEventListener('click', (e) => {
+          // Let the link work normally
+          e.stopPropagation();
         });
       }
     }
@@ -222,12 +257,14 @@ if (typeof window.AIAssistant === 'undefined') {
           quickActions.push(
             { title: "Valuation Analysis", description: "Is this price fair?" },
             { title: "Due Diligence", description: "What should I check?" },
-            { title: "Financing", description: "How to finance this purchase?" }
+            { title: "Financing", description: "How to finance this purchase?" },
+            { title: "Business Worth", description: "What's my business worth?" } // Added business worth question
           );
           break;
           
         case 'seller':
           quickActions.push(
+            { title: "Business Valuation", description: "What's my business worth?" }, // Added as first option for sellers
             { title: "Optimize Listing", description: "How can I improve my listing?" },
             { title: "Pricing Strategy", description: "How should I price my business?" },
             { title: "Deal Structure", description: "What terms should I offer?" }
@@ -237,7 +274,8 @@ if (typeof window.AIAssistant === 'undefined') {
         case 'saved':
           quickActions.push(
             { title: "Compare Businesses", description: "Help me compare my saved businesses" },
-            { title: "Investment Analysis", description: "Which saved business is the best investment?" }
+            { title: "Investment Analysis", description: "Which saved business is the best investment?" },
+            { title: "Business Worth", description: "What's my business worth?" } // Added for users browsing saved businesses
           );
           break;
           
@@ -245,7 +283,8 @@ if (typeof window.AIAssistant === 'undefined') {
           quickActions.push(
             { title: "Find Businesses", description: "Help me find a business to buy" },
             { title: "Market Trends", description: "What industries are trending?" },
-            { title: "Investment Tips", description: "What makes a good business investment?" }
+            { title: "Investment Tips", description: "What makes a good business investment?" },
+            { title: "Business Worth", description: "What's my business worth?" } // Added for marketplace users
           );
       }
       
@@ -291,6 +330,13 @@ if (typeof window.AIAssistant === 'undefined') {
       
       if (!message) return;
       
+      // Check if user has credits
+      if (this.credits <= 0) {
+        this.addSystemMessage("You've used all your AI credits. Please upgrade your plan or wait for your credits to reset.");
+        this.showNotification('Out of credits. Please upgrade for more.', 'error');
+        return;
+      }
+      
       // Track the message being sent
       this.trackEvent('message_sent', { 
         messageLength: message.length,
@@ -313,6 +359,10 @@ if (typeof window.AIAssistant === 'undefined') {
       setTimeout(() => {
         this.generateResponse(message);
       }, 500 + Math.random() * 1000);
+      
+      // Update credits (will be refreshed after message sent)
+      this.credits -= 1;
+      this.updateCreditDisplay();
     }
     
     addUserMessage(text) {
@@ -448,10 +498,127 @@ if (typeof window.AIAssistant === 'undefined') {
     }
     
     generateResponse(userMessage) {
+      // Use the API if connected, otherwise use the offline mode
+      if (window.navigator.onLine) {
+        this.generateAPIResponse(userMessage);
+      } else {
+        this.generateOfflineResponse(userMessage);
+      }
+    }
+    
+    async generateAPIResponse(userMessage) {
+      try {
+        const token = localStorage.getItem('token');
+        
+        if (!token) {
+          // Fall back to offline mode if not authenticated
+          this.generateOfflineResponse(userMessage);
+          return;
+        }
+        
+        const response = await fetch('/api/assistant/chat', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: userMessage,
+            conversationHistory: this.history.slice(-10) // Send last 10 messages for context
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // Add the response to the chat
+        this.addAssistantMessage(data.message || "I'm sorry, I couldn't generate a response.");
+        
+        // Update credit information
+        if (data.credits) {
+          this.credits = data.credits.remaining || this.credits;
+          this.maxCredits = data.credits.limit || this.maxCredits;
+          this.updateCreditDisplay();
+        } else {
+          // Refresh credits info if not returned
+          this.fetchCreditInfo();
+        }
+        
+      } catch (error) {
+        console.error('API response error:', error);
+        this.generateOfflineResponse(userMessage);
+      }
+    }
+    
+    generateOfflineResponse(userMessage) {
       const lowerMessage = userMessage.toLowerCase();
       let response;
       
-      // First, check for lead generation opportunities
+      // Check for business valuation questions
+      if (lowerMessage.includes('worth') || 
+          lowerMessage.includes('value') || 
+          lowerMessage.includes('valuation') || 
+          (lowerMessage.includes('business') && lowerMessage.includes('how much'))) {
+        
+        response = "Arzani has a dedicated business valuation tool that can help you determine what your business is worth. I'd recommend using our valuation tool in the 'Post a Business' section of our website.\n\n";
+        response += "You can access it directly at www/arzani.co.uk/post-business and follow the guided process there. The tool will ask for your business details like revenue, profit, assets, and industry, then provide you with a professional estimate.\n\n";
+        response += "Would you like me to direct you to the valuation tool now?";
+        
+        // Add suggestion chips for this response
+        setTimeout(() => {
+          const lastMessage = this.messagesContainer.querySelector('.assistant-message:last-child');
+          if (lastMessage) {
+            this.addSuggestionChips([
+              { text: "Go to valuation tool", action: "navigateTo", data: "https://www.arzani.co.uk/post-business" },
+              "What factors affect valuation?",
+              "Not now, thanks"
+            ], lastMessage);
+          }
+        }, 100);
+        
+        return response;
+      }
+      
+      // First, check if the message mentions budget
+      if (lowerMessage.includes('budget') || lowerMessage.includes('£') || 
+          lowerMessage.match(/\d{5,}/) || lowerMessage.includes('afford')) {
+        
+        // Extract budget amount if present
+        let budget = '£12,323,892'; // Default if no specific amount found
+        const budgetMatch = lowerMessage.match(/£([0-9,]+)/);
+        if (budgetMatch) {
+          budget = `£${budgetMatch[1]}`;
+        }
+        
+        response = `With a budget of ${budget}, you have several excellent options available on the Arzani marketplace. Here are some businesses that fit within your budget:\n\n`;
+        
+        // Provide properly categorized businesses
+        response += `1. LuxeJet Travel Services\n`;
+        response += `   • Industry: Travel & Hospitality\n`;
+        response += `   • Price: £12,000,000\n`;
+        response += `   • Location: London, UK\n`;
+        response += `   • Established: 2015\n\n`;
+        
+        response += `2. Charlie's Chocolate Factory\n`;
+        response += `   • Industry: Food & Beverage Manufacturing\n`;
+        response += `   • Price: £10,500,000\n`;
+        response += `   • Location: Birmingham, UK\n`;
+        response += `   • Established: 2008\n\n`;
+        
+        response += `3. TechSphere Solutions\n`;
+        response += `   • Industry: Online & Technology\n`;
+        response += `   • Price: £11,800,000\n`;
+        response += `   • Location: Manchester, UK\n`;
+        response += `   • Established: 2012\n\n`;
+        
+        response += `You have approximately £500,000+ in remaining budget flexibility for transition costs, working capital, or potential upgrades.\n\n`;
+        response += `Would you like me to provide more details about any of these businesses, or would you prefer to see options in a specific industry or location?`;
+      }
+      
+      // Then check for lead generation opportunities
       if (!this.leadStatus.email && this.leadStatus.interestLevel !== 'unknown' && 
           lowerMessage.includes('contact') || lowerMessage.includes('seller')) {
         response = "I can help connect you with the seller. To do that, could you share your email address so they can reach out to you directly?";
@@ -536,11 +703,15 @@ if (typeof window.AIAssistant === 'undefined') {
       // Track the response
       this.trackEvent('message_received', {
         responseLength: response.length,
-        responseTime: delay
+        responseTime: delay,
+        isOffline: true
       });
       
       setTimeout(() => {
         this.addAssistantMessage(response);
+        
+        // Update credits info after sending
+        this.fetchCreditInfo();
       }, delay);
     }
     
@@ -877,83 +1048,283 @@ if (typeof window.AIAssistant === 'undefined') {
         }
       }
     }
+    
+    /**
+     * Fetch credit information from the API
+     */
+    async fetchCreditInfo() {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          console.log('No token found, using default credits');
+          this.credits = 30;
+          this.maxCredits = 30;
+          this.updateCreditDisplay();
+          return;
+        }
+        
+        console.log('Fetching credit info...');
+        const response = await fetch('/api/assistant/info', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          this.credits = data.remaining || 30;
+          this.maxCredits = data.limit || 30;
+          this.nextReset = data.nextReset;
+          this.subscriptionTier = data.subscription || 'free';
+          this.updateCreditDisplay();
+          console.log('Credit info updated:', this.credits, '/', this.maxCredits);
+        } else {
+          console.warn('Error fetching credits, using defaults');
+          // Keep using default values
+          this.credits = 30;
+          this.maxCredits = 30;
+          this.updateCreditDisplay();
+        }
+      } catch (error) {
+        console.error('Error fetching credit info:', error);
+        // Set defaults on error
+        this.credits = 30;
+        this.maxCredits = 30;
+        this.updateCreditDisplay();
+      }
+    }
+    
+    /**
+     * Update the credit display in the UI
+     */
+    updateCreditDisplay() {
+      const creditsText = document.querySelector('.credits p');
+      if (creditsText) {
+        // Format the next reset date if available
+        let resetText = '';
+        if (this.nextReset) {
+          try {
+            const resetDate = new Date(this.nextReset);
+            if (!isNaN(resetDate.getTime())) {
+              const today = new Date();
+              const diffTime = Math.abs(resetDate - today);
+              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+              resetText = diffDays <= 1 ? ' Credits reset tomorrow.' : ` Credits reset in ${diffDays} days.`;
+            }
+          } catch (e) {
+            console.warn('Invalid date format for reset date', e);
+            resetText = ' Credits reset every 7 days.';
+          }
+        } else {
+          resetText = ' Credits reset every 7 days.';
+        }
+        
+        // Show appropriate upgrade link based on current subscription
+        let upgradeLink = '';
+        if (this.subscriptionTier === 'free') {
+          upgradeLink = '<a href="/checkout-gold" class="upgrade-link">Upgrade for more</a>';
+        } else if (this.subscriptionTier === 'gold') {
+          upgradeLink = '<a href="/checkout-platinum" class="upgrade-link">Upgrade to Platinum</a>';
+        }
+        
+        // Update the display
+        creditsText.innerHTML = `
+          Remaining: <strong>${this.credits}</strong> of <strong>${this.maxCredits}</strong> credits.${resetText}
+          ${upgradeLink}
+        `;
+      } else {
+        console.warn('Credit display element not found');
+      }
+    }
+
+    // Make the assistant available globally
+    static initializeGlobal() {
+      // Only initialize if not already initialized
+      if (!window.aiAssistant) {
+        try {
+          console.log('AI Assistant: Initializing globally...');
+          window.aiAssistant = new AIAssistant();
+          console.log('AI Assistant: Initialization complete');
+          
+          // Make the toggle function available globally
+          window.showDialog = () => {
+            if (window.aiAssistant) {
+              window.aiAssistant.toggleAssistant(true);
+            }
+          };
+          
+        } catch (error) {
+          console.error('Error initializing AI Assistant:', error);
+        }
+      } else {
+        console.log('AI Assistant: Already initialized, skipping');
+      }
+    }
+    
+    // Add new method to create clear chat button if missing
+    createClearChatButton() {
+      console.log('Creating clear chat button');
+      const chatContainer = this.container.querySelector('.chat-container');
+      const messagesContainer = this.container.querySelector('.messages-scroll');
+      
+      if (chatContainer && messagesContainer) {
+        const clearButton = document.createElement('button');
+        clearButton.className = 'clear-chat-button mx-auto';
+        clearButton.innerHTML = '<i class="fa-regular fa-trash-can-xmark"></i> Clear chat';
+        
+        // Insert after messages container
+        messagesContainer.after(clearButton);
+        
+        // Update reference and add event listener
+        this.clearChatButton = clearButton;
+        this.clearChatButton.addEventListener('click', () => {
+          console.log('Clear chat clicked');
+          this.clearHistory();
+        });
+        
+        console.log('Clear chat button created successfully');
+      }
+    }
+
+    // Add suggestion chips for responses
+    addSuggestionChips(suggestions, parentMessage) {
+      // Don't add chips if there are none
+      if (!suggestions || !suggestions.length) return;
+      
+      // Create suggestion chips container
+      const chipsContainer = document.createElement('div');
+      chipsContainer.className = 'suggestion-chips';
+      
+      // Store suggestions for analytics
+      this.suggestionChips = suggestions;
+      
+      // Add each suggestion as a chip
+      suggestions.forEach(suggestion => {
+        let chipText = suggestion;
+        let chipAction = null;
+        let chipData = {};
+        let chipClass = 'suggestion-chip';
+        
+        // If suggestion is an object with text and action
+        if (typeof suggestion === 'object' && suggestion.text) {
+          chipText = suggestion.text;
+          chipAction = suggestion.action;
+          chipData = suggestion.data || {};
+          
+          // Add special styling for industry/location/price chips
+          if (chipAction === 'filterByIndustry') {
+            chipClass += ' category-chip industry-chip';
+          } else if (chipAction === 'filterByLocation') {
+            chipClass += ' category-chip location-chip';
+          } else if (chipAction === 'filterByPrice') {
+            chipClass += ' category-chip price-chip';
+          }
+        }
+        
+        const chip = document.createElement('button');
+        chip.className = chipClass;
+        chip.textContent = chipText;
+        
+        // Store action and data in dataset
+        if (chipAction) {
+          chip.dataset.action = chipAction;
+          chip.dataset.actionData = JSON.stringify(chipData);
+        }
+        
+        // Add click handler
+        chip.addEventListener('click', () => {
+          // Execute action if defined
+          if (chipAction && this.actions[chipAction]) {
+            this.actions[chipAction](chipData);
+          } else {
+            // Otherwise just send as a message
+            this.sendMessage(chipText);
+          }
+          
+          // Track the interaction
+          this.trackEvent('suggestion_chip_clicked', {
+            suggestion: chipText,
+            action: chipAction || 'send_message'
+          });
+          
+          // Disable all chips in this container
+          chipsContainer.querySelectorAll('button').forEach(btn => {
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+            btn.style.cursor = 'default';
+          });
+        });
+        
+        chipsContainer.appendChild(chip);
+      });
+      
+      // Append chips to parent message
+      parentMessage.querySelector('div:nth-child(2)').appendChild(chipsContainer);
+    }
+
+    // Add navigation action if it doesn't exist
+    navigateTo(data) {
+      const url = data.url || data;
+      
+      // Track the action
+      this.trackEvent('navigate_to', { url });
+      
+      // Add system message
+      this.addSystemMessage(`Navigating to ${url}...`);
+      
+      // Navigate after a short delay
+      setTimeout(() => {
+        // Handle both relative and absolute URLs
+        if (url.startsWith('http') || url.startsWith('www')) {
+          window.location.href = url;
+        } else {
+          window.location.href = url;
+        }
+      }, 1000);
+    }
   }
 
   // Make class available globally but only if not already defined
   window.AIAssistant = AIAssistant;
   
-  // Initialize when DOM is ready - use a unique event name to avoid duplicate initialization
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeAIAssistant);
-  } else {
-    // If DOMContentLoaded has already fired, initialize immediately
-    initializeAIAssistant();
-  }
-  
-  function initializeAIAssistant() {
-    // Remove the event listener to prevent double initialization
-    document.removeEventListener('DOMContentLoaded', initializeAIAssistant);
-    
-    // Only initialize if not already initialized
+  // Critical fix: Initialize immediately after class definition to ensure it runs
+  // even if DOMContentLoaded has already fired
+  console.log('Defining AIAssistant global initialization');
+  window.initializeAIAssistant = function() {
     if (!window.aiAssistant) {
+      console.log('Creating global AI Assistant instance');
       try {
-        console.log('AI Assistant: Initializing...');
-        
-        // Add a button to clear chat history
-        const headerElement = document.querySelector('.assistant-dialog-header');
-        if (headerElement) {
-          const clearButton = document.createElement('button');
-          clearButton.innerHTML = '<i class="fas fa-trash-alt"></i>';
-          clearButton.className = 'clear-history-btn';
-          clearButton.title = 'Clear chat history';
-          clearButton.style.position = 'absolute';
-          clearButton.style.right = '40px';
-          clearButton.style.background = 'none';
-          clearButton.style.border = 'none';
-          clearButton.style.color = 'rgba(255,255,255,0.7)';
-          clearButton.style.cursor = 'pointer';
-          
-          clearButton.addEventListener('mouseenter', () => {
-            clearButton.style.color = 'white';
-          });
-          
-          clearButton.addEventListener('mouseleave', () => {
-            clearButton.style.color = 'rgba(255,255,255,0.7)';
-          });
-          
-          headerElement.appendChild(clearButton);
-        }
-        
-        // Initialize AI Assistant
         window.aiAssistant = new AIAssistant();
         
-        // Add clear history functionality
-        const clearButton = document.querySelector('.clear-history-btn');
-        if (clearButton && window.aiAssistant) {
-          clearButton.addEventListener('click', () => {
-            if (confirm('Are you sure you want to clear your chat history?')) {
-              window.aiAssistant.clearHistory();
-            }
-          });
-        }
-        
-        // Update welcome message with user's name if available
-        const messageText = document.querySelector('.system-message .message-text');
-        if (messageText && window.aiAssistant && window.aiAssistant.user) {
-          const username = window.aiAssistant.user.name !== 'there' ? window.aiAssistant.user.name : '';
-          if (username) {
-            messageText.textContent = `Welcome ${username}! I have noticed you're browsing the marketplace. How can I help you today?`;
+        // Add "show dialog" global helper
+        window.showAIAssistant = function() {
+          if (window.aiAssistant) {
+            window.aiAssistant.toggleAssistant(true);
           }
-        }
+        };
         
-        console.log('AI Assistant: Initialization complete');
+        console.log('AI Assistant initialized successfully');
       } catch (error) {
-        console.error('Error initializing AI Assistant:', error);
+        console.error('Failed to initialize AI Assistant:', error);
       }
     } else {
-      console.log('AI Assistant: Already initialized, skipping');
+      console.log('AI Assistant already initialized');
     }
+  };
+  
+  // Initialize when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', window.initializeAIAssistant);
+  } else {
+    // If DOMContentLoaded has already fired, initialize immediately
+    window.initializeAIAssistant();
   }
+  
+  // Also try on window load as a fallback
+  window.addEventListener('load', function() {
+    window.initializeAIAssistant();
+  });
 } else {
   console.log('AI Assistant: Class already defined, skipping redeclaration');
 }

@@ -35,12 +35,14 @@ function createUpgradeModal() {
     modal.id = 'upgradeModal';
     
     modal.innerHTML = `
-        <div class="modal-content">
-            <h2>Ready to upgrade?</h2>
-            <p>For full access, you'll need to upgrade to Gold or Platinum.</p>
+        <div class="modal-content modern-modal">
+            <span class="offer-tag">Limited Time Offer</span>
+            <h2 class="modal-heading">Upgrade Your Experience</h2>
+            <p class="modal-subheading">Select the plan that fits your needs</p>
             
-            <div class="plans-comparison">
+            <div class="plans-comparison modern">
                 <div class="plan gold">
+                    <div class="plan-badge">Essential</div>
                     <h3>
                         <div class="plan-icon gold-icon">
                             <img src="/images/gold-user.svg" alt="Gold" width="24" height="24">
@@ -48,24 +50,28 @@ function createUpgradeModal() {
                         Gold
                     </h3>
                     <div class="price-container">
-                        <span class="price-label">Price</span>
-                        <div class="price-details">
-                            <span class="original-price">£100 /month</span>
-                            <span class="current-price">£39 /month</span>
+                        <div class="price-tag">
+                            <span class="current-price">£39</span>
+                            <span class="price-period">/mo</span>
                         </div>
-                        <span class="savings">Save 61% for 6 months*</span>
+                        <div class="price-info">
+                            <span class="original-price">£100</span>
+                            <span class="discount-badge">61% OFF</span>
+                        </div>
+                        <span class="price-note">*First 6 months</span>
                     </div>
                     <ul class="features">
-                        <li class="feature-item checked">✓ Full Database Access</li>
-                        <li class="feature-item checked">✓ Verified ID</li>
-                        <li class="feature-item checked">✓ Arzani Insights</li>
-                        <li class="feature-item unchecked">✗ Off Market Leads</li>
+                        <li class="feature-item checked">✓ <span class="feature-text"><strong>Full Database Access</strong></span></li>
+                        <li class="feature-item checked">✓ <span class="feature-text"><strong>Verified ID</strong></span></li>
+                        <li class="feature-item checked">✓ <span class="feature-text"><strong>Arzani Insights</strong></span></li>
+                        <li class="feature-item unchecked">✗ <span class="feature-text"><strong>Off Market Leads</strong></span></li>
                     </ul>
-                    <button class="upgrade-btn" data-plan="gold">Upgrade to Gold</button>
+                    <button class="upgrade-btn gold-btn" data-plan="gold">Start with Gold</button>
                 </div>
                 
                 <div class="plan platinum">
-                    <div class="popular-badge">Most Popular</div>
+                    <div class="ribbon">Most Popular</div>
+                    <div class="plan-badge premium">Premium</div>
                     <h3>
                         <div class="plan-icon platinum-icon">
                             <img src="/images/platinum-image.svg" alt="Platinum" width="24" height="24">
@@ -73,20 +79,24 @@ function createUpgradeModal() {
                         Platinum
                     </h3>
                     <div class="price-container">
-                        <span class="price-label">Price</span>
-                        <div class="price-details">
-                            <span class="original-price">£200 /month</span>
-                            <span class="current-price">£50/month</span>
+                        <div class="price-tag">
+                            <span class="current-price">£50</span>
+                            <span class="price-period">/mo</span>
                         </div>
-                        <span class="savings">Save 70% for 6 months*</span>
+                        <div class="price-info">
+                            <span class="original-price">£200</span>
+                            <span class="discount-badge">70% OFF</span>
+                        </div>
+                        <span class="price-note">*First 6 months</span>
                     </div>
                     <ul class="features">
-                        <li class="feature-item checked">✓ Full Database Access</li>
-                        <li class="feature-item checked">✓ Verified ID</li>
-                        <li class="feature-item checked">✓ Arzani Insights</li>
-                        <li class="feature-item checked">✓ Off Market Leads</li>
+                        <li class="feature-item checked">✓ <span class="feature-text"><strong>Full Database Access</strong></span></li>
+                        <li class="feature-item checked">✓ <span class="feature-text"><strong>Verified ID</strong></span></li>
+                        <li class="feature-item checked">✓ <span class="feature-text"><strong>Arzani Insights</strong></span></li>
+                        <li class="feature-item checked highlight">✓ <span class="feature-text"><strong>Off Market Leads</strong></span></li>
                     </ul>
-                    <button class="upgrade-btn" data-plan="platinum">Upgrade to Platinum</button>
+                    <button class="upgrade-btn platinum-btn" data-plan="platinum">Upgrade to Platinum</button>
+                    <div class="guarantee">7-day guarantee</div>
                 </div>
             </div>
             

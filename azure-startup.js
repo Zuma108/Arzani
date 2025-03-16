@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { ensureAITables } from './startup-helpers/ensure-ai-tables.js';
 
 // Setup directory names for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -54,6 +55,14 @@ async function startServer() {
     loadEnvironmentVariables();
     
     console.log('Starting server with environment:', process.env.NODE_ENV);
+    
+    // Ensure required tables exist
+    try {
+      await ensureAITables();
+    } catch (tableError) {
+      console.error('Warning: Error ensuring AI tables:', tableError);
+      // Continue with startup even if table creation fails
+    }
     
     // Import server.js after environment variables are loaded
     const { server } = await import('./server.js');

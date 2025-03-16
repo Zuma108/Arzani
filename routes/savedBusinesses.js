@@ -1,8 +1,62 @@
 import express from 'express';
+import { authenticateToken } from '../middleware/auth.js';
 import pool from '../db.js';
-import { authenticateToken } from '../utils/auth.js';
 
 const router = express.Router();
+
+/**
+ * Middleware to ensure user is authenticated before accessing saved-searches routes
+ * Adds detailed logging for troubleshooting
+ */
+const ensureAuthenticated = (req, res, next) => {
+  console.log('Saved-searches auth check - Headers:', req.headers['authorization'] ? 'Auth header present' : 'No auth header');
+  console.log('Saved-searches auth check - Cookies:', req.cookies ? 'Cookies present' : 'No cookies', 
+              req.cookies?.token ? 'Token cookie present' : 'No token cookie');
+  
+  // If user is already authenticated through the main middleware, proceed
+  if (req.user) {
+    console.log('User already authenticated:', req.user.userId);
+    return next();
+  }
+  
+  // Otherwise check token again
+  const token = req.cookies?.token || req.headers['authorization']?.split(' ')[1];
+  
+  if (!token) {
+    console.log('No token found in request, redirecting to login');
+    return res.redirect(`/login2?returnTo=${encodeURIComponent(req.originalUrl)}`);
+  }
+  
+  // Use the authenticateToken middleware
+  authenticateToken(req, res, next);
+};
+
+// Apply the authentication middleware to all saved-searches routes
+router.use(ensureAuthenticated);
+
+// GET route for saved businesses page
+router.get('/', async (req, res) => {
+  try {
+    console.log('Saved-searches page accessed by user:', req.user.userId);
+    
+    // Fetch saved businesses for the user
+    const savedBusinessesResult = await pool.query(
+      'SELECT b.* FROM saved_businesses sb JOIN businesses b ON sb.business_id = b.id WHERE sb.user_id = $1',
+      [req.user.userId]
+    );
+    
+    // Render the saved-searches page
+    res.render('saved-searches', { 
+      title: 'Your Saved Businesses',
+      user: req.user,
+      token: req.cookies?.token || req.headers['authorization']?.split(' ')[1],
+      savedBusinesses: savedBusinessesResult.rows
+    });
+  } catch (error) {
+    console.error('Error rendering saved-searches page:', error);
+    res.status(500).render('error', { message: 'Error loading saved businesses' });
+  }
+});
 
 // First ensure the saved_businesses table exists
 const createTableQuery = `
@@ -33,12 +87,6 @@ const getUserId = (req) => {
     
     return null;
 };
-
-// Add separate route for the saved-searches page
-router.get('/saved-searches', async (req, res) => {
-    // Render the page template first
-    res.render('saved-searches');
-});
 
 // Save a business
 router.post('/save', authenticateToken, async (req, res) => {

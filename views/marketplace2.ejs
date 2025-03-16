@@ -9,6 +9,10 @@
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"></script>
     <link rel="stylesheet" href="/css/marketplace2.css">
+    <!-- Add Font Awesome for AI assistant icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Add AI Assistant styling -->
+    <link rel="stylesheet" href="/css/ai-chatbot.css">
     <script src="/js/marketplace-tracking.js"></script>
     <script type="module" src="/js/marketplace.js"></script>
     <script type="module" src="/js/filter.js"></script>
@@ -16,6 +20,39 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <!-- Add Inter font for the new AI assistant button -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+      /* Font Awesome fallback styles */
+      .fa-regular.fa-xmark::before {
+        content: "×";
+      }
+      .fa-regular.fa-search::before {
+        content: "🔍";
+      }
+      .fa-regular.fa-store::before {
+        content: "🏪";
+      }
+      .fa-regular.fa-calculator::before {
+        content: "🧮";
+      }
+      .fa-regular.fa-lightbulb::before {
+        content: "💡";
+      }
+      .fa-regular.fa-trash-can-xmark::before {
+        content: "🗑️";
+      }
+      .fa-regular.fa-paperclip::before {
+        content: "📎";
+      }
+      .fa-regular.fa-paper-plane-top::before {
+        content: "📤";
+      }
+      .fa-regular.fa-circle-star::before {
+        content: "⭐";
+      }
+      .fa-regular.fa-sparkles::before {
+        content: "✨";
+      }
+    </style>
 </head>
 
 <body>
@@ -338,7 +375,6 @@
     
 
     </script>
-    <%- include('partials/chatbox') %>
   <%- include('partials/footer') %>
   <div id="pagination">
   <!-- Pagination controls will be loaded here -->
@@ -435,7 +471,6 @@ function trackAndView(businessId) {
 <!-- Load tracking script first -->
 <script src="/js/marketplace-tracking.js"></script>
 <!-- Then load marketplace script as a module -->
-<script type="module" src="/js/chatbox.js"></script>
 <script src="/js/profile.js"></script>
 <script>
 // Add a helper function to ensure S3 URLs are properly formatted
@@ -457,8 +492,6 @@ window.formatImageUrl = formatImageUrl;
 <script src="/js/modal-fix.js"></script>
 
 <!-- Include the chatbox partial (with integrated assistant icon) -->
-<%- include('partials/chatbox') %>
-
 <!-- Load the marketplace2.js script (without assistant icon creation) -->
 <script src="/js/marketplace2.js"></script>
 
@@ -641,5 +674,90 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 </script>
+
+<!-- Add AI Assistant Integration -->
+<%- include('partials/ai-chatbot') %>
+
+<!-- AI Assistant scripts -->
+<script src="/js/ai-assistant.js"></script>
+<script src="/js/ai-chatbot-initializer.js"></script>
+<script src="/js/modal-fix.js"></script>
+
+<!-- Track business interactions for AI context -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Track business view events
+  document.querySelectorAll('.card').forEach(card => {
+    card.addEventListener('click', function(event) {
+      const businessId = this.getAttribute('data-business-id');
+      if (businessId) {
+        // Save to localStorage for AI context
+        try {
+          let recentViews = JSON.parse(localStorage.getItem('recentBusinessViews') || '[]');
+          // Add to front if not already present
+          recentViews = recentViews.filter(view => view.id !== businessId);
+          recentViews.unshift({
+            id: businessId,
+            name: this.querySelector('.card-title')?.textContent || 'Business',
+            timestamp: new Date().toISOString()
+          });
+          // Keep only 10 most recent
+          recentViews = recentViews.slice(0, 10);
+          localStorage.setItem('recentBusinessViews', JSON.stringify(recentViews));
+        } catch (error) {
+          console.error('Error saving recent view:', error);
+        }
+      }
+    });
+  });
+});
+</script>
+
+<!-- Add near the bottom of the file, before the closing </body> tag -->
+
+<!-- Add AI Assistant Integration -->
+<%- include('partials/ai-chatbot') %>
+
+<!-- AI Assistant scripts -->
+<script src="/js/ai-assistant.js"></script>
+<script src="/js/ai-chatbot-initializer.js"></script>
+<script src="/js/modal-fix.js"></script>
+<script src="/js/ai-debug.js"></script>
+
+<!-- Ensure AI button functionality -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Extra check to ensure AI button functionality
+  setTimeout(function() {
+    const aiButton = document.getElementById('ai-assistant-button');
+    if (aiButton) {
+      console.log('Reinforcing AI button click handler');
+      
+      aiButton.addEventListener('click', function(e) {
+        console.log('AI button clicked via extra handler');
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (window.aiAssistant && typeof window.aiAssistant.toggleAssistant === 'function') {
+          window.aiAssistant.toggleAssistant();
+        } else {
+          console.log('Falling back to manual toggle');
+          const container = document.getElementById('ai-assistant-container');
+          if (container) {
+            if (container.classList.contains('ai-assistant-hidden')) {
+              container.classList.remove('ai-assistant-hidden');
+            } else {
+              container.classList.add('ai-assistant-hidden');
+            }
+          }
+        }
+        return false;
+      });
+    }
+  }, 1000);
+});
+</script>
+
+<!-- ...existing code... -->
 </body>
 </html>

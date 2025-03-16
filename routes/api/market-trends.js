@@ -1,90 +1,357 @@
 import express from 'express';
 import pool from '../../db.js';
 import { authenticateToken } from '../../middleware/auth.js';
+import { adminAuth } from '../../middleware/adminAuth.js'; // Add this import
 import PDFDocument from 'pdfkit';
 import ExcelJS from 'exceljs';
 import { Parser as CsvParser } from 'json2csv';
 // Fix the Chart.js import path - it needs the full file path
 import Chart from 'chart.js/auto/auto.js';
 import { ChartJSNodeCanvas } from 'chartjs-node-canvas';
+import { diagnoseAndFixMarketTrends } from '../../utils/fixMarketTrends.js';
 
 const router = express.Router();
 
-// Get market trends data
+// Add this diagnostic endpoint to help identify the correct column names
+router.get('/debug-schema', authenticateToken, async (req, res) => {
+  try {
+    // Query to get column names from the table
+    const schemaQuery = `
+      SELECT column_name, data_type 
+      FROM information_schema.columns 
+      WHERE table_name = 'market_trends_mv'
+      ORDER BY ordinal_position;
+    `;
+    const result = await pool.query(schemaQuery);
+    
+    // Log the column information for debugging
+    console.log('Market trends table columns:', result.rows);
+    
+    res.json({
+      success: true,
+      columns: result.rows,
+      message: 'Check server logs for the column details'
+    });
+  } catch (error) {
+    console.error('Schema inspection error:', error);
+    res.status(500).json({ 
+      error: 'Failed to inspect schema',
+      message: error.message
+    });
+  }
+});
+
+// Add this diagnostic endpoint to help identify and fix materialized view issues
+router.get('/fix-structure', authenticateToken, adminAuth, async (req, res) => {
+  try {
+    // Attempt to diagnose and fix the market trends structure
+    const result = await diagnoseAndFixMarketTrends();
+    
+    res.json({
+      success: true,
+      message: 'Market trends structure check complete',
+      details: result
+    });
+  } catch (error) {
+    console.error('Error fixing market trends structure:', error);
+    res.status(500).json({ 
+      error: 'Failed to fix market trends structure',
+      message: error.message
+    });
+  }
+});
+
+// Add this emergency repair endpoint to fix the view when needed
+router.get('/repair-view', authenticateToken, adminAuth, async (req, res) => {
+  try {
+    console.log('Starting emergency view repair...');
+    
+    // Drop the existing view if it exists
+    await pool.query('DROP MATERIALIZED VIEW IF EXISTS market_trends_mv');
+    
+    // Create materialized view directly from businesses table
+    // Don't use temporary tables - they don't work with materialized views
+    await pool.query(`
+      CREATE MATERIALIZED VIEW market_trends_mv AS
+      SELECT 
+        date_listed,
+        industry,
+        location,
+        AVG(price::numeric) as avg_price,
+        AVG(CASE WHEN gross_revenue <> 0 THEN ebitda::numeric / gross_revenue::numeric ELSE NULL END) as avg_multiple,
+        AVG(gross_revenue::numeric) as avg_gross_revenue,
+        AVG(ebitda::numeric) as avg_ebitda,
+        COUNT(*)::integer as listings_count
+      FROM businesses
+      WHERE price IS NOT NULL
+      GROUP BY date_listed, industry, location
+      ORDER BY date_listed DESC;
+    `);
+    
+    // Add indices
+    await pool.query(`
+      CREATE INDEX market_trends_mv_date_idx ON market_trends_mv(date_listed);
+      CREATE INDEX market_trends_mv_industry_idx ON market_trends_mv(industry);
+      CREATE INDEX market_trends_mv_location_idx ON market_trends_mv(location);
+    `);
+    
+    // Verify the view has data
+    const countResult = await pool.query('SELECT COUNT(*) FROM market_trends_mv');
+    const rowCount = parseInt(countResult.rows[0].count);
+    
+    // Check columns directly with pg_catalog
+    const columnsQuery = await pool.query(`
+      SELECT attname, format_type(atttypid, atttypmod) AS data_type
+      FROM pg_catalog.pg_attribute
+      WHERE attrelid = 'market_trends_mv'::regclass
+      AND attnum > 0 
+      AND NOT attisdropped
+      ORDER BY attnum;
+    `);
+    
+    res.json({
+      success: true,
+      message: 'Market trends view repaired successfully',
+      rowCount: rowCount,
+      columns: columnsQuery.rows
+    });
+  } catch (error) {
+    console.error('Error repairing view:', error);
+    res.status(500).json({ 
+      error: 'Failed to repair market trends view',
+      message: error.message 
+    });
+  }
+});
+
+// Get market trends data - update with more reliable column detection
 router.get('/data', authenticateToken, async (req, res) => {
   try {
     // Extract filter parameters
     const { timeRange = '30', industry, location } = req.query;
 
-    // Build query conditions based on filters
-    let conditions = [];
-    let params = [];
-    let paramCounter = 1;
+    console.log('Market trends request:', { timeRange, industry, location });
 
-    // Apply time range filter
-    if (timeRange) {
-      const days = parseInt(timeRange);
-      if (!isNaN(days)) {
-        conditions.push(`date >= NOW() - INTERVAL '${days} days'`);
+    // First, let's determine what columns actually exist in our table
+    // Use pg_catalog directly instead of information_schema for materialized views
+    try {
+      const columnsQuery = `
+        SELECT attname as column_name
+        FROM pg_catalog.pg_attribute
+        WHERE attrelid = 'market_trends_mv'::regclass
+          AND attnum > 0 
+          AND NOT attisdropped;
+      `;
+      console.log('Executing column query:', columnsQuery);
+      const columnsResult = await pool.query(columnsQuery);
+      const availableColumns = columnsResult.rows.map(row => row.column_name);
+      console.log('Available columns:', availableColumns);
+      
+      // Determine the date column - try common column names
+      let dateColumn = null;
+      const possibleDateColumns = ['date_listed', 'date', 'created_at', 'listing_date', 'created_date'];
+      for (const column of possibleDateColumns) {
+        if (availableColumns.includes(column)) {
+          dateColumn = column;
+          break;
+        }
       }
+      
+      if (!dateColumn) {
+        console.error('Could not identify a date column in market_trends_mv');
+        return res.status(500).json({
+          error: 'Schema configuration error',
+          message: 'Could not identify a date column in the market trends table'
+        });
+      }
+
+      // Build query conditions based on filters and available columns
+      let conditions = [];
+      let params = [];
+      let paramCounter = 1;
+
+      // Apply time range filter with the identified date column
+      if (timeRange) {
+        const days = parseInt(timeRange);
+        if (!isNaN(days) && days > 0) {
+          conditions.push(`${dateColumn} >= NOW() - INTERVAL '${days} days'`);
+        } else {
+          console.warn('Invalid timeRange parameter:', timeRange);
+          conditions.push(`${dateColumn} >= NOW() - INTERVAL '30 days'`);
+        }
+      }
+
+      // Apply industry filter if that column exists
+      if (industry && availableColumns.includes('industry')) {
+        conditions.push(`industry = $${paramCounter}`);
+        params.push(industry);
+        paramCounter++;
+      } else if (industry && availableColumns.includes('business_type')) {
+        // Try alternative column names
+        conditions.push(`business_type = $${paramCounter}`);
+        params.push(industry);
+        paramCounter++;
+      } else if (industry && availableColumns.includes('category')) {
+        conditions.push(`category = $${paramCounter}`);
+        params.push(industry);
+        paramCounter++;
+      }
+
+      // Apply location filter if that column exists
+      if (location && availableColumns.includes('location')) {
+        conditions.push(`location = $${paramCounter}`);
+        params.push(location);
+        paramCounter++;
+      } else if (location && availableColumns.includes('region')) {
+        // Try alternative column names
+        conditions.push(`region = $${paramCounter}`);
+        params.push(location);
+        paramCounter++;
+      } else if (location && availableColumns.includes('area')) {
+        conditions.push(`area = $${paramCounter}`);
+        params.push(location);
+        paramCounter++;
+      }
+
+      // Build the final query
+      let whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+      
+      const query = `
+        SELECT * FROM market_trends_mv
+        ${whereClause}
+        ORDER BY ${dateColumn} ASC
+      `;
+
+      console.log('Executing query:', { query, params });
+
+      // Execute the query
+      const result = await pool.query(query, params);
+      console.log(`Query returned ${result.rows.length} rows`);
+      
+      // Map the results to a consistent format for the frontend
+      const mappedData = result.rows.map(row => {
+        const mappedRow = { ...row };
+        
+        // Ensure the date property exists with the correct column value
+        if (dateColumn !== 'date') {
+          mappedRow.date = row[dateColumn];
+        }
+        
+        return mappedRow;
+      });
+      
+      res.json(mappedData);
+    } catch (dbError) {
+      // Handle database-specific errors with more detail
+      console.error('Database error during column detection:', dbError);
+      console.error('Error details:', {
+        code: dbError.code,
+        detail: dbError.detail,
+        hint: dbError.hint
+      });
+      res.status(500).json({ 
+        error: 'Database error', 
+        message: 'Failed to fetch market trends data from the database',
+        details: process.env.NODE_ENV === 'development' ? dbError.message : undefined
+      });
     }
-
-    // Apply industry filter
-    if (industry) {
-      conditions.push(`industry = $${paramCounter}`);
-      params.push(industry);
-      paramCounter++;
-    }
-
-    // Apply location filter
-    if (location) {
-      conditions.push(`location = $${paramCounter}`);
-      params.push(location);
-      paramCounter++;
-    }
-
-    // Build the final query
-    let whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
-    
-    const query = `
-      SELECT * FROM market_trends_mv
-      ${whereClause}
-      ORDER BY date ASC
-    `;
-
-    const result = await pool.query(query, params);
-    res.json(result.rows);
   } catch (error) {
     console.error('Error fetching market trends:', error);
-    res.status(500).json({ error: 'Failed to fetch market trends data' });
+    res.status(500).json({ 
+      error: 'Failed to process market trends request',
+      message: error.message
+    });
   }
 });
 
-// Get available filters
+// Get available filters - update with more reliable column detection
 router.get('/filters', authenticateToken, async (req, res) => {
   try {
-    const industriesQuery = `
-      SELECT DISTINCT industry FROM market_trends_mv
-      WHERE industry IS NOT NULL
-      ORDER BY industry
+    // Use pg_catalog directly instead of information_schema for materialized views
+    const columnsQuery = `
+      SELECT attname as column_name
+      FROM pg_catalog.pg_attribute
+      WHERE attrelid = 'market_trends_mv'::regclass
+        AND attnum > 0 
+        AND NOT attisdropped;
     `;
+    console.log('Executing filter column query:', columnsQuery);
+    const columnsResult = await pool.query(columnsQuery);
+    const availableColumns = columnsResult.rows.map(row => row.column_name);
+    console.log('Available columns for filters:', availableColumns);
     
-    const locationsQuery = `
-      SELECT DISTINCT location FROM market_trends_mv
-      WHERE location IS NOT NULL
-      ORDER BY location
-    `;
-
-    const industries = await pool.query(industriesQuery);
-    const locations = await pool.query(locationsQuery);
+    // Try different column names for industry
+    let industries = [];
+    if (availableColumns.includes('industry')) {
+      const industriesQuery = `
+        SELECT DISTINCT industry FROM market_trends_mv
+        WHERE industry IS NOT NULL
+        ORDER BY industry
+      `;
+      const industriesResult = await pool.query(industriesQuery);
+      industries = industriesResult.rows.map(row => row.industry);
+    } else if (availableColumns.includes('business_type')) {
+      const industriesQuery = `
+        SELECT DISTINCT business_type FROM market_trends_mv
+        WHERE business_type IS NOT NULL
+        ORDER BY business_type
+      `;
+      const industriesResult = await pool.query(industriesQuery);
+      industries = industriesResult.rows.map(row => row.business_type);
+    } else if (availableColumns.includes('category')) {
+      const industriesQuery = `
+        SELECT DISTINCT category FROM market_trends_mv
+        WHERE category IS NOT NULL
+        ORDER BY category
+      `;
+      const industriesResult = await pool.query(industriesQuery);
+      industries = industriesResult.rows.map(row => row.category);
+    }
+    
+    // Try different column names for location
+    let locations = [];
+    if (availableColumns.includes('location')) {
+      const locationsQuery = `
+        SELECT DISTINCT location FROM market_trends_mv
+        WHERE location IS NOT NULL
+        ORDER BY location
+      `;
+      const locationsResult = await pool.query(locationsQuery);
+      locations = locationsResult.rows.map(row => row.location);
+    } else if (availableColumns.includes('region')) {
+      const locationsQuery = `
+        SELECT DISTINCT region FROM market_trends_mv
+        WHERE region IS NOT NULL
+        ORDER BY region
+      `;
+      const locationsResult = await pool.query(locationsQuery);
+      locations = locationsResult.rows.map(row => row.region);
+    } else if (availableColumns.includes('area')) {
+      const locationsQuery = `
+        SELECT DISTINCT area FROM market_trends_mv
+        WHERE area IS NOT NULL
+        ORDER BY area
+      `;
+      const locationsResult = await pool.query(locationsQuery);
+      locations = locationsResult.rows.map(row => row.area);
+    }
 
     res.json({
-      industries: industries.rows.map(row => row.industry),
-      locations: locations.rows.map(row => row.location)
+      industries,
+      locations,
+      availableColumns // Include this for debugging
     });
   } catch (error) {
     console.error('Error fetching filters:', error);
-    res.status(500).json({ error: 'Failed to fetch filters' });
+    // Add more detailed error reporting
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack?.substring(0, 200)
+    });
+    res.status(500).json({ 
+      error: 'Failed to fetch filters', 
+      details: error.message 
+    });
   }
 });
 
@@ -160,11 +427,32 @@ router.get('/export', authenticateToken, async (req, res) => {
   }
 });
 
-// Helper function to fetch data
+// Helper function to fetch data - update with more reliable column detection
 async function fetchTrendsData(filters = {}) {
   const { timeRange = '30', industry, location } = filters;
   
-  // Build query conditions based on filters
+  // Get available columns using pg_catalog
+  const columnsQuery = `
+    SELECT attname as column_name
+    FROM pg_catalog.pg_attribute
+    WHERE attrelid = 'market_trends_mv'::regclass
+      AND attnum > 0 
+      AND NOT attisdropped;
+  `;
+  const columnsResult = await pool.query(columnsQuery);
+  const availableColumns = columnsResult.rows.map(row => row.column_name);
+  
+  // Find date column
+  let dateColumn = 'date';
+  const possibleDateColumns = ['date_listed', 'date', 'created_at', 'listing_date', 'created_date'];
+  for (const column of possibleDateColumns) {
+    if (availableColumns.includes(column)) {
+      dateColumn = column;
+      break;
+    }
+  }
+  
+  // Build query conditions
   let conditions = [];
   let params = [];
   let paramCounter = 1;
@@ -173,22 +461,42 @@ async function fetchTrendsData(filters = {}) {
   if (timeRange) {
     const days = parseInt(timeRange);
     if (!isNaN(days)) {
-      conditions.push(`date >= NOW() - INTERVAL '${days} days'`);
+      conditions.push(`${dateColumn} >= NOW() - INTERVAL '${days} days'`);
     }
   }
 
-  // Apply industry filter
+  // Apply industry filter - try different possible column names
   if (industry) {
-    conditions.push(`industry = $${paramCounter}`);
-    params.push(industry);
-    paramCounter++;
+    if (availableColumns.includes('industry')) {
+      conditions.push(`industry = $${paramCounter}`);
+      params.push(industry);
+      paramCounter++;
+    } else if (availableColumns.includes('business_type')) {
+      conditions.push(`business_type = $${paramCounter}`);
+      params.push(industry);
+      paramCounter++;
+    } else if (availableColumns.includes('category')) {
+      conditions.push(`category = $${paramCounter}`);
+      params.push(industry);
+      paramCounter++;
+    }
   }
 
-  // Apply location filter
+  // Apply location filter - try different possible column names
   if (location) {
-    conditions.push(`location = $${paramCounter}`);
-    params.push(location);
-    paramCounter++;
+    if (availableColumns.includes('location')) {
+      conditions.push(`location = $${paramCounter}`);
+      params.push(location);
+      paramCounter++;
+    } else if (availableColumns.includes('region')) {
+      conditions.push(`region = $${paramCounter}`);
+      params.push(location);
+      paramCounter++;
+    } else if (availableColumns.includes('area')) {
+      conditions.push(`area = $${paramCounter}`);
+      params.push(location);
+      paramCounter++;
+    }
   }
 
   // Build the final query
@@ -197,11 +505,24 @@ async function fetchTrendsData(filters = {}) {
   const query = `
     SELECT * FROM market_trends_mv
     ${whereClause}
-    ORDER BY date ASC
+    ORDER BY ${dateColumn} ASC
   `;
 
+  console.log('Fetching trends with query:', query, params);
+  
   const result = await pool.query(query, params);
-  return result.rows;
+  
+  // Map the results to a consistent format
+  return result.rows.map(row => {
+    const mappedRow = { ...row };
+    
+    // Ensure the date property exists
+    if (dateColumn !== 'date') {
+      mappedRow.date = row[dateColumn];
+    }
+    
+    return mappedRow;
+  });
 }
 
 // PDF Export function with custom styling and visualizations
@@ -289,7 +610,7 @@ async function exportPDF(res, data, filters, options = {}) {
     try {
       // Create trend chart configuration
       const chartData = {
-        labels: data.map(d => new Date(d.date).toLocaleDateString()),
+        labels: data.map(d => new Date(d.date_listed).toLocaleDateString()),
         datasets: [{
           label: 'Average Price',
           data: data.map(d => d.avg_price),
@@ -359,7 +680,7 @@ async function exportPDF(res, data, filters, options = {}) {
     const tableTop = doc.y;
     const tableHeaders = ['Date', 'Industry', 'Location', 'Avg. Price (£)', 'Avg. Multiple'];
     const tableData = data.map(item => [
-      new Date(item.date).toLocaleDateString(),
+      new Date(item.date_listed).toLocaleDateString(),
       item.industry || '-',
       item.location || '-',
       '£' + Math.round(parseFloat(item.avg_price || 0)).toLocaleString(),
@@ -424,8 +745,8 @@ async function exportPDF(res, data, filters, options = {}) {
 }
 
 function exportCSV(res, data) {
-  // Prepare data for CSV
-  const fields = ['date', 'industry', 'location', 'avg_price', 'avg_multiple', 'listings_count'];
+  // Prepare data for CSV - update field names if needed
+  const fields = ['date_listed', 'industry', 'location', 'avg_price', 'avg_multiple', 'listings_count'];
   const opts = { fields };
   
   try {
@@ -459,7 +780,7 @@ async function exportExcel(res, data) {
   // Add data rows - ensure all numeric values are properly parsed
   data.forEach(item => {
     worksheet.addRow({
-      date: new Date(item.date),
+      date: new Date(item.date_listed),
       industry: item.industry || '',
       location: item.location || '',
       avg_price: parseFloat(item.avg_price || 0),

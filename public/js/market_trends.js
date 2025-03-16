@@ -8,8 +8,106 @@ let activeFilters = {
     location: ''
 };
 
+/**
+ * Creates a gradient fill for Chart.js charts
+ * @param {CanvasRenderingContext2D} ctx - The canvas context
+ * @param {string} colorStart - The starting color (hex code)
+ * @returns {CanvasGradient} - The gradient object for use with Chart.js
+ */
+function createGradient(ctx, colorStart) {
+    const colorEnd = colorStart + '00'; // Add transparency
+    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, colorStart + 'CC'); // Semi-transparent version of the color
+    gradient.addColorStop(1, colorEnd);
+    return gradient;
+}
+
+/**
+ * Generates an array of distinct colors based on the count
+ * @param {number} count - Number of colors needed
+ * @returns {string[]} - Array of hex color codes
+ */
+function generateColorPalette(count) {
+    // Base set of professional colors
+    const baseColors = [
+        '#3b82f6', // blue
+        '#10b981', // green
+        '#6366f1', // indigo
+        '#8b5cf6', // purple
+        '#ec4899', // pink
+        '#f97316', // orange
+        '#ef4444', // red
+        '#14b8a6', // teal
+        '#84cc16', // lime
+        '#a855f7', // violet
+        '#f59e0b', // amber
+        '#64748b'  // slate
+    ];
+    
+    // If we have enough base colors, return a slice of that array
+    if (count <= baseColors.length) {
+        return baseColors.slice(0, count);
+    }
+    
+    // Otherwise generate more colors using hue rotation
+    const colors = [...baseColors];
+    const hueStep = 360 / (count - baseColors.length);
+    
+    for (let i = baseColors.length; i < count; i++) {
+        // Generate hue based on position and convert to hex
+        const hue = Math.floor(i * hueStep) % 360;
+        const saturation = 70 + (i % 20);
+        const lightness = 45 + (i % 15);
+        
+        // HSL to Hex conversion (simplified)
+        const h = hue / 360;
+        const s = saturation / 100;
+        const l = lightness / 100;
+        
+        // Color algorithm
+        let r, g, b;
+        if (s === 0) {
+            r = g = b = l;
+        } else {
+            const hue2rgb = (p, q, t) => {
+                if (t < 0) t += 1;
+                if (t > 1) t -= 1;
+                if (t < 1/6) return p + (q - p) * 6 * t;
+                if (t < 1/2) return q;
+                if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                return p;
+            };
+            
+            const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+            const p = 2 * l - q;
+            r = hue2rgb(p, q, h + 1/3);
+            g = hue2rgb(p, q, h);
+            b = hue2rgb(p, q, h - 1/3);
+        }
+        
+        // Convert to hex
+        const toHex = (x) => {
+            const hex = Math.round(x * 255).toString(16);
+            return hex.length === 1 ? '0' + hex : hex;
+        };
+        
+        colors.push(`#${toHex(r)}${toHex(g)}${toHex(b)}`);
+    }
+    
+    return colors;
+}
+
+// Modify the fetchMarketTrends function to include better error handling
 async function fetchMarketTrends(filters = activeFilters) {
     const token = localStorage.getItem('token');
+    
+    if (!token) {
+        console.error('No authentication token found');
+        // Try to get the current URL to use as redirect after login
+        const currentPage = encodeURIComponent(window.location.pathname);
+        window.location.href = `/login2?redirect=${currentPage}`;
+        throw new Error('Authentication required');
+    }
     
     const queryParams = new URLSearchParams({
         timeRange: filters.timeRange || '30'
@@ -18,17 +116,36 @@ async function fetchMarketTrends(filters = activeFilters) {
     if (filters.industry) queryParams.append('industry', filters.industry);
     if (filters.location) queryParams.append('location', filters.location);
     
-    const response = await fetch(`/api/market-trends/data?${queryParams.toString()}`, {
-        headers: {
-            'Authorization': `Bearer ${token}`
+    try {
+        console.log('Fetching market trends with token:', token ? 'Present' : 'Missing');
+        const response = await fetch(`/api/market-trends/data?${queryParams.toString()}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                // Token might be expired, redirect to login
+                const currentPage = encodeURIComponent(window.location.pathname);
+                window.location.href = `/login2?redirect=${currentPage}`;
+                throw new Error('Authentication required');
+            }
+            
+            const errorData = await response.json().catch(() => ({
+                error: 'Failed to fetch market trends'
+            }));
+            
+            throw new Error(errorData.message || errorData.error || 'Failed to fetch market trends');
         }
-    });
 
-    if (!response.ok) {
-        throw new Error('Failed to fetch market trends');
+        return response.json();
+    } catch (error) {
+        console.error('Market trends fetch error:', error);
+        showError(`Error: ${error.message}`);
+        throw error;
     }
-
-    return response.json();
 }
 
 async function fetchFilters() {
@@ -93,6 +210,16 @@ async function updateDashboard() {
     }
 }
 
+// Helper function to safely access properties that might have different column names
+function getPropertyValue(item, possibleProps, defaultValue = 0) {
+    for (const prop of possibleProps) {
+        if (item[prop] !== undefined) {
+            return item[prop];
+        }
+    }
+    return defaultValue;
+}
+
 function updateChart(data) {
     // Standard chart update code for valuationChart
     const ctx = document.getElementById('valuationChart').getContext('2d');
@@ -103,10 +230,11 @@ function updateChart(data) {
     gradientFill.addColorStop(1, 'rgba(59, 130, 246, 0)');
     
     const chartData = {
-        labels: data.map(d => new Date(d.date).toLocaleDateString()),
+        // Use date from any possible column name
+        labels: data.map(d => new Date(d.date || d.date_listed || d.created_at || d.listing_date).toLocaleDateString()),
         datasets: [{
             label: 'Average Price',
-            data: data.map(d => d.avg_price),
+            data: data.map(d => getPropertyValue(d, ['avg_price', 'price', 'average_price'])),
             borderColor: '#3b82f6', // Modern blue
             borderWidth: 3,
             pointRadius: 4,
@@ -120,7 +248,7 @@ function updateChart(data) {
             }
         }, {
             label: 'Average Multiple',
-            data: data.map(d => d.avg_multiple),
+            data: data.map(d => getPropertyValue(d, ['avg_multiple', 'multiple', 'average_multiple'])),
             borderColor: '#f97316', // Modern orange
             borderWidth: 3,
             pointRadius: 4,
@@ -588,21 +716,35 @@ function updateGrowthTrendsChart(data) {
     const ctx = document.getElementById('growthTrendsChart').getContext('2d');
     
     // Group data by industry and calculate average values over time
-    const industries = [...new Set(data.map(item => item.industry))];
-    const dates = [...new Set(data.map(item => item.date))].sort((a, b) => new Date(a) - new Date(b));
+    const industries = [...new Set(data.map(item => 
+        getPropertyValue(item, ['industry', 'business_type', 'category'], 'Unknown')
+    ))];
+    
+    // Get all dates from the data
+    const dates = [...new Set(data.map(item => 
+        item.date || item.date_listed || item.created_at || item.listing_date
+    ))].sort((a, b) => new Date(a) - new Date(b));
     
     // Create datasets for each industry
     const colors = generateColorPalette(industries.length);
     const datasets = industries.map((industry, index) => {
         const industryData = dates.map(date => {
-            const matchingRecords = data.filter(item => 
-                item.industry === industry && new Date(item.date).toISOString() === new Date(date).toISOString()
-            );
+            // Find matching records for this industry and date
+            const matchingRecords = data.filter(item => {
+                const itemIndustry = getPropertyValue(item, ['industry', 'business_type', 'category'], 'Unknown');
+                const itemDate = item.date || item.date_listed || item.created_at || item.listing_date;
+                return itemIndustry === industry && 
+                       new Date(itemDate).toISOString() === new Date(date).toISOString();
+            });
             
             if (matchingRecords.length === 0) return null;
             
             // Calculate average price
-            const avgPrice = matchingRecords.reduce((sum, item) => sum + parseFloat(item.avg_price), 0) / matchingRecords.length;
+            const avgPrice = matchingRecords.reduce((sum, item) => {
+                const price = getPropertyValue(item, ['avg_price', 'price', 'average_price']);
+                return sum + parseFloat(price);
+            }, 0) / matchingRecords.length;
+            
             return avgPrice;
         });
         
@@ -743,41 +885,13 @@ function updateGrowthTrendsChart(data) {
     });
 }
 
-// Create gradient helper function
-function createGradient(ctx, baseColor) {
-    const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-    gradient.addColorStop(0, baseColor);
-    gradient.addColorStop(1, baseColor + '40');
-    return gradient;
-}
-
-// Helper function to generate a color palette
-function generateColorPalette(count) {
-    const baseColors = [
-        '#264653', '#2a9d8f', '#e9c46a', '#f4a261', '#e76f51',
-        '#023e8a', '#0077b6', '#0096c7', '#00b4d8', '#48cae4'
-    ];
-    
-    // If we need more colors than in our base palette, generate additional ones
-    if (count <= baseColors.length) {
-        return baseColors.slice(0, count);
-    }
-    
-    // Generate additional colors using hue rotation
-    const colors = [...baseColors];
-    const hueStep = 360 / (count - baseColors.length);
-    
-    for (let i = baseColors.length; i < count; i++) {
-        const hue = (i - baseColors.length) * hueStep;
-        colors.push(`hsl(${hue}, 70%, 50%)`);
-    }
-    
-    return colors;
-}
-
 function updateInsights(data) {
     // Calculate and display key insights
-    const avgPrice = data.reduce((sum, item) => sum + parseFloat(item.avg_price), 0) / data.length;
+    const avgPrice = data.reduce((sum, item) => {
+        const price = getPropertyValue(item, ['avg_price', 'price', 'average_price']);
+        return sum + parseFloat(price);
+    }, 0) / data.length;
+    
     const avgValuationEl = document.getElementById('avgValuation');
     if (avgValuationEl) {
         avgValuationEl.textContent = `£${Math.round(avgPrice).toLocaleString()}`;
@@ -786,14 +900,18 @@ function updateInsights(data) {
     // Find top industry
     const industryPrices = {};
     data.forEach(item => {
-        if (!industryPrices[item.industry]) {
-            industryPrices[item.industry] = {
+        // Get industry value from any possible column name
+        const industry = getPropertyValue(item, ['industry', 'business_type', 'category'], 'Unknown');
+        
+        if (!industryPrices[industry]) {
+            industryPrices[industry] = {
                 total: 0,
                 count: 0
             };
         }
-        industryPrices[item.industry].total += parseFloat(item.avg_price);
-        industryPrices[item.industry].count++;
+        const price = getPropertyValue(item, ['avg_price', 'price', 'average_price']);
+        industryPrices[industry].total += parseFloat(price);
+        industryPrices[industry].count++;
     });
     
     let topIndustry = '';
@@ -812,10 +930,11 @@ function updateInsights(data) {
     }
     
     // Calculate and display growth rate
-    const sortedDates = [...new Set(data.map(item => new Date(item.date).getTime()))].sort();
+    // Update to use date_listed
+    const sortedDates = [...new Set(data.map(item => new Date(item.date_listed).getTime()))].sort();
     if (sortedDates.length >= 2) {
-        const oldestData = data.filter(item => new Date(item.date).getTime() === sortedDates[0]);
-        const newestData = data.filter(item => new Date(item.date).getTime() === sortedDates[sortedDates.length - 1]);
+        const oldestData = data.filter(item => new Date(item.date_listed).getTime() === sortedDates[0]);
+        const newestData = data.filter(item => new Date(item.date_listed).getTime() === sortedDates[sortedDates.length - 1]);
         
         const oldestAvg = oldestData.reduce((sum, item) => sum + parseFloat(item.avg_price), 0) / oldestData.length;
         const newestAvg = newestData.reduce((sum, item) => sum + parseFloat(item.avg_price), 0) / newestData.length;
@@ -854,7 +973,8 @@ function updateInsights(data) {
     
     // Set recent listings count
     const recentListings = data.filter(item => {
-        const date = new Date(item.date);
+        // Update to use date_listed
+        const date = new Date(item.date_listed);
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
         return date >= sevenDaysAgo;
@@ -867,8 +987,8 @@ function updateInsights(data) {
 
     // Update valuation change indicator
     if (sortedDates.length >= 2) {
-        const oldestData = data.filter(item => new Date(item.date).getTime() === sortedDates[0]);
-        const newestData = data.filter(item => new Date(item.date).getTime() === sortedDates[sortedDates.length - 1]);
+        const oldestData = data.filter(item => new Date(item.date_listed).getTime() === sortedDates[0]);
+        const newestData = data.filter(item => new Date(item.date_listed).getTime() === sortedDates[sortedDates.length - 1]);
         
         const oldestAvg = oldestData.reduce((sum, item) => sum + parseFloat(item.avg_price), 0) / oldestData.length;
         const newestAvg = newestData.reduce((sum, item) => sum + parseFloat(item.avg_price), 0) / newestData.length;
@@ -1136,102 +1256,107 @@ function suggestQuery(query) {
 document.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('token');
     
-    // Add token to all fetch requests
-    const fetchWithAuth = (url, options = {}) => {
-        return fetch(url, {
-            ...options,
-            headers: {
-                ...options.headers,
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
-    };
-
-    // Check authentication first
+    // Log token status (but not the actual token)
+    console.log('Token status:', token ? 'Present' : 'Missing');
+    
+    // Check if token exists and is valid
     if (!token) {
-        window.location.href = '/login2?redirect=/market-trends';
-        return;
-    }
-
-    // Verify token is valid
-    fetchWithAuth('/api/verify-token')
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Invalid token');
+        // Try to refresh token first
+        refreshToken().then(newToken => {
+            if (newToken) {
+                console.log('Token refreshed successfully');
+                // Now initialize the page
+                initializePage();
+            } else {
+                // Redirect to login if no token and can't refresh
+                const currentPage = encodeURIComponent(window.location.pathname);
+                window.location.href = `/login2?redirect=${currentPage}`;
             }
-            return response.json();
-        })
-        .then(data => {
-            if (!data.valid) {
-                throw new Error('Invalid token');
-            }
-            // Continue with page initialization
-            initializePage();
-        })
-        .catch(error => {
-            console.error('Auth error:', error);
-            window.location.href = '/login2?redirect=/market-trends';
         });
+    } else {
+        // Initialize page with existing token
+        initializePage();
+    }
+});
 
-    // Page initialization function
-    function initializePage() {
-        const timeRange = document.getElementById('timeRange');
-        timeRange.addEventListener('change', (e) => {
-            activeFilters.timeRange = e.target.value;
-            updateDashboard();
+// Add this function to refresh the token if needed
+async function refreshToken() {
+    try {
+        const response = await fetch('/auth/refresh-token', {
+            method: 'POST',
+            credentials: 'include' // Important for cookies
         });
         
-        // Initial load
-        updateDashboard();
+        if (!response.ok) {
+            throw new Error('Failed to refresh token');
+        }
+        
+        const data = await response.json();
+        localStorage.setItem('token', data.token);
+        return data.token;
+    } catch (error) {
+        console.error('Token refresh failed:', error);
+        return null;
     }
+}
 
-    // Initialize filters
-    populateFilters();
-    
-    // Filter change handlers
-    document.getElementById('industryFilter').addEventListener('change', (e) => {
-        activeFilters.industry = e.target.value;
+// Page initialization function
+function initializePage() {
+    const timeRange = document.getElementById('timeRange');
+    timeRange.addEventListener('change', (e) => {
+        activeFilters.timeRange = e.target.value;
         updateDashboard();
     });
     
-    document.getElementById('locationFilter').addEventListener('change', (e) => {
-        activeFilters.location = e.target.value;
-        updateDashboard();
+    // Initial load
+    updateDashboard();
+}
+
+// Initialize filters
+populateFilters();
+
+// Filter change handlers
+document.getElementById('industryFilter').addEventListener('change', (e) => {
+    activeFilters.industry = e.target.value;
+    updateDashboard();
+});
+
+document.getElementById('locationFilter').addEventListener('change', (e) => {
+    activeFilters.location = e.target.value;
+    updateDashboard();
+});
+
+// Tab functionality
+const tabBtns = document.querySelectorAll('.tab-btn');
+tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+        // Remove active class from all tabs
+        tabBtns.forEach(b => b.classList.remove('active'));
+        // Add active class to clicked tab
+        btn.classList.add('active');
+        
+        // Hide all charts
+        const charts = document.querySelectorAll('.chart-container canvas');
+        charts.forEach(chart => chart.style.display = 'none');
+        
+        // Show selected chart
+        const chartId = btn.dataset.chart;
+        document.getElementById(chartId).style.display = 'block';
     });
-    
-    // Tab functionality
-    const tabBtns = document.querySelectorAll('.tab-btn');
-    tabBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            // Remove active class from all tabs
-            tabBtns.forEach(b => b.classList.remove('active'));
-            // Add active class to clicked tab
-            btn.classList.add('active');
-            
-            // Hide all charts
-            const charts = document.querySelectorAll('.chart-container canvas');
-            charts.forEach(chart => chart.style.display = 'none');
-            
-            // Show selected chart
-            const chartId = btn.dataset.chart;
-            document.getElementById(chartId).style.display = 'block';
-        });
+});
+
+// Add chart animation on scroll
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.classList.add('chart-animate');
+            observer.unobserve(entry.target);
+        }
     });
-    
-    // Add chart animation on scroll
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('chart-animate');
-                observer.unobserve(entry.target);
-            }
-        });
-    }, { threshold: 0.1 });
-    
-    document.querySelectorAll('.chart-container').forEach(chart => {
-        observer.observe(chart);
-    });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.chart-container').forEach(chart => {
+    observer.observe(chart);
 });
 
 // Handle WebSocket connections for real-time updates
