@@ -19,31 +19,20 @@ router.get('/', (req, res) => {
     planPrice = 39;
   }
   
-  // Render checkout page with plan details
-  res.render('payment/checkout', {
-    planId,
-    planName,
-    planPrice,
-    stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY
-  });
+  // Redirect to the specific plan page
+  res.redirect(`/checkout/${planId.toLowerCase()}`);
 });
 
 // Route for gold subscription
 router.get('/gold', (req, res) => {
-  res.render('payment/checkout', {
-    planId: 'gold',
-    planName: 'Gold',
-    planPrice: 39,
+  res.render('checkout-gold', {
     stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY
   });
 });
 
 // Route for platinum subscription
 router.get('/platinum', (req, res) => {
-  res.render('payment/checkout', {
-    planId: 'platinum',
-    planName: 'Platinum',
-    planPrice: 50,
+  res.render('checkout-platinum', {
     stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY
   });
 });
@@ -55,10 +44,10 @@ router.get('/complete', authenticateToken, async (req, res) => {
     const { session_id } = req.query;
     
     // Render success page
-    res.redirect(`/subscription-complete`);
+    res.redirect(`/payment/success?session_id=${session_id}`);
   } catch (error) {
     console.error('Checkout completion error:', error);
-    res.redirect('/error?message=checkout-failed');
+    res.redirect('/payment/cancel');
   }
 });
 

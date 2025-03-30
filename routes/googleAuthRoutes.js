@@ -18,13 +18,15 @@ router.get('/auth/google/callback', async (req, res) => {
     try {
         const { code, error } = req.query;
 
+        // Handle error from Google
         if (error) {
-            console.error('Google OAuth error:', error);
-            return res.redirect('/login2?error=google_auth_failed&reason=' + error);
+            console.error('Google auth error:', error);
+            return res.redirect('/login2?error=' + encodeURIComponent('Google authentication failed: ' + error));
         }
 
         if (!code) {
-            return res.redirect('/login2?error=google_auth_failed&reason=no_code');
+            console.error('No authorization code received from Google');
+            return res.redirect('/login2?error=no_code_received');
         }
 
         // Exchange code for tokens
@@ -75,8 +77,18 @@ router.get('/auth/google/callback', async (req, res) => {
         res.redirect(`${redirectTo}?token=${jwtToken}`);
 
     } catch (error) {
-        console.error('Google OAuth callback error:', error);
-        res.redirect('/login2?error=google_auth_failed&details=' + encodeURIComponent(error.message));
+        console.error('Google callback error:', error);
+
+        // Provide more specific error message based on error type
+        let errorMessage = 'Google authentication failed';
+
+        if (error.message && error.message.includes('origin')) {
+            errorMessage = 'Domain not allowed for Google Sign-In. Please contact the administrator.';
+        } else if (error.message && error.message.includes('invalid_grant')) {
+            errorMessage = 'Invalid or expired authorization code';
+        }
+
+        res.redirect('/login2?error=' + encodeURIComponent(errorMessage));
     }
 });
 

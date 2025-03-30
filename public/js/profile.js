@@ -1,225 +1,376 @@
-document.addEventListener('DOMContentLoaded', async () => {
-    try {
-        const token = localStorage.getItem('token');
+/**
+ * Profile Management
+ * Handles user profile data retrieval and updates
+ */
+
+(function() {
+  // Initialize when DOM is loaded
+  document.addEventListener('DOMContentLoaded', initProfileManager);
+  
+  // Set up event listeners when user is logged in
+  function initProfileManager() {
+    console.log('Initializing profile manager');
+    
+    // Fetch and display current user's profile
+    fetchCurrentUserProfile();
+    
+    // Set up profile edit form if it exists
+    setupProfileEditForm();
+    
+    // Set up profile picture upload if it exists
+    setupProfilePictureUpload();
+    
+    // Setup profile data access for other parts of the application
+    setupProfileAPI();
+  }
+  
+  // Fetch current user's profile
+  function fetchCurrentUserProfile() {
+    const token = getAuthToken();
+    
+    if (!token) {
+      console.log('No auth token, skipping profile fetch');
+      return;
+    }
+    
+    fetch('/api/profile', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(response => {
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('AUTH_FAILED');
+        }
+        throw new Error(`Profile fetch failed: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (data.success && data.profile) {
+        // Store profile data globally
+        window.currentUserProfile = data.profile;
+        window.currentUserId = data.profile.id;
         
-        // If no token in localStorage, try to get it from the page
-        if (!token) {
-            const tokenMeta = document.querySelector('meta[name="auth-token"]');
-            if (!tokenMeta?.content) {
-                window.location.href = '/login2';
-                return;
-            }
-            localStorage.setItem('token', tokenMeta.content);
-        }
-
-        const headers = {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/json',
-            'Cache-Control': 'no-cache'
-        };
-
-        // Just fetch profile data, remove subscription fetch
-        const profileResponse = await fetch('/api/profile', { headers });
-
-        if (!profileResponse.ok) {
-            if (profileResponse.status === 401) {
-                localStorage.removeItem('token');
-                window.location.href = '/login2';
-                return;
-            }
-            throw new Error('Failed to fetch profile data');
-        }
-
-        const profileData = await profileResponse.json();
-
-        // Update profile UI
-        const profilePic = document.querySelector('.profile-picture');
-        if (profilePic && profileData.profile_picture) {
-            profilePic.src = getProfilePictureUrl(profileData.profile_picture);
-            profilePic.onerror = () => {
-                profilePic.src = '/images/default-profile.png';
-            };
-        }
-
-        // Update username if it exists in the DOM
-        const usernameElement = document.querySelector('.profile-header h1');
-        if (usernameElement) {
-            usernameElement.textContent = profileData.username;
-        }
-
-        // Update any other profile fields that exist in the DOM
-        const memberSinceElement = document.querySelector('.member-since');
-        if (memberSinceElement && profileData.created_at) {
-            memberSinceElement.textContent = `Member since ${new Date(profileData.created_at).toLocaleDateString()}`;
-        }
-
-    } catch (error) {
-        console.error('Profile error:', error);
-        const errorMessage = document.createElement('div');
-        errorMessage.className = 'error-message';
-        errorMessage.textContent = 'Failed to load profile data. Please try again.';
-        document.querySelector('.profile-header')?.prepend(errorMessage);
-    }
-
-    // Update picture upload form handler
-    const pictureForm = document.getElementById('picture-form');
-    const errorMessage = document.getElementById('upload-error');
-
-    if (pictureForm) {
-        pictureForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = new FormData(pictureForm);
-
-            try {
-                // Update to use the correct endpoint matching profileApi.js
-                const response = await fetch('/api/profile/upload-picture', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    },
-                    body: formData
-                });
-
-                if (!response.ok) {
-                    throw new Error('Upload failed');
-                }
-
-                const data = await response.json();
-                if (data.success) {
-                    window.location.reload();
-                }
-            } catch (error) {
-                errorMessage.textContent = 'Failed to upload image. Please try again.';
-                errorMessage.style.display = 'block';
-            }
-        });
-    }
-
-    // Handle subscription upgrade button - keep basic functionality
-    const upgradeButton = document.querySelector('.upgrade-button');
-    if (upgradeButton) {
-        upgradeButton.addEventListener('click', () => {
-            alert('Premium subscription features coming soon!');
-        });
-    }
-
-    // Add sign out handler
-    const signOutBtn = document.getElementById('signOutBtn');
-    if (signOutBtn) {
-        signOutBtn.addEventListener('click', async () => {
-            try {
-                // Clear local storage
-                localStorage.removeItem('token');
-                
-                // Clear session
-                await fetch('/auth/logout', {
-                    method: 'POST',
-                    credentials: 'include'
-                });
-
-                // Redirect to login
-                window.location.href = '/login';
-            } catch (error) {
-                console.error('Sign out error:', error);
-            }
-        });
-    }
-});
-
-// Update uploadProfilePicture function to use new endpoint
-async function uploadProfilePicture(file) {
-    try {
-        const formData = new FormData();
-        formData.append('profile_picture', file);
-
-        const token = localStorage.getItem('token');
-        if (!token) throw new Error('Not authenticated');
-
-        // Updated to use correct endpoint
-        const response = await fetch('/api/profile/upload-picture', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            },
-            body: formData
-        });
-
-        const data = await response.json();
+        // Update UI with profile data
+        updateProfileUI(data.profile);
         
-        if (!response.ok) {
-            throw new Error(data.error || 'Upload failed');
+        // Dispatch event for other components to use
+        document.dispatchEvent(new CustomEvent('profile-loaded', { 
+          detail: data.profile 
+        }));
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching profile:', error);
+      
+      if (error.message === 'AUTH_FAILED') {
+        // Handle authentication failure if needed
+        if (window.location.pathname.includes('/profile')) {
+          window.location.href = `/login2?returnTo=${encodeURIComponent(window.location.pathname)}`;
         }
-
+      }
+    });
+  }
+  
+  // Update profile UI with data
+  function updateProfileUI(profile) {
+    // Update profile picture
+    const profilePicElements = document.querySelectorAll('[data-profile-picture]');
+    profilePicElements.forEach(element => {
+      element.src = profile.profile_picture || '/images/default-profile.png';
+      element.onerror = function() {
+        this.src = '/images/default-profile.png';
+      };
+    });
+    
+    // Update username
+    const usernameElements = document.querySelectorAll('[data-profile-username]');
+    usernameElements.forEach(element => {
+      element.textContent = profile.username || 'User';
+    });
+    
+    // Update email
+    const emailElements = document.querySelectorAll('[data-profile-email]');
+    emailElements.forEach(element => {
+      element.textContent = profile.email || '';
+    });
+    
+    // Update bio
+    const bioElements = document.querySelectorAll('[data-profile-bio]');
+    bioElements.forEach(element => {
+      element.textContent = profile.bio || 'No bio provided';
+    });
+    
+    // Update location
+    const locationElements = document.querySelectorAll('[data-profile-location]');
+    locationElements.forEach(element => {
+      element.textContent = profile.location || 'Location not specified';
+    });
+    
+    // Update website
+    const websiteElements = document.querySelectorAll('[data-profile-website], [data-profile-website-link]');
+    websiteElements.forEach(element => {
+      if (profile.website) {
+        if (element.tagName === 'A') {
+          element.href = profile.website.startsWith('http') ? profile.website : `https://${profile.website}`;
+          element.textContent = profile.website;
+        } else {
+          element.textContent = profile.website;
+        }
+      } else {
+        if (element.tagName === 'A') {
+          element.href = '#';
+          element.textContent = 'No website provided';
+        } else {
+          element.textContent = 'No website provided';
+        }
+      }
+    });
+    
+    // Update form fields
+    updateProfileFormFields(profile);
+  }
+  
+  // Update profile form fields
+  function updateProfileFormFields(profile) {
+    const form = document.getElementById('profile-edit-form');
+    if (!form) return;
+    
+    // Set form field values
+    const usernameInput = form.querySelector('[name="username"]');
+    if (usernameInput) usernameInput.value = profile.username || '';
+    
+    const bioInput = form.querySelector('[name="bio"]');
+    if (bioInput) bioInput.value = profile.bio || '';
+    
+    const locationInput = form.querySelector('[name="location"]');
+    if (locationInput) locationInput.value = profile.location || '';
+    
+    const websiteInput = form.querySelector('[name="website"]');
+    if (websiteInput) websiteInput.value = profile.website || '';
+  }
+  
+  // Set up profile edit form
+  function setupProfileEditForm() {
+    const form = document.getElementById('profile-edit-form');
+    if (!form) return;
+    
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const token = getAuthToken();
+      if (!token) return;
+      
+      // Get form data
+      const formData = new FormData(form);
+      const profileData = {
+        username: formData.get('username'),
+        bio: formData.get('bio'),
+        location: formData.get('location'),
+        website: formData.get('website')
+      };
+      
+      // Update profile
+      fetch('/api/profile', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(profileData)
+      })
+      .then(response => {
+        if (!response.ok) throw new Error(`Profile update failed: ${response.status}`);
+        return response.json();
+      })
+      .then(data => {
         if (data.success) {
-            const profilePic = document.querySelector('.profile-picture');
-            if (profilePic && data.profile_picture) {
-                profilePic.src = data.profile_picture;
-            }
-            showMessage('Profile picture updated successfully', 'success');
+          // Update global profile data
+          window.currentUserProfile = data.profile;
+          
+          // Show success message
+          showMessage('Profile updated successfully', 'success');
+          
+          // Update UI
+          updateProfileUI(data.profile);
+          
+          // Dispatch event for other components
+          document.dispatchEvent(new CustomEvent('profile-updated', { 
+            detail: data.profile 
+          }));
+        } else {
+          showMessage(data.error || 'Failed to update profile', 'error');
         }
-    } catch (error) {
-        console.error('Upload error:', error);
-        showMessage(error.message || 'Failed to upload profile picture', 'error');
-    }
-}
-
-function showMessage(message, type = 'error') {
-  const messageDiv = document.getElementById('message') || document.createElement('div');
-  messageDiv.id = 'message';
-  messageDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'}`;
-  messageDiv.textContent = message;
-
-  const container = document.querySelector('.profile-container');
-  if (container) {
-    container.insertBefore(messageDiv, container.firstChild);
-    setTimeout(() => messageDiv.remove(), 5000);
+      })
+      .catch(error => {
+        console.error('Error updating profile:', error);
+        showMessage('Error updating profile', 'error');
+      });
+    });
   }
-}
-
-// Helper function to handle S3 URLs
-function getProfilePictureUrl(url) {
-  if (!url) return '/images/default-profile.png';
-  if (url.startsWith('http')) return url; // S3 URL
-  return url; // Local URL fallback
-}
-
-// Update file input handler
-document.getElementById('profile-picture-input')?.addEventListener('change', (e) => {
-  const file = e.target.files[0];
-  if (file) {
-    uploadProfilePicture(file);
-  }
-});
-
-// Error message styles
-const style = document.createElement('style');
-style.textContent = `
-  .error-message {
-    color: #721c24;
-    background-color: #f8d7da;
-    border: 1px solid #f5c6cb;
-    border-radius: 4px;
-    padding: 10px;
-    margin: 10px 0;
-    text-align: center;
-  }
-`;
-
-signOutBtn.addEventListener('click', async () => {
-    try {
-        // Clear local storage
-        localStorage.removeItem('token');
+  
+  // Set up profile picture upload
+  function setupProfilePictureUpload() {
+    const uploadButton = document.getElementById('profile-picture-upload-btn');
+    const fileInput = document.getElementById('profile-picture-input');
+    
+    if (!uploadButton || !fileInput) return;
+    
+    // Open file dialog when upload button is clicked
+    uploadButton.addEventListener('click', function() {
+      fileInput.click();
+    });
+    
+    // Handle file selection
+    fileInput.addEventListener('change', function() {
+      if (this.files && this.files[0]) {
+        const file = this.files[0];
         
-        // Clear session
-        await fetch('/auth/logout', {
-            method: 'POST',
-            credentials: 'include'
+        // Validate file
+        if (!file.type.match('image.*')) {
+          showMessage('Please select an image file', 'error');
+          return;
+        }
+        
+        // Create FormData
+        const formData = new FormData();
+        formData.append('profilePicture', file);
+        
+        // Upload file
+        const token = getAuthToken();
+        if (!token) return;
+        
+        // Show loading state
+        const profilePic = document.querySelector('[data-profile-picture]');
+        if (profilePic) {
+          profilePic.classList.add('opacity-50');
+        }
+        
+        fetch('/api/profile/upload-picture', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
+        })
+        .then(response => {
+          if (!response.ok) throw new Error(`Upload failed: ${response.status}`);
+          return response.json();
+        })
+        .then(data => {
+          if (data.success) {
+            // Update global profile data
+            window.currentUserProfile.profile_picture = data.profile.profile_picture;
+            
+            // Show success message
+            showMessage('Profile picture updated', 'success');
+            
+            // Update UI
+            const profilePicElements = document.querySelectorAll('[data-profile-picture]');
+            profilePicElements.forEach(element => {
+              element.src = data.profile.profile_picture;
+              element.classList.remove('opacity-50');
+            });
+            
+            // Dispatch event for other components
+            document.dispatchEvent(new CustomEvent('profile-picture-updated', { 
+              detail: { profilePicture: data.profile.profile_picture } 
+            }));
+          } else {
+            showMessage(data.error || 'Failed to update profile picture', 'error');
+            if (profilePic) profilePic.classList.remove('opacity-50');
+          }
+        })
+        .catch(error => {
+          console.error('Error uploading profile picture:', error);
+          showMessage('Error uploading profile picture', 'error');
+          if (profilePic) profilePic.classList.remove('opacity-50');
         });
-
-        // Redirect to login2 instead of login
-        window.location.href = '/login2';
-    } catch (error) {
-        console.error('Sign out error:', error);
+      }
+    });
+  }
+  
+  // Set up global profile API for other components
+  function setupProfileAPI() {
+    // Create global ProfileManager object
+    window.ProfileManager = {
+      getProfile: function() {
+        return window.currentUserProfile || null;
+      },
+      
+      getUserId: function() {
+        return window.currentUserId || null;
+      },
+      
+      getUsername: function() {
+        return window.currentUserProfile?.username || null;
+      },
+      
+      getProfilePicture: function() {
+        return window.currentUserProfile?.profile_picture || '/images/default-profile.png';
+      },
+      
+      isLoggedIn: function() {
+        return !!window.currentUserId;
+      },
+      
+      refresh: function() {
+        return fetchCurrentUserProfile();
+      },
+      
+      updateLastActive: function() {
+        const token = getAuthToken();
+        if (!token) return Promise.reject('No auth token');
+        
+        return fetch('/api/profile/active', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        })
+        .then(response => {
+          if (!response.ok) throw new Error('Failed to update last active timestamp');
+          return response.json();
+        });
+      }
+    };
+    
+    // Update last active timestamp periodically
+    setInterval(function() {
+      if (window.ProfileManager.isLoggedIn()) {
+        window.ProfileManager.updateLastActive()
+          .catch(error => console.error('Error updating last active timestamp:', error));
+      }
+    }, 5 * 60 * 1000); // Every 5 minutes
+  }
+  
+  // Helper function to get auth token
+  function getAuthToken() {
+    // Try meta tag first
+    const metaToken = document.querySelector('meta[name="auth-token"]')?.content;
+    if (metaToken) return metaToken;
+    
+    // Try localStorage
+    return localStorage.getItem('token');
+  }
+  
+  // Helper function to show messages
+  function showMessage(message, type = 'info') {
+    // Check if toast functionality exists
+    if (typeof showToast === 'function') {
+      showToast(message, type);
+      return;
     }
-});
-document.head.appendChild(style);
+    
+    // Simple alert fallback
+    if (type === 'error') {
+      alert(`Error: ${message}`);
+    } else {
+      alert(message);
+    }
+  }
+})();

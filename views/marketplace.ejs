@@ -11,32 +11,14 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto">
     <link rel="stylesheet" href="/css/marketplace.css">
+            <%
+             // Safety check - force isChatPage to false for marketplace pages
+                locals.isChatPage = false;
+        %>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                // If no token, redirect back to the login page
-                window.location.href = '/login2';
-            } else {
-                // Send a request to the backend with the JWT to verify access
-                fetch('/auth/marketplace', {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (!data.success) {
-                        // If token is invalid or expired, redirect to login page
-                        window.location.href = '/login2';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error verifying token:', error);
-                    window.location.href = '/login2';
-                });
-            }
+            // Immediately redirect to marketplace2
+            window.location.href = '/marketplace2';
         });
     </script>
 </head>

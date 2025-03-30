@@ -1,9 +1,14 @@
 import pkg from 'pg';
 const { Pool } = pkg;
 import NodeCache from 'node-cache';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 export default class BusinessMetricsService {
     constructor(pool) {
+        // Use the provided pool from db.js to ensure consistent connection settings
         this.pool = pool;
         this.cache = new NodeCache({ stdTTL: 4 * 60 * 60 });
         this.updateInterval = 4 * 60 * 60 * 1000;
@@ -41,6 +46,7 @@ export default class BusinessMetricsService {
             return result.rows;
         } catch (error) {
             console.error('Metrics update failed:', error);
+            // Retry in 5 minutes
             setTimeout(() => this.updateMetrics(), 5 * 60 * 1000);
             return this.cache.get('industryMetrics') || [];
         }
@@ -51,8 +57,13 @@ export default class BusinessMetricsService {
     }
 
     async getBusinesses(queryParams = {}) {
-        const query = 'SELECT * FROM businesses';
-        const result = await this.pool.query(query);
-        return result.rows;
+        try {
+            const query = 'SELECT * FROM businesses';
+            const result = await this.pool.query(query);
+            return result.rows;
+        } catch (error) {
+            console.error('Error getting businesses:', error);
+            return [];
+        }
     }
 }

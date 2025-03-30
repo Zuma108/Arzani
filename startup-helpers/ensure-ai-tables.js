@@ -1,49 +1,63 @@
-import pool from '../db.js';
+import pool from '../config/database.js';
 
 /**
- * Ensures all required AI assistant tables exist
+ * Ensures that the AI assistant tables exist in the database
+ * @returns {Promise<boolean>} True if tables were created or already exist
  */
 export async function ensureAITables() {
-  try {
-    console.log('Checking for AI assistant tables...');
+  let client;
 
-    // Check if ai_credits table exists
-    const tableCheck = await pool.query(`
+  try {
+    // Get a database client from the pool
+    client = await pool.connect();
+    
+    // Check if ai_assistant_interactions table exists
+    const tableCheckQuery = `
       SELECT EXISTS (
         SELECT FROM information_schema.tables 
-        WHERE table_name = 'ai_credits'
-      )
-    `);
-
-    if (!tableCheck.rows[0].exists) {
-      console.log('Creating ai_credits table...');
+        WHERE table_name = 'ai_assistant_interactions'
+      );
+    `;
+    
+    const tableExists = await client.query(tableCheckQuery);
+    
+    // If table doesn't exist, create it
+    if (!tableExists.rows[0].exists) {
+      console.log('Creating AI assistant tables...');
       
-      // Create the table
-      await pool.query(`
-        CREATE TABLE ai_credits (
+      // Create the interactions table
+      const createTableQuery = `
+        CREATE TABLE ai_assistant_interactions (
           id SERIAL PRIMARY KEY,
-          user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-          credits_used INTEGER DEFAULT 0,
-          credits_limit INTEGER DEFAULT 30,
-          last_reset TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          next_reset TIMESTAMP DEFAULT (CURRENT_TIMESTAMP + INTERVAL '7 days'),
-          subscription_tier VARCHAR(50) DEFAULT 'free',
+          user_id INTEGER,
+          session_id TEXT,
+          query TEXT NOT NULL,
+          response TEXT NOT NULL,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
+          metadata JSONB
+        );
+      `;
+      
+      await client.query(createTableQuery);
+      
+      // Create index on user_id for better performance
+      await client.query(`
+        CREATE INDEX ai_assistant_interactions_user_id_idx 
+        ON ai_assistant_interactions(user_id);
       `);
-
-      // Create index
-      await pool.query(`
-        CREATE INDEX idx_ai_credits_user_id ON ai_credits(user_id)
-      `);
-
-      console.log('ai_credits table created successfully');
+      
+      console.log('AI assistant tables created successfully');
     } else {
-      console.log('ai_credits table already exists');
+      console.log('AI assistant tables already exist');
     }
+    
+    return true;
   } catch (error) {
-    console.error('Error ensuring AI tables:', error);
-    // Don't throw, just log the error
+    console.error('Error ensuring AI tables exist:', error.message);
+    return false;
+  } finally {
+    if (client) {
+      client.release();
+    }
   }
 }

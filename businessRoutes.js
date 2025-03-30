@@ -9,6 +9,7 @@ import jwt from 'jsonwebtoken'; // Add this import
 import fs from 'fs'; // Add this import
 import valuationService from './services/valuationService.js'; // Add this import
 import { uploadToS3 } from './utils/s3.js'; // Make sure this import is present
+import bcrypt from 'bcrypt'; // Add this import for password hashing
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -148,14 +149,22 @@ router.post('/submit-business', validateToken, upload.array('images', 5), async 
     try {
         // Log the incoming request
         console.log('Received business submission:', {
-            body: req.body,
+            body: Object.keys(req.body), // Log keys to avoid logging sensitive data
             files: req.files?.length || 0,
-            user: req.user
+            user: req.user,
+            imageUrls: req.body.imageUrls ? 'present' : 'missing'
         });
 
+        // Enhanced user authentication check
         if (!req.user?.userId) {
+            console.error('Authentication error: No userId in req.user object', { 
+                session: req.session,
+                authHeader: req.headers['authorization'] ? 'present' : 'missing'
+            });
             return res.status(401).json({ error: 'Authentication required' });
         }
+
+        console.log('Authentication confirmed for user:', req.user.userId);
 
         // Validate required fields with proper error messages
         const requiredFields = [
@@ -214,33 +223,62 @@ router.post('/submit-business', validateToken, upload.array('images', 5), async 
         });
         
         // Upload images to S3 and get their URLs
-        const s3UploadPromises = filesToUpload.map(async (file) => {
-            // Create unique filename
-            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-            const ext = path.extname(file.originalname).toLowerCase();
-            const filename = `business-${uniqueSuffix}${ext}`;
-            
-            // Create S3 key - organize by business owner ID for better organization
-            const s3Key = `businesses/${req.user.userId}/${filename}`;
-            
-            // Upload to S3
-            const s3Url = await uploadToS3(file, s3Key);
-            
-            return {
-                filename: filename,
-                url: s3Url
-            };
+        const s3UploadPromises = req.files.map(async (file) => {
+            try {
+                // Create unique filename
+                const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+                const ext = path.extname(file.originalname).toLowerCase();
+                const filename = `business-${uniqueSuffix}${ext}`;
+                
+                // Create S3 key - organize by business owner ID for better organization
+                const s3Key = `businesses/${req.user.userId}/${filename}`;
+                
+                // Get region and bucket from request headers or environment variables
+                const region = req.headers['x-aws-region'] || process.env.AWS_REGION || 'eu-west-2';
+                const bucket = req.headers['x-aws-bucket'] || process.env.AWS_BUCKET_NAME || 'arzani-images1';
+                
+                console.log(`Uploading ${file.originalname} to S3: ${region}/${bucket}/${s3Key}`);
+                
+                // Upload to S3 - make sure parameters are in the right order
+                const s3Url = await uploadToS3(file, s3Key, region, bucket);
+                
+                return {
+                    filename: filename,
+                    url: s3Url
+                };
+            } catch (error) {
+                console.error(`Error uploading file ${file.originalname}:`, error);
+                throw error; // Re-throw to be caught by Promise.all
+            }
         });
 
-        const uploadedImages = await Promise.all(s3UploadPromises);
+        // Wait for all uploads to complete or fail
+        let uploadedImages;
+        try {
+            uploadedImages = await Promise.all(s3UploadPromises);
+        } catch (uploadError) {
+            console.error('S3 upload error:', uploadError);
+            return res.status(500).json({ 
+                error: 'Failed to upload images to S3',
+                message: uploadError.message
+            });
+        }
         
         // Store S3 URLs in the database
         const imageUrls = uploadedImages.map(img => img.url);
+        
+        console.log(`Successfully uploaded ${imageUrls.length} images to S3`);
 
+        // Map request fields to database column names, handling different naming conventions
+        let business_name = req.body.business_name || req.body.title;
+        
+        // Explicitly log the user_id being used
+        console.log('Using user_id for submission:', req.user.userId);
+        
         // Prepare values with proper sanitization
         const values = [
-            req.user.userId,
-            req.body.business_name,
+            req.user.userId,  // user_id - Ensure this value is correct
+            business_name,    // business_name
             req.body.industry,
             sanitizeNumeric(req.body.price),
             req.body.description,
@@ -261,6 +299,14 @@ router.post('/submit-business', validateToken, upload.array('images', 5), async 
             parseInt(req.body.years_in_operation) || 0
         ];
 
+        // Output all values for debugging
+        console.log('Database insertion values:', {
+            user_id: values[0],
+            business_name: values[1],
+            // Add other important fields here
+        });
+        
+        // Insert into database
         const result = await pool.query(`
             INSERT INTO businesses (
                 user_id,
@@ -291,6 +337,11 @@ router.post('/submit-business', validateToken, upload.array('images', 5), async 
             ) RETURNING *
         `, values);
 
+        // Log the inserted business for debugging
+        console.log('Business created successfully with ID:', result.rows[0].id);
+        console.log('User ID in created business:', result.rows[0].user_id);
+
+        // Return a consistently formatted success response
         res.status(200).json({
             success: true,
             business: result.rows[0]
@@ -300,7 +351,9 @@ router.post('/submit-business', validateToken, upload.array('images', 5), async 
         console.error('Error creating business:', error);
         res.status(500).json({
             error: 'Failed to create business listing',
-            details: process.env.NODE_ENV === 'development' ? error.message : undefined
+            message: error.message,
+            detail: error.detail,
+            code: error.code
         });
     }
 });
@@ -512,34 +565,50 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 const emailTemplate = {
   ownerNotification: (data) => ({
     to: data.ownerEmail,
-    from: process.env.SENDGRID_VERIFIED_SENDER,
-    subject: `New Interest: ${data.businessName}`,
-    templateId: 'd-your-template-id',
+    from: {
+      email: 'no-reply@arzani.co.uk',
+      name: 'Arzani Marketplace'
+    },
+    subject: `New Inquiry: ${data.businessName}`,
+    templateId: 'd-cb4f5efd5679464994f937b80687e3b1',
     dynamicTemplateData: {
       firstName: data.firstName,
       lastName: data.lastName,
       email: data.email,
-      phone: data.phone,
-      timeframe: data.timeframe,
-      message: data.message,
-      businessName: data.businessName
+      phone: data.phone || 'Not provided',
+      timeframe: data.timeframe || 'Not specified',
+      message: data.message || 'No message provided',
+      businessName: data.businessName,
+      year: new Date().getFullYear()
     }
   }),
   
   inquirerConfirmation: (data) => ({
     to: data.email,
-    from: process.env.SENDGRID_VERIFIED_SENDER,
-    subject: 'Thank you for your interest',
-    templateId: 'd-your-template-id',
+    from: {
+      email: 'no-reply@arzani.co.uk',
+      name: 'Arzani Marketplace'
+    },
+    subject: `${data.businessName} Inquiry Received`,
+    templateId: 'd-76b6bddff98e4b8c9390a80304ca2484',
     dynamicTemplateData: {
       firstName: data.firstName,
-      businessName: data.businessName
+      businessName: data.businessName,
+      year: new Date().getFullYear()
     }
   })
 };
 
 router.post('/contact-seller', async (req, res) => {
   try {
+    // Log the incoming request for debugging
+    console.log('Contact seller request received:', {
+      businessId: req.body.businessId,
+      email: req.body.email,
+      // Don't log the entire body to avoid sensitive data in logs
+      fields: Object.keys(req.body)
+    });
+    
     const {
       businessId,
       firstName,
@@ -564,61 +633,175 @@ router.post('/contact-seller', async (req, res) => {
       return res.status(400).json({ error: 'Invalid phone format' });
     }
 
-    // Get business details
-    const businessResult = await pool.query(
-      'SELECT business_name, owner_email FROM businesses WHERE id = $1',
-      [businessId]
-    );
+    // Get business details with owner email and user_id by joining with users table
+    const businessResult = await pool.query(`
+      SELECT b.business_name, b.user_id as owner_id, u.email as owner_email 
+      FROM businesses b
+      JOIN users u ON b.user_id = u.id
+      WHERE b.id = $1
+    `, [businessId]);
 
     if (businessResult.rows.length === 0) {
       return res.status(404).json({ error: 'Business not found' });
     }
 
     const business = businessResult.rows[0];
+    
+    // Get or create user account for the inquirer
+    let inquirerId;
+    const userCheck = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+    
+    if (userCheck.rows.length > 0) {
+      // User exists
+      inquirerId = userCheck.rows[0].id;
+      console.log('Found existing user:', inquirerId);
+    } else {
+      // Create new user account for inquirer
+      const newUserResult = await pool.query(`
+        INSERT INTO users (email, username, created_at)
+        VALUES ($1, $2, NOW())
+        RETURNING id
+      `, [email, `${firstName.toLowerCase()}_${Math.floor(Math.random() * 1000)}`]);
+      
+      inquirerId = newUserResult.rows[0].id;
+      console.log('Created new user:', inquirerId);
+    }
 
-    // Save to database
-    const result = await pool.query(
-      `INSERT INTO contacts 
-        (business_id, first_name, last_name, phone, email, timeframe, message, newsletter)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-       RETURNING *`,
-      [businessId, firstName, lastName, phone, email, timeframe, message, newsletter]
-    );
+    // Begin transaction
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      
+      // Save inquiry to database
+      const inquiryResult = await client.query(`
+        INSERT INTO business_inquiries 
+        (business_id, first_name, last_name, phone, email, timeframe, message, newsletter, user_email)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        RETURNING id
+      `, [
+        businessId, 
+        firstName, 
+        lastName, 
+        phone, 
+        email, 
+        timeframe, 
+        message, 
+        newsletter || false,
+        business.owner_email
+      ]);
+      
+      const inquiryId = inquiryResult.rows[0].id;
+      console.log('Created inquiry:', inquiryId);
+      
+      // Prepare and send emails
+      const emailData = {
+        firstName,
+        lastName,
+        email,
+        phone,
+        timeframe,
+        message,
+        businessName: business.business_name,
+        ownerEmail: business.owner_email
+      };
 
-    // Prepare email data
-    const emailData = {
-      firstName,
-      lastName,
-      email,
-      phone,
-      timeframe,
-      message,
-      businessName: business.business_name,
-      ownerEmail: business.owner_email
-    };
-
-    // Send emails
-    await Promise.all([
-      sgMail.send(emailTemplate.ownerNotification(emailData)),
-      sgMail.send(emailTemplate.inquirerConfirmation(emailData))
-    ]);
-
-    // Log success
-    console.log(`Contact request processed for business ${businessId}`);
-
-    res.status(200).json({
-      success: true,
-      message: 'Contact request sent successfully',
-      contactId: result.rows[0].id
-    });
-
+      console.log('Setting up emails to:', business.owner_email, 'and', email);
+      
+      // Send emails asynchronously but don't wait for them
+      // This way if there's an email error, the conversation will still be created
+      const emailPromises = [];
+      
+      // Owner notification email
+      emailPromises.push(
+        sgMail.send(emailTemplate.ownerNotification(emailData))
+          .then(() => console.log('Owner notification email sent'))
+          .catch(err => console.error('Owner email error:', err))
+      );
+      
+      // Inquirer confirmation email
+      emailPromises.push(
+        sgMail.send(emailTemplate.inquirerConfirmation(emailData))
+          .then(() => console.log('Inquirer confirmation email sent'))
+          .catch(err => console.error('Inquirer email error:', err))
+      );
+      
+      // Create a conversation between the inquirer and owner
+      const initialChatMessage = `Hello, I'm interested in your business "${business.business_name}".
+      
+Timeframe: ${timeframe || 'Not specified'}
+${message ? `\nMessage: ${message}` : ''}`;
+      
+      // Create conversation
+      const conversationResult = await client.query(`
+        INSERT INTO conversations (is_group_chat, business_id)
+        VALUES (FALSE, $1)
+        RETURNING id
+      `, [businessId]);
+      
+      const conversationId = conversationResult.rows[0].id;
+      console.log('Created conversation:', conversationId);
+      
+      // Check if inquirer and owner are the same person (prevent duplicate entries)
+      if (inquirerId === business.owner_id) {
+        // Only insert one record if it's the same person
+        await client.query(`
+          INSERT INTO conversation_participants (conversation_id, user_id, is_admin)
+          VALUES ($1, $2, TRUE)
+        `, [conversationId, business.owner_id]);
+        
+        // Add a system message noting this is a self-inquiry
+        await client.query(`
+          INSERT INTO messages (conversation_id, sender_id, content, is_system_message)
+          VALUES ($1, $2, $3, TRUE)
+        `, [conversationId, inquirerId, "Note: You inquired about your own business listing."]);
+      } else {
+        // Add both participants if they're different users
+        await client.query(`
+          INSERT INTO conversation_participants (conversation_id, user_id, is_admin)
+          VALUES ($1, $2, FALSE), ($1, $3, TRUE)
+        `, [conversationId, inquirerId, business.owner_id]);
+      }
+      
+      // Add initial message
+      await client.query(`
+        INSERT INTO messages (conversation_id, sender_id, content)
+        VALUES ($1, $2, $3)
+      `, [conversationId, inquirerId, initialChatMessage]);
+      
+      // Update inquiry with conversation ID
+      await client.query(`
+        UPDATE business_inquiries SET conversation_id = $1 WHERE id = $2
+      `, [conversationId, inquiryId]);
+      
+      await client.query('COMMIT');
+      
+      // Process the emails (don't wait for completion)
+      Promise.all(emailPromises)
+        .then(() => console.log('All emails sent successfully'))
+        .catch(err => console.error('Error sending some emails:', err));
+      
+      // Return success response with conversation link
+      res.status(200).json({
+        success: true,
+        message: 'Contact request sent successfully and conversation created',
+        inquiryId,
+        conversationId,
+        chatUrl: `/chat?conversation=${conversationId}`
+      });
+      
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
   } catch (error) {
     console.error('Error processing contact request:', error);
     
     res.status(500).json({
       success: false,
       error: 'Failed to process contact request',
-      message: process.env.NODE_ENV === 'development' ? error.message : undefined
+      message: process.env.NODE_ENV === 'production' ? error.message : undefined
     });
   }
 });
@@ -726,7 +909,7 @@ router.get('/history', async (req, res) => {
     console.error('History route error:', error);
     res.status(500).render('error', { 
       message: 'Failed to load history page',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: process.env.NODE_ENV === 'production' ? error.message : undefined
     });
   }
 });
@@ -780,7 +963,7 @@ router.post('/calculate-valuation', validateToken, async (req, res) => {
         console.error('Valuation error:', error);
         res.status(500).json({
             error: 'Failed to calculate valuation',
-            details: process.env.NODE_ENV === 'development' ? error.message : undefined
+            details: process.env.NODE_ENV === 'production' ? error.message : undefined
         });
     }
 });

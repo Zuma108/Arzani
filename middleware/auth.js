@@ -1,230 +1,700 @@
+/**
+ * Unified authentication middleware
+ * This file combines all authentication functionality in one place
+ */
+
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
+import crypto from 'crypto';
 import pool from '../db.js';
+import authService from '../auth/auth.js';
 
 dotenv.config();
-const JWT_SECRET = process.env.JWT_SECRET;
 
-// Unified authentication middleware
-export const authenticateUser = async (req, res, next) => {
+// Constants
+const JWT_SECRET = process.env.JWT_SECRET;
+const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET || crypto.randomBytes(64).toString('hex');
+const TOKEN_EXPIRY = process.env.TOKEN_EXPIRY || '4h';
+const REFRESH_TOKEN_EXPIRY = process.env.REFRESH_TOKEN_EXPIRY || '7d';
+
+// Make sure JWT secrets are set
+if (!JWT_SECRET) {
+  console.error('JWT_SECRET is not set in environment variables');
+  process.exit(1);
+}
+
+// Add this helper function near the top of the file
+function sanitizeRedirectUrl(url) {
+  if (!url) return '/';
+  
+  // Decode URL in case it's URL-encoded
+  url = decodeURIComponent(url);
+  
+  // Check if the URL is trying to redirect to a login page
+  if (url.includes('/login') || 
+      url.includes('/login2') || 
+      url.includes('/signup') || 
+      url.includes('/auth/login')) {
+    console.log('Prevented redirect loop to:', url);
+    return '/';
+  }
+  
+  return url;
+}
+
+/**
+ * Extract authentication token from various sources in the request
+ * This helps standardize token extraction across different routes
+ */
+function extractTokenFromRequest(req) {
+  const tokenSources = [];
+
+  // Check Authorization header
+  const authHeader = req.headers['authorization'];
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1];
+    tokenSources.push({ source: 'header', token });
+  }
+  
+  // Check cookies
+  if (req.cookies && req.cookies.token) {
+    tokenSources.push({ source: 'cookie', token: req.cookies.token });
+  }
+  
+  // Check session
+  if (req.session && req.session.token) {
+    tokenSources.push({ source: 'session', token: req.session.token });
+  }
+  
+  // Check query parameters (should only be used for specific callbacks)
+  if (req.query && req.query.token) {
+    // Only allow token in URL for specific callback routes
+    if (req.path.includes('/callback') || req.path.includes('/oauth')) {
+      tokenSources.push({ source: 'query', token: req.query.token });
+    }
+  }
+  
+  // Debug token sources if in development mode
+  if (process.env.NODE_ENV === 'development' && tokenSources.length > 0) {
+    console.log(`Token sources for ${req.path}:`, 
+      tokenSources.map(s => `${s.source}: ${s.token.substring(0, 10)}...`));
+  }
+  
+  // Return the first valid token found
+  for (const source of tokenSources) {
+    try {
+      // Try to verify the token
+      jwt.verify(source.token, JWT_SECRET);
+      return source.token;
+    } catch (err) {
+      // Skip invalid tokens
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`Invalid token from ${source.source}:`, err.message);
+      }
+    }
+  }
+  
+  return null;
+}
+
+/**
+ * Middleware to check if user is authenticated via JWT
+ * Used to protect routes that require authentication
+ */
+const authenticateToken = (req, res, next) => {
+  // Skip authentication for public paths
+  if (
+    req.path.match(/^\/(login2|signup|logout|login|public|css|js|images|fonts|favicon)/i) ||
+    req.path.match(/\.(css|js|png|jpg|jpeg|gif|svg|ico|woff|woff2)$/i)
+  ) {
+    return next();
+  }
+
+  console.log(`Auth check for ${req.method} ${req.path}`);
+  
+  // Get token from request
+  const token = extractTokenFromRequest(req);
+  
+  // Debug token extraction
+  if (req.path.includes('/api/chat')) {
+    console.log(`Chat API auth check: token ${token ? 'found' : 'not found'}`);
+    if (!token) {
+      console.log('Auth sources checked:', {
+        header: !!req.headers.authorization,
+        cookie: !!req.cookies?.token,
+        session: !!req.session?.token
+      });
+    }
+  }
+  
+  // Store token in request for later use
+  req.token = token;
+
+  // If no token found, proceed to next middleware (but req.user will be undefined)
+  if (!token) {
+    return next();
+  }
+
   try {
-    // 1. First check for session authentication
-    if (req.session?.userId) {
-      req.user = { userId: req.session.userId };
-      return next();
-    }
+    // Verify the token
+    const decoded = jwt.verify(token, JWT_SECRET);
     
-    // 2. Then check for token-based authentication
-    const authHeader = req.headers['authorization'];
-    if (authHeader?.startsWith('Bearer ')) {
-      const token = authHeader.split(' ')[1];
+    // If valid, set user property and proceed
+    req.user = { userId: decoded.userId };
+    
+    // If session is available, update it with the user ID
+    if (req.session) {
+      req.session.userId = decoded.userId;
       
-      try {
-        const decoded = jwt.verify(token, JWT_SECRET);
-        req.user = { userId: decoded.userId };
-        
-        // Set session for future requests
-        req.session.userId = decoded.userId;
-        await new Promise(resolve => req.session.save(resolve));
-        
-        return next();
-      } catch (tokenError) {
-        console.error('Token verification failed:', tokenError.message);
-        // Fall through to handle as unauthenticated
-      }
-    }
-    
-    // 3. Check for token in query params (for redirects from OAuth)
-    if (req.query.token) {
-      try {
-        const decoded = jwt.verify(req.query.token, JWT_SECRET);
-        req.user = { userId: decoded.userId };
-        
-        // Set session for future requests
-        req.session.userId = decoded.userId;
-        await new Promise(resolve => req.session.save(resolve));
-        
-        // Clean URL by redirecting without the token
-        if (!req.path.startsWith('/api/')) {
-          const url = new URL(req.originalUrl, `http://${req.headers.host}`);
-          url.searchParams.delete('token');
-          return res.redirect(url.pathname + url.search);
-        }
-        
-        return next();
-      } catch (tokenError) {
-        console.error('Query token verification failed:', tokenError.message);
-        // Fall through to handle as unauthenticated
-      }
-    }
-    
-    // 4. No valid authentication found
-    
-    // For API requests, return 401
-    if (req.path.startsWith('/api/')) {
-      return res.status(401).json({ 
-        success: false, 
-        message: 'Authentication required' 
+      // Also store the token in session for consistent auth
+      req.session.token = token;
+      
+      // Don't wait for session save to complete - fire and forget
+      req.session.save(err => {
+        if (err) console.error('Error saving session:', err);
       });
     }
     
-    // For web UI requests, remember the URL and redirect to login
-    const returnUrl = encodeURIComponent(req.originalUrl);
-    return res.redirect(`/auth/login?returnUrl=${returnUrl}`);
+    next();
   } catch (error) {
-    console.error('Authentication middleware error:', error);
-    
-    if (req.path.startsWith('/api/')) {
-      return res.status(500).json({ 
-        success: false, 
-        message: 'Authentication error' 
-      });
-    }
-    
-    res.redirect('/auth/login?error=internal');
+    console.error('Token verification failed:', error.message);
+    next();
   }
 };
 
-// UPDATED: Enhanced authenticateToken middleware with better token handling
-export function authenticateToken(req, res, next) {
-  try {
-    // First check session
-    if (req.session?.userId) {
-      req.user = { userId: req.session.userId };
-      return next();
-    }
+/**
+ * Middleware to check if user is authenticated via JWT
+ * Used to protect routes that require authentication
+ */
+const validateToken = async (req, res, next) => {
+    try {
+        const authHeader = req.headers['authorization'];
+        
+        if (!authHeader?.startsWith('Bearer ')) {
+            console.log('Missing or invalid auth header');
+            return res.status(401).json({ error: 'Authentication required' });
+        }
 
-    // Check for token in cookie if header isn't present
-    let token = null;
-    const authHeader = req.headers['authorization'];
-    
-    if (authHeader?.startsWith('Bearer ')) {
-      token = authHeader.split(' ')[1];
-    } else if (req.cookies?.token) {
-      // Use token from cookie
-      token = req.cookies.token;
-    }
+        const token = authHeader.split(' ')[1];
+        
+        try {
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            
+            // Verify user exists in database
+            const userCheck = await pool.query(
+                'SELECT id FROM users WHERE id = $1',
+                [decoded.userId]
+            );
 
-    if (!token) {
-      console.log('No authentication token found');
+            if (userCheck.rows.length === 0) {
+                console.log('User not found in database:', decoded.userId);
+                return res.status(401).json({ error: 'User not found' });
+            }
+
+            // Set both user and session
+            req.user = { userId: decoded.userId };
+            req.session.userId = decoded.userId;
+            await new Promise(resolve => req.session.save(resolve));
+
+            console.log('Auth successful for validateToken middleware:', {
+                userId: decoded.userId,
+                sessionId: req.sessionID
+            });
+
+            next();
+        } catch (error) {
+            console.error('Token validation error:', error);
+            return res.status(401).json({ error: 'Invalid token' });
+        }
+    } catch (error) {
+        console.error('Auth middleware error:', error);
+        return res.status(500).json({ error: 'Authentication failed' });
+    }
+};
+
+/**
+ * Enhanced auth middleware that checks for a valid user and redirects if needed
+ * Use this for routes that should only be accessible to authenticated users
+ */
+const requireAuth = (req, res, next) => {
+  // Skip authentication for public paths
+  if (
+    req.path.match(/^\/(login2|signup|logout|login|public|css|js|images|fonts|favicon)/i) ||
+    req.path.match(/\.(css|js|png|jpg|jpeg|gif|svg|ico|woff|woff2)$/i)
+  ) {
+    return next();
+  }
+
+  // First run the token authentication
+  authenticateToken(req, res, () => {
+    // If user exists after token authentication, proceed
+    if (req.user && req.user.userId) {
+      next();
+    } else {
+      // For API routes, return a 401 status
+      if (req.path.startsWith('/api/')) {
+        return res.status(401).json({ 
+          error: 'Unauthorized', 
+          message: 'Authentication required',
+          redirectTo: '/login2?returnTo=' + encodeURIComponent(req.originalUrl)
+        });
+      }
       
-      // For API requests, return JSON error
+      // Sanitize the return URL to prevent redirect loops
+      const safeReturnUrl = sanitizeRedirectUrl(req.originalUrl);
+      
+      // For regular routes, redirect to login page
+      res.redirect('/login2?returnTo=' + encodeURIComponent(safeReturnUrl));
+    }
+  });
+};
+
+/**
+ * Middleware to populate user from token without requiring authentication
+ * This adds user info when available but doesn't block the request if not authenticated
+ */
+const populateUser = (req, res, next) => {
+  // Run token authentication but always continue to next middleware
+  authenticateToken(req, res, async () => {
+    // If we have user info after token auth, expose it to templates
+    if (req.user && req.user.userId) {
+      try {
+        // Get additional user info from database
+        const userResult = await pool.query(
+          `SELECT u.id, u.username, u.email, u.profile_picture, 
+                  u.created_at, u.updated_at,
+                  COALESCE(u.last_login, now()) as last_login,
+                  COALESCE(u.role, 'user') as role
+           FROM users u 
+           WHERE u.id = $1`,
+          [req.user.userId]
+        );
+        
+        if (userResult.rows.length > 0) {
+          // Enhance user object with database data
+          req.user = {
+            ...req.user,
+            ...userResult.rows[0],
+            isAuthenticated: true
+          };
+          
+          // Make user info available to templates
+          res.locals.user = req.user;
+          res.locals.isAuthenticated = true;
+        } else {
+          // User ID doesn't exist in database - clear user
+          req.user = null;
+          res.locals.isAuthenticated = false;
+        }
+      } catch (error) {
+        console.error('Error populating user data:', error);
+        res.locals.isAuthenticated = false;
+      }
+    } else {
+      res.locals.isAuthenticated = false;
+    }
+    next();
+  });
+};
+
+/**
+ * Enhanced auth middleware that ensures complete user profile
+ * Use this for profile-related routes where complete user data is needed
+ */
+const enhancedAuth = async (req, res, next) => {
+  try {
+    // Get token from Authorization header or cookies
+    const authHeader = req.headers['authorization'];
+    const token = req.cookies?.token || (authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : null);
+    
+    // Check for auth token in various locations
+    console.log('Auth check:', {
+      path: req.path,
+      hasAuthHeader: !!authHeader,
+      hasTokenCookie: !!req.cookies?.token,
+      hasSessionUserId: !!req.session?.userId,
+      token: token ? token.substring(0, 10) + '...' : null
+    });
+    
+    // First, make sure we have a valid authenticated user
+    if (!req.user?.userId && !req.session?.userId && !token) {
+      // For API routes, return 401 status
       if (req.path.startsWith('/api/')) {
         return res.status(401).json({ error: 'Authentication required' });
       }
       
-      // For HTML requests, redirect to login with return URL
-      const returnUrl = encodeURIComponent(req.originalUrl || req.url);
-      return res.redirect(`/login2?returnTo=${returnUrl}`);
-    }
-
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      req.user = { userId: decoded.userId };
-      
-      // Set session for future requests
-      req.session.userId = decoded.userId;
-      req.session.save();
-      
-      next();
-    } catch (error) {
-      console.error('Token verification failed:', error);
-      if (req.headers.accept?.includes('application/json')) {
-        return res.status(401).json({ error: 'Invalid token' });
-      }
+      // For regular routes, redirect to login
       return res.redirect(`/login2?returnTo=${encodeURIComponent(req.originalUrl)}`);
     }
-  } catch (error) {
-    console.error('Auth middleware error:', error);
-    if (req.headers.accept?.includes('application/json')) {
-      return res.status(500).json({ error: 'Authentication failed' });
-    }
-    res.redirect('/login2');
-  }
-}
-
-// Optional middleware that populates user but doesn't require authentication
-export const populateUser = async (req, res, next) => {
-  try {
-    if (req.session?.userId) {
-      req.user = { userId: req.session.userId };
-    } else {
-      const authHeader = req.headers['authorization'];
-      if (authHeader?.startsWith('Bearer ')) {
-        const token = authHeader.split(' ')[1];
-        try {
-          const decoded = jwt.verify(token, JWT_SECRET);
-          req.user = { userId: decoded.userId };
-        } catch (error) {
-          // Ignore token errors for this middleware
+    
+    // If we have a token but no user object, try to verify the token
+    if (token && !req.user?.userId) {
+      try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        req.user = { userId: decoded.userId };
+        
+        // Store in session as well
+        if (req.session) {
+          req.session.userId = decoded.userId;
+          await new Promise(resolve => {
+            req.session.save(err => {
+              if (err) console.error('Session save error:', err);
+              resolve();
+            });
+          });
         }
+      } catch (tokenError) {
+        console.error('Token verification failed:', tokenError);
+        
+        // Clear the invalid token
+        res.clearCookie('token');
+        
+        // For API routes, return 401 status
+        if (req.path.startsWith('/api/')) {
+          return res.status(401).json({ error: 'Invalid token' });
+        }
+        
+        // For regular routes, redirect to login
+        return res.redirect(`/login2?returnTo=${encodeURIComponent(req.originalUrl)}`);
       }
-    }
-    next();
-  } catch (error) {
-    console.error('Populate user error:', error);
-    next();
-  }
-};
-
-// Check if user email is verified
-export const requireVerifiedEmail = async (req, res, next) => {
-  try {
-    // Must have a user to check verification status
-    if (!req.user?.userId) {
-      if (req.headers.accept?.includes('application/json')) {
-        return res.status(401).json({ 
-          success: false, 
-          message: 'Authentication required' 
-        });
-      }
-      return res.redirect(`/auth/login?returnUrl=${encodeURIComponent(req.originalUrl)}`);
     }
     
-    // Check verification status
-    const result = await pool.query(
-      'SELECT is_verified FROM users WHERE id = $1',
-      [req.user.userId]
-    );
+    // If we have a session userId but no user object, create one
+    if (req.session?.userId && !req.user) {
+      req.user = { userId: req.session.userId };
+    }
+    
+    // At this point, we should have req.user.userId from one of the methods above
+    if (!req.user?.userId) {
+      console.error('No user ID found after authentication checks');
+      
+      // For API routes, return 401 status
+      if (req.path.startsWith('/api/')) {
+        return res.status(401).json({ error: 'User ID not found' });
+      }
+      
+      // For regular routes, redirect to login
+      return res.redirect(`/login2?returnTo=${encodeURIComponent(req.originalUrl)}`);
+    }
+    
+    // Get complete user profile data - FIX: use plan_type instead of plan_name
+    const query = `
+      SELECT 
+        u.*,
+        s.plan_type AS subscription_plan,
+        s.active AS subscription_active,
+        s.next_billing_date
+      FROM 
+        users u
+      LEFT JOIN 
+        subscriptions s ON u.id = s.user_id
+      WHERE 
+        u.id = $1
+    `;
+    
+    const result = await pool.query(query, [req.user.userId]);
     
     if (result.rows.length === 0) {
-      // User not found
-      req.session.destroy();
-      if (req.headers.accept?.includes('application/json')) {
-        return res.status(401).json({ 
-          success: false, 
-          message: 'Invalid user account' 
-        });
+      // User not found in database despite having valid token
+      // This can happen if the user was deleted but still has a valid token
+      if (req.path.startsWith('/api/')) {
+        return res.status(401).json({ error: 'User not found' });
       }
-      return res.redirect('/auth/login');
+      
+      // Clear session and redirect to login
+      if (req.session) {
+        req.session.destroy();
+      }
+      
+      // For regular routes, redirect to login
+      return res.redirect(`/login2?returnTo=${encodeURIComponent(req.originalUrl)}`);
     }
     
-    const { is_verified } = result.rows[0];
+    // Enhance user object with complete profile data
+    const user = result.rows[0];
     
-    if (!is_verified) {
-      // User exists but email not verified
-      if (req.headers.accept?.includes('application/json')) {
-        return res.status(403).json({ 
-          success: false, 
-          message: 'Email verification required',
-          verificationRequired: true
-        });
-      }
-      return res.redirect('/auth/verify-email-notice');
-    }
+    // Remove sensitive fields
+    delete user.password;
     
-    // User is verified, proceed
+    // Add enhanced data to request for downstream handlers
+    req.user = {
+      ...req.user,
+      ...user,
+      hasSubscription: user.subscription_active === true,
+      subscriptionPlan: user.subscription_plan || 'free'
+    };
+    
     next();
   } catch (error) {
-    console.error('Verification check error:', error);
-    if (req.headers.accept?.includes('application/json')) {
-      return res.status(500).json({ 
-        success: false, 
-        message: 'Verification check failed' 
-      });
+    console.error('Enhanced auth error:', error);
+    
+    if (req.path.startsWith('/api/')) {
+      return res.status(500).json({ error: 'Server error' });
     }
-    res.redirect('/auth/login');
+    
+    // Safely pass error to the error template
+    res.status(500).render('error', { 
+      message: 'An error occurred while loading your profile',
+      error: process.env.NODE_ENV === 'development' ? error : {}
+    });
   }
 };
 
-export default { authenticateUser, populateUser, requireVerifiedEmail };
+/**
+ * Middleware for business routes authentication
+ * Specialized version of requireAuth for business-related routes
+ */
+const businessAuth = (req, res, next) => {
+  // First apply the regular authentication
+  requireAuth(req, res, async () => {
+    try {
+      // Check if the user has access to this business
+      const businessId = req.params.id || req.body.businessId;
+      
+      if (businessId) {
+        // Check if user owns or has access to this business
+        const query = `
+          SELECT 1 FROM businesses 
+          WHERE id = $1 AND (user_id = $2 OR $2 IN (
+            SELECT user_id FROM business_access WHERE business_id = $1
+          ))
+        `;
+        
+        const result = await pool.query(query, [businessId, req.user.userId]);
+        
+        if (result.rows.length === 0) {
+          // User doesn't have access to this specific business
+          if (req.path.startsWith('/api/')) {
+            return res.status(403).json({
+              error: 'Forbidden',
+              message: 'You do not have access to this business'
+            });
+          }
+          
+          // For regular routes, redirect to businesses page
+          return res.redirect('/businesses?error=access');
+        }
+      }
+      
+      // Proceed if access check passes
+      next();
+    } catch (error) {
+      console.error('Business auth error:', error);
+      
+      if (req.path.startsWith('/api/')) {
+        return res.status(500).json({ error: 'Server error' });
+      }
+      
+      res.status(500).render('error', { message: 'An error occurred while checking business access' });
+    }
+  });
+};
+
+/**
+ * Middleware for admin authentication
+ * Only allows access to users with admin role
+ */
+const adminAuth = (req, res, next) => {
+  // First apply the regular authentication
+  requireAuth(req, res, async () => {
+    try {
+      // Check if user is an admin
+      const query = 'SELECT role FROM users WHERE id = $1';
+      const result = await pool.query(query, [req.user.userId]);
+      
+      if (result.rows.length === 0 || result.rows[0].role !== 'admin') {
+        // Not an admin
+        if (req.path.startsWith('/api/')) {
+          return res.status(403).json({
+            error: 'Forbidden',
+            message: 'Admin access required'
+          });
+        }
+        
+        // For regular routes, redirect to home
+        return res.redirect('/?error=adminRequired');
+      }
+      
+      // User is an admin, proceed
+      req.user.isAdmin = true;
+      next();
+    } catch (error) {
+      console.error('Admin auth error:', error);
+      
+      if (req.path.startsWith('/api/')) {
+        return res.status(500).json({ error: 'Server error' });
+      }
+      
+      res.status(500).render('error', { message: 'An error occurred while checking admin access' });
+    }
+  });
+};
+
+/**
+ * Log authentication attempts for security monitoring
+ * @param {string} userId - User ID or null if failed attempt
+ * @param {string} email - Email used in the attempt
+ * @param {boolean} success - Whether the authentication succeeded
+ * @param {string} method - Authentication method (password, google, etc.)
+ * @param {string} ipAddress - IP address of the client
+ * @param {string} userAgent - User agent of the client
+ */
+const logAuthAttempt = async (userId, email, success, method, ipAddress, userAgent) => {
+  try {
+    const query = `
+      INSERT INTO auth_logs 
+      (user_id, email, success, method, ip_address, user_agent, created_at) 
+      VALUES ($1, $2, $3, $4, $5, $6, NOW())
+    `;
+    
+    await pool.query(query, [
+      userId, 
+      email, 
+      success, 
+      method, 
+      ipAddress, 
+      userAgent
+    ]);
+  } catch (error) {
+    console.error('Error logging auth attempt:', error);
+  }
+};
+
+/**
+ * Authenticate a user with email and password
+ * @param {string} email - User email
+ * @param {string} password - User password
+ * @param {string} ipAddress - IP address of the client
+ * @param {string} userAgent - User agent of the client
+ * @returns {Promise<Object>} Auth result with token and user data
+ */
+const authenticateUser = async (email, password, ipAddress, userAgent) => {
+  try {
+    // Use the auth service for authentication
+    const user = await authService.authenticateUser(email, password);
+    
+    // Generate tokens using the auth service
+    const token = authService.generateToken(user);
+    const refreshToken = authService.generateRefreshToken(user);
+    
+    // Store refresh token
+    await authService.storeRefreshToken(user.id, refreshToken);
+    
+    // Log successful attempt
+    await logAuthAttempt(user.id, email, true, 'password', ipAddress, userAgent);
+    
+    return {
+      success: true,
+      token,
+      refreshToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        role: user.role
+      }
+    };
+  } catch (error) {
+    // Log failed attempt - extract email from error in case user wasn't found
+    await logAuthAttempt(null, email, false, 'password', ipAddress, userAgent);
+    
+    console.error('Authentication error:', error);
+    return {
+      success: false,
+      error: error.message || 'Authentication failed'
+    };
+  }
+};
+
+/**
+ * Authentication middleware for protected routes
+ * Verifies JWT tokens in Authorization header or cookie
+ */
+const auth = (req, res, next) => {
+  try {
+    // Check Authorization header first
+    const authHeader = req.headers.authorization;
+    let token;
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      // Extract token from Authorization header
+      token = authHeader.substring(7);
+    } else if (req.cookies && req.cookies.token) {
+      // Try to get token from cookies
+      token = req.cookies.token;
+    } else if (req.session && req.session.token) {
+      // Try to get token from session
+      token = req.session.token;
+    }
+    
+    if (!token) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Authentication required. No token provided.' 
+      });
+    }
+    
+    // Verify token and extract payload
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    // Add user data to request object
+    req.user = {
+      userId: decoded.userId,
+      email: decoded.email,
+      role: decoded.role || 'user'
+    };
+    
+    // Proceed to the next middleware or route handler
+    next();
+  } catch (error) {
+    console.error('Auth middleware error:', error);
+    
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Token expired. Please login again.' 
+      });
+    }
+    
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Invalid token. Please login again.' 
+      });
+    }
+    
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Authentication error' 
+    });
+  }
+};
+
+// Export all functions for use in other modules
+export {
+  authenticateToken,
+  validateToken,
+  requireAuth,
+  populateUser,
+  enhancedAuth,
+  businessAuth,
+  adminAuth,
+  logAuthAttempt,
+  authenticateUser,
+  extractTokenFromRequest,
+  auth
+};
+
+// Default export for compatibility
+export default {
+  authenticateToken,
+  validateToken,
+  requireAuth,
+  populateUser,
+  enhancedAuth,
+  businessAuth,
+  adminAuth,
+  authenticateUser,
+  auth
+};

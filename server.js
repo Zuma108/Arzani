@@ -79,6 +79,33 @@ import { debugAuth } from './middleware/authDebug.js';
 
 import tokenDebugRoutes from './routes/api/token-debug.js'; // Add this import
 
+// Add this import near the top of the file with other imports
+import { attachRootRoute } from './root-route-fix.js';
+import { WebSocket } from 'ws';
+import apiAuthRoutes from './routes/api/auth.js'; // Add this import
+
+// Import WebSocket service
+import WebSocketService from './services/websocket.js';
+import http from 'http';
+import { Server as SocketIOServer } from 'socket.io';
+
+// Import chat routes
+import chatRoutes from './routes/chat.js';
+
+// Import the chat socket initialization function
+import { initializeChatSocket } from './socket/chatSocket.js';
+
+// Import chat API routes
+import chatApiRoutes from './routes/api/chat.js';
+
+import chatDebugRouter from './routes/chat-debug.js';
+
+import testRoutes from './routes/api/test-routes.js'; // Add this import
+
+import postBusinessUploadRoutes from './routes/api/post-business-upload.js';
+import s3TestRoutes from './routes/api/s3-test.js';
+import submitBusinessRoutes from './routes/api/submit-business.js';
+
 // Add businessAuth middleware
 const businessAuth = async (req, res, next) => {
   try {
@@ -111,6 +138,8 @@ const PORT = process.env.PORT || 8080; // Update default port to 8080 for Azure
 const JWT_SECRET = process.env.JWT_SECRET;
 const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;
 
+
+
 // Initialize Express and create HTTP server
 
 const app = express();
@@ -119,6 +148,27 @@ const wss = new WebSocketServer({ server }); // Attach to HTTP server instead of
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2024-12-18.acacia; custom_checkout_beta=v1'
 });
+
+
+// After creating the server but before starting it, initialize the chat socket service
+const chatSocketService = initializeChatSocket(server);
+// Initialize Socket.IO with the server
+const io = new SocketIOServer(server, {
+  cors: {
+    origin: process.env.NODE_ENV === 'production' 
+      ? 'https://arzani.co.uk' 
+      : ['http://localhost:5000', 'http://localhost:3000'],
+    methods: ['GET', 'POST'],
+    credentials: true
+  }
+});
+
+// Initialize WebSocket service
+const webSocketService = new WebSocketService(io);
+
+// IMPORTANT: Attach the root route handler before any other middleware or routes
+// This ensures it takes precedence over any conflicting handlers
+attachRootRoute(app);
 
 // Verify S3 configuration early
 const s3Client = new S3Client({
@@ -147,10 +197,8 @@ async function testS3Connection() {
     // Explicitly set AWS environment variables to ensure correct values
     // This will override any incorrect values that might be coming from elsewhere
     const forcedCredentials = {
-      AWS_ACCESS_KEY_ID: 'AKIA5WLTS45XNHMUBGWY',
-      AWS_SECRET_ACCESS_KEY: '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',
-      AWS_REGION: 'eu-west-2',
-      AWS_BUCKET_NAME: 'arzani-images1'
+      AWS_REGION: process.env.AWS_REGION || 'eu-west-2',
+      AWS_BUCKET_NAME: process.env.AWS_BUCKET_NAME || 'arzani-images1'
     };
     
     // Forcibly override with correct values
@@ -158,9 +206,9 @@ async function testS3Connection() {
       process.env[key] = value;
     });
     
-    console.log("FORCED AWS credentials to correct values");
+    console.log("Set AWS region and bucket name to correct values");
     
-    // Now try connecting with the forced credentials
+    // Now try connecting with the configured credentials
     const s3Client = new S3Client({
       region: process.env.AWS_REGION,
       credentials: {
@@ -169,12 +217,12 @@ async function testS3Connection() {
       }
     });
     
-    // Log the actual credentials being used (without revealing full secret)
+    // Log the actual credentials being used (without revealing secrets)
     console.log("Using AWS credentials:", {
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID ? `${process.env.AWS_ACCESS_KEY_ID.substring(0, 5)}...` : 'undefined',
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ? '***' : 'undefined',
       region: process.env.AWS_REGION,
-      bucketName: process.env.AWS_BUCKET_NAME
+      bucketName: process.env.AWS_BUCKET_NAME,
+      hasAccessKeyId: !!process.env.AWS_ACCESS_KEY_ID,
+      hasSecretKey: !!process.env.AWS_SECRET_ACCESS_KEY
     });
     
     // Test connection
@@ -187,6 +235,15 @@ async function testS3Connection() {
     process.exit(1); // Exit if S3 connection fails
   }
 }
+
+// Add chat-interface route - make sure it's only accessible at the exact /chat-interface path
+app.get('/chat-interface', (req, res) => {
+  // Redirect old URL pattern to new one
+  if (req.query.conversation) {
+    return res.redirect(`/chat?conversation=${req.query.conversation}`);
+  }
+  return res.redirect('/chat');
+});
 
 // 1. Homepage routes come first (before any static middleware or catch-all routes)
 app.get('/homepage', (req, res) => {
@@ -208,7 +265,12 @@ app.use((req, res, next) => {
   
   // Check for legacy /uploads/ paths
   if (path.startsWith('/uploads/')) {
-    // Check if it's an S3 path
+    // Check if it's an S3 path - updated to check for eu-west-2
+    if (path.includes('s3.eu-west-2.amazonaws.com')) {
+      const s3Url = `https://${path.split('s3.eu-west-2.amazonaws.com/')[1]}`;
+      return res.redirect(s3Url);
+    }
+    // Also handle legacy north-1 paths that might still be in the system
     if (path.includes('s3.eu-north-1.amazonaws.com')) {
       const s3Url = `https://${path.split('s3.eu-north-1.amazonaws.com/')[1]}`;
       return res.redirect(s3Url);
@@ -381,15 +443,17 @@ app.use(cookieParser());
 
 // Routes
 app.use('/api', historyRoutes);
-app.use('/api/chat', chatRouter);
+app.use('/api/auth', apiAuthRoutes); // Add API auth routes
+app.use('/api/chat', chatApiRoutes); // Use chatApiRoutes instead of chatRouter
 app.use('/payment', paymentRoutes);
 app.use('/auth', authRoutes); // Update this line to register auth routes
 app.use('/api/market', marketTrendsRoutes);
 app.use('/api/drive', googleDriveRoutes);
+app.use('/api/test', testRoutes); // Add the new test routes
 app.use('/stripe', stripeRoutes);
-app.use('/api/profile', authenticateToken, profileApi);
+app.use('/api/profile', authenticateToken, profileApi); // Keep this one, remove the duplicate below
+// app.use('/api/profile', profileApi); // REMOVE THIS DUPLICATE LINE
 app.use('/api/business', businessRoutes);
-app.use('/api/profile', profileApi);
 app.use('/api', apiRoutes);
 app.use('/api/business', savedBusinessesRoutes); 
 app.use('/profile', profileRoutes);
@@ -399,8 +463,7 @@ app.use('/checkout-gold', (req, res) => res.redirect('/checkout/gold'));
 app.use('/checkout-platinum', (req, res) => res.redirect('/checkout/platinum'));
 app.use('/api/subscription', subscriptionApiRoutes);
 app.use('/api/market-trends', marketTrendsApiRoutes);
-
-// Add the token debug routes - make sure it's before the catch-all handler
+// app.use('/chat', chatRoutes); // Remove authenticateToken middleware
 app.use('/api/token-debug', tokenDebugRoutes); // ADD THIS LINE
 
 // Add assistant monitoring routes
@@ -414,6 +477,9 @@ app.use('/api/protected', authMiddleware);
 app.use('/dashboard', authMiddleware);
 app.use('/marketplace/edit', authMiddleware);
 app.use('/', populateUser); // Optional: populate user for all routes
+app.use('/api/post-business-upload', postBusinessUploadRoutes);
+app.use('/api/s3-test', s3TestRoutes);
+app.use('/api/submit-business', submitBusinessRoutes);
 
 // Set view engine (ensure the public folder is included)
 app.set('view engine', 'ejs');
@@ -446,6 +512,13 @@ app.use(express.static('public', {
 app.use('/api', (req, res, next) => {
   res.setHeader('Content-Type', 'application/json');
   next();
+});
+
+// Test route for the new homepage design
+app.get('/new-homepage', (req, res) => {
+  res.render('new-homepage', {
+    title: 'Welcome to Arzani Marketplace - New Design'
+  });
 });
 
 // Add a general API verification endpoint directly
@@ -501,7 +574,7 @@ const upload = multer({
   }
 });
 app.use('/', businessRoutes); // <-- Ensure this line is present
-app.use('/', chatRouter);
+// app.use('/', chatRouter);
 app.use('/', voiceRoutes); // Now this will work
 app.use('/', googleAuthRoutes);
 
@@ -526,7 +599,6 @@ app.get('/debug/css', (req, res) => {
     });
 });
 
-export { app, server };
 const router = express.Router();
 
 (async () => {
@@ -541,7 +613,7 @@ const router = express.Router();
   });
 
   app.use('/public', express.static(path.join(__dirname, 'public')));
-  app.use('/test-realtime-api', express.static(path.join(__dirname, 'test-realtime-api')));7
+  app.use('/test-realtime-api', express.static(path.join(__dirname, 'test-realtime-api')));
   app.use(express.static('public', {
     setHeaders: (res, path, stat) => {
         if (path.endsWith('.css')) {
@@ -550,11 +622,11 @@ const router = express.Router();
     }
 }));
   // Serve the marketplace2.ejs file
-  app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'views', 'marketplace2.ejs'));
+  app.get('/homepage', (req, res) => {
+    res.render('homepage', {
+      title: 'Welcome to Our Marketplace'
+    });
   });
-
-
 
 
   const JWT_SECRET = process.env.JWT_SECRET;
@@ -611,6 +683,13 @@ app.get('/terms', (req, res) => {
     console.error('Error rendering terms page:', error);
     res.status(500).send('Error loading terms page');
   }
+});
+
+app.get('/pricing', (req, res) => {
+  res.render('pricing', {
+    title: 'Pricing Plans - Arzani Marketplace',
+    user: req.user || null
+  });
 });
 
   app.get('/auth/verifyemail', async (req, res) => {
@@ -716,7 +795,14 @@ app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) =
 });
 
   app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    // Redirect the root URL to the homepage
+    res.redirect('/homepage');
+  });
+
+  app.get('/homepage', (req, res) => {
+    res.render('homepage', {
+      title: 'Arzani'
+    });
   });
 
   app.get('/auth/marketplace', (req, res) => {
@@ -743,7 +829,168 @@ app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) =
   app.get('/signup', (req, res) => {
     res.sendFile(path.join(__dirname, 'public/signup.html'));
   });
+  
+  // Add comprehensive S3 test route - no authentication required for testing
+  app.get('/s3-test', async (req, res) => {
+    try {
+      // Check if we have required AWS environment variables
+      const hasRequiredEnvVars = 
+        process.env.AWS_ACCESS_KEY_ID && 
+        process.env.AWS_SECRET_ACCESS_KEY && 
+        process.env.AWS_REGION && 
+        process.env.AWS_BUCKET_NAME;
 
+      if (!hasRequiredEnvVars) {
+        return res.render('s3-test', {
+          title: 'S3 Configuration Test',
+          error: 'Missing required AWS environment variables',
+          envStatus: {
+            AWS_ACCESS_KEY_ID: !!process.env.AWS_ACCESS_KEY_ID,
+            AWS_SECRET_ACCESS_KEY: !!process.env.AWS_SECRET_ACCESS_KEY,
+            AWS_REGION: process.env.AWS_REGION || 'missing',
+            AWS_BUCKET_NAME: process.env.AWS_BUCKET_NAME || 'missing'
+          },
+          testResults: null,
+          user: req.user || null
+        });
+      }
+
+      // Test connection to primary region (eu-west-2)
+      let primaryRegionClient = new S3Client({
+        region: 'eu-west-2',
+        credentials: {
+          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+        }
+      });
+
+      // Test connection to backup region (eu-north-1)
+      let fallbackRegionClient = new S3Client({
+        region: 'eu-north-1',
+        credentials: {
+          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+        }
+      });
+
+      // Test connections
+      const testResults = {
+        primaryRegion: { success: false, error: null },
+        fallbackRegion: { success: false, error: null },
+        bucketName: process.env.AWS_BUCKET_NAME || 'arzani-images1'
+      };
+
+      try {
+        await primaryRegionClient.send(new ListBucketsCommand({}));
+        testResults.primaryRegion.success = true;
+      } catch (error) {
+        testResults.primaryRegion.error = error.message;
+      }
+
+      try {
+        await fallbackRegionClient.send(new ListBucketsCommand({}));
+        testResults.fallbackRegion.success = true;
+      } catch (error) {
+        testResults.fallbackRegion.error = error.message;
+      }
+
+      // Render the test page with results
+      res.render('s3-test', {
+        title: 'S3 Configuration Test',
+        error: null,
+        envStatus: {
+          AWS_ACCESS_KEY_ID: '***' + (process.env.AWS_ACCESS_KEY_ID || '').substr(-4),
+          AWS_SECRET_ACCESS_KEY: '***' + (process.env.AWS_SECRET_ACCESS_KEY || '').substr(-4),
+          AWS_REGION: process.env.AWS_REGION || 'eu-west-2',
+          AWS_BUCKET_NAME: process.env.AWS_BUCKET_NAME || 'arzani-images1'
+        },
+        testResults,
+        user: req.user || null
+      });
+    } catch (error) {
+      console.error('S3 test page error:', error);
+      res.render('s3-test', {
+        title: 'S3 Configuration Test',
+        error: error.message,
+        envStatus: {
+          AWS_ACCESS_KEY_ID: !!process.env.AWS_ACCESS_KEY_ID,
+          AWS_SECRET_ACCESS_KEY: !!process.env.AWS_SECRET_ACCESS_KEY,
+          AWS_REGION: process.env.AWS_REGION || 'missing',
+          AWS_BUCKET_NAME: process.env.AWS_BUCKET_NAME || 'missing'
+        },
+        testResults: null,
+        user: req.user || null
+      });
+    }
+  });
+
+  // Add a REST API endpoint for testing S3 upload
+  app.post('/api/s3-test/upload', upload.single('testImage'), async (req, res) => {
+    try {
+      console.log('S3 test upload request received:', {
+        hasFile: !!req.file,
+        fileDetails: req.file ? {
+          fieldname: req.file.fieldname,
+          originalname: req.file.originalname,
+          mimetype: req.file.mimetype,
+          size: req.file.size,
+          buffer: req.file.buffer ? 'Buffer present' : 'No buffer'
+        } : 'No file'
+      });
+
+      // Check if we have a file in the request
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          message: 'No test image uploaded'
+        });
+      }
+
+      const testImage = req.file;
+      const timestamp = Date.now();
+      const fileExt = path.extname(testImage.originalname) || '.jpg';
+      const s3Key = `test-uploads/test-${timestamp}${fileExt}`;
+
+      console.log('Attempting to upload file to S3:', {
+        originalname: testImage.originalname,
+        size: testImage.size,
+        s3Key: s3Key
+      });
+
+      // First validate the bucket and get the correct region
+      const region = process.env.AWS_REGION || 'eu-west-2';
+      const bucket = process.env.AWS_BUCKET_NAME || 'arzani-images1';
+      
+      // Upload to S3 - the uploadToS3 function now handles region redirects
+      try {
+        const s3Url = await uploadToS3(testImage, s3Key, region, bucket);
+        
+        console.log('S3 upload successful:', s3Url);
+        return res.json({
+          success: true,
+          message: 'Successfully uploaded',
+          url: s3Url,
+          region: region
+        });
+      } catch (error) {
+        console.error('S3 upload error:', error);
+        
+        return res.status(500).json({
+          success: false,
+          message: 'Upload failed: ' + error.message,
+          error: error.message
+        });
+      }
+    } catch (error) {
+      console.error('S3 test upload error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Server error during upload test',
+        error: error.message
+      });
+    }
+  });
+  
   createUserTable();
 
   app.set('view engine', 'ejs');
@@ -763,20 +1010,64 @@ app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) =
   });
   app.get('/login2', (req, res) => {
     const email = req.query.email;
-    res.render('login2', { email });
-  });
-  app.get('/marketplace', (req, res) => {
-    res.render('marketplace');
-  });
+    let returnTo = req.query.returnTo;
 
+    // Clean up returnTo to prevent redirect loops
+    if (returnTo) {
+      // Remove any nested login2 redirects
+      returnTo = decodeURIComponent(returnTo);
+      if (returnTo.includes('login2')) {
+        // If we detect a login2 in the returnTo, just redirect to homepage
+        returnTo = '/';
+      }
+    }
+
+    res.render('login2', { 
+      email,
+      returnTo: returnTo || '/'
+    });
+  });
+  
+// Apply the same protection to the regular marketplace route
+app.get('/marketplace', authDebug.enforceNonChatPage, (req, res) => {
+  res.locals.isChatPage = false;
+  res.redirect('/marketplace2');
+});
   
   app.get('/marketplace2', async (req, res) => {
     try {
-      // Just render the template, let the client-side JS load the data
-      res.render('marketplace2', { businesses: [] });
+      // Explicitly mark as NOT a chat page - this is crucial
+      res.locals.isChatPage = false;
+      
+      // Pass user data if authenticated
+      let userData = null;
+      if (req.user && req.user.userId) {
+        // Fetch user data if available
+        try {
+          const user = await getUserById(req.user.userId);
+          if (user) {
+            userData = {
+              userId: user.id,
+              username: user.username,
+              email: user.email,
+              profile_picture: user.profile_picture || '/images/default-profile.png'
+            };
+          }
+        } catch (error) {
+          console.error('Error fetching user data for marketplace:', error);
+        }
+      }
+      
+      // Render the marketplace2 template with isChatPage explicitly set to false
+      res.render('marketplace2', {
+        title: 'Business Marketplace',
+        isChatPage: false, // Explicitly set to false
+        user: userData,
+        isAuthenticated: !!userData
+      });
     } catch (error) {
-      console.error('Error rendering marketplace:', error);
-      res.status(500).send('Internal Server Error');
+      console.error('Error rendering marketplace2:', error);
+      res.status(500).send('Error loading marketplace');
     }
   });
   
@@ -1418,14 +1709,21 @@ app.get('/market-trends', authenticateToken, async (req, res) => {
 // Move the market trends API route here
 app.use('/api/market', authenticateToken, marketTrendsRoutes);
 
-// If you need a catch-all, make it the last route and exclude /market-trends
+
+// Modify the catch-all route to exclude /chat
 app.get('*', (req, res, next) => {
-    if (req.path === '/market-trends' || req.path === '/saved-searches' || req.path === '/history' || req.path.startsWith('/post-business')) {
-        next();
-    } else {
-        res.sendFile(path.join(__dirname, 'public', 'index.html'));
-    }
+  // Don't redirect chat routes to index.html
+  if (req.path.startsWith('/chat') || 
+      req.path === '/market-trends' || 
+      req.path === '/saved-searches' || 
+      req.path === '/history' || 
+      req.path.startsWith('/post-business')) {
+      next();
+  } else {
+      res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  }
 });
+
 
 // Update login/authentication route to include refresh token
 app.post('/auth/login', async (req, res) => {
@@ -1657,7 +1955,7 @@ app.get('/homepage', async (req, res) => {
 // Add root route that renders homepage directly
 app.get('/', (req, res) => {
   res.render('homepage', {
-    title: 'Welcome to Our Marketplace'
+    title: 'Welcome to Arzani Marketplace'
   });
 });
 
@@ -1872,6 +2170,15 @@ app.use((req, res, next) => {
   next();
 });
 
+// Add this near your other routes, before any catch-all routes
+app.get('/s3-test', authenticateToken, (req, res) => {
+  res.render('s3-test', {
+    title: 'S3 Configuration Test',
+    user: req.user
+  });
+});
+
+
 // Update the business listings API to include image data needed for optimization
 app.get('/api/business/listings', async (req, res) => {
   // ...existing code...
@@ -1960,8 +2267,6 @@ if (!fs.existsSync(defaultImagePath)) {
 console.log("All registered routes:");
 printRoutes(app);
 
-
-
 })();
 
 app.use((err, req, res, next) => {
@@ -1981,10 +2286,14 @@ app.use((err, req, res, next) => {
     });
   }
 
-  // For non-API routes, render error page
+  // For non-API routes, render error page with properly formatted error data
   res.status(500).render('error', { 
-    message: 'Something went wrong',
-    error: process.env.NODE_ENV === 'development' ? err : {}
+    message: err.message || 'Something went wrong',
+    error: process.env.NODE_ENV === 'development' ? {
+      stack: err.stack,
+      name: err.name,
+      message: err.message
+    } : {}
   });
 });
 
@@ -2009,65 +2318,64 @@ async function getMarketplaceListings() {
   }
 }
 
-// Update WebSocket connection handler
+// Update WebSocket connection handler to validate messages before parsing JSON
 wss.on('connection', async (ws) => {
     console.log('WebSocket client connected');
 
     ws.on('message', async (message) => {
+        console.log('Received message:', message.toString());
         try {
-            const data = JSON.parse(message);
-            console.log('Received message:', data); // Debug log
-            
-            if (data.type === 'text' || data.type === 'voice') {
-                const messages = data.messages || [{
-                    role: "user",
-                    content: data.text || data.audio
-                }];
+            // Safe parsing of JSON messages
+            let data;
+            try {
+                // First, convert the message to a string if it's not already
+                const messageStr = message.toString();
+                // Then try to parse it as JSON
+                data = JSON.parse(messageStr);
+                console.log('Parsed message data:', data);
+            } catch (parseError) {
+                console.error('Error parsing message as JSON:', parseError);
+                // If parsing fails, treat as plain text message
+                data = { type: 'text', text: message.toString() };
+                console.log('Treating as plain text:', data);
+            }
 
-                const completion = await openai.chat.completions.create({
-                    model: "gpt-4",
-                    messages: [
-                        {
-                            role: "system",
-                            content: "You are Arzani, a professional British AI assistant..."
-                        },
-                        ...messages
-                    ],
-                    temperature: 0.7,
-                    max_tokens: 150
-                });
-
-                // Send response back to client
+            // Process the message based on type
+            if (data.type === 'voice') {
+                const response = await handleVoiceMessage(data, ws);
                 ws.send(JSON.stringify({
-                    type: 'response',
-                    text: completion.choices[0].message.content
+                    type: 'voice_response',
+                    text: response,
+                    query: data.text
                 }));
-
-                // If it was a voice message, also send audio
-                if (data.type === 'voice') {
-                    const audioResponse = await openai.audio.speech.create({
-                        model: "tts-1",
-                        voice: "shimmer",
-                        input: completion.choices[0].message.content
-                    });
-
-                    // Convert audio to base64
-                    const audioBuffer = await audioResponse.arrayBuffer();
-                    const audioBase64 = Buffer.from(audioBuffer).toString('base64');
-
-                    ws.send(JSON.stringify({
-                        type: 'audio',
-                        data: audioBase64
-                    }));
-                }
+            } else {
+                // Handle other message types or unknown types
+                console.log('Processing message of type:', data.type || 'unknown');
+                ws.send(JSON.stringify({
+                    type: 'acknowledgment',
+                    message: 'Message received'
+                }));
             }
         } catch (error) {
-            console.error('WebSocket message error:', error);
-            ws.send(JSON.stringify({ 
-                type: 'error',
-                message: 'Failed to process message'
-            }));
+            console.error('Error processing WebSocket message:', error);
+            // Send error response
+            try {
+                ws.send(JSON.stringify({ 
+                    type: 'error', 
+                    message: 'Error processing your message' 
+                }));
+            } catch (sendError) {
+                console.error('Error sending error response:', sendError);
+            }
         }
+    });
+
+    ws.on('error', (error) => {
+        console.error('WebSocket error:', error);
+    });
+
+    ws.on('close', () => {
+        console.log('WebSocket client disconnected');
     });
 });
 
@@ -2271,6 +2579,122 @@ app.use((req, res, next) => {
   }
 })();
 
+// Ensure proper Socket.IO configuration
+// This section should be BEFORE server.listen() but AFTER all other configuration
+io.on('connection', (socket) => {
+  console.log('New Socket.io client connected:', socket.id);
+  
+  // Handle authentication using token from handshake
+  if (socket.handshake.auth && socket.handshake.auth.token) {
+    try {
+      const token = socket.handshake.auth.token;
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      
+      // Associate user ID with socket
+      socket.userId = decoded.userId;
+      socket.join(`user:${decoded.userId}`);
+      
+      console.log(`Socket ${socket.id} authenticated for user ${decoded.userId}`);
+      
+      // Emit authenticated event
+      socket.emit('authenticated');
+    } catch (error) {
+      console.error('Socket authentication error:', error);
+      socket.emit('auth_error', { message: 'Authentication failed' });
+    }
+  } else {
+    console.log('Socket connected without authentication');
+  }
+  
+  // Handle joining conversation rooms
+  socket.on('join_conversation', (data) => {
+    if (data.conversationId) {
+      socket.join(`conversation:${data.conversationId}`);
+      console.log(`Socket ${socket.id} joined conversation ${data.conversationId}`);
+    }
+  });
+  
+  // Handle message seen status
+  socket.on('mark_seen', (data) => {
+    if (data.conversationId && data.messageId && socket.userId) {
+      // Broadcast to other participants in the conversation
+      socket.to(`conversation:${data.conversationId}`).emit('message_seen', {
+        conversationId: data.conversationId,
+        messageId: data.messageId,
+        userId: socket.userId
+      });
+    }
+  });
+  
+  // Handle typing indicators
+  socket.on('typing', (data) => {
+    if (data.conversationId && socket.userId) {
+      socket.to(`conversation:${data.conversationId}`).emit('typing', {
+        conversationId: data.conversationId,
+        userId: socket.userId,
+        isTyping: data.isTyping
+      });
+    }
+  });
+  
+  // Handle disconnect
+  socket.on('disconnect', () => {
+    console.log('Socket.io client disconnected:', socket.id);
+  });
+});
+
+// Ensure proper Socket.IO configuration
+// Add this before the server.listen call
+io.on('connection', (socket) => {
+  console.log('New client connected', socket.id);
+  
+  // Handle authentication
+  socket.on('authenticate', async (data) => {
+    try {
+      if (!data.token) {
+        socket.emit('auth_error', { message: 'No token provided' });
+        return;
+      }
+      
+      const decoded = jwt.verify(data.token, process.env.JWT_SECRET);
+      const userId = decoded.userId;
+      
+      // Associate socket with user ID
+      socket.userId = userId;
+      socket.join(`user:${userId}`);
+      
+      console.log(`Socket ${socket.id} authenticated for user ${userId}`);
+      socket.emit('authenticated');
+    } catch (error) {
+      console.error('Socket auth error:', error);
+      socket.emit('auth_error', { message: 'Authentication failed' });
+    }
+  });
+  
+  // Handle disconnect
+  socket.on('disconnect', () => {
+    console.log('Client disconnected', socket.id);
+  });
+  
+  // Handle join conversation
+  socket.on('join_conversation', (data) => {
+    if (!socket.userId) {
+      socket.emit('error', { message: 'Not authenticated' });
+      return;
+    }
+    
+    if (data.conversationId) {
+      socket.join(`conversation:${data.conversationId}`);
+      console.log(`User ${socket.userId} joined conversation ${data.conversationId}`);
+    }
+  });
+  
+  // Handle new message event (if using Socket.IO for sending messages)
+  socket.on('new_message', async (data) => {
+    // Implementation depends on your app's requirements
+  });
+});
+
 // Graceful shutdown handlers
 process.on('SIGTERM', () => {
   console.log('SIGTERM received, shutting down gracefully');
@@ -2324,15 +2748,57 @@ app.use('/uploads/', (req, res, next) => {
   const path = req.path;
   
   // Direct S3 URLs should just pass through
-  if (path.includes('s3.eu-north-1.amazonaws.com')) {
+  if (path.includes('s3.eu-west-2.amazonaws.com')) {
     return next();
   }
+  
+  // Handle legacy north-1 URLs
+  if (path.includes('s3.eu-north-1.amazonaws.com')) {
+    // Replace north-1 with west-2 in the URL
+    const updatedPath = path.replace('s3.eu-north-1.amazonaws.com', 's3.eu-west-2.amazonaws.com');
+    return res.redirect(updatedPath);
+  }
 
-  // For relative paths, redirect to S3
+  // For relative paths, redirect to S3 with the new region
   const s3Url = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com${path}`;
   return res.redirect(s3Url);
 });
 
+// Add a utility route to update old S3 URLs stored in the database
+app.get('/api/admin/update-s3-region', adminAuth, async (req, res) => {
+  try {
+    // Update business images
+    const businessResult = await pool.query(`
+      UPDATE businesses 
+      SET images = array_replace(images, 
+                               unnest(images), 
+                               replace(unnest(images), 's3.eu-north-1.amazonaws.com', 's3.eu-west-2.amazonaws.com'))
+      WHERE array_to_string(images, ',') LIKE '%s3.eu-north-1.amazonaws.com%'
+      RETURNING id;
+    `);
+    
+    // Update user profile pictures
+    const userResult = await pool.query(`
+      UPDATE users
+      SET profile_picture = replace(profile_picture, 's3.eu-north-1.amazonaws.com', 's3.eu-west-2.amazonaws.com')
+      WHERE profile_picture LIKE '%s3.eu-north-1.amazonaws.com%'
+      RETURNING id;
+    `);
+    
+    res.json({
+      success: true,
+      message: 'S3 region updated in database',
+      updatedBusinesses: businessResult.rowCount,
+      updatedUsers: userResult.rowCount
+    });
+  } catch (error) {
+    console.error('Error updating S3 region in database:', error);
+    res.status(500).json({ 
+      error: 'Failed to update S3 region references',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
 
 // Add migration to handle existing local files
 app.get('/api/migrate-profile-pictures', adminAuth, async (req, res) => {
@@ -2370,6 +2836,10 @@ app.get('/api/migrate-profile-pictures', adminAuth, async (req, res) => {
 // After all routes are registered, print them
 console.log("All registered routes:");
 printRoutes(app);
+
+// Add this before other routes
+app.use('/debug', chatDebugRouter);
+
  
 
 // Document handling endpoints
@@ -2651,7 +3121,213 @@ app.get('/api/token-debug', (req, res) => {
   });
 });
 
-// ...existing code...
+// Add redirect loop prevention middleware before your auth routes
+app.use((req, res, next) => {
+  // Check if this is a login-related route with a redirect parameter
+  if ((req.path.includes('/login') || req.path.includes('/auth/login')) && 
+      (req.query.returnTo || req.query.returnUrl || req.query.redirect)) {
+    
+    // Get the redirect URL
+    let redirectUrl = req.query.returnTo || req.query.returnUrl || req.query.redirect;
+    
+    // Decode it
+    redirectUrl = decodeURIComponent(redirectUrl);
+    
+    // Check for login redirect loops
+    if (redirectUrl.includes('/login') || 
+        redirectUrl.includes('/signup') || 
+        redirectUrl.includes('/auth/login')) {
+      
+      console.log('Detected login redirect loop:', {
+        path: req.path,
+        redirectUrl: redirectUrl
+      });
+      
+      // Replace the redirect parameter with homepage
+      const newUrl = req.url.replace(
+        /(returnTo|returnUrl|redirect)=([^&]+)/, 
+        '$1=%2F'
+      );
+      
+      return res.redirect(newUrl);
+    }
+  }
+  
+  next();
+});
 
-export default app;
+// Add redirect loop prevention middleware before your auth routes
+app.use((req, res, next) => {
+  // Check if the URL contains multiple nested login2 redirects
+  if (req.url.includes('login2') && req.url.includes('returnTo')) {
+    const redirectCount = (req.url.match(/login2/g) || []).length;
+    if (redirectCount > 1) {
+      // If we detect a redirect loop, send user to the base login page
+      return res.redirect('/login2');
+    }
+  }
+  next();
+});
+
+
+// Chat interface route
+app.get('/chat', authenticateToken, async (req, res) => {
+  try {
+    // Import the chat helper functions
+    const { getConversationsForUser, getConversationById, getTokenFromRequest } = await import('./utils/chat-helpers.js');
+    
+    const userId = req.user?.userId;
+    
+    // Get conversation ID from query parameters
+    const conversationId = req.query.conversation;
+    
+    // Fetch conversations for sidebar
+    let conversations = [];
+    if (userId) {
+      conversations = await getConversationsForUser(userId);
+    }
+    
+    // Fetch current conversation if ID is provided
+    let conversation = null;
+    if (conversationId) {
+      conversation = await getConversationById(conversationId, userId);
+    }
+    
+    // Get token for socket authentication
+    const token = getTokenFromRequest(req);
+    
+    // IMPORTANT: Render chat.ejs instead of chat-interface.ejs
+    res.render('chat', {
+      title: conversation ? `Chat with ${conversation.recipient?.name || 'User'}` : 'Chat',
+      user: req.user,
+      userId,
+      conversations: conversations || [],
+      conversation,
+      activeConversationId: conversationId,
+      formatTime: (timestamp) => {
+        if (!timestamp) return '';
+        const date = new Date(timestamp);
+        const now = new Date();
+        const diff = Math.floor((now - date) / 1000);
+        if (diff < 60) return 'Just now';
+        if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+        return date.toLocaleDateString();
+      },
+      token: token
+    });
+  } catch (error) {
+    console.error('Error in chat route:', error);
+    res.status(500).render('error', { message: 'Failed to load chat interface' });
+  }
+});
+
+// Add a separate route for the enhanced chat interface if needed
+app.get('/chat-interface', authenticateUser, async (req, res) => {
+  try {
+    // ...existing code for chat-interface...
+    
+    // Render chat-interface.ejs specifically for this route
+    res.render('chat-interface', {
+      title: 'Enhanced Chat Interface',
+      // ...pass necessary data...
+      user: req.user,
+      userId: req.user?.userId,
+      token: req.token
+    });
+  } catch (error) {
+    console.error('Error in chat interface route:', error);
+    res.status(500).render('error', { message: 'Failed to load enhanced chat interface' });
+  }
+});
+
+// Import our specialized auth debugging middleware
+import authDebug from './middleware/authDebug.js';
+
+// Add this code near the top of your middleware section, before other route handlers
+app.use(authDebug.routeDebugger);
+
+// Apply the hard-blocking middleware specifically to marketplace2 routes
+app.use('/marketplace2', authDebug.enforceNonChatPage);
+app.use('/marketplace2/*', authDebug.enforceNonChatPage);
+
+// Update the marketplace2 route to use our specialized error prevention
+app.get('/marketplace2', authDebug.enforceNonChatPage, async (req, res) => {
+  try {
+    // Triple assurance this is not a chat page
+    res.locals.isChatPage = false;
+    
+    // Pass user data if authenticated
+    let userData = null;
+    if (req.user && req.user.userId) {
+      // Fetch user data if available
+      try {
+        const user = await getUserById(req.user.userId);
+        if (user) {
+          userData = {
+            userId: user.id,
+            username: user.username,
+            email: user.email,
+            profile_picture: user.profile_picture || '/images/default-profile.png'
+          };
+        }
+      } catch (error) {
+        console.error('Error fetching user data for marketplace:', error);
+      }
+    }
+    
+    // Create a non-writable isChatPage property
+    Object.defineProperty(res.locals, 'isChatPage', {
+      value: false,
+      writable: false,
+      configurable: false
+    });
+    
+    // Render the marketplace2 template with guaranteed non-chat page settings
+    res.render('marketplace2', {
+      title: 'Business Marketplace',
+      isChatPage: false, // Explicitly set to false for redundancy
+      user: userData,
+      isAuthenticated: !!userData,
+      isMarketplacePage: true  // Add an explicit marketplace flag
+    });
+  } catch (error) {
+    console.error('Error rendering marketplace2:', error);
+    res.status(500).send('Error loading marketplace');
+  }
+});
+
+
+// Improve API error handling to show detailed errors for debugging
+app.use((err, req, res, next) => {
+  console.error('API Error:', err);
+  
+  // Check if headers are already sent
+  if (res.headersSent) {
+    return next(err);
+  }
+  
+  // Determine status code
+  const statusCode = err.statusCode || 500;
+  
+  // Send error response
+  res.status(statusCode).json({
+    success: false,
+    error: err.message || 'Server error',
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+    details: process.env.NODE_ENV === 'development' ? err : undefined
+  });
+});
+
+// Add explicit route for chat messages API to ensure proper route matching
+app.get('/api/chat/messages', (req, res, next) => {
+  console.log('Chat messages API route hit directly');
+  // Forward to the router
+  next();
+});
+
+// Make sure the server and chat socket service are properly exported
+export { app, server, chatSocketService };
+
+
 

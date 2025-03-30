@@ -16,7 +16,7 @@ if (useSendGrid) {
 
 // Configure email provider based on environment
 const getTransporter = () => {
-  if (process.env.NODE_ENV === 'development' && !useSendGrid) {
+  if (process.env.NODE_ENV === 'development') {
     // Development: Use ethereal fake SMTP service
     return nodemailer.createTransport({
       host: 'smtp.ethereal.email',
@@ -28,11 +28,11 @@ const getTransporter = () => {
       }
     });
   } else if (!useSendGrid) {
-    // Fall back to SendinBlue if no SendGrid
+    // Production: Use SendinBlue/Brevo
     return nodemailer.createTransport({
       service: process.env.EMAIL_SERVICE || 'SendinBlue',
       auth: {
-        user: process.env.EMAIL_USER,
+        user: 'hello@arzani.co.uk',
         api_key: process.env.SENDINBLUE_API_KEY
       }
     });
@@ -46,18 +46,18 @@ export async function sendVerificationEmail(email, verificationToken) {
     throw new Error('Email and verification token are required');
   }
 
-  const SERVER_URL = process.env.SERVER_URL || 'http://localhost:5000';
+  const SERVER_URL = process.env.NODE_ENV === 'production' ? 'https://www.arzani.co.uk' : 'http://localhost:5000';
   console.log('Sending verification email to:', email);
 
   // Email content
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <div style="background-color: #c0816f; color: white; padding: 20px; text-align: center;">
-        <h2>Marketplace Email Verification</h2>
+        <h2>Arzani Marketplace Email Verification</h2>
       </div>
       <div style="padding: 20px; border: 1px solid #ddd; border-top: none;">
         <p>Hello,</p>
-        <p>Thank you for signing up for Marketplace! Please verify your email address by clicking the button below:</p>
+        <p>Thank you for signing up for Arzani Marketplace! Please verify your email address by clicking the button below:</p>
         <div style="text-align: center; margin: 30px 0;">
           <a href="${SERVER_URL}/auth/verify-email?token=${verificationToken}" style="background-color: #c0816f; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">
             Verify Email Address
@@ -67,7 +67,7 @@ export async function sendVerificationEmail(email, verificationToken) {
         <p><a href="${SERVER_URL}/auth/verify-email?token=${verificationToken}">${SERVER_URL}/auth/verify-email?token=${verificationToken}</a></p>
         <p>This verification link is valid for 24 hours.</p>
         <p>If you did not create an account, please ignore this email.</p>
-        <p>Best regards,<br>The Marketplace Team</p>
+        <p>Best regards,<br>The Arzani Marketplace Team</p>
       </div>
     </div>
   `;
@@ -78,10 +78,10 @@ export async function sendVerificationEmail(email, verificationToken) {
       const msg = {
         to: email,
         from: {
-          email: process.env.EMAIL_FROM || 'michaeladekoya321@gmail.com',
-          name: 'Marketplace Support'
+          email: 'hello@arzani.co.uk',
+          name: 'Arzani Marketplace'
         },
-        subject: 'Verify your Marketplace account',
+        subject: 'Verify your Arzani Marketplace account',
         html: htmlContent
       };
 
@@ -92,9 +92,9 @@ export async function sendVerificationEmail(email, verificationToken) {
       // Use Nodemailer
       const transporter = getTransporter();
       const info = await transporter.sendMail({
-        from: process.env.EMAIL_FROM || '"Marketplace" <no-reply@marketplace.com>',
+        from: '"Arzani Marketplace" <hello@arzani.co.uk>',
         to: email,
-        subject: 'Verify your Marketplace account',
+        subject: 'Verify your Arzani Marketplace account',
         html: htmlContent
       });
       
@@ -121,7 +121,7 @@ export async function sendPasswordResetEmail(email, resetToken) {
     throw new Error('Email and reset token are required');
   }
   
-  const SERVER_URL = process.env.SERVER_URL || 'http://localhost:5000';
+  const SERVER_URL = process.env.NODE_ENV === 'production' ? 'https://www.arzani.co.uk' : 'http://localhost:5000';
   const resetLink = `${SERVER_URL}/auth/reset-password?token=${resetToken}`;
   
   // Email content
@@ -142,7 +142,7 @@ export async function sendPasswordResetEmail(email, resetToken) {
         <p><a href="${resetLink}">${resetLink}</a></p>
         <p>This password reset link is valid for 1 hour.</p>
         <p>If you did not request a password reset, please ignore this email or contact support if you have concerns.</p>
-        <p>Best regards,<br>The Marketplace Team</p>
+        <p>Best regards,<br>The Arzani Marketplace Team</p>
       </div>
     </div>
   `;
@@ -153,10 +153,10 @@ export async function sendPasswordResetEmail(email, resetToken) {
       const msg = {
         to: email,
         from: {
-          email: process.env.EMAIL_FROM || 'michaeladekoya321@gmail.com',
-          name: 'Marketplace Support'
+          email: 'hello@arzani.co.uk',
+          name: 'Arzani Marketplace'
         },
-        subject: 'Reset your Marketplace password',
+        subject: 'Reset your Arzani Marketplace password',
         html: htmlContent
       };
 
@@ -167,9 +167,9 @@ export async function sendPasswordResetEmail(email, resetToken) {
       // Use Nodemailer
       const transporter = getTransporter();
       const info = await transporter.sendMail({
-        from: process.env.EMAIL_FROM || '"Marketplace" <no-reply@marketplace.com>',
+        from: '"Arzani Marketplace" <hello@arzani.co.uk>',
         to: email,
-        subject: 'Reset your Marketplace password',
+        subject: 'Reset your Arzani Marketplace password',
         html: htmlContent
       });
       

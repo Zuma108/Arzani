@@ -215,11 +215,15 @@ async function getUserById(id) {
 
 async function verifyUser(userId) {
   try {
-    const result = await pool.query(
-      'UPDATE users SET verified = TRUE WHERE id = $1 RETURNING *',
-      [userId]
-    );
+    // Add query to get user verification status
+    const query = `
+      SELECT u.id, u.username, u.email, ua.verified
+      FROM users u
+      JOIN users_auth ua ON u.id = ua.user_id
+      WHERE u.id = $1
+    `;
     
+    const result = await pool.query(query, [userId]);
     return result.rows[0] || null;
   } catch (error) {
     console.error('Error in verifyUser:', error);
@@ -228,7 +232,58 @@ async function verifyUser(userId) {
 }
 
 async function authenticateUser(email, password) {
+  let client = null;
+  
   try {
+    // Add special handling for when the function receives a request object instead of email string
+    if (typeof email !== 'string') {
+      // Check if this is a request object (has headers, session, etc.)
+      if (email && email.session && email.session.userId) {
+        console.log(`Received request object instead of email. Using session userId: ${email.session.userId}`);
+        
+        // Use the userId from the session to get the user
+        const userId = email.session.userId;
+        client = await pool.connect();
+        
+        const userQuery = `
+          SELECT 
+            u.id,
+            u.username,
+            u.email,
+            ua.verified
+          FROM users u
+          JOIN users_auth ua ON u.id = ua.user_id
+          WHERE u.id = $1
+        `;
+        
+        const result = await client.query(userQuery, [userId]);
+        
+        if (result.rows.length === 0) {
+          console.log(`No user found with ID: ${userId}`);
+          return null;
+        }
+        
+        // Return the user without password verification since we're using session
+        return {
+          id: result.rows[0].id,
+          username: result.rows[0].username,
+          email: result.rows[0].email,
+          verified: result.rows[0].verified
+        };
+      }
+      
+      // If we can't extract a userId, log the error and return null
+      console.error('Invalid parameter type passed to authenticateUser. Expected string email, got:', 
+                    email ? typeof email : 'null/undefined');
+      return null;
+    }
+    
+    // Original authentication logic for email/password
+    console.log(`Authentication attempt for email: ${email}`);
+    
+    // Get a client from the pool
+    client = await pool.connect();
+    
     // Join users and users_auth tables to get all necessary info
     const query = `
       SELECT 
@@ -242,25 +297,71 @@ async function authenticateUser(email, password) {
       WHERE u.email = $1
     `;
     
-    const result = await pool.query(query, [email]);
-    if (result.rows.length === 0) return null;
+    // Execute the query with careful error handling
+    let result;
+    try {
+      result = await client.query(query, [email]);
+    } catch (queryError) {
+      console.error('Database query error during authentication:', queryError.message);
+      throw new Error(`Query error: ${queryError.message}`);
+    }
     
-    const user = result.rows[0];
-    const validPassword = await bcrypt.compare(password, user.password_hash);
+    // Check if we found a user
+    if (result.rows.length === 0) {
+      console.log(`No user found with email: ${email}`);
+      return null;
+    }
+    
+    // Extract data from result manually to avoid circular references
+    const userData = {
+      id: result.rows[0].id,
+      username: result.rows[0].username,
+      email: result.rows[0].email,
+      password_hash: result.rows[0].password_hash,
+      verified: result.rows[0].verified
+    };
+    
+    console.log(`Found user: ${userData.username} (ID: ${userData.id})`);
+    
+    // Validate password with careful error handling
+    let validPassword = false;
+    try {
+      if (userData.password_hash) {
+        validPassword = await bcrypt.compare(password, userData.password_hash);
+      } else {
+        console.error(`User ${userData.id} has no password hash`);
+        return null;
+      }
+    } catch (bcryptError) {
+      console.error('Password validation error:', bcryptError.message);
+      throw new Error(`Password validation error: ${bcryptError.message}`);
+    }
     
     if (validPassword) {
-      // Return user with the correct ID from users table
-      return {
-        id: user.id, // This is the ID from users table
-        username: user.username,
-        email: user.email,
-        verified: user.verified
-      };
+      console.log(`Authentication successful for user: ${userData.id}`);
+      // Return only the necessary user data (excluding password_hash)
+      delete userData.password_hash;
+      return userData;
     }
+    
+    console.log(`Invalid password for user: ${userData.id}`);
     return null;
   } catch (error) {
-    console.error('Authentication error:', error);
-    throw error;
+    // Enhanced error logging with details but without circular references
+    console.error('Authentication error:', {
+      message: error.message,
+      stack: error.stack?.split('\n')[0],
+      emailType: typeof email
+    });
+    
+    // Create descriptive error without including the original error object
+    throw new Error(`Authentication failed: ${error.message || 'Unknown database error'}`);
+  } finally {
+    // IMPORTANT: Always release the client back to the pool
+    if (client) {
+      console.log('Releasing database client');
+      client.release(true); // true means to discard the client if it encountered an error
+    }
   }
 }
 

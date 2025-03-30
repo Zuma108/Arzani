@@ -1,37 +1,40 @@
-document.addEventListener('DOMContentLoaded', function() {
-    const accordionItems = document.querySelectorAll('.Horizontalborder');
+document.addEventListener('DOMContentLoaded', () => {
+    const faqItems = document.querySelectorAll('.faq-item');
     
-    if (accordionItems.length === 0) {
-        console.error('No accordion items found with class .Horizontalborder');
-    } else {
-        console.log('Found ' + accordionItems.length + ' accordion items');
-    }
-    
-    accordionItems.forEach(item => {
-        const header = item.querySelector('.faq-header');
-        const content = item.querySelector('.faq-content');
-        const svg = header.querySelector('.Svg');
+    faqItems.forEach(item => {
+        const question = item.querySelector('.faq-question');
+        const answer = item.querySelector('.faq-answer');
+        const icon = item.querySelector('.faq-icon');
         
-        // Initial state - hide content
-        content.style.maxHeight = '0px';
-        content.style.opacity = '0';
-        content.style.overflow = 'hidden';
-        
-        header.addEventListener('click', () => {
-            // Toggle active class
-            item.classList.toggle('active');
-            
-            // If item is active, expand content and rotate icon
-            if (item.classList.contains('active')) {
-                content.style.maxHeight = content.scrollHeight + 'px';
-                content.style.opacity = '1';
-                if (svg) svg.style.transform = 'rotate(180deg)';
-            } else {
-                // Otherwise collapse content and reset icon
-                content.style.maxHeight = '0px';
-                content.style.opacity = '0';
-                if (svg) svg.style.transform = 'rotate(0deg)';
-            }
-        });
+        if (question && answer && icon) {
+            question.addEventListener('click', () => {
+                // Toggle this FAQ item
+                const isExpanded = !answer.classList.contains('hidden');
+                // Close all FAQs first
+                faqItems.forEach(otherItem => {
+                    const otherAnswer = otherItem.querySelector('.faq-answer');
+                    const otherIcon = otherItem.querySelector('.faq-icon');
+                    if (otherAnswer && otherIcon) {
+                        otherAnswer.classList.add('hidden');
+                        otherIcon.style.transform = 'rotate(0deg)';
+                    }
+                });
+                
+                // Then toggle the clicked one
+                answer.classList.toggle('hidden');
+                icon.style.transform = isExpanded ? 'rotate(0deg)' : 'rotate(180deg)';
+            });
+        }
     });
+    
+    // Automatically open the first FAQ item
+    if (faqItems.length > 0) {
+        const firstAnswer = faqItems[0].querySelector('.faq-answer');
+        const firstIcon = faqItems[0].querySelector('.faq-icon');
+        
+        if (firstAnswer && firstIcon) {
+            firstAnswer.classList.remove('hidden');
+            firstIcon.style.transform = 'rotate(180deg)';
+        }
+    }
 });

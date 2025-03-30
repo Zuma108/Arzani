@@ -266,6 +266,12 @@
   
     <!-- Load the login handler script -->
     <script src="/js/login-handler.js" defer></script>
+    <!-- Add this near the end of your <head> section, before the closing </head> tag -->
+<script src="/js/google-auth-fix.js"></script>
+<!-- Add this after your existing Google-related script but before the closing </head> tag -->
+<meta name="google-signin-client_id" content="<%= process.env.GOOGLE_CLIENT_ID %>">
+<script src="/js/google-auth-fix.js"></script>
+<script src="/js/auth-token-handler.js"></script>
 </head>
 
 <body>
@@ -298,6 +304,16 @@
     <div class="social-section">
         <!-- Google provided button -->
         <div id="google-signin-btn"></div>
+        <!-- Add this right after your Google Sign-In button -->
+<script>
+  // Provide fallback for Google Sign-In
+  document.querySelector('[data-provider="google"]')?.addEventListener('click', function(e) {
+    if (this.classList.contains('disabled')) {
+      e.preventDefault();
+      alert('Google Sign-In is not available for this domain. Please use email login instead or contact the administrator.');
+    }
+  });
+</script>
 
         <!-- Microsoft Sign-In Button -->
         <button class="social-btn" onclick="handleMicrosoftSignIn()">
@@ -352,6 +368,55 @@ document.addEventListener('DOMContentLoaded', () => {
         return regex.test(email);
     }
 });
+</script>
+<!-- Add this before the closing </body> tag -->
+<script>
+  // Enhanced Google Sign-In handling
+  document.addEventListener('DOMContentLoaded', function() {
+    // Store the return URL in localStorage so it persists through OAuth redirects
+    const urlParams = new URLSearchParams(window.location.search);
+    const returnTo = urlParams.get('returnTo') || '/marketplace2';
+    localStorage.setItem('authReturnTo', returnTo);
+    
+    // Add click event handler for Google button
+    document.getElementById('google-signin-btn')?.addEventListener('click', function() {
+      console.log('Google sign-in button clicked');
+    });
+    
+    // Override Google's callback
+    window.handleCredentialResponse = function(response) {
+      console.log('Google callback received');
+      
+      if (!response.credential) {
+        console.error('No credential received');
+        return;
+      }
+      
+      fetch('/auth/google', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          credential: response.credential
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success && data.token) {
+          // Store token and redirect
+          localStorage.setItem('token', data.token);
+          window.location.href = localStorage.getItem('authReturnTo') || '/marketplace2';
+        } else {
+          throw new Error(data.message || 'Authentication failed');
+        }
+      })
+      .catch(error => {
+        console.error('Authentication error:', error);
+        alert('Login failed: ' + error.message);
+      });
+    };
+  });
 </script>
 </body>
 </html>

@@ -146,52 +146,173 @@ router.post('/webhook', express.raw({type: 'application/json'}), async (req, res
   }
 });
 
-// Success page handler
+// Success route - redirect from Stripe checkout
 router.get('/success', authenticateToken, async (req, res) => {
-  const { session_id } = req.query;
-
   try {
+    const { session_id } = req.query;
+    const userId = req.user.userId;
+    
+    if (!session_id) {
+      return res.redirect('/payment/success-generic');
+    }
+    
+    // Get session details from Stripe
     const session = await stripe.checkout.sessions.retrieve(session_id);
     
-    if (session.payment_status === 'paid') {
-      const subscription = await stripe.subscriptions.retrieve(session.subscription);
-      
-      // Update database
-      await pool.query(`
-        INSERT INTO subscriptions (
-          user_id, 
-          stripe_subscription_id, 
-          plan_type, 
-          status,
-          current_period_start,
-          current_period_end
-        ) VALUES ($1, $2, $3, $4, to_timestamp($5), to_timestamp($6))
-        ON CONFLICT (user_id) DO UPDATE SET
-          stripe_subscription_id = EXCLUDED.stripe_subscription_id,
-          plan_type = EXCLUDED.plan_type,
-          status = EXCLUDED.status,
-          current_period_start = EXCLUDED.current_period_start,
-          current_period_end = EXCLUDED.current_period_end,
-          updated_at = NOW()
-      `, [
-        req.user.id,
-        subscription.id,
-        session.metadata.plan,
-        subscription.status,
-        subscription.current_period_start,
-        subscription.current_period_end
-      ]);
-
-      res.render('payment-success', {
-        plan: session.metadata.plan,
-        nextBilling: new Date(subscription.current_period_end * 1000).toLocaleDateString()
+    // Verify the session belongs to this user
+    if (session.metadata?.userId && session.metadata.userId !== userId.toString()) {
+      console.log('Session user ID mismatch:', {
+        sessionUserId: session.metadata.userId,
+        requestUserId: userId
       });
-    } else {
-      throw new Error('Payment not completed');
+      return res.status(403).redirect('/payment/error');
     }
+    
+    // Get user subscription data
+    const userQuery = await pool.query(
+      `SELECT 
+        subscription_type, 
+        subscription_end 
+      FROM users 
+      WHERE id = $1`,
+      [userId]
+    );
+    
+    if (userQuery.rows.length === 0) {
+      return res.status(404).redirect('/payment/error');
+    }
+    
+    const { subscription_type, subscription_end } = userQuery.rows[0];
+    
+    // Format plan name
+    let planName = 'Free Plan';
+    if (subscription_type === 'gold') {
+      planName = 'Gold Plan';
+    } else if (subscription_type === 'platinum') {
+      planName = 'Platinum Plan';
+    }
+    
+    // Format next billing date
+    const nextBillingDate = subscription_end 
+      ? new Date(subscription_end).toLocaleDateString('en-GB', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric'
+        })
+      : 'N/A';
+    
+    // Render success page with subscription details
+    res.render('payment/success', {
+      planName,
+      nextBillingDate,
+      sessionId: session_id
+    });
   } catch (error) {
-    console.error('Success page error:', error);
-    res.redirect('/payment/error');
+    console.error('Payment success error:', error);
+    res.redirect('/payment/success-generic');
+  }
+});
+
+// Generic success route (when session_id is missing)
+router.get('/success-generic', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    
+    // Get user subscription data
+    const userQuery = await pool.query(
+      `SELECT 
+        subscription_type, 
+        subscription_end 
+      FROM users 
+      WHERE id = $1`,
+      [userId]
+    );
+    
+    if (userQuery.rows.length === 0) {
+      return res.status(404).redirect('/payment/error');
+    }
+    
+    const { subscription_type, subscription_end } = userQuery.rows[0];
+    
+    // Format plan name
+    let planName = 'Free Plan';
+    if (subscription_type === 'gold') {
+      planName = 'Gold Plan';
+    } else if (subscription_type === 'platinum') {
+      planName = 'Platinum Plan';
+    }
+    
+    // Format next billing date
+    const nextBillingDate = subscription_end 
+      ? new Date(subscription_end).toLocaleDateString('en-GB', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric'
+        })
+      : 'N/A';
+    
+    // Render success page with subscription details
+    res.render('payment/success', {
+      planName,
+      nextBillingDate,
+      sessionId: null
+    });
+  } catch (error) {
+    console.error('Generic success error:', error);
+    res.status(500).render('error', { message: 'Failed to load subscription details' });
+  }
+});
+
+// Cancel route - redirect from Stripe checkout
+router.get('/cancel', (req, res) => {
+  res.render('payment/cancel');
+});
+
+// Error route
+router.get('/error', (req, res) => {
+  res.status(500).render('error', {
+    message: 'There was a problem processing your payment',
+    error: { status: 500, stack: '' } // Empty stack to avoid exposing sensitive info
+  });
+});
+
+// Manage subscription route
+router.get('/manage', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    
+    // Get user subscription data
+    const userQuery = await pool.query(
+      `SELECT 
+        stripe_customer_id,
+        subscription_id,
+        subscription_type
+      FROM users 
+      WHERE id = $1`,
+      [userId]
+    );
+    
+    if (userQuery.rows.length === 0) {
+      return res.status(404).redirect('/payment/error');
+    }
+    
+    const { stripe_customer_id, subscription_id } = userQuery.rows[0];
+    
+    if (!stripe_customer_id) {
+      return res.redirect('/profile');
+    }
+    
+    // Create a portal session
+    const session = await stripe.billingPortal.sessions.create({
+      customer: stripe_customer_id,
+      return_url: `${req.protocol}://${req.get('host')}/profile`,
+    });
+    
+    // Redirect to the portal
+    res.redirect(session.url);
+  } catch (error) {
+    console.error('Manage subscription error:', error);
+    res.status(500).render('error', { message: 'Failed to access subscription management' });
   }
 });
 

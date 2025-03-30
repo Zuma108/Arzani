@@ -5,7 +5,7 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "start": "node server.js",
+    "start": "node azure-startup.js",
     "postinstall": "node -e \"console.log('Dependencies installed successfully!')\""
   },
   "engines": {

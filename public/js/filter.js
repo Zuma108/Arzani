@@ -118,3 +118,160 @@ async function applyFilters() {
         console.error('Error applying filters:', error);
     }
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Initializing filters...');
+    
+    // Initialize dropdown toggles
+    const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
+    
+    // Handle dropdown toggle clicks
+    dropdownToggles.forEach(toggle => {
+        toggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const dropdown = this.closest('.dropdown');
+            const menu = dropdown.querySelector('.dropdown-menu');
+            
+            // Close other dropdowns
+            document.querySelectorAll('.dropdown-menu.show').forEach(openMenu => {
+                // Don't close this dropdown if it's the one we're toggling
+                if(openMenu !== menu) {
+                    openMenu.classList.remove('show');
+                }
+            });
+            
+            // Toggle this dropdown
+            menu.classList.toggle('show');
+            console.log('Toggled dropdown menu:', menu.classList.contains('show'));
+        });
+    });
+    
+    // Handle selection in dropdowns
+    document.querySelectorAll('.dropdown-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const dropdown = this.closest('.dropdown');
+            const toggle = dropdown.querySelector('.dropdown-toggle');
+            const menu = dropdown.querySelector('.dropdown-menu');
+            
+            // Handle checkbox selection for multi-select dropdowns
+            if (this.querySelector('input[type="checkbox"]')) {
+                const checkbox = this.querySelector('input[type="checkbox"]');
+                checkbox.checked = !checkbox.checked;
+                e.preventDefault(); // Prevent default to handle checkbox manually
+                
+                // Update the dropdown toggle text to show selection count
+                const checkedItems = menu.querySelectorAll('input[type="checkbox"]:checked');
+                if (checkedItems.length > 0) {
+                    toggle.textContent = `Industries (${checkedItems.length})`;
+                } else {
+                    toggle.textContent = 'Industries';
+                }
+            } 
+            // Handle radio selection for single-select dropdowns
+            else if (this.querySelector('input[type="radio"]')) {
+                const radio = this.querySelector('input[type="radio"]');
+                radio.checked = true;
+                
+                // Update toggle text with selected value
+                if (toggle.id === 'priceRangeDropdown') {
+                    toggle.textContent = 'Price: ' + this.textContent.trim();
+                } else if (toggle.id === 'revenueDropdown') {
+                    toggle.textContent = 'Revenue: ' + this.textContent.trim();
+                } else if (toggle.id === 'cashflowDropdown') {
+                    toggle.textContent = 'Cashflow: ' + this.textContent.trim();
+                }
+                
+                // Close menu after selection for radio buttons
+                menu.classList.remove('show');
+            }
+            // Handle location selection
+            else if (this.classList.contains('location-item')) {
+                document.getElementById('locationInput').value = this.textContent.trim();
+                menu.classList.remove('show');
+            }
+            
+            // Apply filters when selection changes
+            applyFilters();
+        });
+    });
+    
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.dropdown')) {
+            document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+                menu.classList.remove('show');
+            });
+        }
+    });
+    
+    // Initialize location input
+    const locationInput = document.getElementById('locationInput');
+    if (locationInput) {
+        locationInput.addEventListener('input', function() {
+            // Apply filters on input change with debounce
+            clearTimeout(this.debounceTimer);
+            this.debounceTimer = setTimeout(() => {
+                applyFilters();
+            }, 500);
+        });
+    }
+    
+    // Apply filters button
+    const filterButton = document.querySelector('.filter-button');
+    if (filterButton) {
+        filterButton.addEventListener('click', function() {
+            applyFilters();
+        });
+    }
+    
+    // Apply filters function
+    function applyFilters() {
+        // Collect all filter values
+        const location = document.getElementById('locationInput')?.value || '';
+        
+        // Get selected industries
+        const industriesChecked = Array.from(document.querySelectorAll('.industry-checkbox:checked')).map(cb => cb.value);
+        
+        // Get price range
+        const priceRange = document.querySelector('input[name="priceRange"]:checked')?.value || '';
+        
+        // Get revenue range
+        const revenueRange = document.querySelector('input[name="revenueRange"]:checked')?.value || '';
+        
+        // Get cashflow range
+        const cashflowRange = document.querySelector('input[name="cashflowRange"]:checked')?.value || '';
+        
+        // Build filters object
+        const filters = {
+            location: location,
+            industries: industriesChecked.join(','),
+            priceRange: priceRange,
+            revenueRange: revenueRange,
+            cashflowRange: cashflowRange
+        };
+        
+        console.log('Applying filters:', filters);
+        
+        // Call loadPage from marketplace.js with the filters
+        if (typeof window.loadPage === 'function') {
+            window.loadPage(1, filters);
+        } else {
+            console.error('loadPage function not found. Make sure marketplace.js is loaded properly.');
+            // Fallback to manually building query and reloading
+            const query = new URLSearchParams();
+            Object.entries(filters).forEach(([key, value]) => {
+                if (value) query.append(key, value);
+            });
+            
+            // Reload the page with the filters as query params
+            if (query.toString()) {
+                window.location.href = '/marketplace2?' + query.toString();
+            }
+        }
+    }
+});

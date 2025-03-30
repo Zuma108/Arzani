@@ -37,3 +37,31 @@ export default function printRoutes(app) {
   
   return routes;
 }
+
+// Add this function to your existing file
+export function registerDebugMiddleware(app) {
+  app.use('/api/chat/*', (req, res, next) => {
+    console.log('*** DEBUG: Chat API request received ***');
+    console.log('  - Path:', req.path);
+    console.log('  - Method:', req.method);
+    console.log('  - Params:', req.params);
+    console.log('  - Query:', req.query);
+    console.log('  - Route matched:', !!req.route);
+    
+    // Print the available routes
+    console.log('Available routes that could match:');
+    app._router.stack.forEach(r => {
+      if (r.route && r.route.path) {
+        console.log(`  - ${r.route.path}`);
+      } else if (r.name === 'router' && r.handle.stack) {
+        r.handle.stack.forEach(layer => {
+          if (layer.route && layer.route.path) {
+            console.log(`  - ${r.regexp} → ${layer.route.path}`);
+          }
+        });
+      }
+    });
+    
+    next();
+  });
+}

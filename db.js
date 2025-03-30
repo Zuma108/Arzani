@@ -14,14 +14,32 @@ const { Pool } = pg;
 
 const isProduction = process.env.NODE_ENV === 'production';
 
-const connectionString = isProduction
-  ? process.env.DATABASE_URL
-  : `postgresql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`;
+// Create connection configuration
+const connectionConfig = {
+  user: process.env.DB_USER,
+  host: process.env.DB_HOST,
+  database: process.env.DB_NAME,
+  password: process.env.DB_PASSWORD,
+  port: process.env.DB_PORT || 5432
+};
 
-const pool = new Pool({
-  connectionString,
-  ssl: isProduction ? { rejectUnauthorized: false } : false
-});
+// Check explicit SSL setting before using production check
+if (process.env.DB_SSL && process.env.DB_SSL.toLowerCase() === 'true') {
+  console.log('Enabling SSL for database connection (from DB_SSL env var)');
+  connectionConfig.ssl = { rejectUnauthorized: false };
+} else if (process.env.DB_SSL && process.env.DB_SSL.toLowerCase() === 'false') {
+  console.log('Explicitly disabling SSL for database connection (from DB_SSL env var)');
+  // SSL explicitly disabled, don't add the ssl property
+} else if (isProduction) {
+  // Default behavior for production if DB_SSL not specified
+  console.log('Enabling SSL for database connection (production environment)');
+  connectionConfig.ssl = { rejectUnauthorized: false };
+} else {
+  console.log('SSL disabled for database connection (development environment)');
+}
+
+// Create the pool with the appropriate config
+const pool = new Pool(connectionConfig);
 
 pool.on('connect', () => {
   console.log('Database connected');
@@ -29,7 +47,24 @@ pool.on('connect', () => {
 
 pool.on('error', (err) => {
   console.error('Database connection error:', err);
-  process.exit(1);
+  if (!isProduction) {
+    console.log('Database connection details:', {
+      host: process.env.DB_HOST,
+      database: process.env.DB_NAME,
+      port: process.env.DB_PORT,
+      user: process.env.DB_USER,
+      ssl: connectionConfig.ssl ? 'enabled' : 'disabled'
+    });
+  }
+});
+
+// Test database connection
+pool.query('SELECT NOW()', (err, res) => {
+  if (err) {
+    console.error('Error connecting to the database:', err);
+  } else {
+    console.log('Database connected successfully at:', res.rows[0].now);
+  }
 });
 
 export default pool;

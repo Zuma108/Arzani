@@ -3,6 +3,68 @@
  */
 
 document.addEventListener('DOMContentLoaded', function() {
+  // Fix Bootstrap modal issues if bootstrap.Modal is not available
+  if (typeof bootstrap === 'undefined' || typeof bootstrap.Modal === 'undefined') {
+    console.warn('Bootstrap modal object not found. Adding polyfill.');
+    
+    // Simple polyfill for show/hide
+    window.bootstrap = window.bootstrap || {};
+    bootstrap.Modal = class {
+      constructor(element) {
+        this.element = element;
+      }
+      
+      show() {
+        if (this.element) {
+          this.element.style.display = 'block';
+          this.element.classList.add('show');
+          document.body.classList.add('modal-open');
+          
+          // Create backdrop if it doesn't exist
+          if (!document.querySelector('.modal-backdrop')) {
+            const backdrop = document.createElement('div');
+            backdrop.className = 'modal-backdrop fade show';
+            document.body.appendChild(backdrop);
+          }
+        }
+      }
+      
+      hide() {
+        if (this.element) {
+          this.element.style.display = 'none';
+          this.element.classList.remove('show');
+          document.body.classList.remove('modal-open');
+          
+          // Remove backdrop
+          const backdrop = document.querySelector('.modal-backdrop');
+          if (backdrop) {
+            backdrop.remove();
+          }
+        }
+      }
+      
+      static getInstance(element) {
+        return new bootstrap.Modal(element);
+      }
+    };
+  }
+  
+  // Fix modal backdrop issues
+  document.querySelectorAll('.modal').forEach(modal => {
+    modal.addEventListener('shown.bs.modal', function() {
+      if (!document.querySelector('.modal-backdrop')) {
+        const backdrop = document.createElement('div');
+        backdrop.className = 'modal-backdrop fade show';
+        document.body.appendChild(backdrop);
+      }
+    });
+    
+    modal.addEventListener('hidden.bs.modal', function() {
+      const backdrop = document.querySelector('.modal-backdrop');
+      if (backdrop) backdrop.remove();
+    });
+  });
+
   // Find all Bootstrap modals
   const bootstrapModals = document.querySelectorAll('.modal');
   const aiAssistantContainer = document.getElementById('ai-assistant-container');

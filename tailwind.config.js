@@ -1,12 +1,9 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
-    "./pages/**/*.{js,ts,jsx,tsx}",
-    "./components/**/*.{js,ts,jsx,tsx}",
-    "./views/**/*.ejs",
-    "./public/**/*.js",
-    "./public/**/*.css",
-    "./routes/**/*.js"
+    "./views/**/*.{ejs,html,js}",
+    "./public/**/*.{js,css}",
+    "./src/**/*.{js,jsx,ts,tsx}"
   ],
   theme: {
     extend: {
@@ -21,11 +18,20 @@ module.exports = {
         "appsintraai-semantic-button": ["Inter-Medium", "sans-serif"],
         "font-family-font-1": ["Inter-Medium", "sans-serif"],
         "font-family-font-2": ["SegoeUi-Regular", "sans-serif"],
-        sans: ['Inter', 'sans-serif'],
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        heading: ['Poppins', 'system-ui', 'sans-serif'],
       },
       colors: {
-        primary: '#3B82F6',
-        secondary: '#10B981',
+        primary: {
+          DEFAULT: '#3B82F6', // Blue
+          light: '#93C5FD',
+          dark: '#1D4ED8',
+        },
+        secondary: {
+          DEFAULT: '#10B981', // Green
+          light: '#6EE7B7',
+          dark: '#047857',
+        },
         accent: '#8B5CF6',
         dark: '#1F2937',
         "appsintraai-black-80": "rgba(0, 0, 0, 0.80)",
@@ -93,6 +99,9 @@ module.exports = {
       }
     }
   },
-  plugins: []
+  plugins: [],
+  corePlugins: {
+    preflight: true,
+  },
 };
 

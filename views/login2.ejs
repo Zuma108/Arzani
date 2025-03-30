@@ -6,6 +6,13 @@
   <title>Login</title>
   <!-- Add meta tag for Google client ID -->
   <meta name="google-client-id" content="<%= process.env.GOOGLE_CLIENT_ID %>">
+  <!-- Add meta tags for environment detection -->
+  <meta name="site-environment" content="<%= process.env.NODE_ENV === 'production' ? 'production' : 'development' %>">
+  <meta name="production-domain" content="www.arzani.co.uk">
+  <!-- Add CSRF token if implemented -->
+  <% if (typeof csrfToken !== 'undefined') { %>
+  <meta name="csrf-token" content="<%= csrfToken %>">
+  <% } %>
   
   <style>
     /* Your existing styles */
@@ -208,7 +215,11 @@
               <a href="/auth/forgot-password" style="color: #c0816f; text-decoration: none; font-size: 14px;">Forgot Password?</a>
             </div>
     
-            <button type="submit" class="login-button">Login</button>
+            <button type="submit" class="login-button" id="login-button">Login</button>
+            
+            <div style="margin-top: 20px; text-align: center;">
+              <p>Don't have an account? <a href="/signup" id="signup-link">Sign up here</a></p>
+            </div>
           </form>
         </div>
     </section>

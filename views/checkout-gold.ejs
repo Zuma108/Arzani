@@ -2,26 +2,39 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gold Plan Checkout</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://js.stripe.com/v3/"></script>
     <style>
         :root {
             --gold-primary: #FFD700;
-            --gold-secondary: #FDB931;
+            --gold-secondary: #D4AF37;
             --gold-gradient: linear-gradient(135deg, var(--gold-primary), var(--gold-secondary));
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #f8f9fa;
         }
 
         .checkout-container {
             background: #fff;
             border-radius: 1rem;
-            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
             margin-top: 3rem;
             overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .checkout-container:hover {
+            transform: translateY(-5px);
         }
 
         .header-banner {
             background: var(--gold-gradient);
-            padding: 2rem;
+            padding: 2.5rem 2rem;
             text-align: center;
             color: #2a2a2a;
         }
@@ -33,11 +46,12 @@
             font-weight: 600;
             margin-bottom: 1rem;
             display: inline-block;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
 
         .feature-item {
-            padding: 1rem;
-            border-bottom: 1px solid rgba(0,0,0,0.1);
+            padding: 1.25rem;
+            border-bottom: 1px solid rgba(0,0,0,0.06);
             display: flex;
             align-items: center;
             gap: 1rem;
@@ -55,34 +69,11 @@
             border-radius: 0 0 1rem 1rem;
         }
 
-        #payment-element {
-            margin: 2rem 0;
-        }
-
-        .submit-button {
-            background: var(--gold-gradient);
-            border: none;
-            color: #2a2a2a;
-            font-weight: 600;
-            padding: 1rem 2rem;
-            border-radius: 0.5rem;
-            width: 100%;
-            transition: transform 0.2s;
-        }
-
-        .submit-button:hover {
-            transform: translateY(-2px);
-        }
-
-        .submit-button:disabled {
-            opacity: 0.7;
-            transform: none;
-        }
-
         .price-tag {
             font-size: 2.5rem;
             font-weight: 700;
             color: #2a2a2a;
+            margin-bottom: 0.5rem;
         }
 
         .price-period {
@@ -90,19 +81,59 @@
             color: #666;
         }
 
+        .cta-button {
+            background: #041b76;
+            color: white;
+            border: none;
+            font-weight: 600;
+            padding: 1rem 2rem;
+            border-radius: 0.5rem;
+            width: 100%;
+            transition: all 0.3s ease;
+            font-size: 1.1rem;
+            margin-top: 1.5rem;
+        }
+
+        .cta-button:hover {
+            background: #052287;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(4, 27, 118, 0.2);
+        }
+
+        .loader {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid white;
+            border-bottom-color: transparent;
+            border-radius: 50%;
+            animation: rotation 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         .guarantee-badge {
             background: rgba(255, 255, 255, 0.9);
             border-radius: 0.5rem;
             padding: 1rem;
-            margin-top: 1rem;
+            margin-top: 1.5rem;
             font-size: 0.9rem;
             text-align: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .feature-description {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 0.2rem;
         }
     </style>
-    <!-- Move Stripe.js to head and remove async -->
-    <script src="https://js.stripe.com/v3/"></script>
 </head>
-<body class="bg-light">
+<body>
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-12 col-md-8 col-lg-6">
@@ -113,6 +144,7 @@
                         <div class="price-tag">
                             £39 <span class="price-period">/month</span>
                         </div>
+                        <div class="text-white-50">Billed monthly, cancel anytime</div>
                     </div>
 
                     <div class="p-4">
@@ -123,21 +155,35 @@
                                 </svg>
                                 <div>
                                     <h5 class="mb-0">Full Database Access</h5>
-                                    <small class="text-muted">Search through our complete database</small>
+                                    <div class="feature-description">Search through our complete UK business database</div>
                                 </div>
                             </div>
-                            <!-- Add more features -->
+                            <div class="feature-item">
+                                <svg class="feature-icon" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"/>
+                                </svg>
+                                <div>
+                                    <h5 class="mb-0">Advanced Filtering</h5>
+                                    <div class="feature-description">Find businesses by industry, location, and financials</div>
+                                </div>
+                            </div>
+                            <div class="feature-item">
+                                <svg class="feature-icon" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"/>
+                                </svg>
+                                <div>
+                                    <h5 class="mb-0">Priority Support</h5>
+                                    <div class="feature-description">Get help when you need it with our dedicated support team</div>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="payment-section">
-                            <h4 class="mb-4">Payment Details</h4>
-                            <form id="payment-form">
-                                <div id="payment-element"></div>
-                                <button id="submit-button" class="submit-button">
-                                    Subscribe Now
-                                </button>
-                                <div id="error-message" class="text-danger mt-3"></div>
-                            </form>
+                            <button id="checkout-button" class="cta-button">
+                                <span id="loader" class="loader"></span>
+                                <span id="button-text">Subscribe Now</span>
+                            </button>
+                            <div id="error-message" class="text-danger mt-3"></div>
                             <div class="guarantee-badge">
                                 <svg class="feature-icon mb-2" fill="currentColor" viewBox="0 0 20 20">
                                     <path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
@@ -152,100 +198,55 @@
     </div>
 
     <script>
-        // Wait for Stripe.js to be fully loaded
-        let stripeInstance = null;
-        let paymentElement = null;
-
-        // Initialize on DOM load
         document.addEventListener('DOMContentLoaded', function() {
-            // Check if Stripe.js is loaded
-            if (typeof Stripe === 'undefined') {
-                console.error('Stripe.js not loaded');
-                document.getElementById('error-message').textContent = 
-                    'Payment system failed to load. Please refresh the page.';
-                return;
-            }
-
-            // Initialize Stripe
-            stripeInstance = Stripe('<%= stripePublishableKey %>');
-            initializePayment();
-        });
-
-        // Separate initialization function
-        async function initializePayment() {
-            try {
-                const response = await fetch("/payment/create-checkout-session", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${localStorage.getItem('token')}`
-                    },
-                    body: JSON.stringify({ 
-                        plan: '<%= locals.plan || "gold" %>'
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to create payment session');
-                }
-
-                const { clientSecret } = await response.json();
+            const stripe = Stripe('<%= stripePublishableKey %>');
+            const checkoutButton = document.getElementById('checkout-button');
+            const errorMessage = document.getElementById('error-message');
+            const loader = document.getElementById('loader');
+            const buttonText = document.getElementById('button-text');
+            
+            checkoutButton.addEventListener('click', async function() {
+                // Show loading state
+                checkoutButton.disabled = true;
+                loader.style.display = 'inline-block';
+                buttonText.textContent = 'Processing...';
+                errorMessage.textContent = '';
                 
-                if (!clientSecret) {
-                    throw new Error('No client secret received');
-                }
-
-                const elements = stripeInstance.elements({
-                    clientSecret,
-                    appearance: {
-                        theme: 'stripe',
-                        variables: {
-                            colorPrimary: '#FFD700',
-                        }
-                    }
-                });
-
-                paymentElement = elements.create('payment');
-                paymentElement.mount('#payment-element');
-
-                // Set up form handling
-                setupFormHandler(elements);
-
-            } catch (error) {
-                console.error('Payment initialization error:', error);
-                document.getElementById('error-message').textContent = 
-                    'Failed to initialize payment system. Please try again.';
-            }
-        }
-
-        function setupFormHandler(elements) {
-            const form = document.getElementById('payment-form');
-            const submitButton = document.getElementById('submit-button');
-            const errorElement = document.getElementById('error-message');
-
-            form.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                submitButton.disabled = true;
-
                 try {
-                    const { error } = await stripeInstance.confirmPayment({
-                        elements,
-                        confirmParams: {
-                            return_url: `${window.location.origin}/payment/success`
-                        }
+                    const response = await fetch('/stripe/create-subscription', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        },
+                        body: JSON.stringify({ planType: 'gold' })
                     });
-
-                    if (error) {
-                        errorElement.textContent = error.message;
-                        submitButton.disabled = false;
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || errorData.error || 'Something went wrong');
                     }
-                } catch (e) {
-                    console.error('Payment error:', e);
-                    errorElement.textContent = 'An unexpected error occurred';
-                    submitButton.disabled = false;
+                    
+                    const { sessionId, url } = await response.json();
+                    
+                    // Redirect to Stripe Checkout
+                    if (url) {
+                        window.location.href = url;
+                    } else if (sessionId) {
+                        stripe.redirectToCheckout({ sessionId });
+                    } else {
+                        throw new Error('Invalid response from server');
+                    }
+                    
+                } catch (error) {
+                    console.error('Error:', error);
+                    errorMessage.textContent = error.message || 'Failed to start checkout process';
+                    checkoutButton.disabled = false;
+                    loader.style.display = 'none';
+                    buttonText.textContent = 'Subscribe Now';
                 }
             });
-        }
+        });
     </script>
 </body>
 </html>

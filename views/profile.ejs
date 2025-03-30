@@ -310,6 +310,13 @@
             top: 20px;
             right: 20px;
         }
+        
+        /* Left side navigation buttons */
+        .nav-buttons-left {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+        }
 
         /* Update the back to marketplace button styles */
         .back-to-marketplace {
@@ -357,10 +364,19 @@
         <div class="grid">
             <!-- Profile Header -->
             <div class="profile-header">
+                <!-- Add the left side navigation buttons -->
+                <div class="nav-buttons-left">
+                    <a href="/chat" class="back-to-marketplace">Chat</a>
+                </div>
+                
                 <div class="nav-buttons">
                     <a href="/marketplace2" class="back-to-marketplace">Back to Marketplace</a>
                     <a href="/market-trends" class="back-to-marketplace">Market Trends</a>
+                    
+                   
+                    <!-- Removed the Chat button from here -->
                 </div>
+                
                 <div class="profile-picture-container">
                     <img 
                         class="profile-picture" 
@@ -425,13 +441,29 @@
                 <p>You are currently on the</p>
                 <h2>Free Plan</h2>
                 <p>Upgrade to access premium features</p>
-                <button class="button upgrade-button">Upgrade your plan</button>
+                <button class="button upgrade-button" id="upgradeBtn">Upgrade your plan</button>
                 <button class="sign-out-button" id="signOutBtn">Sign Out</button>
             </div>
         </div>
     </div>
 
     <script src="/js/profile.js"></script>
+    
+    <script>
+        // Add event listener for the upgrade button
+        document.getElementById('upgradeBtn').addEventListener('click', function() {
+            // Redirect to the off-market leads page
+            window.location.href = '/off-market-leads';
+        });
+        
+        // Add event listener for the sign out button if not already in profile.js
+        document.getElementById('signOutBtn').addEventListener('click', function() {
+            // Clear token from localStorage
+            localStorage.removeItem('token');
+            // Redirect to login page
+            window.location.href = '/login2';
+        });
+    </script>
    
     <%- include('partials/footer') %>
 </body>

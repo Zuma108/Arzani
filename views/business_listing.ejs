@@ -357,5 +357,67 @@
         });
     });
   </script>
+
+<!-- Add this JavaScript before closing body tag -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Handle contact seller button click
+    document.querySelector('.contact-seller-btn').addEventListener('click', function(e) {
+      e.preventDefault();
+      
+      // Check if user is logged in
+      const token = localStorage.getItem('token');
+      if (!token) {
+        window.location.href = `/login2?returnTo=${encodeURIComponent(window.location.pathname)}`;
+        return;
+      }
+      
+      // Set form input values
+      document.getElementById('contactBusinessId').value = this.getAttribute('data-business-id');
+      document.getElementById('contactOtherUserId').value = this.getAttribute('data-user-id');
+      
+      // Show contact form modal
+      const contactModal = new bootstrap.Modal(document.getElementById('contactFormModal'));
+      contactModal.show();
+    });
+    
+    // Handle form submission
+    document.getElementById('submitContactForm').addEventListener('click', function() {
+      const form = document.getElementById('preContactForm');
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
+      
+      // Get form data
+      const businessId = document.getElementById('contactBusinessId').value;
+      const otherUserId = document.getElementById('contactOtherUserId').value;
+      const interest = document.getElementById('buyerInterest').value;
+      const timeline = document.getElementById('buyerTimeline').value;
+      const message = document.getElementById('initialMessage').value;
+      const questions = document.getElementById('buyerQuestions').value;
+      
+      // Construct initial message for chat
+      let initialMessage = `**Interest Level:** ${interest}\n**Timeline:** ${timeline}\n\n`;
+      
+      if (message) {
+        initialMessage += `**Message:**\n${message}\n\n`;
+      }
+      
+      if (questions) {
+        initialMessage += `**Questions:**\n${questions}`;
+      }
+      
+      // Encode the message for URL
+      const encodedMessage = encodeURIComponent(initialMessage);
+      
+      // Redirect to chat with initial message
+      window.location.href = `/chat/start-conversation?otherUserId=${otherUserId}&businessId=${businessId}&initialMessage=${encodedMessage}`;
+      
+      // Hide the modal
+      bootstrap.Modal.getInstance(document.getElementById('contactFormModal')).hide();
+    });
+  });
+</script>
 </body>
 </html>

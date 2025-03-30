@@ -17,6 +17,27 @@ document.addEventListener('DOMContentLoaded', async function() {
         cookieToken: getCookie('token')
     });
     
+    // Get S3 configuration if available
+    const s3ConfigEl = document.getElementById('s3-config');
+    if (s3ConfigEl) {
+        try {
+            const config = JSON.parse(s3ConfigEl.textContent);
+            window.AWS_REGION = config.region || 'eu-west-2'; // Default to London region
+            window.AWS_BUCKET_NAME = config.bucketName || 'arzani-images1';
+            console.log('Using S3 config:', { region: window.AWS_REGION, bucket: window.AWS_BUCKET_NAME });
+        } catch (e) {
+            console.error('Failed to parse S3 config:', e);
+            // Set defaults if parsing fails
+            window.AWS_REGION = 'eu-west-2'; // London region
+            window.AWS_BUCKET_NAME = 'arzani-images1';
+        }
+    } else {
+        // Set defaults if config element is missing
+        window.AWS_REGION = 'eu-west-2'; // London region
+        window.AWS_BUCKET_NAME = 'arzani-images1';
+        console.log('No S3 config found, using defaults:', { region: window.AWS_REGION, bucket: window.AWS_BUCKET_NAME });
+    }
+    
     // Get token from various sources
     let token = getAuthToken();
     if (!token) {
@@ -214,10 +235,10 @@ function getCookie(name) {
 function initializeForm(token) {
     console.log('Initializing form with valid token');
     
-    // Update Dropzone configuration with valid token
+    // Update Dropzone configuration with enhanced error handling
     imageDropzone = new Dropzone("#imageDropzone", {
-        url: "/api/submit-business", // Updated endpoint path
-        autoProcessQueue: false, // Prevent auto upload
+        url: "/api/submit-business", 
+        autoProcessQueue: false, 
         uploadMultiple: true,
         parallelUploads: 5,
         maxFiles: 5,
@@ -230,7 +251,9 @@ function initializeForm(token) {
         dictMaxFilesExceeded: "You can only upload up to 5 images",
         dictMinFilesExceeded: "You must upload at least 3 images",
         headers: {
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${token}`,
+            'X-AWS-Region': window.AWS_REGION || 'eu-west-2',
+            'X-AWS-Bucket': window.AWS_BUCKET_NAME || 'arzani-images1'
         },
         init: function() {
             const dz = this;
@@ -239,14 +262,43 @@ function initializeForm(token) {
                 // Always use the current token
                 const currentToken = getAuthToken();
                 xhr.setRequestHeader('Authorization', `Bearer ${currentToken}`);
+                
+                // Add S3 configuration headers
+                xhr.setRequestHeader('X-AWS-Region', window.AWS_REGION || 'eu-west-2');
+                xhr.setRequestHeader('X-AWS-Bucket', window.AWS_BUCKET_NAME || 'arzani-images1');
+                
+                // Add the region and bucket to formData as well
+                formData.append('awsRegion', window.AWS_REGION || 'eu-west-2');
+                formData.append('awsBucket', window.AWS_BUCKET_NAME || 'arzani-images1');
+                
+                // Log what we're sending
+                console.log(`Sending file: ${file.name}, size: ${file.size} bytes`);
+                console.log(`Using region: ${window.AWS_REGION || 'eu-west-2'}, bucket: ${window.AWS_BUCKET_NAME || 'arzani-images1'}`);
             });
 
-            // Show preview of files but don't upload
+            // Enhanced file validation
             this.on("addedfile", file => {
-                // Add file size validation
+                console.log(`File added: ${file.name}, size: ${file.size} bytes, type: ${file.type}`);
+                
+                // Validate file type more strictly
+                if (!file.type.match(/^image\/(jpeg|jpg|png)$/i)) {
+                    dz.removeFile(file);
+                    alert('Only JPG and PNG images are allowed.');
+                    return;
+                }
+                
+                // Validate file size
                 if (file.size > 5 * 1024 * 1024) { // 5MB
                     dz.removeFile(file);
                     alert('File too large. Maximum size is 5MB.');
+                    return;
+                }
+                
+                // Check for empty files
+                if (file.size === 0) {
+                    dz.removeFile(file);
+                    alert('Empty file detected. Please select a valid image.');
+                    return;
                 }
                 
                 // Update message based on current file count
@@ -262,19 +314,51 @@ function initializeForm(token) {
                 alert('Maximum 5 files allowed');
             });
 
+            // Enhanced success handling
             this.on("success", function(file, response) {
-                // Store the S3 URL returned from the server
-                file.s3url = response.url;
-                console.log('File uploaded to S3:', response.url);
+                console.log('File uploaded successfully:', file.name);
+                if (response && response.images && response.images.length > 0) {
+                    // Find the matching image URL for this file
+                    const imageUrl = response.images.find(url => url.includes(file.name.replace(/[^a-zA-Z0-9.-]/g, '_')));
+                    file.s3url = imageUrl || response.images[0];
+                    console.log('Assigned S3 URL:', file.s3url);
+                } else {
+                    console.warn('No image URLs returned in response:', response);
+                }
             });
             
-            this.on("error", function(file, response) {
-                if (typeof response === 'string' && response.includes('Unauthorized')) {
+            // Enhanced error handling
+            this.on("error", function(file, errorMessage, xhr) {
+                console.error("File upload error:", {
+                    file: file.name,
+                    error: errorMessage,
+                    status: xhr?.status,
+                    responseText: xhr?.responseText
+                });
+                
+                // Parse error if it's a string that might be JSON
+                if (typeof errorMessage === 'string' && errorMessage.startsWith('{')) {
+                    try {
+                        const parsedError = JSON.parse(errorMessage);
+                        errorMessage = parsedError.error || parsedError.message || errorMessage;
+                    } catch (e) {
+                        // Not JSON, use as is
+                    }
+                }
+                
+                // Check for authentication issues
+                if (typeof errorMessage === 'string' && errorMessage.includes('Unauthorized')) {
                     alert('Your session has expired. Please log in again.');
-                    window.location.href = '/login2';
+                    window.location.href = `/login2?returnTo=${encodeURIComponent(window.location.pathname)}`;
                     return;
                 }
-                console.error("File upload error:", response);
+                
+                // Show error on the file
+                file.previewElement.classList.add('dz-error');
+                const errorDisplay = file.previewElement.querySelector('.dz-error-message span');
+                if (errorDisplay) {
+                    errorDisplay.textContent = errorMessage;
+                }
             });
         }
     });
@@ -354,139 +438,217 @@ let isSubmitting = false;
 async function handleFormSubmission() {
     // Prevent multiple submissions
     if (isSubmitting) {
-        console.log('Form submission already in progress');
         return;
     }
 
     isSubmitting = true;
     const submitButton = document.querySelector('button[type="submit"]');
+    const originalButtonText = submitButton.innerHTML;
     submitButton.innerHTML = 'Uploading...';
     submitButton.disabled = true;
 
     try {
+        // Refresh token first
         const token = await verifyAndRefreshToken();
         if (!token) {
-            isSubmitting = false;
-            submitButton.innerHTML = 'Submit';
-            submitButton.disabled = false;
-            return;
+            throw new Error('Authentication required. Please log in again.');
         }
 
-        // Debug form fields
-        console.log('Form validation passed, preparing submission');
+        console.log('Using authentication token for submission:', token.substring(0, 10) + '...');
 
-        const formData = new FormData();
+        // Check if we have enough images
+        if (imageDropzone && imageDropzone.files.length < 3) {
+            throw new Error('Please upload at least 3 images of your business');
+        }
+
+        // Get the form data
+        const form = document.getElementById('postBusinessForm');
+        const formData = new FormData(form);
         
-        // Validate images first
-        if (!imageDropzone || !imageDropzone.files || imageDropzone.files.length < 3) {
-            alert('Please upload at least 3 images');
-            isSubmitting = false;
-            submitButton.innerHTML = 'Submit';
-            submitButton.disabled = false;
-            return;
-        }
-
-        if (imageDropzone.files.length > 5) {
-            alert('Maximum 5 images allowed');
-            isSubmitting = false;
-            submitButton.innerHTML = 'Submit';
-            submitButton.disabled = false;
-            return;
-        }
-
-        // Add all form fields with proper validation and sanitization
-        const fields = {
-            'business_name': document.getElementById('title').value,
-            'industry': document.getElementById('industry').value,
-            'price': sanitizeNumericInput(document.getElementById('price').value),
-            'description': document.getElementById('description').value,
-            'cash_flow': sanitizeNumericInput(document.getElementById('cashFlow').value),
-            'gross_revenue': sanitizeNumericInput(document.getElementById('grossRevenue').value),
-            'ebitda': sanitizeNumericInput(document.getElementById('ebitda').value),
-            'inventory': sanitizeNumericInput(document.getElementById('inventory').value),
-            'sales_multiple': sanitizeNumericInput(document.getElementById('salesMultiple').value),
-            'profit_margin': sanitizeNumericInput(document.getElementById('profitMargin').value),
-            'debt_service': sanitizeNumericInput(document.getElementById('debtService').value),
-            'cash_on_cash': sanitizeNumericInput(document.getElementById('cashOnCash').value),
-            'down_payment': sanitizeNumericInput(document.getElementById('downPayment').value),
-            'location': document.getElementById('location').value,
-            'ffe': sanitizeNumericInput(document.getElementById('ffE').value),
-            'employees': document.getElementById('employees').value,
-            'reason_for_selling': document.getElementById('reasonForSelling').value,
-            'years_in_operation': document.getElementById('yearsInOperation').value
-        };
-
-        // Validate required fields
-        const requiredFields = [
-            'business_name',
-            'industry',
-            'price',
-            'description'
+        // Make sure the numeric fields are properly sanitized
+        const numericFields = [
+            'price', 'cash_flow', 'gross_revenue', 'ebitda', 'inventory', 
+            'sales_multiple', 'profit_margin', 'debt_service', 'cash_on_cash', 
+            'down_payment', 'ffe', 'employees', 'years_in_operation'
         ];
-
-        const missingFields = requiredFields.filter(field => !fields[field]);
-        if (missingFields.length > 0) {
-            alert(`Please fill in the following required fields: ${missingFields.join(', ')}`);
-            isSubmitting = false;
-            submitButton.innerHTML = 'Submit';
-            submitButton.disabled = false;
-            return;
-        }
-
-        // Append all fields to formData
-        Object.entries(fields).forEach(([key, value]) => {
-            if (value) formData.append(key, value);
-        });
-
-        // Add images
-        imageDropzone.files.forEach(file => {
-            formData.append('images', file);
-        });
-
-        // Add a request timestamp to help prevent duplicate submissions
-        formData.append('requestTimestamp', Date.now().toString());
-
-        console.log('Submitting business listing...');
         
-        // Update the endpoint to the correct one
+        // Double-check that sanitized numeric fields don't include empty strings
+        numericFields.forEach(field => {
+            const value = formData.get(field);
+            // If empty or not a valid number, set to null or 0
+            if (value === '' || value === null || isNaN(parseFloat(value))) {
+                formData.set(field, '0'); // Use '0' instead of empty string
+            } else {
+                // Make sure it's properly sanitized
+                formData.set(field, sanitizeNumericInput(value));
+            }
+        });
+        
+        // Add field mappings for backward compatibility
+        // This ensures both camelCase and snake_case field names work during transition
+        const fieldMappings = {
+            'cashFlow': 'cash_flow',
+            'grossRevenue': 'gross_revenue',
+            'salesMultiple': 'sales_multiple',
+            'profitMargin': 'profit_margin',
+            'debtService': 'debt_service',
+            'cashOnCash': 'cash_on_cash',
+            'downPayment': 'down_payment',
+            'ffE': 'ffe',
+            'yearsInOperation': 'years_in_operation',
+            'reasonForSelling': 'reason_for_selling'
+        };
+        
+        // Add cross-field compatibility - duplicate fields with both naming conventions 
+        for (const [camelCase, snakeCase] of Object.entries(fieldMappings)) {
+            // If form has the camelCase version and no snake_case version, add it
+            if (formData.has(camelCase) && !formData.has(snakeCase)) {
+                formData.set(snakeCase, formData.get(camelCase));
+            }
+            // If form has the snake_case version and no camelCase version, add it
+            else if (formData.has(snakeCase) && !formData.has(camelCase)) {
+                formData.set(camelCase, formData.get(snakeCase));
+            }
+        }
+        
+        // Add S3 region information
+        formData.append('awsRegion', window.AWS_REGION || 'eu-west-2');
+        formData.append('awsBucket', window.AWS_BUCKET_NAME || 'arzani-images1');
+        
+        // Process images from Dropzone
+        if (imageDropzone && imageDropzone.files.length > 0) {
+            const imageFiles = imageDropzone.files;
+            console.log(`Adding ${imageFiles.length} files from Dropzone`);
+            
+            // Clear existing files from formData to avoid duplicates
+            formData.delete('images');
+            
+            // Add each file to the form data - IMPORTANT to use the same field name for all files
+            // This is how multer recognizes them as an array
+            for (let i = 0; i < imageFiles.length; i++) {
+                formData.append('images', imageFiles[i], imageFiles[i].name);
+                console.log(`Added image ${i+1}: ${imageFiles[i].name} to FormData`);
+            }
+        }
+        
+        // Log the form data before submission
+        console.log('Submitting business data:');
+        let imageCount = 0;
+        for (const [key, value] of formData.entries()) {
+            if (key === 'images') {
+                imageCount++;
+                console.log(`${key} [${imageCount}]: ${value instanceof File ? value.name : 'Not a file'}`);
+            } else {
+                console.log(`${key}: ${value}`);
+            }
+        }
+        console.log(`Total images in FormData: ${imageCount}`);
+        
+        // Add fields for new database columns
+        if (formData.get('recurringRevenue')) {
+            formData.append('recurring_revenue_percentage', formData.get('recurringRevenue'));
+        }
+        
+        if (formData.get('growthRate')) {
+            formData.append('growth_rate', formData.get('growthRate'));
+        }
+        
+        if (formData.get('intellectualProperty')) {
+            formData.append('intellectual_property', formData.get('intellectualProperty'));
+        }
+        
+        if (formData.get('websiteTraffic')) {
+            formData.append('website_traffic', formData.get('websiteTraffic'));
+        }
+        
+        if (formData.get('socialFollowers')) {
+            formData.append('social_media_followers', formData.get('socialFollowers'));
+        }
+        
+        // Log the form data before submission
+        console.log('Submitting business data with fields:');
+        for (const [key, value] of formData.entries()) {
+            if (key === 'images') {
+                console.log(`${key}: [File object]`);
+            } else {
+                console.log(`${key}: ${value}`);
+            }
+        }
+        
+        // Submit the form data to the server with the token
         const response = await fetch('/api/submit-business', {
             method: 'POST',
+            body: formData,
             headers: {
                 'Authorization': `Bearer ${token}`
-            },
-            body: formData
+            }
         });
 
+        // Log the full response for debugging
+        const responseText = await response.text();
+        console.log('Server response:', responseText);
+        
+        // Try to parse response as JSON
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch (e) {
+            throw new Error(`Server returned non-JSON response: ${responseText}`);
+        }
+        
+        // Add detailed logging to see the exact structure
+        console.log('Parsed response data structure:', {
+            success: data.success,
+            hasBusinessObject: !!data.business,
+            businessKeys: data.business ? Object.keys(data.business) : 'N/A',
+            businessId: data.business?.id,
+            imagesArray: Array.isArray(data.images) ? `${data.images.length} URLs` : 'Not an array'
+        });
+        
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Submission response error:', response.status, errorText);
-            
-            if (response.status === 401) {
-                // Authentication issue
-                alert('Your session has expired. Please log in again.');
-                window.location.href = `/login2?returnTo=${encodeURIComponent(window.location.pathname)}`;
-                return;
-            }
-            
-            throw new Error(`Submission failed with status: ${response.status}`);
+            throw new Error(data.error || data.message || 'Failed to submit business');
         }
 
-        const data = await response.json();
+        // Log success information
+        console.log('Business submission successful:', {
+            id: data.business?.id,
+            name: data.business?.business_name,
+            userId: data.business?.user_id,
+            images: data.images
+        });
         
-        if (data.success) {
-            alert('Business posted successfully!');
-            window.location.href = '/marketplace2';
-        } else {
-            throw new Error(data.error || 'Submission failed');
+        // Modified check - also verify the id is a number
+        if (!data.business?.id || typeof data.business.id !== 'number') {
+            console.error('Invalid business object in response:', data.business);
+            throw new Error('No valid business ID returned from server. Please try again.');
         }
+
+        // Redirect to marketplace instead of the business detail page
+        window.location.href = '/marketplace2';
+
     } catch (error) {
-        console.error('Submission error:', error);
-        alert('Error submitting business: ' + error.message);
+        console.error('Error submitting business:', error);
+        
+        // Show error message
+        const errorElement = document.getElementById('errorMessage') || 
+                            document.createElement('div');
+        
+        if (!document.getElementById('errorMessage')) {
+            errorElement.id = 'errorMessage';
+            errorElement.className = 'alert alert-danger mt-3';
+            const form = document.getElementById('postBusinessForm');
+            form.prepend(errorElement);
+        }
+        
+        errorElement.textContent = error.message || 'Failed to submit business. Please try again.';
+        
+        // Scroll to error
+        errorElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } finally {
-        // Reset submission state
-        isSubmitting = false;
-        submitButton.innerHTML = 'Submit';
+        // Re-enable submit button
+        submitButton.innerHTML = originalButtonText;
         submitButton.disabled = false;
+        isSubmitting = false;
     }
 }
 

@@ -4,15 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign Up</title>
+    <!-- Add meta tag for site environment -->
+    <meta name="site-environment" content="production">
+    <meta name="production-domain" content="www.arzani.co.uk">
     <style>
         body {
             font-family: Arial, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             background-color: #f4f4f4;
             margin: 0;
+            padding: 20px 0;
         }
 
         .signup-wrapper {
@@ -20,86 +24,289 @@
             padding: 30px;
             border-radius: 10px;
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-            width: 400px;
+            width: 100%;
+            max-width: 400px;
             text-align: center;
         }
 
-        h1 {
-            font-size: 24px;
+        .title-wrapper {
             margin-bottom: 20px;
-            color: #333;
         }
 
-        label {
-            display: block;
-            margin-bottom: 5px;
+        .title {
+            font-size: 28px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .form-container {
+            text-align: left;
+        }
+
+        .input-wrapper {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
             font-size: 14px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+
+        .input-field:focus {
+            border-color: #c0816f;
+            outline: none;
+        }
+
+        .label-field {
+            position: absolute;
+            top: -10px;
+            left: 15px;
+            font-size: 12px;
+            background-color: white;
+            padding: 0 5px;
             color: #666;
         }
 
-        input {
-            width: 93.4%;
-            padding: 10px;
-            margin-bottom: 15px;
-            font-size: 14px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
+        .error-message {
+            font-size: 12px;
+            color: #dc3545;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 5px;
+            padding-left: 5px;
         }
 
-        .btn {
+        .error-icon {
+            width: 14px;
+            height: 14px;
+        }
+
+        .signup-button {
+            width: 100%;
+            padding: 12px;
             background-color: #c0816f;
             color: white;
-            padding: 12px;
             border: none;
             border-radius: 5px;
-            width: 100%;
             cursor: pointer;
             font-size: 16px;
+            transition: background-color 0.3s;
         }
 
-        .btn:hover {
+        .signup-button:hover {
             background-color: #a46854;
         }
 
+        .signup-button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+        }
+        
+        .alert-danger {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+        
+        .alert-success {
+            color: #155724;
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+
+        /* Password strength indicator styles */
+        .password-strength-wrapper {
+            margin-top: -10px;
+            margin-bottom: 15px;
+        }
+
+        .password-strength-meter {
+            height: 5px;
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 2px;
+            margin-bottom: 5px;
+            overflow: hidden;
+        }
+
+        .password-strength-bar {
+            height: 100%;
+            width: 0%;
+            border-radius: 2px;
+            transition: width 0.3s, background-color 0.3s;
+        }
+
+        .password-feedback {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 5px;
+        }
+
+        .feedback-item {
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            background-color: #f0f0f0;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .feedback-item.valid {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .feedback-item.invalid {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .feedback-icon {
+            font-size: 10px;
+        }
+
+        /* Links and additional text */
         p {
             margin-top: 20px;
             font-size: 14px;
-            color: #333;
+            color: #666;
+            text-align: center;
         }
 
         a {
-            color: #007bff;
+            color: #c0816f;
             text-decoration: none;
+            transition: color 0.3s;
         }
 
         a:hover {
+            color: #a46854;
             text-decoration: underline;
+        }
+
+        #resend-container {
+            margin-top: 15px;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+            text-align: center;
+        }
+
+        #resend-email-btn {
+            background: none;
+            border: none;
+            color: #c0816f;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: underline;
+            padding: 0;
+        }
+
+        #resend-email-btn:hover {
+            color: #a46854;
+        }
+
+        /* Terms checkbox styling */
+        .terms-wrapper {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .terms-wrapper input[type="checkbox"] {
+            margin-top: 3px;
+            margin-right: 10px;
+        }
+
+        .terms-wrapper label {
+            font-size: 12px;
+            color: #666;
+            line-height: 1.5;
         }
     </style>
 </head>
 <body>
     <section class="signup-wrapper">
-        <h1>Sign Up</h1>
-        <form id="signup-form">
+        <div class="title-wrapper">
+            <h1 class="title">Create Account</h1>
+        </div>
 
-            <label for="username">Username</label>
-            <input type="text" id="username" name="username" required>
-
-            <label for="email">Email</label>
-            <input type="email" id="email" name="email" required>
-
-            <label for="password">Password</label>
-            <input type="password" id="password" name="password" required minlength="12"><br><br>
-
-            <button type="submit" class="btn">Sign Up</button>
+        <div class="form-container">
+            <div id="signup-error" class="alert alert-danger" style="display: none;"></div>
             
-        </form>
-        <p>Already have an account? <a href="http://localhost:5000/login">Log in here</a></p>
-        <p id="resend-container">
-            Didn't receive the email? <button id="resend-email-btn">Resend Verification Email</button>
-        </p>
+            <form id="signup-form">
+                <div class="input-wrapper">
+                    <input class="input-field" type="text" id="username" name="username" required autocomplete="username">
+                    <label class="label-field" for="username">Username*</label>
+                    <div class="error-message" id="username-error" style="display: none;">
+                        <img class="error-icon" src="/images/error_icon.svg" alt="Error Icon">Username must be at least 3 characters
+                    </div>
+                </div>
+
+                <div class="input-wrapper">
+                    <input class="input-field" type="email" id="email" name="email" required autocomplete="email">
+                    <label class="label-field" for="email">Email*</label>
+                    <div class="error-message" id="email-error" style="display: none;">
+                        <img class="error-icon" src="/images/error_icon.svg" alt="Error Icon">Please enter a valid email address
+                    </div>
+                </div>
+
+                <div class="input-wrapper">
+                    <input class="input-field" type="password" id="password" name="password" required minlength="6" autocomplete="new-password">
+                    <label class="label-field" for="password">Password*</label>
+                    <div class="error-message" id="password-error" style="display: none;">
+                        <img class="error-icon" src="/images/error_icon.svg" alt="Error Icon">Password must be at least 6 characters
+                    </div>
+                </div>
+
+                <!-- Modern password strength indicator -->
+                <div class="password-strength-wrapper">
+                    <div class="password-strength-meter">
+                        <div id="password-strength-bar" class="password-strength-bar"></div>
+                    </div>
+                    <div id="password-strength-text" style="font-size: 12px; color: #666;"></div>
+                    <div id="password-feedback" class="password-feedback">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <div class="input-wrapper">
+                    <div class="terms-wrapper">
+                        <input type="checkbox" id="terms" name="terms" required>
+                        <label for="terms">
+                            By signing up, you agree to our <a href="/terms">Terms of Service</a> and <a href="/privacy">Privacy Policy</a>
+                        </label>
+                    </div>
+                    <div class="error-message" id="terms-error" style="display: none;">
+                        <img class="error-icon" src="/images/error_icon.svg" alt="Error Icon">You must agree to the terms and conditions
+                    </div>
+                </div>
+
+                <button type="submit" class="signup-button" id="signup-button">Create Account</button>
+            </form>
+            
+            <p>Already have an account? <a href="#" id="login-link">Log in here</a></p>
+            <div id="resend-container" style="display: none;">
+                Didn't receive the verification email? <button id="resend-email-btn">Resend</button>
+            </div>
+        </div>
     </section>
 
-    <script src="/js/signup.js"></script>
+    <script src="/js/signup-handler.js"></script>
 </body>
 </html>

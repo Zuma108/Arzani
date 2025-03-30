@@ -2,12 +2,34 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const config = {
-  env: process.env.NODE_ENV || 'development',
+  env: process.env.NODE_ENV || 'production',
   port: process.env.PORT || 5000,
   jwtSecret: process.env.JWT_SECRET,
   refreshTokenSecret: process.env.REFRESH_TOKEN_SECRET,
   emailSecret: process.env.EMAIL_SECRET,
   sessionSecret: process.env.SESSION_SECRET,
+  
+  // Domain configuration
+  domain: {
+    base: process.env.NODE_ENV === 'production' ? 'www.arzani.co.uk' : 'localhost:5000',
+    protocol: process.env.NODE_ENV === 'production' ? 'https' : 'http',
+    get url() {
+      return `${this.protocol}://${this.base}`;
+    }
+  },
+  
+  // Email configuration
+  email: {
+    from: 'no-reply@arzani.co.uk',
+    name: 'Arzani Marketplace',
+    service: process.env.EMAIL_SERVICE || 'SendGrid',
+    sendGrid: {
+      apiKey: process.env.SENDGRID_API_KEY
+    },
+    sendinBlue: {
+      apiKey: process.env.SENDINBLUE_API_KEY
+    }
+  },
   
   // Database
   db: {
@@ -27,9 +49,6 @@ const config = {
     bucketName: process.env.AWS_BUCKET_NAME
   },
   
-  // Domain
-  serverUrl: process.env.SERVER_URL,
-  
   // Stripe
   stripe: {
     publishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
@@ -47,7 +66,8 @@ const config = {
     cookie: {
       secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      domain: process.env.NODE_ENV === 'production' ? '.arzani.co.uk' : undefined
     }
   }
 };

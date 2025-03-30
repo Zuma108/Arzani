@@ -190,7 +190,7 @@
         <form id="postBusinessForm" class="needs-validation" novalidate method="POST" action="/api/submit-business" enctype="multipart/form-data">
             <div class="mb-3">
                 <label for="title" class="form-label">Business Name</label>
-                <input type="text" class="form-control" id="title" name="title" required>
+                <input type="text" class="form-control" id="title" name="business_name" required>
                 <div class="invalid-feedback">Please provide the name of your business.</div>
             </div>
             <div class="mb-3">
@@ -224,12 +224,12 @@
                 <div class="invalid-feedback">Please provide a price.</div>
             </div>
             <div class="mb-3">
-                <label for="cashFlow" class="form-label">Net Cash Flow (£/Year)</label>
-                <input type="number" class="form-control" id="cashFlow" name="cashFlow">
+                <label for="cash_flow" class="form-label">Net Cash Flow (£/Year)</label>
+                <input type="number" class="form-control" id="cash_flow" name="cash_flow">
             </div>
             <div class="mb-3">
-                <label for="grossRevenue" class="form-label">Gross Revenue (£/Year)</label>
-                <input type="number" class="form-control" id="grossRevenue" name="grossRevenue">
+                <label for="gross_revenue" class="form-label">Gross Revenue (£/Year)</label>
+                <input type="number" class="form-control" id="gross_revenue" name="gross_revenue">
             </div>
             <div class="mb-3">
                 <label for="ebitda" class="form-label">EBITDA (£/Year)</label>
@@ -240,24 +240,24 @@
                 <input type="number" class="form-control" id="inventory" name="inventory">
             </div>
             <div class="mb-3">
-                <label for="salesMultiple" class="form-label">Sales Multiple (×)</label>
-                <input type="text" class="form-control" id="salesMultiple" name="salesMultiple">
+                <label for="sales_multiple" class="form-label">Sales Multiple (×)</label>
+                <input type="text" class="form-control" id="sales_multiple" name="sales_multiple">
             </div>
             <div class="mb-3">
-                <label for="profitMargin" class="form-label">Profit Margin (%)</label>
-                <input type="text" class="form-control" id="profitMargin" name="profitMargin">
+                <label for="profit_margin" class="form-label">Profit Margin (%)</label>
+                <input type="text" class="form-control" id="profit_margin" name="profit_margin">
             </div>
             <div class="mb-3">
-                <label for="debtService" class="form-label">Annual Debt Service (£)</label>
-                <input type="number" class="form-control" id="debtService" name="debtService">
+                <label for="debt_service" class="form-label">Annual Debt Service (£)</label>
+                <input type="number" class="form-control" id="debt_service" name="debt_service">
             </div>
             <div class="mb-3">
-                <label for="cashOnCash" class="form-label">Cash-on-Cash Return (%)</label>
-                <input type="text" class="form-control" id="cashOnCash" name="cashOnCash">
+                <label for="cash_on_cash" class="form-label">Cash-on-Cash Return (%)</label>
+                <input type="text" class="form-control" id="cash_on_cash" name="cash_on_cash">
             </div>
             <div class="mb-3">
-                <label for="downPayment" class="form-label">Down Payment (£)</label>
-                <input type="number" class="form-control" id="downPayment" name="downPayment">
+                <label for="down_payment" class="form-label">Down Payment (£)</label>
+                <input type="number" class="form-control" id="down_payment" name="down_payment">
             </div>
             <div class="mb-3">
                 <label for="location" class="form-label">Business Location</label>

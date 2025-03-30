@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="auth-token" content="<%= locals.token || '' %>">
+    <!-- Add user ID meta tag for JavaScript usage -->
+    <meta name="user-id" content="<%= locals.userId || '' %>">
+    <title><%= (conversation && conversation.recipient) ? conversation.recipient.name : 'Chat' %> | Arzani Marketplace</title>
+    <%- include('partials/tailwind-setup') %>
+    <!-- Core Stylesheets -->
+    <link rel="stylesheet" href="/css/modern.css">
+    <link rel="stylesheet" href="/css/chat-interface.css">
+    <link rel="stylesheet" href="/css/chat-additional.css">
+    
+    <!-- Third-party Dependencies -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.quilljs.com/1.3.6/quill.snow.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/perfect-scrollbar/1.5.5/css/perfect-scrollbar.min.css">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- ENSURE SOCKET.IO LOADS CORRECTLY - REPLACE PREVIOUS SOCKET.IO LOADING CODE -->
+    <!-- Load Socket.io client and our wrapper -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/socket-io-config.js"></script>
+    <script src="/js/socket-io.js"></script>
+
+    <!-- Verify Socket.io was properly loaded, use CDN if needed -->
+    <script>
+        // Initialize script status
+        window.scriptStatus = window.scriptStatus || {};
+        
+        // Check if Socket.io is available
+        if (typeof io !== 'function') {
+            console.warn('Server Socket.io not correctly loaded, using CDN version');
+            
+            // Create a fresh script element
+            var socketIoScript = document.createElement('script');
+            socketIoScript.src = 'https://cdn.socket.io/4.6.1/socket.io.min.js';
+            socketIoScript.crossOrigin = 'anonymous';
+            socketIoScript.onload = function() {
+                console.log('CDN Socket.io loaded successfully ✓');
+                window.scriptStatus.socketIo = true;
+                
+                // Load our configuration after Socket.io is available
+                var configScript = document.createElement('script');
+                configScript.src = '/js/socket-io-config.js';
+                configScript.onload = function() {
+                    console.log('Socket.io config loaded successfully ✓');
+                    
+                    // Now load our wrapper
+                    var wrapperScript = document.createElement('script');
+                    wrapperScript.src = '/js/socket-io.js';
+                    wrapperScript.onload = function() {
+                        console.log('Socket.io wrapper loaded successfully ✓');
+                        window.scriptStatus.socketIoWrapper = true;
+                    };
+                    document.head.appendChild(wrapperScript);
+                };
+                document.head.appendChild(configScript);
+            };
+            document.head.appendChild(socketIoScript);
+        } else {
+            console.log('Socket.io verified as a function ✓');
+            window.scriptStatus.socketIo = true;
+        }
+    </script>
+
+    <!-- Core dependencies must load first -->
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/perfect-scrollbar/1.5.5/perfect-scrollbar.min.js"></script>
+    
+    <!-- Add image handler script before other scripts -->
+    <script src="/js/image-handler.js"></script>
+
+    <!-- Add chat socket script before chat interface script -->
+    <script src="/js/chat-socket.js"></script>
+    <!-- Add chat interface script -->
+    <script src="/js/chat-interface.js"></script>
+
+    <!-- Custom styles to move message input up and improve message display -->
+    <style>
+      /* Move message form up by 50px */
+      #message-form,
+      .message-form,
+      .chat-input-container {
+        transform: translateY(-33px); /* Moves the element up */
+        position: relative; /* Ensures the transform works properly */
+        z-index: 10; /* Keep it above other elements */
+      }
+      
+      /* Adjust the messages container to fill the new space */
+      .messages-container,
+      .chat-body,
+      #messages-list {
+        padding-bottom: 50px; /* Add padding to prevent messages from being hidden behind input */
+      }
+      
+      /* Style conversation list */
+      .conversation-list {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      
+      .conversation-item {
+        display: flex;
+        padding: 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+      
+      .conversation-item:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+      }
+      
+      .conversation-item.active {
+        background-color: rgba(59, 130, 246, 0.1);
+      }
+      
+      .avatar {
+        width: 48px;
+        height: 48px;
+        margin-right: 12px;
+      }
+      
+      .avatar-image {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        object-fit: cover;
+        background-color: #f0f0f0;
+      }
+      
+      .conversation-details {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      
+      .conversation-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 4px;
+      }
+      
+      .conversation-name {
+        font-weight: 600;
+        font-size: 16px;
+        margin: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      
+      .conversation-time {
+        font-size: 12px;
+        color: #666;
+        white-space: nowrap;
+      }
+      
+      .conversation-snippet {
+        font-size: 14px;
+        color: #666;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      
+      .unread-badge {
+        background-color: #3b82f6;
+        color: white;
+        font-size: 12px;
+        font-weight: 600;
+        min-width: 18px;
+        height: 18px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 4px;
+        align-self: flex-start;
+        padding: 0 6px;
+      }
+      
+      /* Debug outline to see if container exists */
+      #messages-list {
+        min-height: 200px;
+        border: 1px solid rgba(0,0,0,0.1);
+      }
+      
+      /* Enhanced message display styles */
+      .message {
+        margin-bottom: 12px;
+        display: flex;
+        align-items: flex-start;
+        max-width: 85%;
+        clear: both;
+        position: relative;
+      }
+      
+      .message.incoming {
+        float: left;
+        margin-right: auto;
+      }
+      
+      .message.outgoing {
+        float: right;
+        margin-left: auto;
+        flex-direction: row-reverse;
+      }
+      
+      .message-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        overflow: hidden;
+        flex-shrink: 0;
+        margin: 0 8px;
+      }
+      
+      .message-wrapper {
+        background-color: #f0f0f0;
+        border-radius: 12px;
+        padding: 8px 12px;
+        position: relative;
+      }
+      
+      .message.incoming .message-wrapper {
+        background-color: #f0f0f0;
+        border-bottom-left-radius: 4px;
+      }
+      
+      .message.outgoing .message-wrapper {
+        background-color: #e1f0ff;
+        border-bottom-right-radius: 4px;
+      }
+      
+      .message-content {
+        word-break: break-word;
+        color: #333; /* Ensure readable text color */
+      }
+      
+      .message-time {
+        font-size: 0.75rem;
+        color: #888;
+        margin-top: 4px;
+      }
+      
+      .message-sender {
+        font-size: 0.75rem;
+        color: #666;
+        font-weight: 500;
+        margin-bottom: 2px;
+      }
+      
+      /* Fix message list container to properly clear float elements */
+      #messages-list {
+        overflow-y: auto;
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        min-height: 200px;
+        border: 1px solid rgba(0,0,0,0.1);
+      }
+      
+      #messages-list::after {
+        content: "";
+        display: table;
+        clear: both;
+      }
+      
+      /* Ensure system messages are centered */
+      .message.system-message {
+        float: none;
+        margin: 10px auto;
+        text-align: center;
+      }
+      
+      /* Fix scroll container to handle floated elements correctly */
+      .messages-container {
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+      }
+      
+      /* Add debug mode toggle button (hidden by default) */
+      #debug-toggle {
+        position: fixed;
+        bottom: 10px;
+        right: 10px;
+        background: rgba(0,0,0,0.5);
+        color: white;
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-size: 12px;
+        cursor: pointer;
+        z-index: 1000;
+        display: none;
+      }
+    </style>
+</head>
+<body class="bg-secondary-light font-sans h-screen overflow-hidden flex flex-col">
+    
+    <!-- Mobile overlay for sidebar -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-gray-900 bg-opacity-50 z-30 hidden lg:hidden"></div>
+
+    <div class="chat-container flex-1 flex overflow-hidden">
+        <!-- Conversation Sidebar - With toggle functionality -->
+        <div id="chatSidebar" class="chat-sidebar w-full lg:w-80 bg-white flex-shrink-0 flex flex-col border-r border-gray-200 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out fixed lg:relative left-0 top-0 h-full z-40">
+            <!-- Sidebar Header with close button for mobile -->
+            <div class="sidebar-header flex justify-between items-center px-4 py-3 border-b border-gray-200 bg-gray-50">
+                <h2 class="text-lg font-semibold text-gray-800">Conversations</h2>
+                <!-- Remove the close button that was here -->
+            </div>
+            
+            <div class="user-info p-4 border-b border-gray-200">
+                <% if (locals.userId) { %>
+                    <div class="flex items-center" id="profile-container">
+                        <div class="user-avatar w-10 h-10 rounded-full overflow-hidden mr-3">
+                            <img src="<%= user?.profile_picture || '/images/default-profile.png' %>" 
+                                 alt="Profile" 
+                                 id="sidebar-profile-picture"
+                                 class="w-full h-full object-cover" 
+                                 onerror="this.src='/images/default-profile.png'"/>
+                        </div>
+                        <div>
+                            <div id="sidebar-username" class="user-name font-medium"><%= user?.username || 'Loading...' %></div>
+                            <div id="user-status" class="text-xs text-gray-500">
+                                <span class="status-indicator inline-block w-2 h-2 rounded-full bg-gray-400 mr-1"></span>
+                                <span class="status-text">Offline</span>
+                            </div>
+                        </div>
+                    </div>
+                <% } else { %>
+                    <div class="auth-notice text-center">
+                        <a href="/login2?returnTo=<%= encodeURIComponent('/chat' + (activeConversationId ? '?conversation=' + activeConversationId : '')) %>" class="login-btn bg-primary text-white px-4 py-2 rounded hover:bg-primary-dark transition">
+                            Log in to chat
+                        </a>
+                    </div>
+                <% } %>
+            </div>
+            
+            <div class="flex items-center justify-between px-4 py-2 border-b border-gray-200">
+                <h3 class="text-sm font-semibold text-gray-600">Recent</h3>
+                <button id="new-conversation-btn" class="bg-primary text-white text-sm px-3 py-1 rounded-md hover:bg-primary-dark transition">
+                    <i class="fas fa-plus mr-1"></i> New
+                </button>
+            </div>
+            
+            <div class="conversations-list flex-1 overflow-y-auto py-2 px-1">
+                <% if (conversations && conversations.length > 0) { %>
+                    <% conversations.forEach(function(conversation) { %>
+                        <div class="conversation-item <%= conversation.id === activeConversationId ? 'active' : '' %> 
+                                 hover:bg-gray-100 p-3 rounded-md mb-1 cursor-pointer transition" 
+                             data-conversation-id="<%= conversation.id %>">
+                            <div class="flex items-start">
+                                <div class="conversation-avatar bg-gray-200 w-10 h-10 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                                    <% if (conversation.is_group_chat) { %>
+                                        <i class="fas fa-users text-gray-500"></i>
+                                    <% } else if (conversation.is_ai_chat) { %>
+                                        <i class="fas fa-robot text-gray-500"></i>
+                                    <% } else { %>
+                                        <i class="fas fa-user text-gray-500"></i>
+                                    <% } %>
+                                </div>
+                                <div class="conversation-details flex-1 min-w-0">
+                                    <div class="conversation-name font-medium text-gray-800 truncate">
+                                        <%= conversation.group_name || 'Conversation ' + conversation.id %>
+                                    </div>
+                                    <div class="conversation-last-message flex justify-between items-center mt-1 text-xs">
+                                        <% if (conversation.unread_count > 0) { %>
+                                            <span class="unread-badge bg-primary text-white rounded-full min-w-5 h-5 flex items-center justify-center px-1.5">
+                                                <%= conversation.unread_count %>
+                                            </span>
+                                        <% } %>
+                                        <span class="last-updated text-gray-500 ml-auto">
+                                            <%= formatTime(conversation.updated_at) %>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <% }); %>
+                <% } else { %>
+                    <div class="no-conversations p-4 text-center text-gray-500">
+                        <p>No conversations yet.</p>
+                        <% if (locals.userId) { %>
+                            <p class="mt-2">Start a new conversation to chat!</p>
+                        <% } else { %>
+                            <p class="mt-2">Log in to start chatting.</p>
+                        <% } %>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+        
+        <!-- Main Chat Area with toggle button -->
+        <div class="chat-main flex-1 flex flex-col">
+            <!-- Chat header with sidebar toggle for mobile -->
+            <% if (activeConversationId) { %>
+                <div class="chat-header flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200">
+                    <div class="flex items-center min-w-0 mr-1">
+                        <button id="toggleSidebarBtn" class="lg:hidden mr-2 flex-shrink-0 text-gray-600 hover:bg-gray-100 p-2 rounded-full">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                        <h2 id="conversation-title" class="font-semibold text-gray-800 truncate text-sm sm:text-base max-w-[120px] sm:max-w-xs md:max-w-sm">
+                            <%= conversations.find(c => c.id === activeConversationId)?.group_name || 'Conversation ' + activeConversationId %>
+                        </h2>
+                    </div>
+                    <div class="flex items-center space-x-1 md:space-x-2">
+                        <a href="/marketplace2" class="text-gray-600 hover:bg-gray-100 px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium transition-colors flex items-center">
+                            <i class="fas fa-store mr-1 md:mr-1.5"></i>
+                            <span class="hidden sm:inline">Marketplace</span>
+                        </a>
+                        <a href="/profile" class="text-gray-600 hover:bg-gray-100 px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium transition-colors flex items-center">
+                            <i class="fas fa-user mr-1 md:mr-1.5"></i>
+                            <span class="hidden sm:inline">Profile</span>
+                        </a>
+                        <button class="text-gray-600 hover:bg-gray-100 p-2 rounded-full" title="More options">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- ...existing messages container and input form... -->
+                <div class="messages-container flex-1 overflow-y-auto bg-gray-50">
+                    <div class="messages-list" id="messages-list">
+                        <!-- Messages will be loaded here by JavaScript -->
+                        <div class="loading text-center p-4 text-gray-500">Loading messages...</div>
+                    </div>
+                </div>
+                
+                <!-- Add file upload progress container after the message form -->
+                <div id="upload-progress-container" class="hidden fixed bottom-20 right-4 bg-white shadow-lg rounded-lg p-3 w-72 z-50">
+                  <div class="flex justify-between items-center mb-2">
+                    <div class="upload-filename text-sm font-medium truncate max-w-[180px]">File.jpg</div>
+                    <button class="cancel-upload-btn text-gray-500 hover:text-gray-700">
+                      <i class="fas fa-times"></i>
+                    </button>
+                  </div>
+                  <div class="bg-gray-200 rounded-full h-2 overflow-hidden">
+                    <div class="upload-progress-bar bg-blue-500 h-2 rounded-full" style="width: 0%"></div>
+                  </div>
+                </div>
+
+                <!-- Add hidden file upload input -->
+                <input type="file" id="file-upload" class="hidden" multiple>
+
+                <div class="message-input-container bg-white border-t border-gray-200 p-3">
+                    <form id="message-form" data-conversation-id="<%= activeConversationId %>" class="flex items-center">
+                        <button type="button" id="attachBtn" class="text-gray-500 hover:text-gray-700 mr-2">
+                          <i class="fas fa-paperclip"></i>
+                        </button>
+                        <input type="text" id="message-input" class="form-control flex-1 border border-gray-300 rounded-l-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" 
+                               placeholder="Type your message..." 
+                               <%= !locals.userId ? 'disabled' : '' %>>
+                        <button type="submit" class="btn btn-primary bg-primary text-white px-4 py-2 rounded-r-md hover:bg-primary-dark transition" 
+                                <%= !locals.userId ? 'disabled' : '' %>>
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
+            <% } else { %>
+                <div class="chat-header flex items-center px-4 py-3 bg-white border-b border-gray-200">
+                    <button id="toggleSidebarBtn" class="lg:hidden mr-2 flex-shrink-0 text-gray-600 hover:bg-gray-100 p-2 rounded-full">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h2 class="font-semibold text-gray-800 text-sm sm:text-base truncate max-w-[120px] sm:max-w-xs">Select a conversation</h2>
+                    <div class="ml-auto flex items-center space-x-1 md:space-x-2">
+                        <a href="/marketplace2" class="text-gray-600 hover:bg-gray-100 px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium transition-colors flex items-center">
+                            <i class="fas fa-store mr-1 md:mr-1.5"></i>
+                            <span class="hidden sm:inline">Marketplace</span>
+                        </a>
+                        <a href="/profile" class="text-gray-600 hover:bg-gray-100 px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium transition-colors flex items-center">
+                            <i class="fas fa-user mr-1 md:mr-1.5"></i>
+                            <span class="hidden sm:inline">Profile</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="no-active-conversation flex-1 flex items-center justify-center bg-gray-50">
+                    <div class="placeholder-message text-center p-6">
+                        <i class="fas fa-comments text-gray-300 text-5xl mb-4"></i>
+                        <h3 class="text-xl font-medium text-gray-700 mb-2">Select a conversation to start chatting</h3>
+                        <% if (!locals.userId) { %>
+                            <p class="text-gray-500 mb-4">Log in to view your conversations</p>
+                            <a href="/login2?returnTo=<%= encodeURIComponent('/chat') %>" class="bg-primary text-white px-4 py-2 rounded hover:bg-primary-dark transition">
+                                Log in
+                            </a>
+                        <% } %>
+                    </div>
+                </div>
+            <% } %>
+        </div>
+    </div>
+
+    <!-- Add hidden user ID element for easier access in JavaScript -->
+    <div id="current-user-data" data-user-id="<%= locals.userId || '' %>" style="display:none;"></div>
+    
+    <!-- Hidden debug toggle (can be enabled for troubleshooting) -->
+    <div id="debug-toggle" onclick="toggleDebugMode()">Debug: OFF</div>
+
+    <script>
+    // Helper function to format time
+    function formatTime(timestamp) {
+        if (!timestamp) return '';
+
+        const date = new Date(timestamp);
+        const now = new Date();
+        const diff = Math.floor((now - date) / 1000);
+
+        if (diff < 60) return 'Just now';
+        if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+
+        return date.toLocaleDateString();
+    }
+    </script>
+
+    <!-- Add profile management script before the script loader -->
+    <script src="/js/profile.js"></script>
+
+    <!-- Script Loader - Ensures dependencies load in the right order with proper error handling -->
+    <script>
+    (function() {
+        // Initialize script status tracking object if it doesn't exist
+        window.scriptStatus = window.scriptStatus || {};
+        
+        // Collection of scripts to load
+        var scripts = [
+            { name: 'image-handler', src: '/js/image-handler.js', loaded: false, required: false },
+            { name: 'socket-io', src: '/js/socket-io.js', loaded: false, required: true },
+            { name: 'chat', src: '/js/chat.js', loaded: false, required: true },
+            { name: 'chat-interface', src: '/js/chat-interface.js', loaded: false, required: false },
+            { name: 'chat-activity-tracker', src: '/js/chat-activity-tracker.js', loaded: false, required: false },
+            { name: 'chat-sidebar', src: '/js/chat-sidebar.js', loaded: false, required: false },
+            { name: 'scroll', src: '/js/scroll.js', loaded: false, required: false },
+            { name: 'message-analyzer', src: '/js/message-analyzer.js', loaded: false, required: false }
+        ];
+        
+        // Verify Socket.io is available
+        function verifySocketIo() {
+            if (typeof io === 'function') {
+                console.log('Socket.io verified as a function ✓');
+                window.scriptStatus.socketIo = true;
+                return true;
+            }
+            return false;
+        }
+        
+        // Wait until Socket.io is definitely available
+        function waitForSocketIo(callback, maxAttempts) {
+            var attempts = 0;
+            var maxWait = maxAttempts || 20; // 10 seconds total
+
+            function checkSocketIo() {
+                attempts++;
+                if (window.scriptStatus.socketIo || verifySocketIo()) {
+                    console.log(`Socket.io loaded successfully after ${attempts} attempts`);
+                    callback();
+                    return;
+                }
+                
+                if (attempts >= maxWait) {
+                    console.error('Timed out waiting for Socket.io, proceeding anyway');
+                    callback();
+                    return;
+                }
+                
+                console.log(`Socket.io not ready, attempt ${attempts}/${maxWait}`);
+                setTimeout(checkSocketIo, 500);
+            }
+            
+            checkSocketIo();
+        }
+        
+        // Wait until ChatSocket is available
+        function waitForChatSocket(callback, maxAttempts) {
+            var attempts = 0;
+            var maxWait = maxAttempts || 20; // 10 seconds total
+
+            function checkChatSocket() {
+                attempts++;
+                if (window.ChatSocket) {
+                    console.log(`ChatSocket loaded successfully after ${attempts} attempts`);
+                    callback();
+                    return;
+                }
+                
+                if (attempts >= maxWait) {
+                    console.error('Timed out waiting for ChatSocket, proceeding anyway');
+                    callback();
+                    return;
+                }
+                
+                console.log(`ChatSocket not ready, attempt ${attempts}/${maxWait}`);
+                setTimeout(checkChatSocket, 500);
+            }
+            
+            checkChatSocket();
+        }
+        
+        // Load scripts in sequence
+        function loadNextScript(index) {
+            if (index >= scripts.length) {
+                console.log('All chat scripts loaded successfully!');
+                initChatFunctionality();
+                return;
+            }
+            
+            // Skip already loaded scripts (like image-handler.js which we loaded in the head)
+            if (scripts[index].loaded || window.scriptStatus[scripts[index].name]) {
+                console.log(`Script already loaded: ${scripts[index].name}`);
+                loadNextScript(index + 1);
+                return;
+            }
+            
+            var script = document.createElement('script');
+            script.src = scripts[index].src;
+            
+            script.onload = function() {
+                console.log('Loaded: ' + scripts[index].name);
+                scripts[index].loaded = true;
+                window.scriptStatus[scripts[index].name] = true;
+                loadNextScript(index + 1);
+            };
+            
+            script.onerror = function() {
+                console.error('Failed to load: ' + scripts[index].name);
+                if (scripts[index].required) {
+                    console.error('Required script failed to load');
+                    displayScriptError(scripts[index].name);
+                } else {
+                    loadNextScript(index + 1);
+                }
+            };
+            
+            document.body.appendChild(script);
+        }
+        
+        function displayScriptError(scriptName) {
+            var messagesContainer = document.querySelector('.messages-list, #messages-list');
+            if (messagesContainer) {
+                messagesContainer.innerHTML = `
+                    <div class="error-message p-4 bg-red-100 text-red-800 rounded">
+                        <h3 class="font-bold mb-2">Error Loading Chat</h3>
+                        <p class="mb-3">Failed to load required script: ${scriptName}</p>
+                        <button class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" onclick="location.reload()">Reload Page</button>
+                    </div>
+                `;
+            }
+        }
+        
+        function initChatFunctionality() {
+            // Call chat initialization functions if they exist
+            if (typeof window.initChat === 'function') {
+                window.initChat();
+            }
+            
+            if (typeof window.initConversationList === 'function') {
+                window.initConversationList();
+            }
+            
+            // Init profile data
+            if (typeof window.fetchUserProfileData === 'function') {
+                window.fetchUserProfileData();
+            }
+            
+            console.log('Chat functionality initialized!');
+        }
+        
+        // Begin the loading process - wait for Socket.io first, then ChatSocket
+        waitForSocketIo(function() {
+            // Now wait for ChatSocket (our wrapper)
+            waitForChatSocket(function() {
+                // Finally load other scripts
+                loadNextScript(0);
+            });
+        });
+    })();
+    </script>
+
+    <!-- Add Sidebar Toggle Script -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get DOM elements
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        const chatSidebar = document.getElementById('chatSidebar');
+        const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
+        const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+        
+        // Toggle sidebar on mobile
+        if (toggleSidebarBtn) {
+            toggleSidebarBtn.addEventListener('click', function() {
+                chatSidebar.classList.toggle('-translate-x-full');
+                sidebarOverlay.classList.toggle('hidden');
+                document.body.classList.toggle('overflow-hidden');
+            });
+        }
+        
+        // Close sidebar when clicking the close button
+        if (closeSidebarBtn) {
+            closeSidebarBtn.addEventListener('click', function() {
+                chatSidebar.classList.add('-translate-x-full');
+                sidebarOverlay.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+            });
+        }
+        
+        // Close sidebar when clicking the overlay
+        if (sidebarOverlay) {
+            sidebarOverlay.addEventListener('click', function() {
+                chatSidebar.classList.add('-translate-x-full');
+                sidebarOverlay.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+            });
+        }
+        
+        // Handle window resize to reset mobile sidebar state
+        window.addEventListener('resize', function() {
+            if (window.innerWidth >= 1024) { // lg breakpoint
+                chatSidebar.classList.remove('-translate-x-full');
+                sidebarOverlay.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+            }
+        });
+    });
+    </script>
+    
+    <script src="/js/image-handler.js"></script>
+    <script>
+      // Ensure failedImages is initialized
+      if (!window.failedImages) window.failedImages = new Set();
+      
+      // Add specific image paths that we know are problematic
+      window.failedImages.add('http://localhost:5000/images/default_profile5.png');
+    </script>
+
+    <script>
+    function toggleDebugMode() {
+        const debug = !window.chatDebug;
+        window.chatDebug = debug;
+        document.getElementById('debug-toggle').textContent = 'Debug: ' + (debug ? 'ON' : 'OFF');
+        
+        // Toggle debug class on message containers
+        document.querySelectorAll('.message').forEach(msg => {
+            if (debug) {
+                msg.classList.add('debug');
+                // Add data attributes for debugging
+                const senderId = msg.getAttribute('data-sender-id');
+                const currentUserId = getCurrentUserId();
+                msg.setAttribute('data-current-user', currentUserId);
+                msg.setAttribute('data-is-current', String(senderId) === String(currentUserId) ? 'yes' : 'no');
+            } else {
+                msg.classList.remove('debug');
+            }
+        });
+        
+        // Log useful debug info
+        if (debug) {
+            console.log('Current user ID:', getCurrentUserId());
+            console.log('Messages:', document.querySelectorAll('.message').length);
+            console.log('Incoming:', document.querySelectorAll('.message.incoming').length);
+            console.log('Outgoing:', document.querySelectorAll('.message.outgoing').length);
+        }
+    }
+    </script>
+
+    <!-- Add a small script to initialize profile data fetching after DOM loads -->
+    <script>
+    // ...existing script code...
+
+    // Initialize profile data when DOM is ready
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof fetchUserProfileData === 'function') {
+            fetchUserProfileData();
+        }
+    });
+    </script>
+
+    <%- include('partials/footer') %>
+</body>
+</html>

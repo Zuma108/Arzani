@@ -1,8 +1,9 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
-import { authenticateToken } from '../middleware/auth.js';  // Use your main authentication middleware
+import { authenticateToken } from '../middleware/auth.js';
 import pool from '../db.js';
 import dotenv from 'dotenv';
+import { uploadToS3, sanitizeFilename } from '../utils/s3.js'; // Import the S3 utils
 
 // Load environment variables
 dotenv.config();
@@ -55,6 +56,16 @@ router.get('/auth-check', (req, res) => {
     sessionId: req.sessionID,
     timestamp: new Date().toISOString(),
     cookies: Object.keys(req.cookies || {})
+  });
+});
+
+// Add a helper endpoint to get S3 configuration
+router.get('/s3-config', (req, res) => {
+  // Provide S3 configuration to the client
+  res.json({
+    region: process.env.AWS_REGION || 'eu-west-2',
+    bucketName: process.env.AWS_BUCKET_NAME || 'arzani-images1',
+    useS3: true
   });
 });
 

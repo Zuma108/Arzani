@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <!-- Include Tailwind CSS -->
+    <%- include('../partials/tailwind-setup') %>
+    
+    <!-- Common CSS -->
+    <link rel="stylesheet" href="/css/styles.css">
+    
+    <!-- Page-specific CSS -->
+    <% if (locals.styles && Array.isArray(locals.styles)) { %>
+        <% styles.forEach(style => { %>
+            <link rel="stylesheet" href="<%= style %>">
+        <% }); %>
+    <% } %>
+    
+    <!-- Only include chat styles if this is a chat page -->
+    <% if (locals.isChatPage) { %>
+        <link rel="stylesheet" href="/css/chat.css">
+    <% } %>
+</head>
+<body>
+    <% if (!locals.hideHeader) { %>
+        <%- include('../partials/header') %>
+    <% } %>
+    
+    <div class="content-container">
+        <%- body %>
+    </div>
+    
+    <% if (!locals.hideFooter) { %>
+        <%- include('../partials/footer') %>
+    <% } %>
+    
+    <!-- Scripts -->
+    <%- include('../partials/scripts') %>
+</body>
+</html>

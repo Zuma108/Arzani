@@ -8,17 +8,46 @@ import {
   getUserByEmail, 
   createUser, 
   verifyUser, 
-  authenticateUser, 
   createOrUpdateOAuthUser 
 } from '../database.js';
 import { sendVerificationEmail } from '../utils/email.js';
 import { repairUserAccount } from '../database-repair.js';
+import { authenticateUser } from '../middleware/auth.js';
 
 dotenv.config();
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET;
 const EMAIL_SECRET = process.env.EMAIL_SECRET || process.env.JWT_SECRET;
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+// Add this helper function near the top of your file
+function sanitizeRedirectUrl(url) {
+  if (!url) return '/';
+
+  // Decode URL in case it's URL-encoded
+  url = decodeURIComponent(url);
+
+  // Check if the URL is trying to redirect to a login page
+  if (url.includes('/login') || 
+      url.includes('/login2') || 
+      url.includes('/signup') || 
+      url.includes('/auth/login')) {
+    console.log('Prevented redirect loop to:', url);
+    return '/';
+  }
+
+  // If URL is absolute (starts with http or //), only allow our own domain
+  if (url.startsWith('http') || url.startsWith('//')) {
+    // Extract hostname - simplified approach
+    const hostname = url.replace(/^https?:\/\//, '').split('/')[0];
+    if (!hostname.includes('localhost') && !hostname.includes('arzani.co.uk')) {
+      console.log('Prevented redirect to external domain:', hostname);
+      return '/';
+    }
+  }
+
+  return url;
+}
 
 // System health check route
 router.get('/check-db', async (req, res) => {
@@ -88,11 +117,11 @@ router.post('/login', async (req, res) => {
     // Check if auth entry exists
     if (authInfo.rows.length === 0 || !authInfo.rows[0].password_hash) {
       console.error(`User has no password hash: ${user.id}`);
-      
+
       // Attempt to repair the account
       try {
         await repairUserAccount(user.id, user.email);
-        
+
         return res.status(401).json({
           success: false,
           requiresReset: true,
@@ -110,7 +139,7 @@ router.post('/login', async (req, res) => {
     // Store password hash
     const passwordHash = authInfo.rows[0].password_hash;
     const isVerified = authInfo.rows[0].verified || false;
-    
+
     // Check for placeholder password that requires reset
     if (passwordHash === 'REQUIRES_RESET') {
       return res.status(401).json({
@@ -153,7 +182,7 @@ router.post('/login', async (req, res) => {
       JWT_SECRET,
       { expiresIn: '4h' }
     );
-    
+
     const refreshToken = jwt.sign(
       { userId: user.id, type: 'refresh' },
       process.env.REFRESH_TOKEN_SECRET || JWT_SECRET,
@@ -169,12 +198,25 @@ router.post('/login', async (req, res) => {
       });
     });
 
-    // Update last login timestamp
+    // Update last login time with a conditional approach
     try {
-      await pool.query('UPDATE users SET last_login = NOW() WHERE id = $1', [user.id]);
-    } catch (updateErr) {
-      console.error('Failed to update last_login:', updateErr);
-      // Non-critical, continue
+      // Check if the last_login column exists first
+      const columnCheck = await pool.query(`
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'users' AND column_name = 'last_login'
+      `);
+
+      // Only update if the column exists
+      if (columnCheck.rows.length > 0) {
+        await pool.query(
+          'UPDATE users SET last_login = NOW() WHERE id = $1',
+          [user.id]
+        );
+      }
+    } catch (error) {
+      // Log but don't fail the login process
+      console.warn('Failed to update last_login:', error.message);
     }
 
     // Response
@@ -203,7 +245,7 @@ router.post('/signup', async (req, res) => {
   try {
     const { username, email, password } = req.body;
     console.log('Signup request for:', email);
-    
+
     if (!username || !email || !password) {
       return res.status(400).json({
         success: false,
@@ -305,10 +347,10 @@ router.get('/verify-email', async (req, res) => {
       // Check if any row was updated
       if (updateResult.rows.length === 0) {
         console.error('No auth record found for user ID:', decoded.userId);
-        
+
         // Try to find the user to confirm they exist
         const userCheck = await pool.query('SELECT id FROM users WHERE id = $1', [decoded.userId]);
-        
+
         if (userCheck.rows.length === 0) {
           console.error('User not found:', decoded.userId);
           return res.status(404).json({
@@ -316,18 +358,18 @@ router.get('/verify-email', async (req, res) => {
             message: 'User not found'
           });
         }
-        
+
         // If user exists but no auth record, create one
         await pool.query(
           'INSERT INTO users_auth (user_id, password_hash, verified) VALUES ($1, $2, true)',
           [decoded.userId, 'REQUIRES_RESET']
         );
-        
+
         console.log('Created new auth record with verified=true for user:', decoded.userId);
       } else {
         console.log('Successfully verified user:', decoded.userId);
       }
-      
+
       // If request wants JSON
       if (req.headers.accept?.includes('application/json')) {
         return res.status(200).json({
@@ -335,31 +377,31 @@ router.get('/verify-email', async (req, res) => {
           message: 'Email verified successfully'
         });
       }
-      
+
       // Otherwise redirect to login page with verified=true
       res.redirect('/auth/login?verified=true');
     } catch (dbError) {
       console.error('Database error during verification:', dbError);
-      
+
       if (req.headers.accept?.includes('application/json')) {
         return res.status(500).json({
           success: false,
           message: 'Email verification failed due to database error'
         });
       }
-      
+
       res.redirect('/auth/login?verified=false&error=' + encodeURIComponent('Verification failed'));
     }
   } catch (error) {
     console.error('Email verification error:', error);
-    
+
     if (req.headers.accept?.includes('application/json')) {
       return res.status(500).json({
         success: false,
         message: 'Email verification failed'
       });
     }
-    
+
     res.redirect('/auth/login?verified=false&error=' + encodeURIComponent('Verification failed'));
   }
 });
@@ -368,7 +410,7 @@ router.get('/verify-email', async (req, res) => {
 router.post('/google', async (req, res) => {
   try {
     const { credential } = req.body;
-    
+
     if (!credential) {
       return res.status(400).json({
         success: false,
@@ -381,9 +423,9 @@ router.post('/google', async (req, res) => {
       idToken: credential,
       audience: process.env.GOOGLE_CLIENT_ID
     });
-    
+
     const payload = ticket.getPayload();
-    
+
     // Create or update user
     const user = await createOrUpdateOAuthUser({
       email: payload.email,
@@ -427,31 +469,24 @@ router.post('/google', async (req, res) => {
 router.get('/google/callback', async (req, res) => {
   try {
     const { code, error } = req.query;
-    
+
     if (error) {
-      return res.redirect(`/login?error=${encodeURIComponent(error)}`);
-    }
-    
-    if (!code) {
-      return res.redirect('/login?error=no_code');
+      return res.redirect(`/login2?error=${encodeURIComponent(error)}`);
     }
 
-    // Exchange code for tokens
-    const oauth2Client = new OAuth2Client(
-      process.env.GOOGLE_CLIENT_ID,
-      process.env.GOOGLE_CLIENT_SECRET,
-      process.env.GOOGLE_REDIRECT_URI
-    );
-    
-    const { tokens } = await oauth2Client.getToken(code);
-    
-    // Get user info
-    oauth2Client.setCredentials(tokens);
+    if (!code) {
+      return res.redirect('/login2?error=no_code');
+    }
+
+    // Get the tokens
+    const { tokens } = await googleClient.getToken(code);
+
+    // Verify token and get user info
     const ticket = await googleClient.verifyIdToken({
       idToken: tokens.id_token,
       audience: process.env.GOOGLE_CLIENT_ID
     });
-    
+
     const payload = ticket.getPayload();
 
     // Create or update user
@@ -459,13 +494,14 @@ router.get('/google/callback', async (req, res) => {
       email: payload.email,
       username: payload.name,
       provider: 'google',
-      providerId: payload.sub
+      providerId: payload.sub,
+      googleTokens: tokens
     });
 
-    // Create JWT
+    // Create JWT token
     const token = jwt.sign(
-      { userId: user.id, email: user.email },
-      JWT_SECRET,
+      { userId: user.id },
+      process.env.JWT_SECRET,
       { expiresIn: '4h' }
     );
 
@@ -473,14 +509,11 @@ router.get('/google/callback', async (req, res) => {
     req.session.userId = user.id;
     await new Promise(resolve => req.session.save(resolve));
 
-    // Redirect with token
-    const redirectTo = req.session.returnUrl || '/marketplace2';
-    delete req.session.returnUrl;
-    
-    res.redirect(`${redirectTo}?token=${token}`);
+    // Redirect directly to marketplace2
+    res.redirect(`/marketplace2?token=${token}`);
   } catch (error) {
     console.error('Google callback error:', error);
-    res.redirect('/login?error=google_auth_failed');
+    res.redirect('/login2?error=google_auth_failed');
   }
 });
 
@@ -488,7 +521,7 @@ router.get('/google/callback', async (req, res) => {
 router.post('/refresh-token', async (req, res) => {
   try {
     const { refreshToken } = req.body;
-    
+
     if (!refreshToken) {
       return res.status(400).json({ 
         success: false, 
@@ -501,7 +534,7 @@ router.post('/refresh-token', async (req, res) => {
       refreshToken, 
       process.env.REFRESH_TOKEN_SECRET || JWT_SECRET
     );
-    
+
     // Check if it's a refresh token
     if (decoded.type !== 'refresh') {
       return res.status(401).json({
@@ -540,7 +573,7 @@ router.post('/logout', (req, res) => {
         message: 'Logout failed'
       });
     }
-    
+
     res.clearCookie('connect.sid');
     res.status(200).json({
       success: true,
@@ -556,8 +589,12 @@ router.get('/login', (req, res) => {
   const email = req.query.email || '';
   const verified = req.query.verified === 'true';
   const error = req.query.error || null;
-  
-  res.render('login', { email, verified, error });
+
+  // Normalize all redirect parameters to returnTo
+  let returnTo = req.query.returnTo || req.query.returnUrl || req.query.redirect || '/';
+  returnTo = sanitizeRedirectUrl(returnTo);
+
+  res.render('login', { email, verified, error, returnTo });
 });
 
 // Second login step - Password entry
@@ -566,13 +603,17 @@ router.get('/login2', (req, res) => {
   const email = req.query.email || '';
   const verified = req.query.verified === 'true';
   const error = req.query.error || null;
-  
+
+  // Normalize all redirect parameters to returnTo
+  let returnTo = req.query.returnTo || req.query.returnUrl || req.query.redirect || '/';
+  returnTo = sanitizeRedirectUrl(returnTo);
+
   // If no email provided, redirect back to first login step
   if (!email) {
-    return res.redirect('/auth/login');
+    return res.redirect(`/auth/login?returnTo=${encodeURIComponent(returnTo)}`);
   }
-  
-  res.render('login2', { email, verified, error });
+
+  res.render('login2', { email, verified, error, returnTo });
 });
 
 router.get('/signup', (req, res) => {
@@ -589,25 +630,25 @@ router.get('/check-token', async (req, res) => {
         message: 'No token provided'
       });
     }
-    
+
     const token = authHeader.split(' ')[1];
-    
+
     try {
       const decoded = jwt.verify(token, JWT_SECRET);
-      
+
       // Check if user exists in database
       const userCheck = await pool.query(
         'SELECT id FROM users WHERE id = $1',
         [decoded.userId]
       );
-      
+
       if (userCheck.rows.length === 0) {
         return res.status(401).json({
           valid: false,
           message: 'User not found'
         });
       }
-      
+
       return res.status(200).json({
         valid: true,
         userId: decoded.userId
@@ -631,17 +672,17 @@ router.get('/check-token', async (req, res) => {
 router.post('/resend-verification', async (req, res) => {
   try {
     const { email } = req.body;
-    
+
     if (!email) {
       return res.status(400).json({
         success: false,
         message: 'Email is required'
       });
     }
-    
+
     // Check if user exists
     const user = await getUserByEmail(email);
-    
+
     if (!user) {
       // Return success even if user doesn't exist for security reasons
       return res.status(200).json({
@@ -649,7 +690,7 @@ router.post('/resend-verification', async (req, res) => {
         message: 'If your email exists in our system, a verification email has been sent.'
       });
     }
-    
+
     // Check if already verified
     if (user.is_verified) {
       return res.status(200).json({
@@ -658,22 +699,22 @@ router.post('/resend-verification', async (req, res) => {
         message: 'Your email is already verified. You can log in now.'
       });
     }
-    
+
     // Generate verification token
     const verificationToken = jwt.sign(
       { userId: user.id },
       EMAIL_SECRET,
       { expiresIn: '24h' }
     );
-    
+
     // Send verification email
     await sendVerificationEmail(email, verificationToken);
-    
+
     res.status(200).json({
       success: true,
       message: 'Verification email sent. Please check your inbox.'
     });
-    
+
   } catch (error) {
     console.error('Error resending verification email:', error);
     res.status(500).json({
@@ -685,7 +726,10 @@ router.post('/resend-verification', async (req, res) => {
 
 // Verify email notice page
 router.get('/verify-email-notice', (req, res) => {
-  res.render('verify-email-notice');
+  let returnTo = req.query.returnTo || req.query.returnUrl || req.query.redirect || '/';
+  returnTo = sanitizeRedirectUrl(returnTo);
+
+  res.render('verify-email-notice', { returnTo });
 });
 
 // This assumes you have an auth.js file for authentication routes
@@ -696,7 +740,7 @@ router.post('/login2', async (req, res) => {
   try {
     // Extract login details from request body
     const { email, password, remember } = req.body;
-    
+
     if (!email || !password) {
       return res.status(400).json({ 
         success: false, 
@@ -706,10 +750,10 @@ router.post('/login2', async (req, res) => {
 
     // Use your existing authentication logic here
     // This is just a wrapper that calls your existing login handler
-    
+
     // For example, if you have a user service:
     const result = await userService.authenticateUser(email, password);
-    
+
     if (!result.success) {
       return res.status(401).json({ 
         success: false, 
@@ -720,7 +764,7 @@ router.post('/login2', async (req, res) => {
     // Generate authentication tokens
     const token = generateAuthToken(result.user);
     const refreshToken = remember ? generateRefreshToken(result.user) : null;
-    
+
     // Set cookies if you're using them
     if (token) {
       const cookieOptions = {
@@ -728,9 +772,9 @@ router.post('/login2', async (req, res) => {
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'Strict'
       };
-      
+
       res.cookie('auth_token', token, cookieOptions);
-      
+
       if (refreshToken) {
         // Set refresh token with longer expiry
         res.cookie('refresh_token', refreshToken, {
@@ -765,17 +809,17 @@ router.post('/login2', async (req, res) => {
 router.post('/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
-    
+
     if (!email) {
       return res.status(400).json({
         success: false,
         message: 'Email is required'
       });
     }
-    
+
     // Check if user exists
     const user = await getUserByEmail(email);
-    
+
     if (!user) {
       // For security, don't reveal that the email doesn't exist
       return res.status(200).json({
@@ -783,21 +827,21 @@ router.post('/forgot-password', async (req, res) => {
         message: 'If your email exists in our system, password reset instructions will be sent.'
       });
     }
-    
+
     // Generate a reset token
     const resetToken = jwt.sign(
       { userId: user.id, purpose: 'password_reset' },
       process.env.EMAIL_SECRET || JWT_SECRET,
       { expiresIn: '1h' }
     );
-    
+
     // Store the token in the database (optional but recommended)
     await pool.query(`
       UPDATE users_auth 
       SET reset_token = $1, reset_token_expires = NOW() + INTERVAL '1 hour'
       WHERE user_id = $2
     `, [resetToken, user.id]);
-    
+
     // Send password reset email
     try {
       // Assume you have a function like this
@@ -809,12 +853,12 @@ router.post('/forgot-password', async (req, res) => {
         message: 'Error sending password reset email'
       });
     }
-    
+
     res.status(200).json({
       success: true,
       message: 'Password reset instructions have been sent to your email'
     });
-    
+
   } catch (error) {
     console.error('Forgot password error:', error);
     res.status(500).json({
@@ -828,18 +872,18 @@ router.post('/forgot-password', async (req, res) => {
 router.post('/reset-password', async (req, res) => {
   try {
     const { password, token } = req.body;
-    
+
     if (!password || !token) {
       return res.status(400).json({
         success: false,
         message: 'Password and token are required'
       });
     }
-    
+
     let decoded;
     try {
       decoded = jwt.verify(token, process.env.EMAIL_SECRET || JWT_SECRET);
-      
+
       if (decoded.purpose !== 'password_reset') {
         throw new Error('Invalid token purpose');
       }
@@ -849,9 +893,9 @@ router.post('/reset-password', async (req, res) => {
         message: 'Invalid or expired reset token'
       });
     }
-    
+
     const userId = decoded.userId;
-    
+
     // Verify token is still valid in database (optional)
     const tokenCheck = await pool.query(`
       SELECT user_id FROM users_auth
@@ -859,17 +903,17 @@ router.post('/reset-password', async (req, res) => {
       AND reset_token = $2
       AND reset_token_expires > NOW()
     `, [userId, token]);
-    
+
     if (tokenCheck.rows.length === 0) {
       return res.status(400).json({
         success: false,
         message: 'Invalid or expired reset token'
       });
     }
-    
+
     // Hash the new password
     const hashedPassword = await bcrypt.hash(password, 10);
-    
+
     // Update the password
     await pool.query(`
       UPDATE users_auth
@@ -879,12 +923,12 @@ router.post('/reset-password', async (req, res) => {
           verified = true
       WHERE user_id = $2
     `, [hashedPassword, userId]);
-    
+
     res.status(200).json({
       success: true,
       message: 'Password has been reset successfully'
     });
-    
+
   } catch (error) {
     console.error('Password reset error:', error);
     res.status(500).json({
@@ -904,37 +948,37 @@ router.post('/manual-verify', async (req, res) => {
         message: 'Unauthorized'
       });
     }
-    
+
     const { email } = req.body;
-    
+
     if (!email) {
       return res.status(400).json({
         success: false,
         message: 'Email is required'
       });
     }
-    
+
     // Find the user
     const userResult = await pool.query(
       'SELECT id, email FROM users WHERE email = $1',
       [email.toLowerCase()]
     );
-    
+
     if (userResult.rows.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
       });
     }
-    
+
     const userId = userResult.rows[0].id;
-    
+
     // Check if auth record exists
     const authCheck = await pool.query(
       'SELECT user_id FROM users_auth WHERE user_id = $1',
       [userId]
     );
-    
+
     if (authCheck.rows.length === 0) {
       // Create auth record
       await pool.query(
@@ -948,14 +992,14 @@ router.post('/manual-verify', async (req, res) => {
         [userId]
       );
     }
-    
+
     console.log(`User ${userId} (${email}) manually verified`);
-    
+
     res.status(200).json({
       success: true,
       message: 'User verified successfully'
     });
-    
+
   } catch (error) {
     console.error('Manual verification error:', error);
     res.status(500).json({

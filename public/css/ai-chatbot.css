@@ -302,11 +302,22 @@
   color: #666;
   border-top: 1px solid #f0f0f0;
   text-align: center;
+  gap: 6px;
 }
 
 .credits i {
   color: #000AA4;
-  margin-right: 6px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+}
+
+.credits p {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
 }
 
 .credits strong {
@@ -452,4 +463,27 @@
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 16px;
+}
+
+.send-button {
+  position: absolute;
+  right: 24px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  color: #5D2AC6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+
+.send-button:hover {
+  transform: scale(1.1);
+  color: #4a1ba0;
+}
+
+.send-button i {
+  font-size: 16px;
 }

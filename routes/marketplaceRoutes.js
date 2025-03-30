@@ -6,14 +6,22 @@ import pool from '../db.js';
 dotenv.config();
 const router = express.Router();
 
-// Home route
+// Home route now renders homepage.ejs
 router.get('/', (req, res) => {
-  res.render('home', { user: req.user || null });
+  res.render('homepage', { 
+    title: 'Welcome to Arzani Marketplace',
+    user: req.user || null
+  });
 });
 
-// Marketplace main page
+// Marketplace main page - redirect old route
+router.get('/marketplace', (req, res) => {
+  res.redirect('/marketplace2');
+});
+
+// New marketplace page
 router.get('/marketplace2', (req, res) => {
-  res.render('marketplace', { user: req.user || null });
+  res.render('marketplace2', { user: req.user || null });
 });
 
 // Profile page (requires authentication)

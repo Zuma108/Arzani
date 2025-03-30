@@ -1,0 +1,44 @@
+<!-- AI Assistant Button Only (no chat interface) -->
+<div class="ai-assistant-button" id="aiAssistantButton">
+    <button class="ai-button" onclick="window.location.href='/chat'">
+        <span class="ai-icon">🤖</span>
+        <span class="ai-text">Ask Arzani AI</span>
+    </button>
+</div>
+
+<style>
+    .ai-assistant-button {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1000;
+    }
+
+    .ai-button {
+        display: flex;
+        align-items: center;
+        background-color: #4a6cf7;
+        color: white;
+        border: none;
+        border-radius: 30px;
+        padding: 10px 20px;
+        cursor: pointer;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s ease;
+    }
+
+    .ai-button:hover {
+        background-color: #3a59d5;
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
+        transform: translateY(-2px);
+    }
+
+    .ai-icon {
+        font-size: 20px;
+        margin-right: 8px;
+    }
+
+    .ai-text {
+        font-weight: 600;
+    }
+</style>

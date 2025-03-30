@@ -579,6 +579,7 @@ footer {
 
 .modal-content {
     background: white;
+    z-index: 100000;
     padding: 2rem;
     border-radius: 12px;
     max-width: 800px;
@@ -927,6 +928,7 @@ footer {
 /* Modern Modal Styling */
 .modal-content.modern-modal {
     background: white;
+    z-index: 100000;
     padding: 1.5rem 2rem 1rem; /* Reduced top and bottom padding */
     border-radius: 16px;
     max-width: 860px;

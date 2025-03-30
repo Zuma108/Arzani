@@ -1,7 +1,7 @@
 import express from 'express';
 import Stripe from 'stripe';
 import multer from 'multer';
-import { authenticateToken } from '../middleware/auth.js';
+import auth from '../middleware/auth.js';
 import pool from '../db.js';
 import { uploadToS3 } from '../utils/s3.js';
 import dotenv from 'dotenv';
@@ -16,39 +16,64 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 // Configure multer for memory storage
 const upload = multer({ storage: multer.memoryStorage() });
 
-// Main profile page
-router.get('/', authenticateToken, async (req, res) => {
+// Add authentication middleware to all routes
+router.use(auth.authenticateToken);
+
+// Main profile page - improved authentication handling
+router.get('/', async (req, res) => {
   try {
-    const userId = req.user.userId;
-    
-    // Get user data
-    const userQuery = await pool.query(
-      `SELECT id, username, email, profile_picture, created_at, auth_provider, subscription_type 
-       FROM users WHERE id = $1`,
-      [userId]
-    );
-    
-    if (userQuery.rows.length === 0) {
-      return res.status(404).send('User not found');
-    }
-    
-    const user = userQuery.rows[0];
-    
-    // Render profile page
-    res.render('profile', { 
-      user,
-      title: 'Your Profile',
-      activeTab: 'profile'
+    console.log('Profile request:', {
+      hasUser: !!req.user,
+      userId: req.user?.userId || req.session?.userId,
+      sessionId: req.sessionID
     });
     
+    // Check auth from multiple sources
+    const userId = req.user?.userId || req.session?.userId;
+    
+    // If user is not authenticated, redirect to login
+    if (!userId) {
+      console.log('No user ID found, redirecting to login');
+      return res.redirect('/login2?returnTo=' + encodeURIComponent('/profile'));
+    }
+
+    // Get user data from database
+    const result = await pool.query(
+      `SELECT u.id, u.username, u.email, u.profile_picture, u.created_at, 
+              COUNT(DISTINCT b.id) AS business_count
+       FROM users u
+       LEFT JOIN businesses b ON u.id = b.user_id
+       WHERE u.id = $1
+       GROUP BY u.id`,
+      [userId]
+    );
+
+    // If user not found, redirect to login
+    if (result.rows.length === 0) {
+      console.log('User not found in database, redirecting to login');
+      return res.redirect('/login2');
+    }
+
+    const user = result.rows[0];
+    console.log('User profile loaded successfully:', user.id);
+    
+    // Render the profile page with user data
+    res.render('profile', {
+      title: 'My Profile',
+      user: user,
+      formattedDate: new Date(user.created_at).toLocaleDateString()
+    });
   } catch (error) {
-    console.error('Profile page error:', error);
-    res.status(500).send('Error loading profile');
+    console.error('Error fetching profile:', error);
+    res.status(500).render('error', {
+      message: 'Error loading profile',
+      error: process.env.NODE_ENV === 'development' ? error : {}
+    });
   }
 });
 
-// Subscription management page
-router.get('/subscription', authenticateToken, async (req, res) => {
+// Subscription management page - use the unified auth system
+router.get('/subscription', auth.enhancedAuth, async (req, res) => {
   try {
     const userId = req.user.userId;
     
@@ -126,8 +151,8 @@ router.get('/subscription', authenticateToken, async (req, res) => {
   }
 });
 
-// Update profile information
-router.post('/update', authenticateToken, async (req, res) => {
+// Update profile information - use the unified auth system
+router.post('/update', auth.enhancedAuth, async (req, res) => {
   try {
     const userId = req.user.userId;
     const { username, email } = req.body;
@@ -161,8 +186,8 @@ router.post('/update', authenticateToken, async (req, res) => {
   }
 });
 
-// Update profile picture
-router.post('/update-picture', authenticateToken, upload.single('profilePicture'), async (req, res) => {
+// Update profile picture - use the unified auth system
+router.post('/update-picture', auth.enhancedAuth, upload.single('profilePicture'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No profile picture uploaded' });
@@ -192,8 +217,8 @@ router.post('/update-picture', authenticateToken, upload.single('profilePicture'
   }
 });
 
-// Change password
-router.post('/change-password', authenticateToken, async (req, res) => {
+// Change password - use the unified auth system
+router.post('/change-password', auth.enhancedAuth, async (req, res) => {
   try {
     const userId = req.user.userId;
     const { currentPassword, newPassword } = req.body;

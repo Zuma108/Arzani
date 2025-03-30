@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pricing - Arzani Marketplace</title>
+    <link rel="stylesheet" href="/css/modern.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://js.stripe.com/v3/"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#316FD4',
+                        dark: '#141414',
+                        'dark-light': '#1E1E1E'
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-dark text-white font-sans">
+    <%- include('partials/header') %>
+
+    <!-- Pricing Hero Section -->
+    <section class="pt-32 pb-16 relative overflow-hidden">
+        <!-- Background elements -->
+        <div class="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
+            <div class="absolute -top-40 -left-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl"></div>
+            <div class="absolute -bottom-60 -right-40 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
+        </div>
+        
+        <!-- Background grid pattern -->
+        <div class="absolute inset-0 z-0 opacity-10">
+            <div class="grid-pattern"></div>
+        </div>
+        
+        <div class="container mx-auto px-4 md:px-6 relative z-10">
+            <div class="text-center max-w-3xl mx-auto">
+                <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
+                    Choose the plan that's right for you
+                </h1>
+                <p class="text-xl text-gray-400 mb-8">
+                    Get access to powerful tools and insights to help you make smarter business decisions
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Plans Section -->
+    <section class="py-20 relative overflow-hidden">
+        <!-- Background elements -->
+        <div class="absolute inset-0 z-0">
+            <div class="absolute top-1/2 left-0 w-full h-1/2 bg-gradient-to-b from-transparent to-black/20"></div>
+        </div>
+        
+        <div class="container mx-auto px-4 md:px-6 relative z-10">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-7xl mx-auto">
+                <!-- Basic Plan -->
+                <div class="bg-dark-light/40 backdrop-blur-sm border border-gray-800/50 rounded-2xl p-8 transition-all duration-300 hover:border-gray-700/50 hover:translate-y-[-4px]">
+                    <div class="text-center mb-8">
+                        <h3 class="text-2xl font-bold mb-4">Basic</h3>
+                        <div class="flex justify-center items-baseline mb-4">
+                            <span class="text-5xl font-bold">£0</span>
+                            <span class="text-gray-400 ml-2">/month</span>
+                        </div>
+                        <p class="text-gray-400">Perfect for getting started</p>
+                    </div>
+                    
+                    <div class="space-y-4 mb-8">
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 text-primary mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span>Limited Database (100k listings)</span>
+                        </div>
+                        <div class="flex items-center text-gray-400">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                            <span>ID Verification</span>
+                        </div>
+                        <div class="flex items-center text-gray-400">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                            <span>Arzani Insights</span>
+                        </div>
+                        <div class="flex items-center text-gray-400">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                            <span>Off Market Leads</span>
+                        </div>
+                    </div>
+                    
+                    <button class="w-full py-3 px-6 rounded-xl bg-gray-800 text-gray-400 cursor-not-allowed" disabled>
+                        Current Plan
+                    </button>
+                </div>
+
+                <!-- Gold Plan -->
+                <div class="bg-dark-light/40 backdrop-blur-sm border border-gray-800/50 rounded-2xl p-8 transition-all duration-300 hover:border-primary/30 hover:translate-y-[-4px]">
+                    <div class="text-center mb-8">
+                        <h3 class="text-2xl font-bold mb-4">Gold</h3>
+                        <div class="flex justify-center items-baseline mb-4">
+                            <span class="text-5xl font-bold">£39</span>
+                            <span class="text-gray-400 ml-2">/month</span>
+                        </div>
+                        <p class="text-gray-400">For serious buyers</p>
+                    </div>
+                    
+                    <div class="space-y-4 mb-8">
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 text-primary mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span>Full Database Access</span>
+                        </div>
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 text-primary mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span>ID Verification</span>
+                        </div>
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 text-primary mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span>Arzani Insights</span>
+                        </div>
+                        <div class="flex items-center text-gray-400">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                            <span>Off Market Leads</span>
+                        </div>
+                    </div>
+                    
+                    <button class="w-full py-3 px-6 rounded-xl bg-primary hover:bg-primary/90 transition-colors duration-300" data-plan="gold">
+                        Upgrade to Gold
+                    </button>
+                </div>
+
+                <!-- Platinum Plan -->
+                <div class="bg-dark-light/40 backdrop-blur-sm border border-primary/20 rounded-2xl p-8 transition-all duration-300 hover:border-primary/40 hover:translate-y-[-4px] relative">
+                    <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                        <span class="bg-primary text-white text-sm py-1 px-4 rounded-full">Most Popular</span>
+                    </div>
+                    
+                    <div class="text-center mb-8">
+                        <h3 class="text-2xl font-bold mb-4">Platinum</h3>
+                        <div class="flex justify-center items-baseline mb-4">
+                            <span class="text-5xl font-bold">£50</span>
+                            <span class="text-gray-400 ml-2">/month</span>
+                        </div>
+                        <p class="text-gray-400">Complete access to all features</p>
+                    </div>
+                    
+                    <div class="space-y-4 mb-8">
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 text-primary mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span>Full Database Access</span>
+                        </div>
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 text-primary mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span>ID Verification</span>
+                        </div>
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 text-primary mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span>Arzani Insights</span>
+                        </div>
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 text-primary mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span>Off Market Leads</span>
+                        </div>
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 text-primary mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span>Deal Emails</span>
+                        </div>
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 text-primary mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span>Off Market Advanced Data</span>
+                        </div>
+                    </div>
+                    
+                    <button class="w-full py-3 px-6 rounded-xl bg-gradient-to-r from-primary to-purple-600 hover:opacity-90 transition-opacity duration-300" data-plan="platinum">
+                        Upgrade to Platinum
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="py-20 relative overflow-hidden">
+        <div class="container mx-auto px-4 md:px-6">
+            <div class="max-w-3xl mx-auto">
+                <h2 class="text-3xl font-bold text-center mb-12">Frequently Asked Questions</h2>
+                <div class="space-y-6">
+                    <div class="faq-item border-b border-gray-800 pb-6">
+                        <button class="faq-question w-full flex justify-between items-center text-left">
+                            <span class="text-lg font-medium">Can I switch between plans?</span>
+                            <svg class="faq-icon w-6 h-6 transform transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div class="faq-answer mt-4 text-gray-400 hidden">
+                            Yes, you can upgrade or downgrade your plan at any time. Changes will be reflected in your next billing cycle.
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item border-b border-gray-800 pb-6">
+                        <button class="faq-question w-full flex justify-between items-center text-left">
+                            <span class="text-lg font-medium">What payment methods do you accept?</span>
+                            <svg class="faq-icon w-6 h-6 transform transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div class="faq-answer mt-4 text-gray-400 hidden">
+                            We accept all major credit cards and debit cards. Payments are processed securely through Stripe.
+                        </div>
+                    </div>
+                    
+                    <div class="faq-item border-b border-gray-800 pb-6">
+                        <button class="faq-question w-full flex justify-between items-center text-left">
+                            <span class="text-lg font-medium">Is there a free trial available?</span>
+                            <svg class="faq-icon w-6 h-6 transform transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div class="faq-answer mt-4 text-gray-400 hidden">
+                            Yes, you can start with our Basic plan which is free forever. This allows you to explore our platform and upgrade when you're ready.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <%- include('partials/footer') %>
+
+    <script src="/js/navigation.js"></script>
+    <script src="/js/animations.js"></script>
+    <script src="/js/faq-accordion.js"></script>
+    <script src="/js/off-market-leads.js"></script>
+</body>
+</html>

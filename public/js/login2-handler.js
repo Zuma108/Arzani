@@ -23,6 +23,40 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
   
+  // Get the base URL for redirects based on environment
+  function getBaseUrl() {
+    const environmentMeta = document.querySelector('meta[name="site-environment"]');
+    const productionDomainMeta = document.querySelector('meta[name="production-domain"]');
+    
+    const isProduction = environmentMeta && environmentMeta.content === 'production';
+    const productionDomain = productionDomainMeta ? productionDomainMeta.content : 'www.arzani.co.uk';
+    
+    if (isProduction) {
+        return 'https://' + productionDomain;
+    }
+    
+    // For development, use relative URLs
+    return '';
+  }
+  
+  // Set correct href on all login/signup links
+  const loginLinks = document.querySelectorAll('a[href*="/login"]');
+  const signupLinks = document.querySelectorAll('a[href*="/signup"]');
+  
+  loginLinks.forEach(link => {
+    if (link.getAttribute('href').includes('arzani.co.uk')) return; // Already absolute
+    
+    const path = link.getAttribute('href').replace(/^https?:\/\/[^\/]+/, '');
+    link.setAttribute('href', getBaseUrl() + path);
+  });
+  
+  signupLinks.forEach(link => {
+    if (link.getAttribute('href').includes('arzani.co.uk')) return; // Already absolute
+    
+    const path = link.getAttribute('href').replace(/^https?:\/\/[^\/]+/, '');
+    link.setAttribute('href', getBaseUrl() + path);
+  });
+  
   if (loginForm) {
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -134,9 +168,8 @@ document.addEventListener('DOMContentLoaded', function() {
           localStorage.removeItem('email');
         }
         
-        // Redirect to appropriate page
-        const returnUrl = urlParams.get('returnUrl') || '/marketplace2';
-        window.location.href = returnUrl;
+        // Always redirect to marketplace2 after successful login with proper domain based on environment
+        window.location.href = getBaseUrl() + '/marketplace2';
         
       } catch (error) {
         console.error('Login error:', error);
@@ -491,10 +524,8 @@ document.addEventListener('DOMContentLoaded', function() {
       localStorage.removeItem('email');
     }
     
-    // Redirect
-    const urlParams = new URLSearchParams(window.location.search);
-    const returnUrl = urlParams.get('returnUrl') || '/marketplace2';
-    window.location.href = returnUrl;
+    // Always redirect to marketplace2 with proper domain based on environment
+    window.location.href = getBaseUrl() + '/marketplace2';
   }
   
   // Show success message if verification was successful
