@@ -3,7 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %></title>
+    <title><%= typeof title !== 'undefined' ? title : 'Arzani Marketplace - AI-Powered Business Platform' %></title>
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="/css/modern.css">
+    <link rel="stylesheet" href="/css/testimonial-carousel.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind Configuration -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#316FD4',
+                        dark: '#141414',
+                        'dark-light': '#1E1E1E'
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-W50GKB6F3M"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-W50GKB6F3M');
+    </script>
     
     <!-- Include Tailwind CSS -->
     <%- include('../partials/tailwind-setup') %>
@@ -22,8 +55,11 @@
     <% if (locals.isChatPage) { %>
         <link rel="stylesheet" href="/css/chat.css">
     <% } %>
+    
+    <!-- Additional head content can be included in child views -->
+    <%- typeof extraHead !== 'undefined' ? extraHead : '' %>
 </head>
-<body>
+<body class="bg-dark text-white font-sans">
     <% if (!locals.hideHeader) { %>
         <%- include('../partials/header') %>
     <% } %>
@@ -36,7 +72,17 @@
         <%- include('../partials/footer') %>
     <% } %>
     
-    <!-- Scripts -->
-    <%- include('../partials/scripts') %>
+    <!-- Common scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+    <script src="/js/navigation.js"></script>
+    <script src="/js/animations.js"></script>
+    <script src="/js/testimonial-carousel.js"></script>
+    <script src="/js/scroll-animations.js"></script>
+    <script src="/js/ai-features.js"></script>
+    <script src="/js/faq-accordion.js"></script>
+    <script src="/js/cookie-banner.js"></script>
+    
+    <!-- Additional scripts can be included in child views -->
+    <%- typeof extraScripts !== 'undefined' ? extraScripts : '' %>
 </body>
 </html>

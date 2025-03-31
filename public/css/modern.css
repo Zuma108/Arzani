@@ -1723,10 +1723,52 @@ footer select {
 
 .feature-card img {
   transition: transform 0.6s ease;
+  max-height: 200px; /* Ensure minimum height on all devices */
+  object-fit: contain;
+  width: auto;
+  height: auto;
+  margin: 0 auto;
 }
 
 .feature-card:hover img {
   transform: scale(1.05);
+}
+
+/* Improved responsive image handling for feature cards */
+@media (max-width: 768px) {
+  .feature-card .flex-grow {
+    min-height: 220px; /* Ensure enough space for images on mobile */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .feature-card img {
+    max-height: 180px;
+    max-width: 90%;
+    object-position: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .feature-card .flex-grow {
+    min-height: 180px;
+  }
+  
+  .feature-card img {
+    max-height: 150px;
+  }
+}
+
+/* For very small devices */
+@media (max-width: 360px) {
+  .feature-card .flex-grow {
+    min-height: 160px;
+  }
+  
+  .feature-card img {
+    max-height: 130px;
+  }
 }
 
 .glow-circle {
@@ -1736,25 +1778,6 @@ footer select {
   background: radial-gradient(circle at center, rgba(49, 111, 212, 0.2) 0%, rgba(49, 111, 212, 0) 70%);
   animation: pulse 4s infinite alternate ease-in-out;
   opacity: 0.7;
-}
-
-.glow-circle.purple {
-  background: radial-gradient(circle at center, rgba(155, 75, 249, 0.2) 0%, rgba(155, 75, 249, 0) 70%);
-}
-
-.glow-circle.green {
-  background: radial-gradient(circle at center, rgba(45, 212, 191, 0.2) 0%, rgba(45, 212, 191, 0) 70%);
-}
-
-@keyframes pulse {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 0.5;
-  }
-  50% {
-    transform: scale(1.15);
-    opacity: 0.8;
-  }
 }
 
 /* Modern Testimonials Section */

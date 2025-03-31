@@ -38,6 +38,7 @@ const checkoutRouter = require('./routes/checkout');
 const stripeRoutes = require('./routes/stripe-routes');
 import stripeImportedRoutes from './routes/stripe.js';
 import submitBusinessRoutes from './routes/api/submit-business.js';
+import sitemapRoutes from './routes/sitemap.js';
 
 app.use('/', voiceRoutes);
 app.use('/', chatRoutes);
@@ -49,6 +50,9 @@ app.use('/chat', chatRoutes); // Add chat routes
 
 // Register the API route
 app.use('/api/submit-business', submitBusinessRoutes);
+
+// Use the sitemap routes
+app.use('/', sitemapRoutes);
 
 // Add pricing route
   
