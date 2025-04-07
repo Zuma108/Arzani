@@ -4030,4 +4030,134 @@ app.post('/api/business/save-questionnaire', async (req, res) => {
   }
 });
 
+// Newsletter subscription endpoint
+app.post('/subscribe', async (req, res) => {
+  try {
+    const { email, first_name, last_name, source = 'website' } = req.body;
+    
+    // Basic validation
+    if (!email) {
+      return res.status(400).redirect('/subscribe/error?message=Email is required');
+    }
+    
+    // Check if email already exists in the newsletter_subscribers table
+    const checkQuery = 'SELECT id, is_active FROM newsletter_subscribers WHERE email = $1';
+    const checkResult = await pool.query(checkQuery, [email.toLowerCase().trim()]);
+    
+    if (checkResult.rows.length > 0) {
+      // Email exists, check if already active
+      if (checkResult.rows[0].is_active) {
+        return res.redirect('/subscribe/thank-you?status=existing');
+      } else {
+        // Reactivate the subscription
+        const reactivateQuery = `
+          UPDATE newsletter_subscribers 
+          SET is_active = TRUE, 
+              unsubscribed_at = NULL,
+              subscribed_at = CURRENT_TIMESTAMP,
+              source = COALESCE($1, source)
+          WHERE id = $2
+          RETURNING id`;
+        
+        await pool.query(reactivateQuery, [source, checkResult.rows[0].id]);
+        return res.redirect('/subscribe/thank-you?status=reactivated');
+      }
+    } else {
+      // Insert new subscriber
+      const insertQuery = `
+        INSERT INTO newsletter_subscribers (
+          email,
+          first_name,
+          last_name,
+          source,
+          subscribed_at,
+          is_active
+        ) VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, TRUE)
+        RETURNING id`;
+      
+      const values = [
+        email.toLowerCase().trim(),
+        first_name || null,
+        last_name || null,
+        source
+      ];
+      
+      await pool.query(insertQuery, values);
+      
+      // Log the subscription
+      console.log(`New newsletter subscription: ${email} from source: ${source}`);
+      
+      return res.redirect('/subscribe/thank-you');
+    }
+  } catch (error) {
+    console.error('Newsletter subscription error:', error);
+    return res.status(500).redirect('/subscribe/error?message=An unexpected error occurred');
+  }
+});
+
+// Newsletter thank you page
+app.get('/subscribe/thank-you', (req, res) => {
+  const status = req.query.status || 'new';
+  
+  res.render('subscribe/thank-you', {
+    title: 'Thank You for Subscribing',
+    status: status
+  });
+});
+
+// Newsletter error page
+app.get('/subscribe/error', (req, res) => {
+  const message = req.query.message || 'An error occurred with your subscription';
+  
+  res.render('subscribe/error', {
+    title: 'Subscription Error',
+    message: message
+  });
+});
+
+// Newsletter unsubscribe functionality
+app.get('/unsubscribe/:token', async (req, res) => {
+  try {
+    const { token } = req.params;
+    
+    // Update subscriber status
+    const updateQuery = `
+      UPDATE newsletter_subscribers
+      SET is_active = FALSE, unsubscribed_at = CURRENT_TIMESTAMP
+      WHERE unsubscribe_token = $1
+      RETURNING email`;
+    
+    const result = await pool.query(updateQuery, [token]);
+    
+    if (result.rows.length === 0) {
+      return res.render('subscribe/unsubscribe', {
+        title: 'Unsubscribe Error',
+        success: false,
+        message: 'Invalid or expired unsubscribe link'
+      });
+    }
+    
+    return res.render('subscribe/unsubscribe', {
+      title: 'Successfully Unsubscribed',
+      success: true,
+      email: result.rows[0].email
+    });
+    
+  } catch (error) {
+    console.error('Unsubscribe error:', error);
+    return res.render('subscribe/unsubscribe', {
+      title: 'Unsubscribe Error',
+      success: false,
+      message: 'An error occurred while processing your request'
+    });
+  }
+});
+
+// Newsletter subscription page
+app.get('/subscribe', (req, res) => {
+  res.render('subscribe/index', {
+    title: 'Subscribe to Our Newsletter'
+  });
+});
+
 export { app, server, chatSocketService };

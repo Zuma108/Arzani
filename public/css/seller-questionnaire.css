@@ -150,3 +150,17 @@ footer .container {
         padding-right: 5rem;
     }
 }
+
+/* Mobile footer padding adjustments */
+@media (max-width: 767px) {
+  footer .container:last-child {
+    padding-bottom: 28px; /* Increase bottom padding on mobile */
+  }
+  
+  /* Specific adjustment for iOS devices */
+  @supports (-webkit-touch-callout: none) {
+    footer .container:last-child {
+      padding-bottom: 40px; /* Even more padding for iOS to clear the home indicator */
+    }
+  }
+}

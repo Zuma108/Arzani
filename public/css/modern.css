@@ -2475,12 +2475,12 @@ footer select {
 }
 
 /* Testimonials Responsive Improvements */
-@media (max-width: this.scrollLeft = -cardWidth;.wrapper.scrollWidth - this.wrapper.clientWidth);
-px) {
+@media (max-width: 768px) {
   .testimonial-nav-button {
     width: 36px;
     height: 36px;
   }
+  
   
   .testimonial-card {
     padding: 16px;
