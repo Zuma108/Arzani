@@ -859,3 +859,203 @@ window.debugMarketplace = (command) => {
 };
 
 console.log('📊 Marketplace debug tools loaded. Access via window.debugMarketplace() or open browser console and type debugMarketplace("summary")');
+
+/**
+ * Debug version of marketplace.js with enhanced logging
+ */
+
+console.log('🔍 DEBUG: Loading marketplace-debug.js');
+
+// Use a single loading state
+let isLoading = false;
+let imageObserver; // Global IntersectionObserver for lazy loading
+
+// Add S3 config - supports multiple regions
+const S3_CONFIG = {
+  primaryRegion: 'eu-west-2',
+  fallbackRegion: 'eu-north-1',
+  bucket: 'arzani-images1',
+  retryAttempts: 2
+};
+
+export async function loadPage(pageNumber = 1, filters = {}) {
+  console.log('🔍 DEBUG: loadPage called with:', { pageNumber, filters });
+  
+  // Set loading state
+  isLoading = true;
+  const listingsContainer = document.getElementById('listings-container');
+  if (listingsContainer) {
+    listingsContainer.innerHTML = '<div class="loading-spinner">Loading...</div>';
+  } else {
+    console.error('🔍 DEBUG: listings-container element not found!');
+  }
+  
+  // Parse numeric values properly
+  const query = new URLSearchParams({
+    page: pageNumber.toString(),
+    location: filters.location || '',
+    industries: filters.industries || '',
+    priceMin: filters.priceRange?.split('-')[0] || '',
+    priceMax: filters.priceRange?.split('-')[1] || '',
+    revenueRange: filters.revenueRange || '',
+    cashflowRange: filters.cashflowRange || ''
+  }).toString();
+
+  console.log(`🔍 DEBUG: Fetching listings with query: ${query}`);
+  
+  try {
+    const response = await fetch(`/api/business/listings?${query}`);
+    console.log(`🔍 DEBUG: API Response status: ${response.status}`);
+    
+    if (!response.ok) {
+      throw new Error(`Server responded with status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log(`🔍 DEBUG: Received ${data.businesses?.length || 0} businesses out of ${data.totalCount || 0} total`);
+    
+    if (data.businesses && Array.isArray(data.businesses)) {
+      renderBusinesses(data.businesses);
+      renderPaginationControls(pageNumber, data.totalPages);
+    } else {
+      console.error('🔍 DEBUG: Invalid data structure received:', data);
+      if (listingsContainer) {
+        listingsContainer.innerHTML = '<div class="alert alert-danger">Invalid data received from server</div>';
+      }
+    }
+  } catch (error) {
+    console.error('🔍 DEBUG: Error loading businesses:', error);
+    if (listingsContainer) {
+      listingsContainer.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+    }
+  } finally {
+    isLoading = false;
+  }
+}
+
+function renderBusinesses(businesses) {
+  console.log('🔍 DEBUG: Rendering businesses:', businesses.length);
+  
+  const listingsContainer = document.getElementById('listings-container');
+  if (!listingsContainer) {
+    console.error('🔍 DEBUG: listings-container element not found during rendering!');
+    return;
+  }
+  
+  listingsContainer.innerHTML = '';
+
+  if (!businesses || businesses.length === 0) {
+    console.log('🔍 DEBUG: No businesses to display');
+    listingsContainer.innerHTML = '<div class="alert alert-info">No businesses found matching your criteria.</div>';
+    return;
+  }
+
+  // Create document fragment for batch DOM updates
+  const fragment = document.createDocumentFragment();
+  
+  businesses.forEach((business, index) => {
+    console.log(`🔍 DEBUG: Processing business #${index}:`, business.business_name);
+    
+    const businessCard = document.createElement('div');
+    businessCard.className = 'col-md-4 mb-4';
+
+    // Only load first image initially for visible businesses
+    const isVisible = index < 9; // First 9 businesses (assuming 3x3 grid)
+    
+    // Process image URLs with multi-region awareness
+    try {
+      business.processedImages = processBusinessImages(business);
+      console.log(`🔍 DEBUG: Processed ${business.processedImages.length} images for business #${business.id}`);
+    } catch (error) {
+      console.error(`🔍 DEBUG: Error processing images for business #${business.id}:`, error);
+      business.processedImages = ['/images/default-business.jpg'];
+    }
+    
+    // Create card with optimized image loading
+    try {
+      businessCard.innerHTML = generateBusinessCard(business, isVisible);
+    } catch (error) {
+      console.error(`🔍 DEBUG: Error generating card for business #${business.id}:`, error);
+      businessCard.innerHTML = `
+        <div class="card h-100">
+          <div class="card-body">
+            <h5 class="card-title">${business.business_name || 'Unnamed business'}</h5>
+            <p class="text-danger">Error rendering business card</p>
+          </div>
+        </div>
+      `;
+    }
+    
+    fragment.appendChild(businessCard);
+  });
+  
+  // Batch DOM update
+  console.log('🔍 DEBUG: Appending all business cards to container');
+  listingsContainer.appendChild(fragment);
+  
+  // Initialize lazy loading for images
+  initLazyLoading();
+  
+  // Initialize tooltips and event handlers
+  try {
+    initTooltips();
+    initEventHandlers();
+  } catch (error) {
+    console.error('🔍 DEBUG: Error initializing tooltips or event handlers:', error);
+  }
+}
+
+/**
+ * Process business images to ensure URLs use the correct S3 region format
+ * @param {Object} business - Business object with images array
+ * @returns {Array} - Array of processed image URLs
+ */
+function processBusinessImages(business) {
+  console.log(`🔍 DEBUG: Processing images for business #${business.id}:`, 
+              business.images ? (Array.isArray(business.images) ? business.images.length : 'Not an array') : 'No images');
+  
+  if (!business.images) {
+    console.log(`🔍 DEBUG: No images for business #${business.id}, using default`);
+    return ['/images/default-business.jpg'];
+  }
+  
+  // Parse PostgreSQL array if needed
+  let images = business.images;
+  if (typeof images === 'string') {
+    console.log(`🔍 DEBUG: Images is a string: "${images.substring(0, 100)}..."`);
+    
+    if (images.startsWith('{') && images.endsWith('}')) {
+      // Parse PostgreSQL array format {url1,url2,url3}
+      images = images.substring(1, images.length - 1).split(',');
+      console.log(`🔍 DEBUG: Parsed PostgreSQL array, got ${images.length} images`);
+    } else {
+      // Single image string
+      images = [images];
+      console.log('🔍 DEBUG: Single image string, converted to array with 1 item');
+    }
+  } else if (!Array.isArray(images)) {
+    console.log(`🔍 DEBUG: Images is not an array or string, type: ${typeof images}`);
+    return ['/images/default-business.jpg'];
+  }
+  
+  // Filter out empty values and process each image
+  return images.filter(Boolean).map(image => {
+    if (!image) return '/images/default-business.jpg';
+    
+    // If already a full URL, return as is
+    if (image.startsWith('http')) {
+      return image;
+    }
+    
+    // If it's a relative upload path, convert to S3 URL with primary region
+    if (image.startsWith('/uploads/')) {
+      const filename = image.substring('/uploads/'.length);
+      return `https://${S3_CONFIG.bucket}.s3.${S3_CONFIG.primaryRegion}.amazonaws.com/businesses/${business.id}/${filename}`;
+    }
+    
+    // Otherwise it's just a filename, construct the URL
+    return `https://${S3_CONFIG.bucket}.s3.${S3_CONFIG.primaryRegion}.amazonaws.com/businesses/${business.id}/${image}`;
+  });
+}
+
+// ...existing code continues the same as in marketplace.js with added debug logs...

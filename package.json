@@ -21,7 +21,8 @@
     "setup-ai-assistant": "node migrations/create_assistant_interactions.js",
     "init-ai": "node scripts/init-ai-assistant.js",
     "fix-ai-tables": "node scripts/fix-ai-tables.js",
-    "watch:css": "tailwindcss -i ./src/tailwind.css -o ./public/css/tailwind.min.css --watch"
+    "watch:css": "tailwindcss -i ./src/tailwind.css -o ./public/css/tailwind.min.css --watch",
+    "install-blog-deps": "node scripts/install-blog-deps.js"
   },
   "engines": {
     "node": ">=18.0.0"
@@ -72,9 +73,13 @@
     "quill": "^2.0.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "reading-time": "^1.5.0",
+    "sanitize-html": "^2.15.0",
     "sequelize": "^6.37.6",
     "sharp": "^0.33.1",
+    "showdown": "^2.1.0",
     "sitemap": "^8.0.0",
+    "slugify": "^1.6.6",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "sqlite3": "^5.1.7",

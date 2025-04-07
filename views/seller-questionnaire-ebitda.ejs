@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seller Questionnaire - EBITDA | Arzani Marketplace</title>
+    <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">
+
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <%- include('../views/partials/tailwind-setup') %>
+    <link rel="stylesheet" href="/css/seller-questionnaire.css">
+    <link rel="stylesheet" href="/css/progress-bar.css">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: white;
+            overflow: hidden; /* Hide scrollbar */
+        }
+        .header {
+            height: 87px;
+            border-bottom: 0.8px solid #bfbcc6;
+        }
+        .content-container {
+            height: calc(100vh - 87px - 100px); /* Header height (87px) and footer height (100px) */
+            overflow-y: auto; /* Enable scrolling inside container if needed */
+            padding-bottom: 20px;
+        }
+        .btn-main {
+            background-color: #25224a;
+            color: white;
+            border-radius: 0 1rem 1rem 1rem;
+        }
+        .btn-next {
+            background-color: #041b76;
+            color: white;
+            border-radius: 0 1rem 1rem 1rem;
+            box-shadow: 7px 7px 17px 0px rgba(25,31,64,0.22);
+        }
+        .progress-bar {
+            background-color: #dee8ff;
+            height: 10px;
+        }
+        .progress-active {
+            background-color: #3e50f7;
+        }
+        .exit-link {
+            color: #25224a;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .profile-pics {
+            display: flex;
+            align-items: center;
+        }
+        .profile-pic {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid white;
+            object-fit: cover;
+        }
+        .profile-pic:not(:first-child) {
+            margin-left: -15px;
+        }
+        .ebitda-option {
+            border: 2px solid #bfbcc6;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+        }
+        .ebitda-option:hover {
+            border-color: #3e50f7;
+            background-color: rgba(62, 80, 247, 0.05);
+        }
+        .ebitda-option.selected {
+            border-color: #3e50f7;
+            background-color: rgba(62, 80, 247, 0.1);
+        }
+        .ebitda-option-check {
+            display: none;
+            color: #3e50f7;
+        }
+        .ebitda-option.selected .ebitda-option-check {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="w-full h-screen flex flex-col bg-white">
+        <!-- Header -->
+        <header class="header w-full bg-white flex items-center flex-shrink-0">
+            <div class="container mx-auto px-4 md:px-8 flex items-center justify-between">
+                <!-- Logo -->
+                <div class="h-12 md:h-16">
+                    <img src="/figma design exports/logos/Arzani black-white background 2.png" alt="Arzani" class="h-full">
+                </div>
+                
+                <!-- Right section -->
+                <div class="flex items-center gap-4">
+                    <!-- Help button -->
+                    <div class="hidden md:flex mr-4 h-12 px-6 items-center border border-[#bfbcc6] rounded">
+                        <span class="text-[#464154] text-base font-medium">Need help?</span>
+                    </div>
+                    
+                    <!-- Profile pictures -->
+                    <div class="profile-pics mr-4">
+                        <img src="https://randomuser.me/api/portraits/women/32.jpg" alt="Support agent" class="profile-pic">
+                        <img src="https://randomuser.me/api/portraits/men/44.jpg" alt="Support agent" class="profile-pic">
+                        <img src="https://randomuser.me/api/portraits/women/68.jpg" alt="Support agent" class="profile-pic">
+                    </div>
+                    
+                    <!-- Exit link -->
+                    <a href="/" class="exit-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                        <span class="hidden sm:inline">Exit</span>
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main content -->
+        <main class="content-container flex-grow page-transition">
+            <div class="container mx-auto px-4 max-w-2xl pt-8 md:pt-12">
+                <h1 class="text-[#25224a] text-2xl md:text-3xl font-black mb-4 text-center">What's your EBITDA?</h1>
+                <p class="text-[#5f5770] text-lg mb-8 text-center">This helps us understand your business's profitability and value to potential buyers.</p>
+                
+                <!-- EBITDA explanation -->
+                <div class="bg-blue-50 p-4 rounded-lg mb-8">
+                    <h3 class="font-medium text-[#25224a] text-lg mb-2">What is EBITDA?</h3>
+                    <p class="text-[#5f5770]">EBITDA stands for Earnings Before Interest, Taxes, Depreciation, and Amortization. It's a measure of a company's overall financial performance and is used as an alternative to net income.</p>
+                </div>
+                
+                <!-- EBITDA Input Form -->
+                <div class="mt-8">
+                    <div class="mb-6">
+                        <label for="ebitdaValue" class="block text-[#25224a] text-lg font-medium mb-2">Enter your annual EBITDA (£)</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-gray-500 text-lg">£</span>
+                            </div>
+                            <input 
+                                type="number" 
+                                id="ebitdaValue" 
+                                name="ebitdaValue" 
+                                min="0" 
+                                step="1000"
+                                class="w-full pl-14 px-4 py-4 border border-[#bfbcc6] rounded-md focus:outline-none focus:ring-2 focus:ring-[#3e50f7] text-lg" 
+                                placeholder="e.g. 150000"
+                            >
+                        </div>
+                        <div id="ebitdaError" class="text-red-500 text-left hidden mt-2">Please enter your EBITDA</div>
+                        <div class="text-[#5f5770] text-sm mt-2">Enter a whole number without commas or decimal points</div>
+                    </div>
+                    
+                    <!-- Historical EBITDA Data -->
+                    <div class="mt-8 border-t border-[#bfbcc6] pt-6">
+                        <h3 class="text-[#25224a] text-lg font-medium mb-4">EBITDA History</h3>
+                        <p class="text-[#5f5770] text-sm mb-4">Providing historical EBITDA data helps buyers assess business stability and growth.</p>
+                        
+                        <div class="mb-4">
+                            <label for="ebitdaPreviousYear" class="block text-[#25224a] text-base font-medium mb-2">EBITDA Previous Year (£)</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <span class="text-gray-500 text-base">£</span>
+                                </div>
+                                <input 
+                                    type="number" 
+                                    id="ebitdaPreviousYear" 
+                                    name="ebitdaPreviousYear" 
+                                    min="0" 
+                                    step="1000"
+                                    class="w-full pl-14 px-4 py-3 border border-[#bfbcc6] rounded-md focus:outline-none focus:ring-2 focus:ring-[#3e50f7] text-base" 
+                                    placeholder="Previous year EBITDA"
+                                >
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="ebitda2YearsAgo" class="block text-[#25224a] text-base font-medium mb-2">EBITDA 2 Years Ago (£)</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <span class="text-gray-500 text-base">£</span>
+                                </div>
+                                <input 
+                                    type="number" 
+                                    id="ebitda2YearsAgo" 
+                                    name="ebitda2YearsAgo" 
+                                    min="0" 
+                                    step="1000"
+                                    class="w-full pl-14 px-4 py-3 border border-[#bfbcc6] rounded-md focus:outline-none focus:ring-2 focus:ring-[#3e50f7] text-base" 
+                                    placeholder="EBITDA from 2 years ago"
+                                >
+                            </div>
+                        </div>
+                        
+                        <div class="text-[#5f5770] text-sm mt-2">Historical data is optional but highly recommended</div>
+                    </div>
+                    
+                    <!-- Common EBITDA ranges as helpful tags -->
+                    <div class="mt-6">
+                        <p class="text-[#5f5770] text-sm mb-2">Common ranges:</p>
+                        <div class="flex flex-wrap gap-2">
+                            <button type="button" class="ebitda-tag bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full text-sm text-[#464154]" data-value="50000">£50,000</button>
+                            <button type="button" class="ebitda-tag bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full text-sm text-[#464154]" data-value="100000">£100,000</button>
+                            <button type="button" class="ebitda-tag bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full text-sm text-[#464154]" data-value="250000">£250,000</button>
+                            <button type="button" class="ebitda-tag bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full text-sm text-[#464154]" data-value="500000">£500,000</button>
+                            <button type="button" class="ebitda-tag bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full text-sm text-[#464154]" data-value="1000000">£1,000,000</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Footer progress bar - Updated to match other pages -->
+        <footer class="w-full bg-white flex-shrink-0">
+            <!-- Progress bar system -->
+            <div class="container mx-auto px-4 md:px-20 py-2">
+                <div class="progress-status">
+                    <div class="current-page">EBITDA</div>
+                    <div class="pages-count">Step 6 of 11</div>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-active step-6-of-11" style="width: 54.55%;"></div>
+                    </div>
+                </div>
+                <div class="step-indicators">
+                    <% for(let i = 1; i <= 11; i++) { %>
+                        <div class="step-dot <%= i < 6 ? 'completed' : (i === 6 ? 'active' : '') %>" data-step="<%= i %>"></div>
+                    <% } %>
+                </div>
+            </div>
+            
+            <!-- Navigation buttons with fixed alignment -->
+            <div class="container mx-auto px-4 md:px-20 py-6 md:py-8 flex justify-between items-center">
+                <button id="backBtn" class="text-[#25224a] text-base font-medium">Back</button>
+                <button id="nextBtn" class="btn-next px-6 md:px-8 py-3 md:py-4 text-white text-base font-medium">Next</button>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/js/questionnaire-navigation.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Proper page initialization
+            const mainContent = document.querySelector('main');
+            
+            // Force browser to recognize the element before animation
+            mainContent.style.opacity = '0';
+            
+            // Trigger reflow to ensure animation works
+            void mainContent.offsetWidth;
+            
+            // Start animation
+            mainContent.classList.add('page-transition');
+            setTimeout(() => {
+                mainContent.style.opacity = '1';
+            }, 10);
+            
+            // Set up EBITDA input field and error handling
+            const ebitdaInput = document.getElementById('ebitdaValue');
+            const ebitdaPreviousYearInput = document.getElementById('ebitdaPreviousYear');
+            const ebitda2YearsAgoInput = document.getElementById('ebitda2YearsAgo');
+            const ebitdaError = document.getElementById('ebitdaError');
+            
+            // Check if there's a saved EBITDA value in localStorage
+            const savedEbitda = localStorage.getItem('sellerEbitda');
+            const savedEbitdaPrevYear = localStorage.getItem('sellerEbitdaPrevYear');
+            const savedEbitda2YearsAgo = localStorage.getItem('sellerEbitda2YearsAgo');
+            
+            if (savedEbitda) {
+                ebitdaInput.value = savedEbitda;
+            }
+            
+            if (savedEbitdaPrevYear) {
+                ebitdaPreviousYearInput.value = savedEbitdaPrevYear;
+            }
+            
+            if (savedEbitda2YearsAgo) {
+                ebitda2YearsAgoInput.value = savedEbitda2YearsAgo;
+            }
+            
+            // Add number formatting as user types
+            ebitdaInput.addEventListener('input', function(e) {
+                // Remove non-numeric characters
+                let value = this.value.replace(/[^\d]/g, '');
+                
+                // Set the cleaned value back to the input
+                this.value = value;
+                
+                // Hide error if value is entered
+                if (value) {
+                    ebitdaError.classList.add('hidden');
+                    ebitdaInput.classList.remove('border-red-500');
+                }
+            });
+            
+            ebitdaPreviousYearInput.addEventListener('input', function(e) {
+                // Remove non-numeric characters
+                let value = this.value.replace(/[^\d]/g, '');
+                
+                // Set the cleaned value back to the input
+                this.value = value;
+            });
+            
+            ebitda2YearsAgoInput.addEventListener('input', function(e) {
+                // Remove non-numeric characters
+                let value = this.value.replace(/[^\d]/g, '');
+                
+                // Set the cleaned value back to the input
+                this.value = value;
+            });
+            
+            // Add click handlers for EBITDA tags
+            const ebitdaTags = document.querySelectorAll('.ebitda-tag');
+            ebitdaTags.forEach(tag => {
+                tag.addEventListener('click', function() {
+                    ebitdaInput.value = this.getAttribute('data-value');
+                    ebitdaError.classList.add('hidden');
+                    ebitdaInput.classList.remove('border-red-500');
+                });
+            });
+            
+            // Add validation function for the navigation script
+            window.validateBeforeNext = function() {
+                // Check if a value has been entered
+                if (!ebitdaInput.value) {
+                    // Show error
+                    ebitdaError.classList.remove('hidden');
+                    ebitdaInput.classList.add('border-red-500');
+                    ebitdaInput.focus();
+                    return false;
+                }
+                
+                // Save to localStorage
+                localStorage.setItem('sellerEbitda', ebitdaInput.value);
+                localStorage.setItem('sellerEbitdaPrevYear', ebitdaPreviousYearInput.value || '');
+                localStorage.setItem('sellerEbitda2YearsAgo', ebitda2YearsAgoInput.value || '');
+                
+                // Calculate and store EBITDA growth rate if historical data is provided
+                if (ebitdaPreviousYearInput.value && parseFloat(ebitdaPreviousYearInput.value) > 0) {
+                    const currentEbitda = parseFloat(ebitdaInput.value);
+                    const prevEbitda = parseFloat(ebitdaPreviousYearInput.value);
+                    const growthRate = ((currentEbitda - prevEbitda) / prevEbitda) * 100;
+                    localStorage.setItem('sellerEbitdaGrowthRate', growthRate.toFixed(2));
+                }
+                
+                return true;
+            };
+            
+            // Add direct event listener to Next button
+            const nextButton = document.getElementById('nextBtn');
+            if (nextButton) {
+                nextButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Next button clicked on EBITDA page');
+                    
+                    // Validate before proceeding
+                    if (!ebitdaInput.value) {
+                        ebitdaError.classList.remove('hidden');
+                        ebitdaInput.classList.add('border-red-500');
+                        ebitdaInput.focus();
+                        return false;
+                    }
+                    
+                    // Save data
+                    localStorage.setItem('sellerEbitda', ebitdaInput.value);
+                    localStorage.setItem('sellerEbitdaPrevYear', ebitdaPreviousYearInput.value || '');
+                    localStorage.setItem('sellerEbitda2YearsAgo', ebitda2YearsAgoInput.value || '');
+                    
+                    // Add exit animation
+                    const mainContent = document.querySelector('main');
+                    mainContent.style.transition = 'opacity 0.3s ease-out';
+                    mainContent.style.opacity = '0';
+                    
+                    // Animate progress bar
+                    const progressActive = document.querySelector('.progress-active');
+                    if (progressActive) {
+                        progressActive.style.transition = 'width 0.4s ease-out';
+                        progressActive.style.width = '63.64%'; // Next step percentage
+                    }
+                    
+                    // Navigate after animation completes
+                    setTimeout(() => {
+                        window.location.href = '/seller-questionnaire/cash-on-cash';
+                    }, 300);
+                }, true);
+            }
+            
+            // Add direct event listener to Back button
+            const backButton = document.getElementById('backBtn');
+            if (backButton) {
+                backButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Add exit animation
+                    const mainContent = document.querySelector('main');
+                    mainContent.style.transition = 'opacity 0.3s ease-out';
+                    mainContent.style.opacity = '0';
+                    
+                    // Animate progress bar
+                    const progressActive = document.querySelector('.progress-active');
+                    if (progressActive) {
+                        progressActive.style.transition = 'width 0.4s ease-out';
+                        progressActive.style.width = '45.45%'; // Previous step percentage
+                    }
+                    
+                    // Navigate after animation completes
+                    setTimeout(() => {
+                        window.location.href = '/seller-questionnaire/revenue';
+                    }, 300);
+                }, true);
+            }
+        });
+    </script>
+</body>
+</html>

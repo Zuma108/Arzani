@@ -125,18 +125,42 @@ document.addEventListener('DOMContentLoaded', () => {
         signupError.style.display = 'none';
 
         try {
+            // Prepare the request data including questionnaire information
+            const requestData = {
+                username,
+                email,
+                password,
+                termsAccepted
+            };
+            
+            // Add questionnaire data if available
+            const anonymousId = localStorage.getItem('questionnaireAnonymousId');
+            const submissionId = localStorage.getItem('questionnaireSubmissionId');
+            
+            if (anonymousId) {
+                requestData.anonymousId = anonymousId;
+                console.log('Including anonymousId in signup request:', anonymousId);
+            }
+            
+            if (submissionId) {
+                requestData.questionnaireSubmissionId = submissionId;
+                console.log('Including questionnaireSubmissionId in signup request:', submissionId);
+            }
+            
+            // Get any additional localStorage data related to the questionnaire
+            const questionnaireData = collectQuestionnaireData();
+            if (Object.keys(questionnaireData).length > 0) {
+                requestData.questionnaireData = questionnaireData;
+                console.log('Including questionnaire data in signup request');
+            }
+            
             const response = await fetch('/auth/signup', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-Token': getCsrfToken() // Add CSRF protection if implemented
                 },
-                body: JSON.stringify({
-                    username,
-                    email,
-                    password,
-                    termsAccepted
-                })
+                body: JSON.stringify(requestData)
             });
 
             const data = await response.json();
@@ -152,6 +176,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Store email temporarily for verification resend functionality
                 sessionStorage.setItem('signupEmail', email);
+                
+                // Clear questionnaire data from localStorage since it's now in the database
+                clearQuestionnaireData();
                 
                 // Clear form
                 signupForm.reset();
@@ -177,6 +204,67 @@ document.addEventListener('DOMContentLoaded', () => {
             submitButton.style.opacity = '1';
         }
     });
+    
+    // Function to collect all questionnaire data from localStorage
+    function collectQuestionnaireData() {
+        const data = {};
+        const questionnaireKeys = [
+            'sellerEmail',
+            'sellerBusinessName',
+            'sellerIndustry',
+            'sellerDescription',
+            'sellerYearEstablished',
+            'sellerYearsInOperation',
+            'sellerContactName',
+            'sellerContactPhone',
+            'sellerLocation',
+            'sellerRevenueExact',
+            'sellerRevenuePrevYear',
+            'sellerRevenue2YearsAgo',
+            'sellerRevenue3YearsAgo',
+            'sellerEbitda',
+            'sellerEbitdaPrevYear',
+            'sellerEbitda2YearsAgo',
+            'sellerCashOnCash',
+            'sellerFfeValue',
+            'sellerFfeItems',
+            'sellerGrowthRate',
+            'sellerGrowthAreas',
+            'sellerGrowthChallenges',
+            'sellerScalability',
+            'sellerTotalDebtAmount',
+            'sellerDebtTransferable',
+            'sellerDebtNotes',
+            'sellerDebtItems',
+            'sellerValuationData'
+        ];
+
+        questionnaireKeys.forEach(key => {
+            const value = localStorage.getItem(key);
+            if (value) {
+                try {
+                    // Try parsing as JSON first
+                    data[key] = JSON.parse(value);
+                } catch (e) {
+                    // If not valid JSON, store as string
+                    data[key] = value;
+                }
+            }
+        });
+
+        return data;
+    }
+    
+    // Function to clear questionnaire data from localStorage
+    function clearQuestionnaireData() {
+        console.log('Clearing questionnaire data from localStorage...');
+        
+        // Don't immediately clear - we'll use a flag to indicate data has been submitted
+        localStorage.setItem('questionnaireDataSubmitted', 'true');
+        
+        // Save the anonymous ID to a session variable in case we need it
+        sessionStorage.setItem('previousAnonymousId', localStorage.getItem('questionnaireAnonymousId'));
+    }
     
     // Handle API error responses
     function handleErrorResponse(response, data) {
@@ -312,5 +400,56 @@ document.addEventListener('DOMContentLoaded', () => {
         signupError.style.display = 'block';
         signupError.className = 'alert alert-success';
         signupError.innerHTML = '<strong>Registration successful!</strong> Please check your email to verify your account.';
+    }
+    
+    // Check for questionnaire anonymous ID
+    const anonymousId = localStorage.getItem('questionnaireAnonymousId');
+    const questionnaireEmail = localStorage.getItem('sellerEmail');
+    
+    if (signupForm) {
+        // Add hidden field for anonymous ID if available
+        if (anonymousId) {
+            const hiddenField = document.createElement('input');
+            hiddenField.type = 'hidden';
+            hiddenField.name = 'anonymousId';
+            hiddenField.value = anonymousId;
+            signupForm.appendChild(hiddenField);
+            
+            console.log('Added questionnaire anonymous ID to form:', anonymousId);
+        }
+        
+        // Pre-fill email if available from questionnaire
+        if (questionnaireEmail) {
+            const emailInput = signupForm.querySelector('input[name="email"], input[type="email"]');
+            if (emailInput && !emailInput.value) {
+                emailInput.value = questionnaireEmail;
+                console.log('Pre-filled email from questionnaire data:', questionnaireEmail);
+            }
+        }
+        
+        // Listen for form submission
+        signupForm.addEventListener('submit', function(event) {
+            // Clear localStorage after successful submission to prevent duplicate linking
+            if (anonymousId || questionnaireEmail) {
+                const originalSubmitHandler = event.target.onsubmit;
+                
+                event.target.onsubmit = function(e) {
+                    // First run the original handler if it exists
+                    if (originalSubmitHandler) {
+                        const result = originalSubmitHandler.call(this, e);
+                        if (result === false) return false;
+                    }
+                    
+                    // On successful submission, clear localStorage items
+                    setTimeout(function() {
+                        localStorage.removeItem('questionnaireAnonymousId');
+                        localStorage.removeItem('questionnaireSubmissionId');
+                        console.log('Cleared questionnaire data from localStorage after successful signup');
+                    }, 2000);
+                    
+                    return true;
+                };
+            }
+        });
     }
 });

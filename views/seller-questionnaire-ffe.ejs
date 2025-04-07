@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seller Questionnaire - FFE | Arzani Marketplace</title>
+    <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">
+
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <%- include('../views/partials/tailwind-setup') %>
+    <link rel="stylesheet" href="/css/seller-questionnaire.css">
+    <link rel="stylesheet" href="/css/progress-bar.css">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: white;
+            overflow: hidden; /* Hide scrollbar */
+        }
+        .header {
+            height: 87px;
+            border-bottom: 0.8px solid #bfbcc6;
+        }
+        .content-container {
+            height: calc(100vh - 87px - 100px); /* Header height (87px) and footer height (100px) */
+            overflow-y: auto; /* Enable scrolling inside container if needed */
+            padding-bottom: 20px;
+        }
+        .btn-main {
+            background-color: #25224a;
+            color: white;
+            border-radius: 0 1rem 1rem 1rem;
+        }
+        .btn-next {
+            background-color: #041b76;
+            color: white;
+            border-radius: 0 1rem 1rem 1rem;
+            box-shadow: 7px 7px 17px 0px rgba(25,31,64,0.22);
+        }
+        .progress-bar {
+            background-color: #dee8ff;
+            height: 10px;
+        }
+        .progress-active {
+            background-color: #3e50f7;
+        }
+        .exit-link {
+            color: #25224a;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .profile-pics {
+            display: flex;
+            align-items: center;
+        }
+        .profile-pic {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid white;
+            object-fit: cover;
+        }
+        .profile-pic:not(:first-child) {
+            margin-left: -15px;
+        }
+        .ffe-option {
+            border: 2px solid #bfbcc6;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+        }
+        .ffe-option:hover {
+            border-color: #3e50f7;
+            background-color: rgba(62, 80, 247, 0.05);
+        }
+        .ffe-option.selected {
+            border-color: #3e50f7;
+            background-color: rgba(62, 80, 247, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="w-full h-screen flex flex-col bg-white">
+        <!-- Header -->
+        <header class="header w-full bg-white flex items-center flex-shrink-0">
+            <div class="container mx-auto px-4 md:px-8 flex items-center justify-between">
+                <!-- Logo -->
+                <div class="h-12 md:h-16">
+                    <img src="/figma design exports/logos/Arzani black-white background 2.png" alt="Arzani" class="h-full">
+                </div>
+                
+                <!-- Right section -->
+                <div class="flex items-center gap-4">
+                    <!-- Help button -->
+                    <div class="hidden md:flex mr-4 h-12 px-6 items-center border border-[#bfbcc6] rounded">
+                        <span class="text-[#464154] text-base font-medium">Need help?</span>
+                    </div>
+                    
+                    <!-- Profile pictures -->
+                    <div class="profile-pics mr-4">
+                        <img src="https://randomuser.me/api/portraits/women/32.jpg" alt="Support agent" class="profile-pic">
+                        <img src="https://randomuser.me/api/portraits/men/44.jpg" alt="Support agent" class="profile-pic">
+                        <img src="https://randomuser.me/api/portraits/women/68.jpg" alt="Support agent" class="profile-pic">
+                    </div>
+                    
+                    <!-- Exit link -->
+                    <a href="/" class="exit-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                        <span class="hidden sm:inline">Exit</span>
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main content -->
+        <main class="content-container flex-grow page-transition">
+            <div class="container mx-auto px-4 max-w-2xl pt-8 md:pt-12">
+                <h1 class="text-[#25224a] text-2xl md:text-3xl font-black mb-4 text-center">What's your FFE value?</h1>
+                <p class="text-[#5f5770] text-lg mb-8 text-center">Furniture, Fixtures, and Equipment (FFE) value is an important asset for potential buyers.</p>
+                
+                <!-- FFE explanation -->
+                <div class="bg-blue-50 p-4 rounded-lg mb-8">
+                    <h3 class="font-medium text-[#25224a] text-lg mb-2">What is FFE?</h3>
+                    <p class="text-[#5f5770]">FFE refers to the movable furniture, fixtures, or other equipment that have no permanent connection to the structure of a building. This might include desks, chairs, computers, equipment, machinery, and more.</p>
+                </div>
+                
+                <!-- FFE Input Form -->
+                <div class="mt-8">
+                    <div class="mb-6">
+                        <label for="ffeValue" class="block text-[#25224a] text-lg font-medium mb-2">Enter your FFE value (£)</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-gray-500 text-lg">£</span>
+                            </div>
+                            <input 
+                                type="number" 
+                                id="ffeValue" 
+                                name="ffeValue" 
+                                min="0" 
+                                step="1000"
+                                class="w-full pl-14 px-4 py-4 border border-[#bfbcc6] rounded-md focus:outline-none focus:ring-2 focus:ring-[#3e50f7] text-lg" 
+                                placeholder="e.g. 50000"
+                            >
+                        </div>
+                        <div id="ffeError" class="text-red-500 text-left hidden mt-2">Please enter your FFE value</div>
+                        <div class="text-[#5f5770] text-sm mt-2">Enter a whole number without commas or decimal points</div>
+                    </div>
+                    
+                    <!-- Common FFE value ranges as helpful tags -->
+                    <div class="mt-6">
+                        <p class="text-[#5f5770] text-sm mb-2">Common ranges:</p>
+                        <div class="flex flex-wrap gap-2">
+                            <button type="button" class="ffe-tag bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full text-sm text-[#464154]" data-value="10000">£10,000</button>
+                            <button type="button" class="ffe-tag bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full text-sm text-[#464154]" data-value="25000">£25,000</button>
+                            <button type="button" class="ffe-tag bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full text-sm text-[#464154]" data-value="50000">£50,000</button>
+                            <button type="button" class="ffe-tag bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full text-sm text-[#464154]" data-value="100000">£100,000</button>
+                            <button type="button" class="ffe-tag bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full text-sm text-[#464154]" data-value="200000">£200,000</button>
+                        </div>
+                    </div>
+                    
+                    <!-- FFE Items Section (Optional) -->
+                    <div class="mt-8">
+                        <label for="ffeItems" class="block text-[#25224a] text-lg font-medium mb-2">Major FFE items (optional)</label>
+                        <textarea 
+                            id="ffeItems" 
+                            name="ffeItems" 
+                            rows="3" 
+                            class="w-full px-4 py-3 border border-[#bfbcc6] rounded-md focus:outline-none focus:ring-2 focus:ring-[#3e50f7]" 
+                            placeholder="List major equipment, machinery, furniture, etc."
+                        ></textarea>
+                        <div class="text-[#5f5770] text-sm mt-2">Providing details can help buyers better understand the value</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Footer progress bar - Updated to match other pages -->
+        <footer class="w-full bg-white flex-shrink-0">
+            <!-- Progress bar system -->
+            <div class="container mx-auto px-4 md:px-20 py-2">
+                <div class="progress-status">
+                    <div class="current-page">FFE Value</div>
+                    <div class="pages-count">Step 8 of 11</div>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-active step-8-of-11" style="width: 72.73%;"></div>
+                    </div>
+                </div>
+                <div class="step-indicators">
+                    <% for(let i = 1; i <= 11; i++) { %>
+                        <div class="step-dot <%= i < 8 ? 'completed' : (i === 8 ? 'active' : '') %>" data-step="<%= i %>"></div>
+                    <% } %>
+                </div>
+            </div>
+            
+            <!-- Navigation buttons with fixed alignment -->
+            <div class="container mx-auto px-4 md:px-20 py-6 md:py-8 flex justify-between items-center">
+                <button id="backBtn" class="text-[#25224a] text-base font-medium">Back</button>
+                <button id="nextBtn" class="btn-next px-6 md:px-8 py-3 md:py-4 text-white text-base font-medium">Next</button>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/js/questionnaire-navigation.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize page animation first, before anything else
+            const mainContent = document.querySelector('main');
+            
+            // Force browser to recognize the element before animation
+            mainContent.style.opacity = '0';
+            
+            // Trigger reflow to ensure animation works
+            void mainContent.offsetWidth;
+            
+            // Start animation
+            mainContent.classList.add('page-transition');
+            setTimeout(() => {
+                mainContent.style.opacity = '1';
+            }, 10);
+            
+            // Set up FFE input field and error handling
+            const ffeInput = document.getElementById('ffeValue');
+            const ffeError = document.getElementById('ffeError');
+            const ffeItemsTextarea = document.getElementById('ffeItems');
+            
+            // Check if there are saved FFE values in localStorage
+            const savedFfe = localStorage.getItem('sellerFfeValue');
+            const savedFfeItems = localStorage.getItem('sellerFfeItems');
+            
+            if (savedFfe) {
+                ffeInput.value = savedFfe;
+            }
+            
+            if (savedFfeItems) {
+                ffeItemsTextarea.value = savedFfeItems;
+            }
+            
+            // Add number formatting as user types
+            ffeInput.addEventListener('input', function() {
+                // Remove non-numeric characters
+                let value = this.value.replace(/[^\d]/g, '');
+                
+                // Set the cleaned value back to the input
+                this.value = value;
+                
+                // Hide error if value is entered
+                if (value) {
+                    ffeError.classList.add('hidden');
+                    ffeInput.classList.remove('border-red-500');
+                }
+            });
+            
+            // Add click handlers for FFE tags
+            const ffeTags = document.querySelectorAll('.ffe-tag');
+            ffeTags.forEach(tag => {
+                tag.addEventListener('click', function() {
+                    ffeInput.value = this.getAttribute('data-value');
+                    ffeError.classList.add('hidden');
+                    ffeInput.classList.remove('border-red-500');
+                });
+            });
+            
+            // Add validation function for the navigation script
+            window.validateBeforeNext = function() {
+                // Check if a value has been entered
+                if (!ffeInput.value) {
+                    // Show error
+                    ffeError.classList.remove('hidden');
+                    ffeInput.classList.add('border-red-500');
+                    ffeInput.focus();
+                    return false;
+                }
+                
+                // Save to localStorage
+                localStorage.setItem('sellerFfeValue', ffeInput.value);
+                localStorage.setItem('sellerFfeItems', ffeItemsTextarea.value || '');
+                
+                return true;
+            };
+
+            // Update the Next button handler - keep only one version to avoid conflicts
+            const nextButton = document.getElementById('nextBtn');
+            if (nextButton) {
+                // Remove any existing event listeners
+                const newButton = nextButton.cloneNode(true);
+                nextButton.parentNode.replaceChild(newButton, nextButton);
+                
+                // Add the new event listener
+                newButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Next button clicked on FFE page');
+                    
+                    // Validate and save data
+                    if (!ffeInput.value) {
+                        ffeError.classList.remove('hidden');
+                        ffeInput.classList.add('border-red-500');
+                        ffeInput.focus();
+                        return false;
+                    }
+                    
+                    // Save to localStorage
+                    localStorage.setItem('sellerFfeValue', ffeInput.value);
+                    localStorage.setItem('sellerFfeItems', ffeItemsTextarea.value || '');
+                    
+                    // Add exit animation
+                    mainContent.style.transition = 'opacity 0.3s ease-out';
+                    mainContent.style.opacity = '0';
+                    
+                    // Animate progress bar - ensure it has the proper transition
+                    const progressActive = document.querySelector('.progress-active');
+                    if (progressActive) {
+                        progressActive.style.transition = 'width 0.4s ease-out';
+                        progressActive.style.width = '81.82%'; // Next step percentage
+                        
+                        // Force a reflow to ensure the animation triggers
+                        void progressActive.offsetWidth;
+                    }
+                    
+                    // Update dot indicators
+                    const dots = document.querySelectorAll('.step-dot');
+                    if (dots && dots.length >= 9) {
+                        // Clear current active state
+                        dots.forEach(dot => dot.classList.remove('active'));
+                        
+                        // Mark current dot as completed
+                        dots[7].classList.remove('active');
+                        dots[7].classList.add('completed');
+                        
+                        // Set next dot as active
+                        dots[8].classList.add('active');
+                    }
+                    
+                    // Navigate after animation completes
+                    setTimeout(() => {
+                        window.location.href = '/seller-questionnaire/growth';
+                    }, 400); // Slightly longer delay to ensure animation completes
+                });
+            }
+            
+            // Update the Back button handler - same approach
+            const backButton = document.getElementById('backBtn');
+            if (backButton) {
+                // Remove any existing event listeners
+                const newBackButton = backButton.cloneNode(true);
+                backButton.parentNode.replaceChild(newBackButton, backButton);
+                
+                // Add the new event listener
+                newBackButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Add exit animation
+                    mainContent.style.transition = 'opacity 0.3s ease-out';
+                    mainContent.style.opacity = '0';
+                    
+                    // Animate progress bar back
+                    const progressActive = document.querySelector('.progress-active');
+                    if (progressActive) {
+                        progressActive.style.transition = 'width 0.4s ease-out';
+                        progressActive.style.width = '63.64%'; // Previous step percentage
+                        
+                        // Force a reflow to ensure the animation triggers
+                        void progressActive.offsetWidth;
+                    }
+                    
+                    // Update dot indicators
+                    const dots = document.querySelectorAll('.step-dot');
+                    if (dots && dots.length >= 8) {
+                        // Remove active from current dot
+                        dots[7].classList.remove('active');
+                        
+                        // Set previous dot as active
+                        dots[6].classList.remove('completed');
+                        dots[6].classList.add('active');
+                    }
+                    
+                    // Navigate after animation completes
+                    setTimeout(() => {
+                        window.location.href = '/seller-questionnaire/cash-on-cash';
+                    }, 400);
+                });
+            }
+        });
+
+        // Add console debugging for progress bar
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Checking progress bar elements on FFE page:');
+            const progressActive = document.querySelector('.progress-active');
+            console.log('Progress active element:', progressActive);
+            if (progressActive) {
+                console.log('Current width:', progressActive.style.width);
+                console.log('Current classes:', progressActive.className);
+            }
+            
+            const dots = document.querySelectorAll('.step-dot');
+            console.log('Found ' + dots.length + ' step dots');
+            dots.forEach((dot, i) => {
+                console.log(`Dot ${i+1} classes:`, dot.className);
+            });
+        });
+    </script>
+</body>
+</html>

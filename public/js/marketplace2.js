@@ -3,9 +3,16 @@
  * Handles marketplace listing functionality with enhanced UI
  */
 
+// Create a helper for conditional logging
+function debugLog(...args) {
+  if (window.DEBUG_MODE) {
+    console.log(...args);
+  }
+}
+
 // DOM Ready handler
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Marketplace2 script initialized');
+    debugLog('Marketplace2 script initialized');
     
     // Check if there's an s3Config element with data
     const s3ConfigEl = document.getElementById('s3-config');
@@ -314,7 +321,7 @@ function initializeContactButtons() {
           return response.json();
         })
         .then(data => {
-          console.log('Contact form submitted successfully:', data);
+          debugLog('Contact form submitted successfully:', data);
           
           // Hide the modal
           const modal = bootstrap.Modal.getInstance(document.getElementById('contactFormModal'));
@@ -328,7 +335,7 @@ function initializeContactButtons() {
           const chatUrl = data.chatUrl || `/chat?conversation=${data.conversationId}`;
           
           // Debug log the URL we're redirecting to
-          console.log('Redirecting to chat URL:', chatUrl);
+          debugLog('Redirecting to chat URL:', chatUrl);
           
           // Redirect after a short delay to ensure toast is seen
           setTimeout(() => {
@@ -573,22 +580,24 @@ function formatBusinessImages(business) {
   return business.images.map(image => {
     // If it's already a full URL
     if (image.startsWith('http')) {
-      // Don't modify the region - keep as is
+      // Leave URL as is - we'll handle region fallbacks in the img.onerror handler
       return image;
     }
     
-    // Get bucket name and region from window globals if available
+    // Get bucket name from window globals or use a default
     const bucket = window.AWS_BUCKET_NAME || 'arzani-images1';
     
-    // Try both regions based on any indication in the image path
+    // Try to determine the best region based on the image path
+    let region = window.AWS_REGION || 'eu-west-2';
+    
+    // Check if the image path contains region hints
     if (image.includes('eu-north-1')) {
-      return `https://${bucket}.s3.eu-north-1.amazonaws.com/businesses/${business.id}/${image}`;
+      region = 'eu-north-1';
     } else if (image.includes('eu-west-2')) {
-      return `https://${bucket}.s3.eu-west-2.amazonaws.com/businesses/${business.id}/${image}`;
+      region = 'eu-west-2';
     }
     
-    // Default to the region from config, or use the fallback
-    const region = window.AWS_REGION || 'eu-west-2';
+    // Return the full URL
     return `https://${bucket}.s3.${region}.amazonaws.com/businesses/${business.id}/${image}`;
   });
 }
@@ -597,37 +606,48 @@ function formatBusinessImages(business) {
  * Initialize lazy loading with multi-region support
  */
 function initLazyLoading() {
-    // Use Intersection Observer to load images when they become visible
     if ('IntersectionObserver' in window) {
-        const lazyImageObserver = new IntersectionObserver((entries, observer) => {
+        // Clean up existing observer
+        if (imageObserver) {
+            imageObserver.disconnect();
+        }
+        
+        // Create new observer
+        imageObserver = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
-                    const lazyImage = entry.target;
-                    lazyImage.src = lazyImage.dataset.src;
-                    lazyImage.classList.remove('lazy-load');
-                    
-                    // Add error handler to try alternate region
-                    lazyImage.onerror = function() {
-                        console.log('Image failed to load, trying alternate region:', this.src);
-                        const currentSrc = this.src;
-                        
-                        if (currentSrc.includes('eu-west-2')) {
-                            this.src = currentSrc.replace('eu-west-2', 'eu-north-1');
-                        } else if (currentSrc.includes('eu-north-1')) {
-                            this.src = currentSrc.replace('eu-north-1', 'eu-west-2');
-                        } else {
-                            this.src = '/images/default-business.jpg';
+                    const img = entry.target;
+                    if (img.dataset.src) {
+                        // Create the fallback URL before setting src
+                        if (img.dataset.src.includes('eu-west-2')) {
+                            img.dataset.fallback = img.dataset.src.replace('eu-west-2', 'eu-north-1');
+                        } else if (img.dataset.src.includes('eu-north-1')) {
+                            img.dataset.fallback = img.dataset.src.replace('eu-north-1', 'eu-west-2');
                         }
-                    };
-                    
-                    lazyImageObserver.unobserve(lazyImage);
+                        
+                        // Load the image
+                        img.src = img.dataset.src;
+                        
+                        // Make sure the error handler is in place
+                        img.onerror = function() {
+                            // No need to log here - the global handler will handle it
+                            handleImageError(this);
+                        };
+                        
+                        img.removeAttribute('data-src');
+                        img.classList.remove('lazy-load');
+                        imageObserver.unobserve(img);
+                    }
                 }
             });
+        }, {
+            rootMargin: '200px',
+            threshold: 0.1
         });
 
         const lazyImages = document.querySelectorAll('img.lazy-load');
         lazyImages.forEach(img => {
-            lazyImageObserver.observe(img);
+            imageObserver.observe(img);
         });
     } else {
         // Fallback for browsers that don't support Intersection Observer
@@ -636,11 +656,13 @@ function initLazyLoading() {
             
             // Add error handler for region fallback
             img.onerror = function() {
+                debugLog('Image failed to load, trying alternate region:', this.src);
                 const currentSrc = this.src;
-                if (currentSrc.includes('eu-west-2')) {
-                    this.src = currentSrc.replace('eu-west-2', 'eu-north-1');
-                } else if (currentSrc.includes('eu-north-1')) {
-                    this.src = currentSrc.replace('eu-north-1', 'eu-west-2');
+                
+                if (currentSrc.includes('s3.eu-west-2.amazonaws.com')) {
+                    this.src = currentSrc.replace('s3.eu-west-2.amazonaws.com', 's3.eu-north-1.amazonaws.com');
+                } else if (currentSrc.includes('s3.eu-north-1.amazonaws.com')) {
+                    this.src = currentSrc.replace('s3.eu-north-1.amazonaws.com', 's3.eu-west-2.amazonaws.com');
                 } else {
                     this.src = '/images/default-business.jpg';
                 }
@@ -857,16 +879,16 @@ document.querySelectorAll('.business-card').forEach(card => {
 
 // AI Assistant activation code - make sure event handlers are working
 document.addEventListener('DOMContentLoaded', function() {
-  console.log('Marketplace2.js: Checking AI Assistant setup');
+  debugLog('Marketplace2.js: Checking AI Assistant setup');
   
   // Function to verify and fix AI Assistant buttons
   function ensureAIAssistantWorks() {
     const aiButton = document.getElementById('ai-assistant-button');
     
     if (aiButton) {
-      console.log('Reinforcing AI button click handler');
+      debugLog('Reinforcing AI button click handler');
       aiButton.onclick = function(e) {
-        console.log('AI button clicked from marketplace2.js');
+        debugLog('AI button clicked from marketplace2.js');
         e.preventDefault();
         e.stopPropagation();
         
@@ -969,7 +991,7 @@ if (submitContactForm) {
     if (questions) fullMessage += `Questions: ${questions}\n\n`;
     if (timeframe) fullMessage += `Timeframe: ${timeframe}\n\n`;
     
-    console.log('Submitting contact form with data:', {
+    debugLog('Submitting contact form with data:', {
       businessId,
       otherUserId,
       fullMessage
@@ -1000,7 +1022,7 @@ if (submitContactForm) {
       return response.json();
     })
     .then(data => {
-      console.log('Contact form submitted successfully:', data);
+      debugLog('Contact form submitted successfully:', data);
       
       // Hide the modal
       try {
@@ -1028,7 +1050,7 @@ if (submitContactForm) {
       }
       
       // Debug log the URL we're redirecting to
-      console.log('Redirecting to chat URL:', chatUrl);
+      debugLog('Redirecting to chat URL:', chatUrl);
       
       // Redirect after a short delay to ensure toast is seen
       setTimeout(() => {
@@ -1066,7 +1088,7 @@ function formatS3Url(url) {
           const region = parts[2];
           // If region is the bucket name or contains "arzani", they're reversed
           if (region.includes('arzani') || region === bucket) {
-            console.log(`Fixing malformed S3 URL: ${url}`);
+            debugLog(`Fixing malformed S3 URL: ${url}`);
             return `https://${bucket}.s3.eu-west-2.amazonaws.com${urlObj.pathname}`;
           }
         }
@@ -1162,15 +1184,15 @@ function initLazyLoading() {
             
             // Add error handler to try fallback regions if loading fails
             img.onerror = function() {
-              console.log('Image failed to load, trying alternate region:', this.src);
-              if (this.src.includes('eu-west-2')) {
+              debugLog('Lazy-loaded image failed to load, trying alternate region:', this.src);
+              if (this.src.includes('s3.eu-west-2.amazonaws.com')) {
                 // Try northern region as fallback
-                this.src = this.src.replace('eu-west-2', 'eu-north-1');
-              } else if (this.src.includes('eu-north-1')) {
+                this.src = this.src.replace('s3.eu-west-2.amazonaws.com', 's3.eu-north-1.amazonaws.com');
+              } else if (this.src.includes('s3.eu-north-1.amazonaws.com')) {
                 // Try western region as fallback
-                this.src = this.src.replace('eu-north-1', 'eu-west-2');
+                this.src = this.src.replace('s3.eu-north-1.amazonaws.com', 's3.eu-west-2.amazonaws.com');
               } else {
-                // Final fallback to default image
+                // Last resort - default image
                 this.src = '/images/default-business.jpg';
               }
             };
@@ -1191,5 +1213,638 @@ function initLazyLoading() {
   
   // ...fallback code...
 }
+
+// ...existing code...
+
+/**
+ * Utility to load an image with automatic region fallback
+ * @param {HTMLImageElement} imgElement - The image element to load
+ * @param {string} primaryUrl - Primary URL to try
+ * @param {string} fallbackUrl - Fallback URL if primary fails
+ */
+function loadImageWithFallback(imgElement, primaryUrl, fallbackUrl = null) {
+  // Set default fallback URL if not provided
+  if (!fallbackUrl) {
+    fallbackUrl = primaryUrl.includes('s3.eu-west-2.amazonaws.com') 
+      ? primaryUrl.replace('s3.eu-west-2', 's3.eu-north-1')
+      : primaryUrl.replace('s3.eu-north-1', 's3.eu-west-2');
+  }
+  
+  // Set default image as final fallback
+  const defaultImage = '/images/default-business.jpg';
+  
+  // Set the primary URL
+  imgElement.src = primaryUrl;
+  
+  // Handle error by trying fallback URL
+  imgElement.onerror = function() {
+    debugLog('Image failed to load, trying fallback URL:', fallbackUrl);
+    
+    // Check if we're already using the fallback
+    if (this.src === fallbackUrl) {
+      // If fallback also failed, use default image
+      debugLog('Fallback URL also failed, using default image');
+      this.src = defaultImage;
+      this.onerror = null; // Remove error handler to prevent loops
+      return;
+    }
+    
+    // Try the fallback URL
+    this.src = fallbackUrl;
+  };
+}
+
+/**
+ * Apply region-aware image loading to all images on the page
+ */
+function initMultiRegionImageLoading() {
+  // Process all lazy-load images to handle region fallbacks
+  document.querySelectorAll('img.lazy-load').forEach(img => {
+    if (img.dataset.src) {
+      // For lazy-loaded images, set up the fallback to happen when they load
+      img.addEventListener('load', function() {
+        // Successfully loaded, remove error handler
+        this.onerror = null;
+      });
+      
+      img.addEventListener('error', function() {
+        // Failed to load, try alternate region
+        debugLog('Lazy-loaded image failed to load, trying alternate region:', this.src);
+        
+        if (this.src.includes('s3.eu-west-2.amazonaws.com')) {
+          this.src = this.src.replace('s3.eu-west-2', 's3.eu-north-1');
+        } else if (this.src.includes('s3.eu-north-1')) {
+          this.src = this.src.replace('s3.eu-north-1', 's3.eu-west-2');
+        } else {
+          // Last resort - default image
+          this.src = '/images/default-business.jpg';
+          this.onerror = null; // Remove handler to prevent loops
+        }
+      });
+    }
+  });
+  
+  // Process all already-loaded images to add fallbacks
+  document.querySelectorAll('img:not(.lazy-load)').forEach(img => {
+    if (img.src && (img.src.includes('amazonaws.com') || img.src.includes('/uploads/'))) {
+      let primaryUrl = img.src;
+      
+      // For /uploads/ paths, convert to S3 URL
+      if (img.src.includes('/uploads/')) {
+        const businessId = document.querySelector('[data-business-id]')?.dataset?.businessId;
+        if (businessId) {
+          const filename = img.src.substring(img.src.lastIndexOf('/') + 1);
+          const bucket = window.AWS_BUCKET_NAME || 'arzani-images1';
+          const region = window.AWS_REGION || 'eu-west-2';
+          primaryUrl = `https://${bucket}.s3.${region}.amazonaws.com/businesses/${businessId}/${filename}`;
+        }
+      }
+      
+      // Add error handler to try other region
+      img.onerror = function() {
+        if (this.src.includes('s3.eu-west-2.amazonaws.com')) {
+          this.src = this.src.replace('s3.eu-west-2', 's3.eu-north-1');
+        } else if (this.src.includes('s3.eu-north-1')) {
+          this.src = this.src.replace('s3.eu-north-1', 's3.eu-west-2');
+        } else {
+          this.src = '/images/default-business.jpg';
+          this.onerror = null;
+        }
+      };
+    }
+  });
+}
+
+// Call this function at the end of your initialization
+document.addEventListener('DOMContentLoaded', function() {
+  // ...existing code...
+  
+  // Initialize multi-region image loading
+  initMultiRegionImageLoading();
+});
+
+// ...existing code...
+
+/**
+ * Region fallback handler to extend to existing image handling
+ */
+function setupRegionFallbackHandlers() {
+  // Add error handlers to existing images
+  document.querySelectorAll('img').forEach(img => {
+    if (img.src && img.src.includes('amazonaws.com')) {
+      if (!img.hasAttribute('data-has-fallback')) {
+        img.setAttribute('data-has-fallback', 'true');
+        
+        img.onerror = function() {
+          if (this.src.includes('s3.eu-west-2.amazonaws.com')) {
+            // Reduce logging
+            debugLog('Image failed, trying eu-north-1');
+            this.src = this.src.replace('s3.eu-west-2.amazonaws.com', 's3.eu-north-1.amazonaws.com');
+          } else if (this.src.includes('s3.eu-north-1.amazonaws.com')) {
+            // Reduce logging
+            debugLog('Image failed, trying eu-west-2');
+            this.src = this.src.replace('s3.eu-north-1.amazonaws.com', 's3.eu-west-2.amazonaws.com');
+          } else {
+            this.src = '/images/default-business.jpg';
+            this.onerror = null; // Remove handler to prevent loops
+          }
+        };
+      }
+    }
+  });
+  
+  // Also watch for future image loads
+  const observer = new MutationObserver(mutations => {
+    mutations.forEach(mutation => {
+      if (mutation.type === 'childList') {
+        mutation.addedNodes.forEach(node => {
+          // Only process Element nodes
+          if (node.nodeType === Node.ELEMENT_NODE) {
+            // Check if it's an image
+            if (node.tagName === 'IMG') {
+              addFallbackHandler(node);
+            } else {
+              // Check for images inside the added node
+              node.querySelectorAll('img').forEach(img => addFallbackHandler(img));
+            }
+          }
+        });
+      }
+    });
+  });
+  
+  // Start observing
+  observer.observe(document.body, { childList: true, subtree: true });
+  
+  // Helper function to add fallback handler to an image
+  function addFallbackHandler(img) {
+    if (img.src && img.src.includes('amazonaws.com') && !img.hasAttribute('data-has-fallback')) {
+      img.setAttribute('data-has-fallback', 'true');
+      
+      img.onerror = function() {
+        if (this.src.includes('s3.eu-west-2.amazonaws.com')) {
+          this.src = this.src.replace('s3.eu-west-2', 's3.eu-north-1.amazonaws.com');
+        } else if (this.src.includes('s3.eu-north-1.amazonaws.com')) {
+          this.src = this.src.replace('s3.eu-north-1', 's3.eu-west-2.amazonaws.com');
+        } else {
+          this.src = '/images/default-business.jpg';
+          this.onerror = null;
+        }
+      };
+    }
+  }
+}
+
+// After DOM is loaded, set up region fallback handlers
+document.addEventListener('DOMContentLoaded', function() {
+  // ...existing code...
+  
+  // Initialize region fallback handlers
+  setupRegionFallbackHandlers();
+});
+
+// ...existing code...
+
+/**
+ * Load businesses with skeleton loading state
+ * @param {Number} page - Page number to load
+ * @param {Object} filters - Filter criteria
+ */
+function loadPage(page = 1, filters = {}) {
+  const listingsContainer = document.getElementById('listings-container');
+  if (!listingsContainer) return;
+  
+  // Show skeleton loading UI
+  showSkeletonLoaders(listingsContainer);
+  
+  // Build query params
+  const params = new URLSearchParams({
+    page: page.toString(),
+    location: filters.location || '',
+    industries: filters.industries || '',
+    minPrice: filters.priceRange?.split('-')[0] || '',
+    maxPrice: filters.priceRange?.split('-')[1] || '',
+    revenueRange: filters.revenueRange || '',
+    cashflowRange: filters.cashflowRange || ''
+  }).toString();
+  
+  // Fetch businesses with a slight delay to ensure loading state is visible
+  setTimeout(() => {
+    fetch(`/api/business/listings?${params}`)
+      .then(response => {
+        if (!response.ok) throw new Error('Failed to load businesses');
+        return response.json();
+      })
+      .then(data => {
+        renderBusinesses(data.businesses);
+        renderPaginationControls(page, data.totalPages);
+      })
+      .catch(error => {
+        console.error('Error loading businesses:', error);
+        listingsContainer.innerHTML = `
+          <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle"></i> Error loading listings. Please try again.
+          </div>
+        `;
+      });
+  }, 500); // Short delay to ensure loading animation is visible
+}
+
+/**
+ * Show skeleton loaders while content is loading
+ * @param {HTMLElement} container - Container element
+ */
+function showSkeletonLoaders(container) {
+  // Clear existing content
+  container.innerHTML = '';
+  
+  // Create ghost container for grid layout
+  const ghostContainer = document.createElement('div');
+  ghostContainer.className = 'ghost-container';
+  
+  // Determine number of skeletons based on viewport size
+  const viewportWidth = window.innerWidth;
+  let skeletonCount = 9; // Default for desktop
+  
+  if (viewportWidth < 768) {
+    skeletonCount = 3; // Mobile
+  } else if (viewportWidth < 1200) {
+    skeletonCount = 6; // Tablet
+  }
+  
+  // Create skeleton cards
+  for (let i = 0; i < skeletonCount; i++) {
+    const skeleton = createSkeletonCard();
+    ghostContainer.appendChild(skeleton);
+  }
+  
+  container.appendChild(ghostContainer);
+}
+
+/**
+ * Create a skeleton card for loading state
+ * @returns {HTMLElement} - Skeleton card element
+ */
+function createSkeletonCard() {
+  const card = document.createElement('div');
+  card.className = 'card-skeleton';
+  card.innerHTML = `
+    <div class="image-skeleton skeleton-loader"></div>
+    <div class="title-skeleton skeleton-loader"></div>
+    <div class="price-skeleton skeleton-loader"></div>
+    <div class="text-skeleton skeleton-loader"></div>
+    <div class="text-skeleton skeleton-loader"></div>
+    <div class="button-skeleton skeleton-loader"></div>
+  `;
+  return card;
+}
+
+/**
+ * Render business listings with progressive image loading
+ * @param {Array} businesses - Array of business objects
+ */
+function renderBusinesses(businesses) {
+  const listingsContainer = document.getElementById('listings-container');
+  if (!listingsContainer) return;
+  
+  // Clear existing content including skeletons
+  listingsContainer.innerHTML = '';
+  
+  if (!businesses || businesses.length === 0) {
+    listingsContainer.innerHTML = `
+      <div class="alert alert-info text-center w-100">
+        <i class="bi bi-info-circle me-2"></i>
+        No businesses found matching your criteria.
+      </div>`;
+    return;
+  }
+  
+  // Create row for grid layout
+  const row = document.createElement('div');
+  row.className = 'row row-cols-1 row-cols-md-3 g-4';
+  
+  // Add each business card
+  businesses.forEach((business, index) => {
+    const col = document.createElement('div');
+    col.className = 'col';
+    
+    // Process images with multi-region support
+    const processedImages = processBusinessImages(business);
+    
+    // Create card with loading support
+    col.innerHTML = createBusinessCard(business, processedImages, index);
+    row.appendChild(col);
+  });
+  
+  listingsContainer.appendChild(row);
+  
+  // Initialize lazy loading for images
+  initProgressiveImageLoading();
+  
+  // Initialize tooltips and other interactive elements
+  initTooltips();
+  initializeEventHandlers();
+}
+
+/**
+ * Process business images for proper display
+ * @param {Object} business - Business object
+ * @returns {Array} - Array of processed image URLs
+ */
+function processBusinessImages(business) {
+  if (!business.images || !Array.isArray(business.images) || business.images.length === 0) {
+    return ['/images/default-business.jpg'];
+  }
+  
+  // Parse PostgreSQL array format if needed
+  let images = business.images;
+  if (typeof images === 'string' && images.startsWith('{') && images.endsWith('}')) {
+    images = images.substring(1, images.length - 1).split(',');
+  }
+  
+  // Process each image URL
+  return images.map(image => {
+    if (!image) return '/images/default-business.jpg';
+    
+    // If it's already a full URL, use it
+    if (image.startsWith('http')) {
+      return image;
+    }
+    
+    // If it starts with /uploads/, convert to S3 URL
+    if (image.startsWith('/uploads/')) {
+      const filename = image.substring('/uploads/'.length);
+      return `https://${window.AWS_BUCKET_NAME || 'arzani-images1'}.s3.${window.AWS_REGION || 'eu-west-2'}.amazonaws.com/businesses/${business.id}/${filename}`;
+    }
+    
+    // Otherwise, it's a direct filename
+    return `https://${window.AWS_BUCKET_NAME || 'arzani-images1'}.s3.${window.AWS_REGION || 'eu-west-2'}.amazonaws.com/businesses/${business.id}/${image}`;
+  });
+}
+
+/**
+ * Create HTML for a business card with loading support
+ * @param {Object} business - Business object
+ * @param {Array} images - Processed image URLs
+ * @param {Number} index - Card index (for determining load priority)
+ * @returns {String} - HTML string for the business card
+ */
+function createBusinessCard(business, images, index) {
+  // Determine if this card should load immediately (first 6 cards)
+  const shouldLoadImmediately = index < 6;
+  
+  // Create the image carousel/container with loading support
+  const imageHtml = createImageCarousel(business, images, shouldLoadImmediately);
+  
+  // Return the complete card HTML
+  return `
+    <div class="card h-100" data-business-id="${business.id}" data-user-id="${business.user_id || ''}">
+      ${imageHtml}
+      <div class="card-body d-flex flex-column">
+        <h5 class="card-title">${business.business_name}</h5>
+        <p class="card-location">${business.location || 'Location not specified'}</p>
+        <p class="card-price">£${formatPrice(business.price || 0)}</p>
+        <div class="d-flex justify-content-between gap-2 mt-auto">
+          <button class="btn btn-primary flex-grow-1 view-details-btn" 
+                  data-business-id="${business.id}"
+                  onclick="viewBusinessDetails(${business.id})">
+              View Details
+          </button>
+          <button class="btn btn-outline-secondary flex-grow-1 contact-btn"
+                 data-business-id="${business.id}"
+                 data-user-id="${business.user_id || ''}">
+              Contact
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Create image carousel with progressive loading support
+ * @param {Object} business - Business object 
+ * @param {Array} images - Processed image URLs
+ * @param {Boolean} shouldLoadImmediately - Whether to load immediately
+ * @returns {String} - HTML string for image carousel
+ */
+function createImageCarousel(business, images, shouldLoadImmediately) {
+  if (!images || images.length === 0) {
+    return `<div class="image-container">
+      <div class="image-placeholder skeleton-loader"></div>
+      <img src="/images/default-business.jpg" class="card-img-top" alt="Default image">
+    </div>`;
+  }
+  
+  return `
+    <div class="card-image-carousel">
+      <button class="save-business-btn" data-business-id="${business.id}">
+        <i class="bi bi-bookmark"></i>
+      </button>
+      <div class="carousel-inner">
+        ${images.map((imageUrl, index) => {
+          // Set up loading attributes based on priority
+          const isFirst = index === 0;
+          const shouldLoad = isFirst && shouldLoadImmediately;
+          const loadingStrategy = shouldLoad ? 'eager' : 'lazy';
+          
+          // Create alternate region URLs for fallback
+          const fallbackUrl = imageUrl.includes('eu-west-2') 
+            ? imageUrl.replace('eu-west-2', 'eu-north-1') 
+            : imageUrl.replace('eu-north-1', 'eu-west-2');
+          
+          return `
+            <div class="carousel-item ${isFirst ? 'active' : ''}" data-index="${index}">
+              <div class="image-container">
+                <div class="image-placeholder skeleton-loader"></div>
+                <img src="${shouldLoad ? imageUrl : 'data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAA='}" 
+                     data-src="${shouldLoad ? '' : imageUrl}"
+                     data-fallback="${fallbackUrl}"
+                     class="card-img-top ${shouldLoad ? 'blur-up' : 'lazy-load blur-up'}"
+                     alt="${business.business_name}"
+                     loading="${loadingStrategy}"
+                     onerror="handleImageError(this)"
+                     onload="handleImageLoad(this)">
+              </div>
+            </div>`;
+        }).join('')}
+      </div>
+      ${images.length > 1 ? createCarouselControls(images.length) : ''}
+    </div>
+  `;
+}
+
+/**
+ * Format price with thousands separators
+ * @param {Number} price - Price value
+ * @returns {String} - Formatted price string
+ */
+function formatPrice(price) {
+  return new Intl.NumberFormat('en-GB').format(price);
+}
+
+/**
+ * Create carousel controls for multi-image listings
+ * @param {Number} imageCount - Number of images
+ * @returns {String} - HTML string for carousel controls
+ */
+function createCarouselControls(imageCount) {
+  return `
+    <div class="carousel-controls">
+      <button class="carousel-control-prev" onclick="handleCarouselNav(this.closest('.card-image-carousel'), -1)">
+        <i class="bi bi-chevron-left"></i>
+      </button>
+      <button class="carousel-control-next" onclick="handleCarouselNav(this.closest('.card-image-carousel'), 1)">
+        <i class="bi bi-chevron-right"></i>
+      </button>
+      <div class="carousel-indicators">
+        ${Array(imageCount).fill().map((_, i) => 
+          `<button class="${i === 0 ? 'active' : ''}" 
+                  onclick="showSlide(this.closest('.card-image-carousel'), ${i})"></button>`
+        ).join('')}
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Initialize progressive image loading
+ */
+function initProgressiveImageLoading() {
+  // Use Intersection Observer for lazy loading if available
+  if ('IntersectionObserver' in window) {
+    // Cleanup existing observer
+    if (window.imageObserver) {
+      window.imageObserver.disconnect();
+    }
+    
+    // Create new observer
+    window.imageObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const img = entry.target;
+          if (img.dataset.src) {
+            // Set the actual image source
+            img.src = img.dataset.src;
+            img.removeAttribute('data-src');
+            window.imageObserver.unobserve(img);
+          }
+        }
+      });
+    }, {
+      rootMargin: '200px 0px', // Start loading when within 200px
+      threshold: 0.01 // Trigger when at least 1% is visible
+    });
+    
+    // Observe all lazy-load images
+    document.querySelectorAll('img.lazy-load').forEach(img => {
+      window.imageObserver.observe(img);
+    });
+  } else {
+    // Fallback for browsers without IntersectionObserver
+    document.querySelectorAll('img.lazy-load').forEach(img => {
+      if (img.dataset.src) {
+        img.src = img.dataset.src;
+        img.removeAttribute('data-src');
+      }
+    });
+  }
+}
+
+/**
+ * Handle successful image load
+ * @param {HTMLImageElement} img - Image element
+ */
+window.handleImageLoad = function(img) {
+  // Add the loaded class to trigger the fade-in animation
+  img.classList.add('loaded');
+  
+  // Find and hide the placeholder
+  const placeholder = img.previousElementSibling;
+  if (placeholder && placeholder.classList.contains('image-placeholder')) {
+    placeholder.style.display = 'none';
+  }
+}
+
+/**
+ * Handle image loading error with region fallback
+ * @param {HTMLImageElement} img - Image element
+ */
+window.handleImageError = function(img) {
+  // Only log in debug mode to avoid console spam
+  if (window.DEBUG_MODE) {
+    console.log('Image failed to load, trying fallback:', img.src);
+  }
+  
+  // Check if we've already tried the fallback
+  if (img.dataset.usedFallback === 'true') {
+    // If fallback already failed, show error state
+    const placeholder = img.previousElementSibling;
+    if (placeholder) {
+      placeholder.classList.remove('skeleton-loader');
+      placeholder.classList.add('image-error');
+      placeholder.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Image unavailable';
+    }
+    img.style.display = 'none';
+    return;
+  }
+  
+  // Try the fallback URL
+  img.dataset.usedFallback = 'true';
+  if (img.dataset.fallback) {
+    img.src = img.dataset.fallback;
+  } else if (img.src.includes('s3.eu-west-2.amazonaws.com')) {
+    // Try northern region as fallback
+    img.src = img.src.replace('s3.eu-west-2.amazonaws.com', 's3.eu-north-1.amazonaws.com');
+  } else if (img.src.includes('s3.eu-north-1.amazonaws.com')) {
+    // Try western region as fallback
+    img.src = img.src.replace('s3.eu-north-1.amazonaws.com', 's3.eu-west-2.amazonaws.com');
+  } else {
+    // Last resort - use default image
+    img.src = '/images/default-business.jpg';
+  }
+}
+
+/**
+ * Initialize event handlers for the business cards
+ */
+function initializeEventHandlers() {
+  // Initialize carousel navigation
+  document.querySelectorAll('.carousel-control-prev, .carousel-control-next').forEach(control => {
+    control.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const carousel = control.closest('.card-image-carousel');
+      const direction = control.classList.contains('carousel-control-prev') ? -1 : 1;
+      
+      handleCarouselNav(carousel, direction);
+    });
+  });
+  
+  // Initialize save buttons
+  document.querySelectorAll('.save-business-btn').forEach(button => {
+    button.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const businessId = this.dataset.businessId;
+      if (businessId) {
+        toggleSavedStatus(this, businessId);
+      }
+    });
+  });
+  
+  // Initialize contact buttons
+  initContactSellerButtons();
+}
+
+// Make our loadPage function available globally
+window.loadPage = loadPage;
+
+// Add these functions to the global scope for use in HTML
+window.handleCarouselNav = handleCarouselNav;
+window.showSlide = showSlide;
+window.viewBusinessDetails = viewBusinessDetails;
 
 // ...existing code...

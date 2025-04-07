@@ -19,7 +19,7 @@ header {
 }
 
 header.scrolled {
-  background-color: rgba(20, 20, 20, 0.95);
+  background-color: rgba(20, 20, 20, .95);
   backdrop-filter: blur(10px);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
@@ -28,7 +28,7 @@ header.scrolled {
   position: relative;
 }
 
-.nav-item button, 
+.nav-item button,
 .nav-item a {
   position: relative;
   transition: color 0.2s ease;
@@ -1330,9 +1330,9 @@ footer ul li a:hover {
   scroll-snap-align: center;
   display: flex;
   flex-direction: column;
-  background: rgba(30, 30, 30, 0.6);
+  background: rgba(30,30,30,0.6);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255,255,255,0.1);
   border-radius: 12px;
   padding: 1.5rem;
   height: auto;
@@ -2526,6 +2526,91 @@ px) {
   
   .navbar__drawer.touched .navbar__drawer_dropdown {
     display: block;
+  }
+}
+
+/* Hero Section USP Styles */
+.usp-section .usp-item {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.usp-section .usp-item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(49, 111, 212, 0.15);
+}
+
+/* Responsive hero section */
+@media (max-width: 768px) {
+  .hero-section h1 {
+    font-size: 2.5rem !important; /* Adjusted font size */
+  }
+  
+  .hero-section p {
+    font-size: 1rem !important; /* Adjusted font size */
+  }
+  
+  /* Adjust spacing for mobile */
+  section {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  .usp-section {
+    grid-template-columns: 1fr; /* Stack USPs vertically on mobile */
+    gap: 1rem; /* Adjust gap for mobile */
+  }
+}
+
+/* Hero Image Styles */
+.hero-image {
+  max-height: 100vh; /* Adjust max height as needed */
+  filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.3));
+}
+
+/* Responsive hero section */
+@media (max-width: 768px) {
+  .hero-section .grid {
+    grid-template-columns: 1fr; /* Ensure single column on mobile */
+  }
+
+  .hero-section .text-center.md\:text-left {
+     text-align: center !important; /* Force center align text on mobile */
+  }
+
+  .hero-section .justify-center.md\:justify-start {
+      justify-content: center !important; /* Force center align buttons on mobile */
+  }
+
+  .hero-section .mx-auto.md\:mx-0 {
+      margin-left: auto !important; /* Force center align USPs on mobile */
+      margin-right: auto !important;
+  }
+
+  .hero-section h1 {
+    font-size: 2.5rem !important; /* Adjusted font size */
+  }
+  
+  .hero-section p {
+    font-size: 1rem !important; /* Adjusted font size */
+  }
+  
+  /* Adjust spacing for mobile */
+  section.hero-section { /* Be more specific to avoid affecting other sections */
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+    padding-top: 8rem !important; /* Adjust top padding if needed */
+    padding-bottom: 4rem !important; /* Adjust bottom padding */
+    min-height: auto; /* Allow height to adjust on mobile */
+  }
+
+  .usp-section {
+    grid-template-columns: 1fr; /* Stack USPs vertically on mobile */
+    gap: 1rem; /* Adjust gap for mobile */
+  }
+
+  /* Hide the image column on mobile if it was added */
+  .hero-section .hidden.md\:flex {
+      display: none;
   }
 }
 

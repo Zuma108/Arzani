@@ -418,6 +418,7 @@ document.addEventListener('DOMContentLoaded', function() {
               <ul>
                 <li>You recently clicked the verification link (it can take a few minutes)</li>
                 <li>The verification link has expired</li>
+                <li>Check yuor spam folder</li>
                 <li>There was a technical issue with verification</li>
               </ul>
               <p>Please try these steps:</p>

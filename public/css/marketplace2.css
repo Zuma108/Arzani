@@ -1712,3 +1712,158 @@ body {
 }
 
 // ...existing code...
+
+/* Skeleton Loading Styles */
+.skeleton-loader {
+  position: relative;
+  overflow: hidden;
+  background-color: #e9ecef;
+  border-radius: 4px;
+}
+
+.skeleton-loader::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, 
+    rgba(255, 255, 255, 0) 0%, 
+    rgba(255, 255, 255, 0.2) 20%, 
+    rgba(255, 255, 255, 0.5) 60%, 
+    rgba(255, 255, 255, 0));
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Card skeleton loaders */
+.card-skeleton {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-skeleton .image-skeleton {
+  height: 200px;
+  border-radius: 4px 4px 0 0;
+}
+
+.card-skeleton .title-skeleton {
+  height: 24px;
+  margin: 16px 16px 8px;
+  width: 80%;
+}
+
+.card-skeleton .price-skeleton {
+  height: 32px;
+  margin: 8px 16px;
+  width: 60%;
+}
+
+.card-skeleton .text-skeleton {
+  height: 16px;
+  margin: 8px 16px;
+  width: 90%;
+}
+
+.card-skeleton .button-skeleton {
+  height: 38px;
+  margin: 16px 16px 8px;
+  border-radius: 4px;
+}
+
+/* Image loading styles */
+.image-container {
+  position: relative;
+  overflow: hidden;
+  background-color: #f8f9fa;
+  border-radius: 4px 4px 0 0;
+}
+
+.image-placeholder {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #e9ecef;
+}
+
+.card-img-top {
+  transition: opacity 0.3s ease-in-out;
+  opacity: 0;
+  object-fit: cover;
+  width: 100%;
+  height: 200px;
+}
+
+.card-img-top.loaded {
+  opacity: 1;
+}
+
+/* Loading spinner for initial page load */
+.listings-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 0;
+  width: 100%;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top-color: #007bff;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Progressive image loading styles */
+.blur-up {
+  filter: blur(5px);
+  transition: filter 0.3s ease-in-out;
+}
+
+.blur-up.loaded {
+  filter: blur(0);
+}
+
+/* Container for ghost cards when loading */
+.ghost-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+  width: 100%;
+}
+
+/* Error state for images */
+.image-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f8f9fa;
+  color: #6c757d;
+  font-size: 14px;
+  height: 200px;
+}
+
+.image-error i {
+  margin-right: 8px;
+}
+// ...existing code...

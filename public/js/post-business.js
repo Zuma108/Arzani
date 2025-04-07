@@ -237,10 +237,10 @@ function initializeForm(token) {
     
     // Update Dropzone configuration with enhanced error handling
     imageDropzone = new Dropzone("#imageDropzone", {
-        url: "/api/submit-business", 
-        autoProcessQueue: false, 
-        uploadMultiple: true,
-        parallelUploads: 5,
+        url: "/api/s3-upload", // Use dedicated S3 upload endpoint
+        autoProcessQueue: true, // Change to true to process uploads immediately when files are added
+        uploadMultiple: false, // Upload one file at a time
+        parallelUploads: 2, // Process two uploads in parallel for better performance
         maxFiles: 5,
         minFiles: 3,
         acceptedFiles: "image/*",
@@ -257,6 +257,10 @@ function initializeForm(token) {
         },
         init: function() {
             const dz = this;
+            window.submitDropzone = dz; // Make it accessible for debugging
+            
+            // Log file count for debugging
+            console.log(`Dropzone initialized with ${dz.files.length} files`);
             
             this.on("sending", function(file, xhr, formData) {
                 // Always use the current token
@@ -272,8 +276,39 @@ function initializeForm(token) {
                 formData.append('awsBucket', window.AWS_BUCKET_NAME || 'arzani-images1');
                 
                 // Log what we're sending
-                console.log(`Sending file: ${file.name}, size: ${file.size} bytes`);
+                console.log(`Sending file: ${file.name}, size: ${file.size} bytes, status: ${file.status}`);
                 console.log(`Using region: ${window.AWS_REGION || 'eu-west-2'}, bucket: ${window.AWS_BUCKET_NAME || 'arzani-images1'}`);
+            });
+
+            // Enhanced success handling
+            this.on("success", function(file, response) {
+                console.log('File uploaded successfully:', file.name, 'Status:', file.status);
+                console.log('S3 upload response:', response);
+                
+                if (response && response.success && response.url) {
+                    // Store the S3 URL in the file object for later use
+                    file.s3Url = response.url;
+                    console.log('Assigned S3 URL to file:', file.s3Url);
+                    
+                    // Add a hidden field to the form with the S3 URL
+                    const form = document.getElementById('postBusinessForm');
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'imageUrls[]';
+                    input.value = response.url;
+                    input.className = 's3-image-url';
+                    form.appendChild(input);
+                    
+                    // Update the UI to show success
+                    file.previewElement.classList.add('dz-success');
+                } else {
+                    console.warn('No valid URL returned in response:', response);
+                }
+                
+                // Force a status update
+                if (typeof updateUploadStatus === 'function') {
+                    updateUploadStatus();
+                }
             });
 
             // Enhanced file validation
@@ -346,21 +381,57 @@ function initializeForm(token) {
                     }
                 }
                 
-                // Check for authentication issues
-                if (typeof errorMessage === 'string' && errorMessage.includes('Unauthorized')) {
-                    alert('Your session has expired. Please log in again.');
-                    window.location.href = `/login2?returnTo=${encodeURIComponent(window.location.pathname)}`;
-                    return;
-                }
+                // Clearly mark as error
+                file.status = Dropzone.ERROR;
+                file.previewElement.classList.add('dz-error');
+                file.uploadFailed = true;
+                
+                // Set an error flag on the file for later reference
+                file.uploadError = errorMessage;
                 
                 // Show error on the file
-                file.previewElement.classList.add('dz-error');
                 const errorDisplay = file.previewElement.querySelector('.dz-error-message span');
                 if (errorDisplay) {
                     errorDisplay.textContent = errorMessage;
                 }
+                
+                // Force a status update
+                if (typeof updateUploadStatus === 'function') {
+                    updateUploadStatus();
+                }
+            });
+            
+            // Add new handler for queuecomplete event
+            this.on("queuecomplete", function() {
+                console.log('All queued files processed');
+                // Force a status update
+                if (typeof updateUploadStatus === 'function') {
+                    updateUploadStatus();
+                }
+            });
+            
+            // Handle when files are added
+            this.on("addedfile", function(file) {
+                console.log(`File added: ${file.name}, status: ${file.status}`);
+                // Force upload to start immediately
+                if (file.status !== Dropzone.UPLOADING && file.status !== Dropzone.SUCCESS) {
+                    setTimeout(() => {
+                        console.log(`Auto-processing file ${file.name}`);
+                        dz.processFile(file);
+                    }, 100);
+                }
             });
         }
+    });
+    
+    // Initialize the stock image gallery
+    initializeStockImageGallery();
+    
+    // Add tab change event listener to handle image source switching
+    document.querySelectorAll('#imageSourceTabs .nav-link').forEach(tab => {
+        tab.addEventListener('click', function(e) {
+            handleImageSourceChange(e.target.id);
+        });
     });
     
     // Initialize form event listeners after we know authentication is valid
@@ -385,6 +456,176 @@ function initializeForm(token) {
         await checkAdvancedValuation();
         advValuationBtn.classList.remove('loading');
     });
+}
+
+// Add these new functions for stock image handling
+const selectedStockImages = [];
+const MAX_SELECTED_IMAGES = 5;
+
+// Function to initialize the stock image gallery
+function initializeStockImageGallery() {
+    const stockImagesContainer = document.getElementById('stock-images-container');
+    if (!stockImagesContainer) return;
+    
+    // Define stock images (these URLs should point to your pre-uploaded S3 images)
+    const stockImages = [
+        { id: 'stock1', url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/stock/business_1.jpg', title: 'Stock Image 1' },
+        { id: 'stock2', url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/stock/business_2.jpg', title: 'Stock Image 2' },
+        { id: 'stock3', url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/stock/business_3.jpg', title: 'Stock Image 3' },
+        { id: 'stock4', url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/stock/business_4.png', title: 'Stock Image 4' },
+        { id: 'stock5', url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/stock/business_5.jpg', title: 'Stock Image 5' },
+        { id: 'stock6', url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/stock/business_6.jpg', title: 'Stock Image 6' },
+        { id: 'stock7', url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/stock/business_7.jpeg', title: 'Stock Image 7' },
+        { id: 'stock8', url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/stock/business_8.jpg', title: 'Stock Image 8' },
+        { id: 'stock9', url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/stock/business_9.jpg', title: 'Stock Image 9' },
+        { id: 'stock10', url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/stock/business_10.jpg', title: 'Stock Image 10' },
+        { id: 'stock11', url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/stock/business_11.jpg', title: 'Stock Image 11' },
+        { id: 'stock12', url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/stock/business_12.jpg', title: 'Stock Image 12' },
+        { id: 'stock13', url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/stock/business_13.png', title: 'Stock Image 13' },
+        { id: 'stock14', url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/stock/business_14.png', title: 'Stock Image 14' },
+        { id: 'stock15', url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/stock/business_15.jpg', title: 'Stock Image 15' },
+        { id: 'stock16', url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/stock/business_16.jpg', title: 'Stock Image 16' },
+        { id: 'stock17', url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/stock/business_17.jpg', title: 'Stock Image 17' },
+        { id: 'stock18', url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/stock/business_18.jpg', title: 'Stock Image 18' },
+        { id: 'stock19', url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/stock/business_19.jpg', title: 'Stock Image 19' },
+        { id: 'stock20', url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/stock/business_20.jpg', title: 'Stock Image 20' }
+    ];
+    
+    // Clear loading message
+    stockImagesContainer.innerHTML = '';
+    
+    // Generate stock image elements
+    stockImages.forEach(image => {
+        const imageElement = document.createElement('div');
+        imageElement.className = 'stock-image-item';
+        imageElement.dataset.id = image.id;
+        imageElement.dataset.url = image.url;
+        imageElement.innerHTML = `
+            <img src="${image.url}" alt="${image.title}" title="${image.title}">
+            <div class="selection-overlay">✓</div>
+        `;
+        
+        // Add click handler to select/deselect image
+        imageElement.addEventListener('click', () => toggleStockImageSelection(image));
+        
+        stockImagesContainer.appendChild(imageElement);
+    });
+    
+    // Initialize the selection display area
+    updateSelectedImagesDisplay();
+}
+
+// Function to toggle selection of a stock image
+function toggleStockImageSelection(image) {
+    const imageElement = document.querySelector(`.stock-image-item[data-id="${image.id}"]`);
+    
+    // Check if this image is already selected
+    const isSelected = selectedStockImages.some(img => img.id === image.id);
+    
+    if (isSelected) {
+        // Remove from selection
+        const index = selectedStockImages.findIndex(img => img.id === image.id);
+        if (index !== -1) {
+            selectedStockImages.splice(index, 1);
+        }
+        imageElement?.classList.remove('selected');
+    } else {
+        // Add to selection if not at max
+        if (selectedStockImages.length < MAX_SELECTED_IMAGES) {
+            selectedStockImages.push(image);
+            imageElement?.classList.add('selected');
+        } else {
+            alert(`You can only select up to ${MAX_SELECTED_IMAGES} images.`);
+            return;
+        }
+    }
+    
+    // Update the selected images display
+    updateSelectedImagesDisplay();
+}
+
+// Function to update the selected images display
+function updateSelectedImagesDisplay() {
+    const selectedImagesContainer = document.getElementById('selectedImagesContainer');
+    const selectedImageCount = document.getElementById('selectedImageCount');
+    const noSelectedImagesMsg = document.getElementById('noSelectedImagesMsg');
+    
+    // Update count
+    selectedImageCount.textContent = selectedStockImages.length;
+    
+    // Show/hide empty message
+    if (selectedStockImages.length === 0) {
+        noSelectedImagesMsg.style.display = 'block';
+        return;
+    } else {
+        noSelectedImagesMsg.style.display = 'none';
+    }
+    
+    // Clear container except for the message
+    Array.from(selectedImagesContainer.children)
+        .filter(child => child !== noSelectedImagesMsg)
+        .forEach(child => child.remove());
+    
+    // Add selected images
+    selectedStockImages.forEach((image, index) => {
+        const imageElement = document.createElement('div');
+        imageElement.className = 'selected-image-item';
+        imageElement.innerHTML = `
+            <img src="${image.url}" alt="${image.title || 'Image ' + (index+1)}">
+            <button type="button" class="remove-btn" data-id="${image.id}">×</button>
+        `;
+        
+        // Add click handler to remove button
+        imageElement.querySelector('.remove-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleStockImageSelection(image);
+        });
+        
+        selectedImagesContainer.appendChild(imageElement);
+    });
+    
+    // Add hidden fields for each selected stock image
+    updateHiddenImageFields();
+}
+
+// Function to update hidden image fields in the form
+function updateHiddenImageFields() {
+    // Remove any existing stock image fields
+    document.querySelectorAll('input.stock-image-url').forEach(el => el.remove());
+    
+    // Add new fields for each selected image
+    if (selectedStockImages.length > 0) {
+        const form = document.getElementById('postBusinessForm');
+        selectedStockImages.forEach(image => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'stockImageUrls[]';
+            input.value = image.url;
+            input.className = 'stock-image-url';
+            form.appendChild(input);
+        });
+    }
+}
+
+// Function to handle switching between image sources
+function handleImageSourceChange(activeTabId) {
+    // Update active tab for image source
+    const isGalleryActive = activeTabId === 'gallery-tab';
+    const isUploadActive = activeTabId === 'upload-tab';
+    
+    // Store the current mode
+    window.currentImageMode = isGalleryActive ? 'gallery' : 'upload';
+    
+    // Enable/disable Dropzone based on tab
+    if (window.submitDropzone) {
+        if (isGalleryActive) {
+            // When switching to gallery, disable Dropzone
+            window.submitDropzone.disable();
+        } else {
+            // When switching to upload, enable Dropzone
+            window.submitDropzone.enable();
+        }
+    }
 }
 
 // Add token refresh before form submission
@@ -435,7 +676,7 @@ function sanitizeNumericInput(value) {
 let isSubmitting = false;
 
 // Update handleFormSubmission
-async function handleFormSubmission() {
+async function handleFormSubmission(event) {
     // Prevent multiple submissions
     if (isSubmitting) {
         return;
@@ -456,135 +697,94 @@ async function handleFormSubmission() {
 
         console.log('Using authentication token for submission:', token.substring(0, 10) + '...');
 
-        // Check if we have enough images
-        if (imageDropzone && imageDropzone.files.length < 3) {
-            throw new Error('Please upload at least 3 images of your business');
+        // Check if we have enough images - consider both upload and stock images
+        const isGalleryMode = document.getElementById('gallery-tab').classList.contains('active');
+        
+        if (isGalleryMode) {
+            // Check if we have enough stock images
+            if (selectedStockImages.length < 3) {
+                throw new Error('Please select at least 3 images from the gallery');
+            }
+        } else {
+            // Check if we have enough uploaded images
+            if (imageDropzone && imageDropzone.files.length < 3) {
+                throw new Error('Please upload at least 3 images of your business');
+            }
+            
+            // Check if any uploads are still in progress
+            if (imageDropzone && imageDropzone.getUploadingFiles().length > 0) {
+                throw new Error('Please wait for all images to finish uploading before submitting');
+            }
         }
 
         // Get the form data
         const form = document.getElementById('postBusinessForm');
         const formData = new FormData(form);
         
-        // Make sure the numeric fields are properly sanitized
-        const numericFields = [
-            'price', 'cash_flow', 'gross_revenue', 'ebitda', 'inventory', 
-            'sales_multiple', 'profit_margin', 'debt_service', 'cash_on_cash', 
-            'down_payment', 'ffe', 'employees', 'years_in_operation'
-        ];
+        // Create an object to hold the data
+        const submissionData = {};
         
-        // Double-check that sanitized numeric fields don't include empty strings
-        numericFields.forEach(field => {
-            const value = formData.get(field);
-            // If empty or not a valid number, set to null or 0
-            if (value === '' || value === null || isNaN(parseFloat(value))) {
-                formData.set(field, '0'); // Use '0' instead of empty string
-            } else {
-                // Make sure it's properly sanitized
-                formData.set(field, sanitizeNumericInput(value));
+        // Process form fields (excluding images)
+        for (const [key, value] of formData.entries()) {
+            if (key !== 'images') {
+                submissionData[key] = value;
             }
-        });
+        }
         
-        // Add field mappings for backward compatibility
-        // This ensures both camelCase and snake_case field names work during transition
-        const fieldMappings = {
-            'cashFlow': 'cash_flow',
-            'grossRevenue': 'gross_revenue',
-            'salesMultiple': 'sales_multiple',
-            'profitMargin': 'profit_margin',
-            'debtService': 'debt_service',
-            'cashOnCash': 'cash_on_cash',
-            'downPayment': 'down_payment',
-            'ffE': 'ffe',
-            'yearsInOperation': 'years_in_operation',
-            'reasonForSelling': 'reason_for_selling'
-        };
-        
-        // Add cross-field compatibility - duplicate fields with both naming conventions 
-        for (const [camelCase, snakeCase] of Object.entries(fieldMappings)) {
-            // If form has the camelCase version and no snake_case version, add it
-            if (formData.has(camelCase) && !formData.has(snakeCase)) {
-                formData.set(snakeCase, formData.get(camelCase));
-            }
-            // If form has the snake_case version and no camelCase version, add it
-            else if (formData.has(snakeCase) && !formData.has(camelCase)) {
-                formData.set(camelCase, formData.get(snakeCase));
+        // Process images based on the selected mode
+        if (isGalleryMode) {
+            // Use stock images
+            submissionData.images = selectedStockImages.map(img => img.url);
+            submissionData.useStockImages = true;
+        } else {
+            // Process uploaded images
+            // ...existing code for handling uploaded images...
+            if (imageDropzone && imageDropzone.files.length > 0) {
+                submissionData.images = [];
+            
+                // Get local file objects for submission
+                const imageFiles = [];
+                for (let i = 0; i < imageDropzone.files.length; i++) {
+                    const file = imageDropzone.files[i];
+                    imageFiles.push(file);
+                }
+                
+                console.log(`Preparing ${imageFiles.length} files for submission`);
+                
+                // Create a FormData object just for the file uploads
+                const imageFormData = new FormData();
+                for (let i = 0; i < imageFiles.length; i++) {
+                    imageFormData.append('images', imageFiles[i]);
+                }
+                
+                // Upload the images as part of the form submission directly
+                submissionData.hasImages = true;
+                
+                // Add files directly to the form data we'll send
+                for (let i = 0; i < imageFiles.length; i++) {
+                    formData.append('images', imageFiles[i]);
+                }
             }
         }
         
         // Add S3 region information
-        formData.append('awsRegion', window.AWS_REGION || 'eu-west-2');
-        formData.append('awsBucket', window.AWS_BUCKET_NAME || 'arzani-images1');
+        submissionData.awsRegion = window.AWS_REGION || 'eu-west-2';
+        submissionData.awsBucket = window.AWS_BUCKET_NAME || 'arzani-images1';
         
-        // Process images from Dropzone
-        if (imageDropzone && imageDropzone.files.length > 0) {
-            const imageFiles = imageDropzone.files;
-            console.log(`Adding ${imageFiles.length} files from Dropzone`);
-            
-            // Clear existing files from formData to avoid duplicates
-            formData.delete('images');
-            
-            // Add each file to the form data - IMPORTANT to use the same field name for all files
-            // This is how multer recognizes them as an array
-            for (let i = 0; i < imageFiles.length; i++) {
-                formData.append('images', imageFiles[i], imageFiles[i].name);
-                console.log(`Added image ${i+1}: ${imageFiles[i].name} to FormData`);
-            }
-        }
-        
-        // Log the form data before submission
-        console.log('Submitting business data:');
-        let imageCount = 0;
-        for (const [key, value] of formData.entries()) {
-            if (key === 'images') {
-                imageCount++;
-                console.log(`${key} [${imageCount}]: ${value instanceof File ? value.name : 'Not a file'}`);
-            } else {
-                console.log(`${key}: ${value}`);
-            }
-        }
-        console.log(`Total images in FormData: ${imageCount}`);
-        
-        // Add fields for new database columns
-        if (formData.get('recurringRevenue')) {
-            formData.append('recurring_revenue_percentage', formData.get('recurringRevenue'));
-        }
-        
-        if (formData.get('growthRate')) {
-            formData.append('growth_rate', formData.get('growthRate'));
-        }
-        
-        if (formData.get('intellectualProperty')) {
-            formData.append('intellectual_property', formData.get('intellectualProperty'));
-        }
-        
-        if (formData.get('websiteTraffic')) {
-            formData.append('website_traffic', formData.get('websiteTraffic'));
-        }
-        
-        if (formData.get('socialFollowers')) {
-            formData.append('social_media_followers', formData.get('socialFollowers'));
-        }
-        
-        // Log the form data before submission
-        console.log('Submitting business data with fields:');
-        for (const [key, value] of formData.entries()) {
-            if (key === 'images') {
-                console.log(`${key}: [File object]`);
-            } else {
-                console.log(`${key}: ${value}`);
-            }
-        }
+        console.log('Submitting business data:', submissionData);
         
         // Submit the form data to the server with the token
+        // If using stock images, use JSON submission, otherwise use FormData for file uploads
         const response = await fetch('/api/submit-business', {
             method: 'POST',
-            body: formData,
             headers: {
+                ...(isGalleryMode ? {'Content-Type': 'application/json'} : {}),
                 'Authorization': `Bearer ${token}`
-            }
+            },
+            body: isGalleryMode ? JSON.stringify(submissionData) : formData
         });
 
-        // Log the full response for debugging
+        // Parse the response
         const responseText = await response.text();
         console.log('Server response:', responseText);
         
@@ -596,15 +796,7 @@ async function handleFormSubmission() {
             throw new Error(`Server returned non-JSON response: ${responseText}`);
         }
         
-        // Add detailed logging to see the exact structure
-        console.log('Parsed response data structure:', {
-            success: data.success,
-            hasBusinessObject: !!data.business,
-            businessKeys: data.business ? Object.keys(data.business) : 'N/A',
-            businessId: data.business?.id,
-            imagesArray: Array.isArray(data.images) ? `${data.images.length} URLs` : 'Not an array'
-        });
-        
+        // Check for errors
         if (!response.ok) {
             throw new Error(data.error || data.message || 'Failed to submit business');
         }
@@ -614,7 +806,7 @@ async function handleFormSubmission() {
             id: data.business?.id,
             name: data.business?.business_name,
             userId: data.business?.user_id,
-            images: data.images
+            images: data.business?.images
         });
         
         // Modified check - also verify the id is a number
@@ -623,7 +815,7 @@ async function handleFormSubmission() {
             throw new Error('No valid business ID returned from server. Please try again.');
         }
 
-        // Redirect to marketplace instead of the business detail page
+        // Redirect to marketplace
         window.location.href = '/marketplace2';
 
     } catch (error) {
@@ -705,11 +897,60 @@ async function checkValuation() {
     const token = await verifyAndRefreshToken();
     if (!token) return;
 
-    const formData = new FormData(document.querySelector('form'));
-    const businessData = Object.fromEntries(formData);
+    const valuationBtn = document.getElementById('checkValuation');
+    valuationBtn.classList.add('loading');
 
     try {
-        const response = await fetch('/business/calculate-valuation', {
+        // Get form data and format it properly
+        const form = document.getElementById('postBusinessForm');
+        const formData = new FormData(form);
+        const businessData = {};
+        
+        // Process form fields with proper type conversion
+        for (const [key, value] of formData.entries()) {
+            // Convert numeric fields to numbers
+            if (['price', 'cash_flow', 'gross_revenue', 'ebitda', 'inventory', 
+                 'sales_multiple', 'profit_margin', 'debt_service', 'cash_on_cash', 
+                 'down_payment', 'ffe', 'employees', 'years_in_operation',
+                 'recurring_revenue', 'growth_rate', 'website_traffic', 
+                 'social_followers'].includes(key) && value) {
+                businessData[key] = parseFloat(value) || 0;
+            } else {
+                businessData[key] = value;
+            }
+        }
+        
+        // Map camelCase fields to snake_case for consistency
+        const fieldMappings = {
+            'businessName': 'business_name',
+            'cashFlow': 'cash_flow',
+            'grossRevenue': 'gross_revenue',
+            'salesMultiple': 'sales_multiple',
+            'profitMargin': 'profit_margin',
+            'debtService': 'debt_service',
+            'cashOnCash': 'cash_on_cash',
+            'downPayment': 'down_payment',
+            'ffE': 'ffe',
+            'yearsInOperation': 'years_in_operation',
+            'reasonForSelling': 'reason_for_selling',
+            'recurringRevenue': 'recurring_revenue',
+            'growthRate': 'growth_rate',
+            'websiteTraffic': 'website_traffic',
+            'socialFollowers': 'social_media_followers',
+            'intellectualProperty': 'intellectual_property'
+        };
+        
+        // Ensure all fields are in snake_case format
+        for (const [camelCase, snakeCase] of Object.entries(fieldMappings)) {
+            if (businessData[camelCase] !== undefined) {
+                businessData[snakeCase] = businessData[camelCase];
+            }
+        }
+        
+        console.log('Sending business data for valuation:', businessData);
+        
+        // Fix the API endpoint URL - add /api/ prefix
+        const response = await fetch('/api/post-business/calculate-valuation', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -718,68 +959,133 @@ async function checkValuation() {
             body: JSON.stringify(businessData)
         });
 
+        if (!response.ok) {
+            throw new Error(`Valuation request failed: ${response.status}`);
+        }
+
         const data = await response.json();
+        
         if (data.success) {
             updateValuationUI(data.valuation, data.priceComparison);
             document.querySelector('.valuation-status').classList.remove('hidden');
             document.querySelector('.valuation-status').classList.add('active');
+        } else {
+            throw new Error(data.error || data.message || 'Valuation failed');
         }
     } catch (error) {
-        console.error('Valuation check error:', error);
+        console.error('Valuation error:', error);
+        alert('Failed to calculate valuation. Please ensure all required fields are filled.');
+    } finally {
+        valuationBtn?.classList.remove('loading');
     }
 }
 
 function updateValuationUI(valuation, priceComparison) {
-    // First, check if valuation details already exists
-    let valuationDetails = document.querySelector('.valuation-details');
+    // Safety check for missing data
+    if (!valuation || !valuation.valuationRange) {
+        console.error('Missing valuation data:', valuation);
+        
+        // Show error message instead of trying to update UI elements
+        const errorContainer = document.getElementById('valuation-loading') || document.createElement('div');
+        errorContainer.innerHTML = `
+            <div class="alert alert-warning">
+                <p>We couldn't calculate a valuation with the provided information.</p>
+                <p>Please make sure you've entered key financial information like revenue or EBITDA.</p>
+            </div>
+        `;
+        
+        // If we have a container, show it
+        if (document.getElementById('valuation-loading')) {
+            document.getElementById('valuation-loading').classList.remove('d-none');
+        }
+        
+        // Hide results container if it exists
+        const resultsContainer = document.getElementById('valuation-results');
+        if (resultsContainer) {
+            resultsContainer.classList.add('d-none');
+        }
+        
+        return;
+    }
+
+    // Get all elements with null checks to prevent errors
+    const rangeEl = document.getElementById('valuation-range');
+    const confidenceBar = document.getElementById('confidence-bar');
+    const confidenceValue = document.getElementById('confidence-value');
+    const priceAnalysisEl = document.getElementById('price-analysis');
     
-    // If it doesn't exist, create it
-    if (!valuationDetails) {
-        valuationDetails = document.createElement('div');
-        valuationDetails.className = 'valuation-details';
-        const form = document.querySelector('form');
-        form.parentNode.insertBefore(valuationDetails, form.nextSibling);
+    // Update valuation range with null check
+    if (rangeEl) {
+        rangeEl.textContent = `£${valuation.valuationRange.min.toLocaleString()} - £${valuation.valuationRange.max.toLocaleString()}`;
     }
     
-    // Update the valuation content
-    valuationDetails.innerHTML = `
-        <div class="valuation-header">
-            <h3>Business Valuation Analysis</h3>
-            <span class="confidence">Confidence: ${valuation.confidence}%</span>
-        </div>
+    // Update confidence meter with null check
+    if (confidenceBar && confidenceValue) {
+        const confidenceScore = valuation.confidence || 0;
+        confidenceBar.style.width = `${confidenceScore}%`;
+        confidenceValue.textContent = `${confidenceScore}%`;
         
-        <div class="valuation-range">
-            <div class="range-header">Suggested Value Range:</div>
-            <div class="range-values">
-                £${valuation.valuationRange.min.toLocaleString()} - £${valuation.valuationRange.max.toLocaleString()}
-            </div>
-            <div class="price-status ${priceComparison.status}">
-                Your asking price is ${priceComparison.status} market value
-                ${priceComparison.difference > 0 ? 
-                    `by £${priceComparison.difference.toLocaleString()}` : 
-                    ''}
-            </div>
-        </div>
+        // Update confidence bar color based on level
+        if (confidenceScore < 40) {
+            confidenceBar.className = 'progress-bar bg-danger';
+        } else if (confidenceScore < 70) {
+            confidenceBar.className = 'progress-bar bg-warning';
+        } else {
+            confidenceBar.className = 'progress-bar bg-success';
+        }
+    }
+    
+    // Update price analysis with null check
+    if (priceAnalysisEl && priceComparison) {
+        // Set analysis text
+        let priceText = '';
+        if (priceComparison.status === 'above') {
+            priceText = `Your asking price is ${priceComparison.difference > 0 ? 
+                `£${priceComparison.difference.toLocaleString()} above` : 'above'} typical market value`;
+        } else if (priceComparison.status === 'below') {
+            priceText = `Your asking price is ${priceComparison.difference > 0 ? 
+                `£${priceComparison.difference.toLocaleString()} below` : 'below'} typical market value`;
+        } else if (priceComparison.status === 'within') {
+            priceText = 'Your asking price is within the expected market range';
+        } else {
+            priceText = 'Your asking price could not be compared to market value';
+        }
+        priceAnalysisEl.textContent = priceText;
+    }
+    
+    // Update market insights with null check
+    const marketInsightsEl = document.getElementById('market-insights');
+    if (marketInsightsEl) {
+        marketInsightsEl.innerHTML = valuation.explanation || 'No market insights available';
+    }
+    
+    // Update industry insights with null check
+    const industryInsightsEl = document.getElementById('industry-insights');
+    if (industryInsightsEl) {
+        let insightsHTML = '';
         
-        <div class="insights-panel">
-            <div class="insights-header">Market Insights</div>
-            <div class="insights-content">${valuation.explanation}</div>
-        </div>
+        if (Array.isArray(valuation.insights) && valuation.insights.length > 0) {
+            insightsHTML = valuation.insights.map(insight => `<li>${insight}</li>`).join('');
+        } else if (typeof valuation.insights === 'string') {
+            insightsHTML = `<li>${valuation.insights}</li>`;
+        } else {
+            insightsHTML = '<li>No specific industry insights available</li>';
+        }
         
-        <div class="insights-panel">
-            <div class="insights-header">Industry-Specific Insights</div>
-            <ul class="insights-list">
-                ${Array.isArray(valuation.insights) ? 
-                    valuation.insights.map(insight => `<li>${insight}</li>`).join('') :
-                    `<li>${valuation.insights}</li>`}
-            </ul>
-        </div>
-        
-        <div class="valuation-disclaimer">
-            Note: This valuation is an estimate based on current market data and industry standards.
-            Not regulated by the FCA. For guidance purposes only.
-        </div>
-    `;
+        industryInsightsEl.innerHTML = insightsHTML;
+    }
+    
+    // Show the valuation results section and hide loading
+    const resultsContainer = document.getElementById('valuation-results');
+    const loadingContainer = document.getElementById('valuation-loading');
+    
+    if (resultsContainer) {
+        resultsContainer.classList.remove('d-none');
+    }
+    
+    if (loadingContainer) {
+        loadingContainer.classList.add('d-none');
+    }
 }
 
 // Add real-time valuation check
@@ -791,7 +1097,7 @@ async function checkValuation() {
     const businessData = Object.fromEntries(formData);
 
     try {
-        const response = await fetch('/business/calculate-valuation', {
+        const response = await fetch('/api/post-business/calculate-valuation', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -831,7 +1137,8 @@ document.getElementById('checkValuation')?.addEventListener('click', async () =>
         const formData = new FormData(document.getElementById('postBusinessForm'));
         const businessData = Object.fromEntries(formData);
         
-        const response = await fetch('/business/calculate-valuation', {
+        // Fix the API endpoint URL - add /api/ prefix
+        const response = await fetch('/api/post-business/calculate-valuation', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -841,7 +1148,7 @@ document.getElementById('checkValuation')?.addEventListener('click', async () =>
         });
 
         if (!response.ok) {
-            throw new Error('Valuation request failed');
+            throw new Error(`Valuation request failed: ${response.status}`);
         }
 
         const data = await response.json();
@@ -851,7 +1158,7 @@ document.getElementById('checkValuation')?.addEventListener('click', async () =>
             valuationStatus.classList.remove('hidden');
             valuationStatus.classList.add('active');
         } else {
-            throw new Error(data.error || 'Valuation failed');
+            throw new Error(data.error || data.message || 'Valuation failed');
         }
     } catch (error) {
         console.error('Valuation error:', error);
@@ -904,10 +1211,61 @@ function updateValuationUI(valuation, priceComparison) {
 async function checkAdvancedValuation() {
     const token = await verifyAndRefreshToken();
     if (!token) return;
-    const formData = new FormData(document.getElementById('postBusinessForm'));
-    const businessData = Object.fromEntries(formData);
+    
+    const advValuationBtn = document.getElementById('checkAdvancedValuation');
+    advValuationBtn.classList.add('loading');
+    
     try {
-        const response = await fetch('/business/calculate-advanced-valuation', {
+        // Get form data and format it properly
+        const form = document.getElementById('postBusinessForm');
+        const formData = new FormData(form);
+        const businessData = {};
+        
+        // Process all form fields with proper type conversion
+        for (const [key, value] of formData.entries()) {
+            // Convert numeric fields to numbers
+            if (['price', 'cash_flow', 'gross_revenue', 'ebitda', 'inventory', 
+                 'sales_multiple', 'profit_margin', 'debt_service', 'cash_on_cash', 
+                 'down_payment', 'ffe', 'employees', 'years_in_operation',
+                 'recurring_revenue', 'growth_rate', 'website_traffic', 
+                 'social_followers'].includes(key) && value) {
+                businessData[key] = parseFloat(value) || 0;
+            } else {
+                businessData[key] = value;
+            }
+        }
+        
+        // Map camelCase fields to snake_case for consistency
+        const fieldMappings = {
+            'businessName': 'business_name',
+            'cashFlow': 'cash_flow',
+            'grossRevenue': 'gross_revenue',
+            'salesMultiple': 'sales_multiple',
+            'profitMargin': 'profit_margin',
+            'debtService': 'debt_service',
+            'cashOnCash': 'cash_on_cash',
+            'downPayment': 'down_payment',
+            'ffE': 'ffe',
+            'yearsInOperation': 'years_in_operation',
+            'reasonForSelling': 'reason_for_selling',
+            'recurringRevenue': 'recurring_revenue',
+            'growthRate': 'growth_rate',
+            'websiteTraffic': 'website_traffic',
+            'socialFollowers': 'social_media_followers',
+            'intellectualProperty': 'intellectual_property'
+        };
+        
+        // Ensure all fields are in snake_case format
+        for (const [camelCase, snakeCase] of Object.entries(fieldMappings)) {
+            if (businessData[camelCase] !== undefined) {
+                businessData[snakeCase] = businessData[camelCase];
+            }
+        }
+        
+        console.log('Sending business data for advanced valuation:', businessData);
+        
+        // Use the correct API endpoint with /api prefix
+        const response = await fetch('/api/business/calculate-advanced-valuation', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -915,7 +1273,13 @@ async function checkAdvancedValuation() {
             },
             body: JSON.stringify(businessData)
         });
+        
+        if (!response.ok) {
+            throw new Error('Advanced valuation request failed');
+        }
+        
         const data = await response.json();
+        
         if (data.success) {
             updateAdvancedValuationUI(data.advancedValuation);
             document.querySelector('.advanced-valuation-container').classList.remove('hidden');
@@ -926,6 +1290,8 @@ async function checkAdvancedValuation() {
     } catch (error) {
         console.error('Advanced valuation error:', error);
         alert('Failed to calculate advanced valuation. Please ensure all required fields are filled.');
+    } finally {
+        advValuationBtn.classList.remove('loading');
     }
 }
 
@@ -956,3 +1322,433 @@ document.getElementById('checkAdvancedValuation')?.addEventListener('click', asy
     await checkAdvancedValuation();
     advValuationBtn.classList.remove('loading');
 });
+
+// Modified function to submit questionnaire data without requiring authentication
+async function submitQuestionnaireData(formData) {
+    try {
+        const response = await fetch('/api/business/submit-questionnaire', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        const result = await response.json();
+        
+        if (!result.success) {
+            throw new Error(result.message || 'Failed to submit questionnaire');
+        }
+        
+        return result;
+    } catch (error) {
+        console.error('Error submitting questionnaire:', error);
+        throw error;
+    }
+}
+
+// Add this function to prepare data from localStorage
+function prepareQuestionnaireData() {
+    // Get all relevant data from localStorage
+    return {
+        email: localStorage.getItem('sellerEmail'),
+        revenueExact: localStorage.getItem('sellerRevenueExact'),
+        revenuePrevYear: localStorage.getItem('sellerRevenuePrevYear'),
+        revenue2YearsAgo: localStorage.getItem('sellerRevenue2YearsAgo'),
+        revenue3YearsAgo: localStorage.getItem('sellerRevenue3YearsAgo'),
+        ebitda: localStorage.getItem('sellerEbitda'),
+        ebitdaPrevYear: localStorage.getItem('sellerEbitdaPrevYear'),
+        cashOnCash: localStorage.getItem('sellerCashOnCash'),
+        location: localStorage.getItem('sellerLocation'),
+        ffeValue: localStorage.getItem('sellerFfeValue'),
+        ffeItems: localStorage.getItem('sellerFfeItems'),
+        growthRate: localStorage.getItem('sellerGrowthRate'),
+        growthAreas: localStorage.getItem('sellerGrowthAreas'),
+        growthChallenges: localStorage.getItem('sellerGrowthChallenges'),
+        scalability: localStorage.getItem('sellerScalability'),
+        totalDebtAmount: localStorage.getItem('sellerTotalDebtAmount'),
+        debtTransferable: localStorage.getItem('sellerDebtTransferable'),
+        debtNotes: localStorage.getItem('sellerDebtNotes'),
+        debtItems: localStorage.getItem('sellerDebtItems')
+    };
+}
+
+// Update this function to prepare data from localStorage without location
+function prepareQuestionnaireData() {
+    // Get all relevant data from localStorage
+    return {
+        email: localStorage.getItem('sellerEmail'),
+        businessName: localStorage.getItem('sellerBusinessName'),
+        industry: localStorage.getItem('sellerIndustry'),
+        description: localStorage.getItem('sellerDescription'),
+        yearEstablished: localStorage.getItem('sellerYearEstablished'),
+        yearsInOperation: localStorage.getItem('sellerYearsInOperation'),
+        contactName: localStorage.getItem('sellerContactName'),
+        contactPhone: localStorage.getItem('sellerContactPhone'),
+        revenueExact: localStorage.getItem('sellerRevenueExact'),
+        revenuePrevYear: localStorage.getItem('sellerRevenuePrevYear'),
+        revenue2YearsAgo: localStorage.getItem('sellerRevenue2YearsAgo'),
+        revenue3YearsAgo: localStorage.getItem('sellerRevenue3YearsAgo'),
+        ebitda: localStorage.getItem('sellerEbitda'),
+        ebitdaPrevYear: localStorage.getItem('sellerEbitdaPrevYear'),
+        ebitda2YearsAgo: localStorage.getItem('sellerEbitda2YearsAgo'),
+        cashOnCash: localStorage.getItem('sellerCashOnCash'),
+        ffeValue: localStorage.getItem('sellerFfeValue'),
+        ffeItems: localStorage.getItem('sellerFfeItems'),
+        growthRate: localStorage.getItem('sellerGrowthRate'),
+        growthAreas: localStorage.getItem('sellerGrowthAreas'),
+        growthChallenges: localStorage.getItem('sellerGrowthChallenges'),
+        scalability: localStorage.getItem('sellerScalability'),
+        totalDebtAmount: localStorage.getItem('sellerTotalDebtAmount'),
+        debtTransferable: localStorage.getItem('sellerDebtTransferable'),
+        debtNotes: localStorage.getItem('sellerDebtNotes'),
+        debtItems: localStorage.getItem('sellerDebtItems')
+    };
+}
+
+// Replace the multiple valuation functions with a single comprehensive one
+async function calculateComprehensiveValuation() {
+    // Don't attempt valuation until we have essential fields
+    const essentialFields = ['business_name', 'industry', 'price'];
+    const missingEssential = essentialFields.some(field => {
+        const input = document.querySelector(`[name="${field}"]`);
+        return !input || !input.value.trim();
+    });
+
+    if (missingEssential) {
+        console.log('Missing essential fields for valuation');
+        return;
+    }
+
+    try {
+        const token = await verifyAndRefreshToken();
+        if (!token) return;
+
+        // Show loading state for valuation
+        document.getElementById('valuation-loading').classList.remove('d-none');
+        document.getElementById('valuation-results').classList.add('d-none');
+        
+        // Get all form data for comprehensive analysis
+        const form = document.getElementById('postBusinessForm');
+        const formData = new FormData(form);
+        const businessData = {};
+        
+        // Process all form fields with proper type conversion
+        for (const [key, value] of formData.entries()) {
+            // Skip image fields
+            if (key === 'images' || key.includes('stockImageUrls')) continue;
+            
+            // Convert numeric fields to numbers
+            if (['price', 'cash_flow', 'gross_revenue', 'ebitda', 'inventory', 
+                'sales_multiple', 'profit_margin', 'debt_service', 'cash_on_cash', 
+                'down_payment', 'ffe', 'employees', 'yearsInOperation', 'years_in_operation',
+                'recurringRevenue', 'recurring_revenue', 'growthRate', 'growth_rate', 
+                'websiteTraffic', 'website_traffic', 'socialFollowers', 'social_followers'].includes(key) && value) {
+                businessData[key] = parseFloat(value) || 0;
+            } else {
+                businessData[key] = value;
+            }
+        }
+        
+        // Map camelCase fields to snake_case for consistency
+        const fieldMappings = {
+            'businessName': 'business_name',
+            'cashFlow': 'cash_flow',
+            'grossRevenue': 'gross_revenue',
+            'salesMultiple': 'sales_multiple',
+            'profitMargin': 'profit_margin',
+            'debtService': 'debt_service',
+            'cashOnCash': 'cash_on_cash',
+            'downPayment': 'down_payment',
+            'ffe': 'ffe',
+            'yearsInOperation': 'years_in_operation',
+            'reasonForSelling': 'reason_for_selling',
+            'recurringRevenue': 'recurring_revenue',
+            'growthRate': 'growth_rate',
+            'websiteTraffic': 'website_traffic',
+            'socialFollowers': 'social_media_followers',
+            'intellectualProperty': 'intellectual_property'
+        };
+        
+        // Ensure all fields are in snake_case format
+        for (const [camelCase, snakeCase] of Object.entries(fieldMappings)) {
+            if (businessData[camelCase] !== undefined) {
+                businessData[snakeCase] = businessData[camelCase];
+                delete businessData[camelCase];
+            }
+        }
+        
+        // Fix: Use the correct API endpoint with /api prefix
+        const response = await fetch('/api/post-business/calculate-valuation', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(businessData)
+        });
+
+        if (!response.ok) {
+            throw new Error(`Valuation request failed: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (data.success) {
+            updateEnhancedValuationUI(data.valuation, data.priceComparison, businessData);
+            document.querySelector('.valuation-status')?.classList.add('active');
+            
+            // Show results and hide loading
+            document.getElementById('valuation-loading').classList.add('d-none');
+            document.getElementById('valuation-results').classList.remove('d-none');
+        } else {
+            throw new Error(data.error || data.message || 'Valuation failed');
+        }
+    } catch (error) {
+        console.error('Valuation error:', error);
+        // Show user-friendly error in the UI
+        document.getElementById('valuation-loading').innerHTML = `
+            <div class="alert alert-warning">
+                <p>We couldn't complete the valuation at this time.</p>
+                <p class="small">Try adding more business details and try again.</p>
+            </div>
+        `;
+        document.getElementById('valuation-loading').classList.remove('d-none');
+        document.getElementById('valuation-results').classList.add('d-none');
+    }
+}
+
+// New enhanced UI update function
+function updateEnhancedValuationUI(valuation, priceComparison, businessData) {
+    // Update value range
+    const rangeEl = document.getElementById('valuation-range');
+    rangeEl.textContent = `£${valuation.valuationRange.min.toLocaleString()} - £${valuation.valuationRange.max.toLocaleString()}`;
+    
+    // Update confidence meter
+    const confidenceBar = document.getElementById('confidence-bar');
+    const confidenceValue = document.getElementById('confidence-value');
+    
+    confidenceBar.style.width = `${valuation.confidence}%`;
+    confidenceValue.textContent = `${valuation.confidence}%`;
+    
+    // Update confidence bar color based on level
+    if (valuation.confidence < 40) {
+        confidenceBar.className = 'progress-bar bg-danger';
+    } else if (valuation.confidence < 70) {
+        confidenceBar.className = 'progress-bar bg-warning';
+    } else {
+        confidenceBar.className = 'progress-bar bg-success';
+    }
+    
+    // Update price analysis
+    const priceAnalysisEl = document.getElementById('price-analysis');
+    
+    // Set status class
+    priceAnalysisEl.className = 'mb-0 price-status ' + priceComparison.status;
+    
+    // Set analysis text
+    let priceText = '';
+    if (priceComparison.status === 'above') {
+        priceText = `Your asking price is ${priceComparison.difference > 0 ? 
+            `£${priceComparison.difference.toLocaleString()} above` : 'above'} typical market value`;
+    } else if (priceComparison.status === 'below') {
+        priceText = `Your asking price is ${priceComparison.difference > 0 ? 
+            `£${priceComparison.difference.toLocaleString()} below` : 'below'} typical market value`;
+    } else {
+        priceText = 'Your asking price is within the expected market range';
+    }
+    priceAnalysisEl.textContent = priceText;
+    
+    // Update market insights
+    const marketInsightsEl = document.getElementById('market-insights');
+    marketInsightsEl.innerHTML = valuation.explanation;
+    
+    // Update industry insights
+    const industryInsightsEl = document.getElementById('industry-insights');
+    let insightsHTML = '';
+    
+    if (Array.isArray(valuation.insights)) {
+        insightsHTML = valuation.insights.map(insight => `<li>${insight}</li>`).join('');
+    } else if (typeof valuation.insights === 'string') {
+        insightsHTML = `<li>${valuation.insights}</li>`;
+    }
+    
+    industryInsightsEl.innerHTML = insightsHTML;
+}
+
+// Create a debounce function to limit how often valuation is triggered
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Add event listeners for real-time valuation updates on key fields
+document.addEventListener('DOMContentLoaded', function() {
+    // Create a debounced version of the valuation function
+    const debouncedValuation = debounce(calculateComprehensiveValuation, 1000);
+    
+    // List of fields that should trigger valuation
+    const valuationTriggerFields = [
+        'business_name', 'industry', 'price', 'cash_flow', 'gross_revenue', 
+        'ebitda', 'inventory', 'sales_multiple', 'profit_margin', 'debt_service',
+        'cash_on_cash', 'down_payment', 'location', 'ffe', 'employees',
+        'reasonForSelling', 'yearsInOperation', 'recurringRevenue', 'growthRate',
+        'intellectualProperty', 'websiteTraffic', 'socialFollowers'
+    ];
+    
+    // Add event listeners to all relevant fields
+    valuationTriggerFields.forEach(fieldName => {
+        const element = document.querySelector(`[name="${fieldName}"]`);
+        if (element) {
+            element.addEventListener('change', debouncedValuation);
+            element.addEventListener('blur', debouncedValuation);
+            
+            // For text inputs, also listen for keyup with a longer delay
+            if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                element.addEventListener('keyup', debounce(calculateComprehensiveValuation, 1500));
+            }
+        }
+    });
+    
+    // Initial calculation if form has some data
+    setTimeout(calculateComprehensiveValuation, 1000);
+});
+
+// Update the comprehensive valuation function to better handle the API call
+async function calculateComprehensiveValuation() {
+    // Don't attempt valuation until we have essential fields
+    const essentialFields = ['industry'];
+    const missingEssential = essentialFields.some(field => {
+        const input = document.querySelector(`[name="${field}"]`);
+        return !input || !input.value.trim();
+    });
+
+    if (missingEssential) {
+        console.log('Missing essential fields for valuation');
+        return;
+    }
+
+    try {
+        const token = await verifyAndRefreshToken();
+        if (!token) return;
+
+        // Show loading state for valuation
+        const loadingElement = document.getElementById('valuation-loading');
+        const resultsElement = document.getElementById('valuation-results');
+        
+        if (loadingElement) {
+            loadingElement.classList.remove('d-none');
+            loadingElement.innerHTML = `
+                <div class="d-flex justify-content-center my-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+                <p class="text-center">Calculating business valuation...</p>
+            `;
+        }
+        
+        if (resultsElement) {
+            resultsElement.classList.add('d-none');
+        }
+        
+        // Get all form data for comprehensive analysis
+        const form = document.getElementById('postBusinessForm');
+        const formData = new FormData(form);
+        const businessData = {};
+        
+        // Process all form fields with proper type conversion
+        for (const [key, value] of formData.entries()) {
+            // Skip image fields
+            if (key === 'images' || key.includes('stockImageUrls')) continue;
+            
+            // Convert numeric fields to numbers - adding comprehensive list
+            if (['price', 'cash_flow', 'gross_revenue', 'ebitda', 'inventory', 
+                'sales_multiple', 'profit_margin', 'debt_service', 'cash_on_cash', 
+                'down_payment', 'ffe', 'employees', 'years_in_operation',
+                'recurring_revenue', 'growth_rate', 'website_traffic', 
+                'social_followers'].includes(key) && value) {
+                businessData[key] = parseFloat(value) || 0;
+            } else {
+                businessData[key] = value;
+            }
+        }
+        
+        // Log the data being sent for debugging
+        console.log('Sending business data for valuation calculation:', {
+            industry: businessData.industry || 'Not specified',
+            gross_revenue: businessData.gross_revenue || 0,
+            ebitda: businessData.ebitda || 0,
+            cash_flow: businessData.cash_flow || 0
+        });
+        
+        // Use the correct API endpoint
+        const response = await fetch('/api/post-business/calculate-valuation', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(businessData)
+        });
+
+        if (!response.ok) {
+            // Improved error handling to extract detailed error message
+            let errorMessage = `Request failed with status ${response.status}`;
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.message || errorData.error || errorMessage;
+            } catch (e) {
+                // If can't parse JSON, use text
+                const errorText = await response.text();
+                if (errorText) errorMessage += `: ${errorText}`;
+            }
+            
+            throw new Error(errorMessage);
+        }
+
+        const data = await response.json();
+        
+        if (data.success) {
+            console.log('Valuation successful:', {
+                estimatedValue: data.valuation.estimatedValue,
+                range: data.valuation.valuationRange,
+                confidence: data.valuation.confidence
+            });
+            
+            updateEnhancedValuationUI(data.valuation, data.priceComparison);
+            document.querySelector('.valuation-status')?.classList.add('active');
+            
+            // Show results and hide loading
+            if (loadingElement) loadingElement.classList.add('d-none');
+            if (resultsElement) resultsElement.classList.remove('d-none');
+        } else {
+            throw new Error(data.message || data.error || 'Valuation failed');
+        }
+    } catch (error) {
+        console.error('Valuation error:', error);
+        // Show user-friendly error in the UI
+        const loadingElement = document.getElementById('valuation-loading');
+        if (loadingElement) {
+            loadingElement.innerHTML = `
+                <div class="alert alert-warning">
+                    <p><strong>Valuation Error:</strong> ${error.message || 'We couldn\'t complete the valuation at this time.'}</p>
+                    <p class="small">Please ensure you've entered financial data (Revenue, EBITDA, or Cash Flow).</p>
+                </div>
+            `;
+            loadingElement.classList.remove('d-none');
+        }
+        
+        const resultsElement = document.getElementById('valuation-results');
+        if (resultsElement) {
+            resultsElement.classList.add('d-none');
+        }
+    }
+}

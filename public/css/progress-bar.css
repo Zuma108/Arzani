@@ -1,0 +1,203 @@
+.progress-container {
+    width: 100%;
+    height: 12px;
+    background-color: #f0f4ff;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    margin: 10px 0;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Modify the progress bar to have proper container/active elements */
+.progress-bar {
+    width: 100%;
+    height: 100%;
+    background-color: #f0f4ff;
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+}
+
+.progress-active {
+    height: 100%;
+    background: linear-gradient(90deg, #3e50f7 0%, #5e6df7 100%);
+    border-radius: 8px;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    position: absolute;
+    top: 0;
+    left: 0;
+    overflow: hidden;
+    will-change: width;
+}
+
+.progress-active::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100px;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.5) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    width: 100px;
+    animation: progressShine 2.5s infinite;
+    transform: skewX(-30deg);
+    will-change: transform;
+}
+
+.progress-labels {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 10px;
+    margin-top: 5px;
+    color: #5f5770;
+    font-size: 12px;
+}
+
+.progress-status {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 10px;
+    margin-bottom: 5px;
+}
+
+.current-page {
+    color: #25224a;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.pages-count {
+    color: #8e8a9a;
+    font-size: 14px;
+}
+
+@keyframes shine {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(200%);
+    }
+}
+
+/* Dot indicators for steps */
+.step-indicators {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    margin-top: 8px;
+    flex-wrap: wrap; /* Allow wrapping for more steps */
+    max-width: 95%; /* Prevent overflow */
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.step-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #dee8ff;
+    transition: all 0.3s ease;
+    animation: dot-entry 0.5s forwards;
+    will-change: transform, box-shadow, background-color;
+}
+
+.step-dot.completed {
+    background-color: #3e50f7;
+    transition: background-color 0.3s ease;
+}
+
+.step-dot.active {
+    background-color: #3e50f7;
+    box-shadow: 0 0 0 3px rgba(62, 80, 247, 0.2);
+    transform: scale(1.2); /* Make active dot slightly bigger */
+    animation: pulse 2s infinite;
+    transition: all 0.3s ease;
+}
+
+/* Add entry animation for dots */
+@keyframes dot-entry {
+    0% { transform: scale(0); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* Add pulse animation for active dot */
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(62, 80, 247, 0.4); }
+    70% { box-shadow: 0 0 0 6px rgba(62, 80, 247, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(62, 80, 247, 0); }
+}
+
+/* Add responsive adjustments for 11 steps */
+@media (max-width: 767px) {
+    .step-indicators {
+        gap: 3px;
+        max-width: 100%;
+        padding: 0 10px;
+    }
+    
+    .step-dot {
+        width: 6px;
+        height: 6px;
+    }
+}
+
+/* For very small screens, adjust dot size further */
+@media (max-width: 479px) {
+    .step-dot {
+        width: 5px;
+        height: 5px;
+    }
+    
+    .step-indicators {
+        gap: 2px;
+    }
+}
+
+/* Enhanced page transitions */
+.page-transition {
+    opacity: 0;
+    animation: fadeIn 0.5s ease-in-out forwards;
+    animation-delay: 0.05s; /* Short delay for better effect */
+    will-change: opacity, transform;
+}
+
+@keyframes fadeIn {
+    0% { opacity: 0; transform: translateY(8px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+/* Define specific step percentages for an 11-step process */
+.step-1-of-11 { width: 9.09%; }
+.step-2-of-11 { width: 18.18%; }
+.step-3-of-11 { width: 27.27%; }
+.step-4-of-11 { width: 36.36%; }
+.step-5-of-11 { width: 45.45%; }
+.step-6-of-11 { width: 54.55%; }
+.step-7-of-11 { width: 63.64%; }
+.step-8-of-11 { width: 72.73%; }
+.step-9-of-11 { width: 81.82%; }
+.step-10-of-11 { width: 90.91%; }
+.step-11-of-11 { width: 100%; }
+
+@keyframes progressShine {
+    0% { transform: translateX(0) skewX(-30deg); }
+    100% { transform: translateX(400px) skewX(-30deg); }
+}
+
+/* Add a specific fix for FFE page animation */
+body.ffe-page main {
+    opacity: 0;
+    animation: ffePageFadeIn 0.5s ease-in-out forwards;
+}
+
+@keyframes ffePageFadeIn {
+    0% { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
+}

@@ -18,6 +18,34 @@
     document.addEventListener('DOMContentLoaded', function() {
       // The main functionality is now in signup-handler.js
       console.log('Signup form initialized');
+      
+      // Check for questionnaire data
+      const questionnaireSubmissionId = localStorage.getItem('questionnaireSubmissionId');
+      const sellerEmail = localStorage.getItem('sellerEmail');
+      
+      // If we have questionnaire data, pre-fill and add hidden field
+      if (questionnaireSubmissionId) {
+          // Add hidden field for questionnaire ID
+          const hiddenField = document.createElement('input');
+          hiddenField.type = 'hidden';
+          hiddenField.name = 'questionnaireSubmissionId';
+          hiddenField.value = questionnaireSubmissionId;
+          document.querySelector('form').appendChild(hiddenField);
+          
+          // Pre-fill email if available
+          if (sellerEmail && document.querySelector('input[name="email"]')) {
+              document.querySelector('input[name="email"]').value = sellerEmail;
+          }
+          
+          // Show a message about the questionnaire data
+          const formHeader = document.querySelector('form h1, form h2, form header');
+          if (formHeader) {
+              const infoBox = document.createElement('div');
+              infoBox.className = 'bg-blue-50 p-4 rounded-lg mb-4 text-blue-800';
+              infoBox.innerHTML = 'We\'ve saved your business valuation data. Complete your account to access your valuation report.';
+              formHeader.after(infoBox);
+          }
+      }
     });
   </script>
 </body>

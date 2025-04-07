@@ -807,133 +807,215 @@ router.post('/login2', async (req, res) => {
 
 // Add this new route for forgot password
 router.post('/forgot-password', async (req, res) => {
+  const { email } = req.body;
+  
+  if (!email) {
+    return res.status(400).json({
+      success: false,
+      message: 'Email is required'
+    });
+  }
+  
   try {
-    const { email } = req.body;
-
-    if (!email) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email is required'
-      });
-    }
-
     // Check if user exists
-    const user = await getUserByEmail(email);
-
-    if (!user) {
-      // For security, don't reveal that the email doesn't exist
-      return res.status(200).json({
+    const userResult = await pool.query(
+      'SELECT id, email, username FROM users WHERE email = $1',
+      [email.toLowerCase()]
+    );
+    
+    if (userResult.rows.length === 0) {
+      // For security reasons, don't reveal that the email doesn't exist
+      // Still return success to prevent email enumeration attacks
+      return res.json({
         success: true,
-        message: 'If your email exists in our system, password reset instructions will be sent.'
+        message: 'If your email is registered, you will receive password reset instructions shortly.'
       });
     }
-
-    // Generate a reset token
+    
+    const user = userResult.rows[0];
+    
+    // Generate reset token
     const resetToken = jwt.sign(
-      { userId: user.id, purpose: 'password_reset' },
+      { 
+        userId: user.id, 
+        purpose: 'password_reset' 
+      },
       process.env.EMAIL_SECRET || JWT_SECRET,
       { expiresIn: '1h' }
     );
-
-    // Store the token in the database (optional but recommended)
-    await pool.query(`
-      UPDATE users_auth 
-      SET reset_token = $1, reset_token_expires = NOW() + INTERVAL '1 hour'
-      WHERE user_id = $2
-    `, [resetToken, user.id]);
-
-    // Send password reset email
+    
+    // Store the token in the database
     try {
-      // Assume you have a function like this
-      await sendPasswordResetEmail(email, resetToken);
+      // First check if users_auth table has reset_token and reset_token_expires columns
+      const columnCheck = await pool.query(`
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'users_auth' 
+        AND column_name IN ('reset_token', 'reset_token_expires')
+      `);
+      
+      // If both columns exist
+      if (columnCheck.rows.length === 2) {
+        await pool.query(`
+          UPDATE users_auth 
+          SET reset_token = $1, reset_token_expires = NOW() + INTERVAL '1 hour'
+          WHERE user_id = $2
+        `, [resetToken, user.id]);
+      } else {
+        // Just store the token in memory (not ideal for production)
+        console.log('Reset token columns not found in users_auth table');
+      }
+    } catch (dbError) {
+      console.error('Error storing reset token:', dbError);
+      // Continue anyway - token is still in the JWT
+    }
+    
+    // Create reset URL
+    const resetUrl = `${process.env.SITE_URL || 'http://localhost:5000'}/auth/reset-password?token=${resetToken}`;
+    
+    // Send email with reset link
+    try {
+      await sendPasswordResetEmail(email, user.username, resetUrl);
+      console.log('Password reset email sent to:', email);
     } catch (emailError) {
       console.error('Failed to send password reset email:', emailError);
-      return res.status(500).json({
-        success: false,
-        message: 'Error sending password reset email'
-      });
+      // Don't reveal email sending errors to the client
     }
-
-    res.status(200).json({
+    
+    res.json({
       success: true,
-      message: 'Password reset instructions have been sent to your email'
+      message: 'If your email is registered, you will receive password reset instructions shortly.'
     });
-
   } catch (error) {
     console.error('Forgot password error:', error);
     res.status(500).json({
       success: false,
-      message: 'An error occurred processing your request'
+      message: 'Server error. Please try again later.'
     });
   }
 });
 
-// Add route for password reset
+// Reset password - POST request to process the form
 router.post('/reset-password', async (req, res) => {
+  const { token, password } = req.body;
+  
+  if (!token || !password) {
+    return res.status(400).json({
+      success: false,
+      message: 'Token and password are required'
+    });
+  }
+  
   try {
-    const { password, token } = req.body;
-
-    if (!password || !token) {
-      return res.status(400).json({
-        success: false,
-        message: 'Password and token are required'
-      });
-    }
-
+    // Verify token
     let decoded;
     try {
       decoded = jwt.verify(token, process.env.EMAIL_SECRET || JWT_SECRET);
-
+      
       if (decoded.purpose !== 'password_reset') {
-        throw new Error('Invalid token purpose');
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid reset token'
+        });
       }
     } catch (jwtError) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid or expired reset token'
-      });
+      if (jwtError.name === 'TokenExpiredError') {
+        return res.status(400).json({
+          success: false,
+          message: 'Password reset link has expired. Please request a new one.'
+        });
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid reset token. Please request a new password reset link.'
+        });
+      }
     }
-
+    
     const userId = decoded.userId;
-
-    // Verify token is still valid in database (optional)
-    const tokenCheck = await pool.query(`
-      SELECT user_id FROM users_auth
-      WHERE user_id = $1 
-      AND reset_token = $2
-      AND reset_token_expires > NOW()
-    `, [userId, token]);
-
-    if (tokenCheck.rows.length === 0) {
+    
+    // Check password length
+    if (password.length < 8) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid or expired reset token'
+        message: 'Password must be at least 8 characters long'
       });
     }
-
-    // Hash the new password
+    
+    // Verify user exists
+    const userCheck = await pool.query(
+      'SELECT id FROM users WHERE id = $1',
+      [userId]
+    );
+    
+    if (userCheck.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+    
+    // Hash new password
     const hashedPassword = await bcrypt.hash(password, 10);
-
+    
     // Update the password
-    await pool.query(`
-      UPDATE users_auth
-      SET password_hash = $1, 
-          reset_token = NULL,
-          reset_token_expires = NULL,
-          verified = true
-      WHERE user_id = $2
-    `, [hashedPassword, userId]);
-
-    res.status(200).json({
+    try {
+      // Check if users_auth exists for this user
+      const authCheck = await pool.query(
+        'SELECT user_id FROM users_auth WHERE user_id = $1',
+        [userId]
+      );
+      
+      if (authCheck.rows.length === 0) {
+        // Create new auth record
+        await pool.query(
+          'INSERT INTO users_auth (user_id, password_hash, verified) VALUES ($1, $2, true)',
+          [userId, hashedPassword]
+        );
+      } else {
+        // Update existing auth record, handle different table schemas
+        const columnCheck = await pool.query(`
+          SELECT column_name 
+          FROM information_schema.columns 
+          WHERE table_name = 'users_auth' 
+          AND column_name IN ('reset_token', 'reset_token_expires')
+        `);
+        
+        if (columnCheck.rows.length === 2) {
+          await pool.query(`
+            UPDATE users_auth
+            SET password_hash = $1, 
+                reset_token = NULL,
+                reset_token_expires = NULL,
+                verified = true
+            WHERE user_id = $2
+          `, [hashedPassword, userId]);
+        } else {
+          await pool.query(`
+            UPDATE users_auth
+            SET password_hash = $1, 
+                verified = true
+            WHERE user_id = $2
+          `, [hashedPassword, userId]);
+        }
+      }
+    } catch (dbError) {
+      console.error('Database error during password reset:', dbError);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to update password'
+      });
+    }
+    
+    res.json({
       success: true,
-      message: 'Password has been reset successfully'
+      message: 'Password has been reset successfully. You can now log in with your new password.'
     });
-
   } catch (error) {
-    console.error('Password reset error:', error);
+    console.error('Reset password error:', error);
     res.status(500).json({
       success: false,
-      message: 'An error occurred processing your request'
+      message: 'Server error. Please try again later.'
     });
   }
 });
@@ -1005,6 +1087,256 @@ router.post('/manual-verify', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'An error occurred during verification'
+    });
+  }
+});
+
+// Forgot password page - GET request to show the form
+router.get('/forgot-password', (req, res) => {
+  const error = req.query.error || null;
+  const success = req.query.success || null;
+  
+  res.render('auth/forgot-password', { error, success });
+});
+
+// Reset password page - GET request to show the form
+router.get('/reset-password', (req, res) => {
+  const token = req.query.token || '';
+  const error = req.query.error || null;
+  const success = req.query.success || null;
+  
+  if (!token) {
+    return res.redirect('/auth/forgot-password?error=' + encodeURIComponent('Reset token is missing. Please request a new password reset link.'));
+  }
+  
+  // Verify token is valid first
+  try {
+    const decoded = jwt.verify(token, process.env.EMAIL_SECRET || JWT_SECRET);
+    
+    if (decoded.purpose !== 'password_reset') {
+      return res.redirect('/auth/forgot-password?error=' + encodeURIComponent('Invalid reset token. Please request a new password reset link.'));
+    }
+    
+    // Token is valid, render the reset password page
+    res.render('auth/reset-password', { token, error, success });
+  } catch (error) {
+    // Token is invalid or expired
+    console.error('Invalid reset token:', error);
+    res.redirect('/auth/forgot-password?error=' + encodeURIComponent('Password reset link is invalid or has expired. Please request a new one.'));
+  }
+});
+
+// Forgot password - POST request to process the form
+router.post('/forgot-password', async (req, res) => {
+  const { email } = req.body;
+  
+  if (!email) {
+    return res.status(400).json({
+      success: false,
+      message: 'Email is required'
+    });
+  }
+  
+  try {
+    // Check if user exists
+    const userResult = await pool.query(
+      'SELECT id, email, username FROM users WHERE email = $1',
+      [email.toLowerCase()]
+    );
+    
+    if (userResult.rows.length === 0) {
+      // For security reasons, don't reveal that the email doesn't exist
+      // Still return success to prevent email enumeration attacks
+      return res.json({
+        success: true,
+        message: 'If your email is registered, you will receive password reset instructions shortly.'
+      });
+    }
+    
+    const user = userResult.rows[0];
+    
+    // Generate reset token
+    const resetToken = jwt.sign(
+      { 
+        userId: user.id, 
+        purpose: 'password_reset' 
+      },
+      process.env.EMAIL_SECRET || JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+    
+    // Store the token in the database
+    try {
+      // First check if users_auth table has reset_token and reset_token_expires columns
+      const columnCheck = await pool.query(`
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'users_auth' 
+        AND column_name IN ('reset_token', 'reset_token_expires')
+      `);
+      
+      // If both columns exist
+      if (columnCheck.rows.length === 2) {
+        await pool.query(`
+          UPDATE users_auth 
+          SET reset_token = $1, reset_token_expires = NOW() + INTERVAL '1 hour'
+          WHERE user_id = $2
+        `, [resetToken, user.id]);
+      } else {
+        // Just store the token in memory (not ideal for production)
+        console.log('Reset token columns not found in users_auth table');
+      }
+    } catch (dbError) {
+      console.error('Error storing reset token:', dbError);
+      // Continue anyway - token is still in the JWT
+    }
+    
+    // Create reset URL
+    const resetUrl = `${process.env.SITE_URL || 'http://localhost:5000'}/auth/reset-password?token=${resetToken}`;
+    
+    // Send email with reset link
+    try {
+      await sendPasswordResetEmail(email, user.username, resetUrl);
+      console.log('Password reset email sent to:', email);
+    } catch (emailError) {
+      console.error('Failed to send password reset email:', emailError);
+      // Don't reveal email sending errors to the client
+    }
+    
+    res.json({
+      success: true,
+      message: 'If your email is registered, you will receive password reset instructions shortly.'
+    });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error. Please try again later.'
+    });
+  }
+});
+
+// Reset password - POST request to process the form
+router.post('/reset-password', async (req, res) => {
+  const { token, password } = req.body;
+  
+  if (!token || !password) {
+    return res.status(400).json({
+      success: false,
+      message: 'Token and password are required'
+    });
+  }
+  
+  try {
+    // Verify token
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.EMAIL_SECRET || JWT_SECRET);
+      
+      if (decoded.purpose !== 'password_reset') {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid reset token'
+        });
+      }
+    } catch (jwtError) {
+      if (jwtError.name === 'TokenExpiredError') {
+        return res.status(400).json({
+          success: false,
+          message: 'Password reset link has expired. Please request a new one.'
+        });
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid reset token. Please request a new password reset link.'
+        });
+      }
+    }
+    
+    const userId = decoded.userId;
+    
+    // Check password length
+    if (password.length < 8) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 8 characters long'
+      });
+    }
+    
+    // Verify user exists
+    const userCheck = await pool.query(
+      'SELECT id FROM users WHERE id = $1',
+      [userId]
+    );
+    
+    if (userCheck.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+    
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    // Update the password
+    try {
+      // Check if users_auth exists for this user
+      const authCheck = await pool.query(
+        'SELECT user_id FROM users_auth WHERE user_id = $1',
+        [userId]
+      );
+      
+      if (authCheck.rows.length === 0) {
+        // Create new auth record
+        await pool.query(
+          'INSERT INTO users_auth (user_id, password_hash, verified) VALUES ($1, $2, true)',
+          [userId, hashedPassword]
+        );
+      } else {
+        // Update existing auth record, handle different table schemas
+        const columnCheck = await pool.query(`
+          SELECT column_name 
+          FROM information_schema.columns 
+          WHERE table_name = 'users_auth' 
+          AND column_name IN ('reset_token', 'reset_token_expires')
+        `);
+        
+        if (columnCheck.rows.length === 2) {
+          await pool.query(`
+            UPDATE users_auth
+            SET password_hash = $1, 
+                reset_token = NULL,
+                reset_token_expires = NULL,
+                verified = true
+            WHERE user_id = $2
+          `, [hashedPassword, userId]);
+        } else {
+          await pool.query(`
+            UPDATE users_auth
+            SET password_hash = $1, 
+                verified = true
+            WHERE user_id = $2
+          `, [hashedPassword, userId]);
+        }
+      }
+    } catch (dbError) {
+      console.error('Database error during password reset:', dbError);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to update password'
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Password has been reset successfully. You can now log in with your new password.'
+    });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error. Please try again later.'
     });
   }
 });

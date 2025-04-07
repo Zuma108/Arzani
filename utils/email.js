@@ -116,13 +116,10 @@ export async function sendVerificationEmail(email, verificationToken) {
   }
 }
 
-export async function sendPasswordResetEmail(email, resetToken) {
-  if (!email || !resetToken) {
-    throw new Error('Email and reset token are required');
+export async function sendPasswordResetEmail(email, username, resetUrl) {
+  if (!email || !resetUrl) {
+    throw new Error('Email and reset URL are required');
   }
-  
-  const SERVER_URL = process.env.NODE_ENV === 'production' ? 'https://www.arzani.co.uk' : 'http://localhost:5000';
-  const resetLink = `${SERVER_URL}/auth/reset-password?token=${resetToken}`;
   
   // Email content
   const htmlContent = `
@@ -131,15 +128,15 @@ export async function sendPasswordResetEmail(email, resetToken) {
         <h2>Password Reset Request</h2>
       </div>
       <div style="padding: 20px; border: 1px solid #ddd; border-top: none;">
-        <p>Hello,</p>
+        <p>Hello ${username || ''},</p>
         <p>We received a request to reset your password. Click the button below to set a new password:</p>
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${resetLink}" style="background-color: #c0816f; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">
+          <a href="${resetUrl}" style="background-color: #c0816f; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">
             Reset Password
           </a>
         </div>
         <p>If the button doesn't work, please copy and paste this link into your browser:</p>
-        <p><a href="${resetLink}">${resetLink}</a></p>
+        <p><a href="${resetUrl}">${resetUrl}</a></p>
         <p>This password reset link is valid for 1 hour.</p>
         <p>If you did not request a password reset, please ignore this email or contact support if you have concerns.</p>
         <p>Best regards,<br>The Arzani Marketplace Team</p>

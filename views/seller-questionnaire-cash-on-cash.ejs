@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seller Questionnaire - Cash on Cash | Arzani Marketplace</title>
+    <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">
+
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <%- include('../views/partials/tailwind-setup') %>
+    <link rel="stylesheet" href="/css/seller-questionnaire.css">
+    <link rel="stylesheet" href="/css/progress-bar.css">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: white;
+            overflow: hidden; /* Hide scrollbar */
+        }
+        .header {
+            height: 87px;
+            border-bottom: 0.8px solid #bfbcc6;
+        }
+        .content-container {
+            height: calc(100vh - 87px - 100px); /* Header height (87px) and footer height (100px) */
+            overflow-y: auto; /* Enable scrolling inside container if needed */
+            padding-bottom: 20px;
+        }
+        .btn-main {
+            background-color: #25224a;
+            color: white;
+            border-radius: 0 1rem 1rem 1rem;
+        }
+        .btn-next {
+            background-color: #041b76;
+            color: white;
+            border-radius: 0 1rem 1rem 1rem;
+            box-shadow: 7px 7px 17px 0px rgba(25,31,64,0.22);
+        }
+        .progress-bar {
+            background-color: #dee8ff;
+            height: 10px;
+        }
+        .progress-active {
+            background-color: #3e50f7;
+        }
+        .exit-link {
+            color: #25224a;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .profile-pics {
+            display: flex;
+            align-items: center;
+        }
+        .profile-pic {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid white;
+            object-fit: cover;
+        }
+        .profile-pic:not(:first-child) {
+            margin-left: -15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="w-full h-screen flex flex-col bg-white">
+        <!-- Header -->
+        <header class="header w-full bg-white flex items-center flex-shrink-0">
+            <div class="container mx-auto px-4 md:px-8 flex items-center justify-between">
+                <!-- Logo -->
+                <div class="h-12 md:h-16">
+                    <img src="/figma design exports/logos/Arzani black-white background 2.png" alt="Arzani" class="h-full">
+                </div>
+                
+                <!-- Right section -->
+                <div class="flex items-center gap-4">
+                    <!-- Help button -->
+                    <div class="hidden md:flex mr-4 h-12 px-6 items-center border border-[#bfbcc6] rounded">
+                        <span class="text-[#464154] text-base font-medium">Need help?</span>
+                    </div>
+                    
+                    <!-- Profile pictures -->
+                    <div class="profile-pics mr-4">
+                        <img src="https://randomuser.me/api/portraits/women/32.jpg" alt="Support agent" class="profile-pic">
+                        <img src="https://randomuser.me/api/portraits/men/44.jpg" alt="Support agent" class="profile-pic">
+                        <img src="https://randomuser.me/api/portraits/women/68.jpg" alt="Support agent" class="profile-pic">
+                    </div>
+                    
+                    <!-- Exit link -->
+                    <a href="/" class="exit-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                        <span class="hidden sm:inline">Exit</span>
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main content -->
+        <main class="content-container flex-grow page-transition">
+            <div class="container mx-auto px-4 max-w-2xl pt-8 md:pt-12">
+                <h1 class="text-[#25224a] text-2xl md:text-3xl font-black mb-4 text-center">What's your Cash on Cash Return?</h1>
+                <p class="text-[#5f5770] text-lg mb-8 text-center">This metric helps buyers understand the potential return on their investment.</p>
+                
+                <!-- Cash on Cash explanation -->
+                <div class="bg-blue-50 p-4 rounded-lg mb-8">
+                    <h3 class="font-medium text-[#25224a] text-lg mb-2">What is Cash on Cash Return?</h3>
+                    <p class="text-[#5f5770]">Cash on Cash Return is the ratio of annual pre-tax cash flow to the total cash invested, expressed as a percentage. It's a key metric used by investors to evaluate how quickly they'll recoup their initial investment.</p>
+                </div>
+                
+                <!-- Cash on Cash Input Form -->
+                <div class="mt-8">
+                    <div class="mb-6">
+                        <label for="cashOnCashValue" class="block text-[#25224a] text-lg font-medium mb-2">Enter your Cash on Cash Return (%)</label>
+                        <div class="relative">
+                            <input 
+                                type="number" 
+                                id="cashOnCashValue" 
+                                name="cashOnCashValue" 
+                                min="0" 
+                                max="100"
+                                step="0.1"
+                                class="w-full pl-4 pr-10 py-4 border border-[#bfbcc6] rounded-md focus:outline-none focus:ring-2 focus:ring-[#3e50f7] text-lg" 
+                                placeholder="e.g. 25"
+                            >
+                            <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                                <span class="text-gray-500 text-lg">%</span>
+                            </div>
+                        </div>
+                        <div id="cashOnCashError" class="text-red-500 text-left hidden mt-2">Please enter your Cash on Cash Return</div>
+                        <div class="text-[#5f5770] text-sm mt-2">Enter a value between 0 and 100</div>
+                    </div>
+                    
+                    <!-- Common Cash on Cash ranges as helpful tags -->
+                    <div class="mt-6">
+                        <p class="text-[#5f5770] text-sm mb-2">Common ranges:</p>
+                        <div class="flex flex-wrap gap-2">
+                            <button type="button" class="coc-tag bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full text-sm text-[#464154]" data-value="15">15%</button>
+                            <button type="button" class="coc-tag bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full text-sm text-[#464154]" data-value="20">20%</button>
+                            <button type="button" class="coc-tag bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full text-sm text-[#464154]" data-value="25">25%</button>
+                            <button type="button" class="coc-tag bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full text-sm text-[#464154]" data-value="30">30%</button>
+                            <button type="button" class="coc-tag bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full text-sm text-[#464154]" data-value="40">40%</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Footer progress bar - Updated to match other pages -->
+        <footer class="w-full bg-white flex-shrink-0">
+            <!-- Progress bar system -->
+            <div class="container mx-auto px-4 md:px-20 py-2">
+                <div class="progress-status">
+                    <div class="current-page">Cash on Cash Return</div>
+                    <div class="pages-count">Step 7 of 11</div>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-active step-7-of-11" style="width: 63.64%;"></div>
+                    </div>
+                </div>
+                <div class="step-indicators">
+                    <% for(let i = 1; i <= 11; i++) { %>
+                        <div class="step-dot <%= i < 7 ? 'completed' : (i === 7 ? 'active' : '') %>" data-step="<%= i %>"></div>
+                    <% } %>
+                </div>
+            </div>
+            
+            <!-- Navigation buttons with fixed alignment -->
+            <div class="container mx-auto px-4 md:px-20 py-6 md:py-8 flex justify-between items-center">
+                <button id="backBtn" class="text-[#25224a] text-base font-medium">Back</button>
+                <button id="nextBtn" class="btn-next px-6 md:px-8 py-3 md:py-4 text-white text-base font-medium">Next</button>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/js/questionnaire-navigation.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Proper page initialization
+            const mainContent = document.querySelector('main');
+            
+            // Force browser to recognize the element before animation
+            mainContent.style.opacity = '0';
+            
+            // Trigger reflow to ensure animation works
+            void mainContent.offsetWidth;
+            
+            // Start animation
+            mainContent.classList.add('page-transition');
+            setTimeout(() => {
+                mainContent.style.opacity = '1';
+            }, 10);
+            
+            // Set up Cash on Cash input field and error handling
+            const cashOnCashInput = document.getElementById('cashOnCashValue');
+            const cashOnCashError = document.getElementById('cashOnCashError');
+            
+            // Check if there's a saved Cash on Cash value in localStorage
+            const savedCashOnCash = localStorage.getItem('sellerCashOnCash');
+            if (savedCashOnCash) {
+                cashOnCashInput.value = savedCashOnCash;
+            }
+            
+            // Add validation as user types
+            cashOnCashInput.addEventListener('input', function(e) {
+                // Get the current value as a number
+                let value = parseFloat(this.value);
+                
+                // If value is not a number, clear the input
+                if (isNaN(value)) {
+                    this.value = '';
+                    return;
+                }
+                
+                // Clamp value between 0 and 100
+                if (value < 0) value = 0;
+                if (value > 100) value = 100;
+                
+                // Update the input value
+                this.value = value;
+                
+                // Hide error if value is entered
+                if (this.value) {
+                    cashOnCashError.classList.add('hidden');
+                    cashOnCashInput.classList.remove('border-red-500');
+                }
+            });
+            
+            // Add click handlers for Cash on Cash tags
+            const cocTags = document.querySelectorAll('.coc-tag');
+            cocTags.forEach(tag => {
+                tag.addEventListener('click', function() {
+                    cashOnCashInput.value = this.getAttribute('data-value');
+                    cashOnCashError.classList.add('hidden');
+                    cashOnCashInput.classList.remove('border-red-500');
+                });
+            });
+            
+            // Add validation function for the navigation script
+            window.validateBeforeNext = function() {
+                // Check if a value has been entered
+                if (!cashOnCashInput.value) {
+                    // Show error
+                    cashOnCashError.classList.remove('hidden');
+                    cashOnCashInput.classList.add('border-red-500');
+                    cashOnCashInput.focus();
+                    return false;
+                }
+                
+                // Save to localStorage
+                localStorage.setItem('sellerCashOnCash', cashOnCashInput.value);
+                
+                return true;
+            };
+
+            // Add direct event listener to Next button
+            const nextButton = document.getElementById('nextBtn');
+            if (nextButton) {
+                nextButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Next button clicked on Cash on Cash page');
+                    
+                    // Validate and save data
+                    if (!cashOnCashInput.value) {
+                        cashOnCashError.classList.remove('hidden');
+                        cashOnCashInput.classList.add('border-red-500');
+                        cashOnCashInput.focus();
+                        return false;
+                    }
+                    
+                    localStorage.setItem('sellerCashOnCash', cashOnCashInput.value);
+                    
+                    // Add exit animation
+                    const mainContent = document.querySelector('main');
+                    mainContent.style.transition = 'opacity 0.3s ease-out';
+                    mainContent.style.opacity = '0';
+                    
+                    // Animate progress bar
+                    const progressActive = document.querySelector('.progress-active');
+                    if (progressActive) {
+                        progressActive.style.transition = 'width 0.4s ease-out';
+                        progressActive.style.width = '72.73%'; // Next step percentage
+                    }
+                    
+                    // Update step indicators
+                    const currentDot = document.querySelector('.step-dot[data-step="7"]');
+                    const nextDot = document.querySelector('.step-dot[data-step="8"]');
+                    if (currentDot && nextDot) {
+                        currentDot.classList.remove('active');
+                        currentDot.classList.add('completed');
+                        nextDot.classList.add('active');
+                    }
+                    
+                    // Navigate after animation completes
+                    setTimeout(() => {
+                        window.location.href = '/seller-questionnaire/ffe';
+                    }, 300);
+                }, true);
+            }
+            
+            // Add direct event listener to Back button
+            const backButton = document.getElementById('backBtn');
+            if (backButton) {
+                backButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Add exit animation
+                    const mainContent = document.querySelector('main');
+                    mainContent.style.transition = 'opacity 0.3s ease-out';
+                    mainContent.style.opacity = '0';
+                    
+                    // Animate progress bar
+                    const progressActive = document.querySelector('.progress-active');
+                    if (progressActive) {
+                        progressActive.style.transition = 'width 0.4s ease-out';
+                        progressActive.style.width = '54.55%'; // Previous step percentage
+                    }
+                    
+                    // Update step indicators
+                    const currentDot = document.querySelector('.step-dot[data-step="7"]');
+                    const prevDot = document.querySelector('.step-dot[data-step="6"]');
+                    if (currentDot && prevDot) {
+                        currentDot.classList.remove('active');
+                        prevDot.classList.remove('completed');
+                        prevDot.classList.add('active');
+                    }
+                    
+                    // Navigate after animation completes
+                    setTimeout(() => {
+                        window.location.href = '/seller-questionnaire/ebitda';
+                    }, 300);
+                }, true);
+            }
+        });
+    </script>
+</body>
+</html>

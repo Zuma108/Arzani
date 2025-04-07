@@ -1,0 +1,673 @@
+{
+    "name": "Blog Automation Workflow",
+    "nodes": [
+      {
+        "parameters": {
+          "resource": "sheet",
+          "operation": "readRows",
+          "documentId": "={{ $json.documentId }}",
+          "sheetName": "={{ $json.sheetName }}",
+          "range": "={{ $json.range }}",
+          "options": {
+            "valueRenderMode": "FORMATTED_VALUE",
+            "dateTimeRenderOption": "FORMATTED_STRING"
+          }
+        },
+        "name": "Google Sheets",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4,
+        "position": [
+          740,
+          300
+        ],
+        "id": "1"
+      },
+      {
+        "parameters": {
+          "documentId": {
+            "__rl": true,
+            "value": "YOUR_GOOGLE_SHEET_ID_HERE",
+            "mode": "list",
+            "cachedResultName": "Blog Content Sheet"
+          },
+          "sheetName": {
+            "__rl": true,
+            "value": "YOUR_SHEET_NAME_HERE",
+            "mode": "list",
+            "cachedResultName": "Blog Posts"
+          },
+          "event": "rowUpdated",
+          "options": {}
+        },
+        "name": "Google Sheets Trigger",
+        "type": "n8n-nodes-base.googleSheetsTrigger",
+        "typeVersion": 1,
+        "position": [
+          300,
+          300
+        ],
+        "id": "2"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "string": [
+              {
+                "value1": "={{ $json.Status }}",
+                "operation": "equals",
+                "value2": "Approved"
+              }
+            ]
+          }
+        },
+        "name": "Status = Approved?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 1,
+        "position": [
+          520,
+          300
+        ],
+        "id": "3"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Process the blog content\nconst item = $input.item.json;\n\n// Extract all the fields\nconst title = item['Blog Title'] || '';\nconst metaDescription = item['Meta Description'] || '';\nconst author = item.Author || 'Azani Team';\nconst content = item['Content Body'] || '';\nconst categoriesAndTags = item['Categories & Tags'] || '';\nconst slug = item['Slug/Permalink'] || '';\nconst imageUrls = item['Image URLs'] || '';\nconst publishDate = item['Publish Date'] || new Date().toISOString().split('T')[0];\n\n// Process the content (convert markdown to HTML if needed)\nlet processedContent = content;\n\n// Check if content is markdown and convert if necessary\nif (content.includes('##') || content.includes('*')) {\n  // This is a simple check - in a production environment, \n  // you might want to use a proper markdown parser like 'marked'\n  processedContent = content\n    .replace(/^# (.+)$/gm, '<h1>$1</h1>')\n    .replace(/^## (.+)$/gm, '<h2>$1</h2>')\n    .replace(/^### (.+)$/gm, '<h3>$1</h3>')\n    .replace(/\\*\\*(.+?)\\*\\*/g, '<strong>$1</strong>')\n    .replace(/\\*(.+?)\\*/g, '<em>$1</em>')\n    .replace(/\\[(.+?)\\]\\((.+?)\\)/g, '<a href=\"$2\">$1</a>')\n    .replace(/^\\* (.+)$/gm, '<li>$1</li>')\n    .replace(/\\n\\n/g, '</p><p>');\n  \n  processedContent = `<p>${processedContent}</p>`;\n}\n\n// Process image URLs\nlet imageUrlsArray = [];\nif (imageUrls && imageUrls.includes(',')) {\n  imageUrlsArray = imageUrls.split(',').map(url => url.trim());\n} else if (imageUrls) {\n  imageUrlsArray = [imageUrls.trim()];\n}\n\n// Validate slug\nlet cleanSlug = slug;\nif (!cleanSlug) {\n  // Generate slug from title\n  cleanSlug = title.toLowerCase()\n    .replace(/[^\\w\\s-]/g, '') // Remove special chars\n    .replace(/\\s+/g, '-') // Replace spaces with hyphens\n    .replace(/-+/g, '-'); // Remove consecutive hyphens\n}\n\n// Create a structured blog post object\nconst blogPost = {\n  title,\n  metaDescription,\n  author,\n  content: processedContent,\n  categoriesAndTags,\n  slug: cleanSlug,\n  imageUrls: imageUrlsArray,\n  publishDate,\n  status: 'Approved',\n  processedAt: new Date().toISOString()\n};\n\n// Return the processed blog post\nreturn {json: blogPost};"
+        },
+        "name": "Process Content",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 1,
+        "position": [
+          960,
+          300
+        ],
+        "id": "4"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "=https://azani.co.uk/api/blog",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "title",
+                "value": "={{ $json.title }}"
+              },
+              {
+                "name": "metaDescription",
+                "value": "={{ $json.metaDescription }}"
+              },
+              {
+                "name": "author",
+                "value": "={{ $json.author }}"
+              },
+              {
+                "name": "content",
+                "value": "={{ $json.content }}"
+              },
+              {
+                "name": "categoriesAndTags",
+                "value": "={{ $json.categoriesAndTags }}"
+              },
+              {
+                "name": "slug",
+                "value": "={{ $json.slug }}"
+              },
+              {
+                "name": "imageUrls",
+                "value": "={{ $json.imageUrls }}"
+              },
+              {
+                "name": "publishDate",
+                "value": "={{ $json.publishDate }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "name": "Publish to CMS",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.1,
+        "position": [
+          1180,
+          300
+        ],
+        "id": "5"
+      },
+      {
+        "parameters": {
+          "resource": "sheet",
+          "operation": "updateRow",
+          "documentId": {
+            "__rl": true,
+            "value": "YOUR_GOOGLE_SHEET_ID_HERE",
+            "mode": "list",
+            "cachedResultName": "Blog Content Sheet"
+          },
+          "sheetName": {
+            "__rl": true,
+            "value": "YOUR_SHEET_NAME_HERE",
+            "mode": "list",
+            "cachedResultName": "Blog Posts"
+          },
+          "range": "={{ $('Google Sheets Trigger').item.json.range }}",
+          "options": {
+            "valueInputMode": "RAW"
+          },
+          "valueInputMode": "RAW",
+          "dataMode": "autoMapInputData",
+          "valueToUpdate": {
+            "values": {
+              "Status": "Published"
+            }
+          }
+        },
+        "name": "Update Status to Published",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4,
+        "position": [
+          1400,
+          300
+        ],
+        "id": "6",
+        "alwaysOutputData": true
+      },
+      {
+        "parameters": {
+          "to": "admin@azani.co.uk",
+          "subject": "Blog Post Published: {{ $json.title }}",
+          "text": "=A new blog post has been published on Azani.co.uk\n\nTitle: {{ $json.title }}\nAuthor: {{ $json.author }}\nURL: https://azani.co.uk/blog/{{ $json.slug }}\n\nThis post was automatically published by the n8n workflow."
+        },
+        "name": "Send Email Notification",
+        "type": "n8n-nodes-base.emailSend",
+        "typeVersion": 2.1,
+        "position": [
+          1620,
+          300
+        ],
+        "id": "7"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "string": [
+              {
+                "value1": "={{ $json['Generate with AI'] }}",
+                "operation": "equals",
+                "value2": "Yes"
+              }
+            ]
+          }
+        },
+        "name": "Use AI Generation?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 1,
+        "position": [
+          520,
+          500
+        ],
+        "id": "8"
+      },
+      {
+        "parameters": {
+          "url": "https://generativelanguage.googleapis.com/v1/models/gemini-2.0:generateContent",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "x-goog-api-key",
+                "value": "={{ $env.GEMINI_API_KEY }}"
+              }
+            ]
+          },
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "contents",
+                "value": "={{ [{\"role\":\"user\",\"parts\":[{\"text\":\"You are a professional blog writer for Arzani, a UK business marketplace focused on helping people buy and sell businesses. Write a comprehensive, well-structured blog post with the following specifications:\\n\\nTitle: {{$json['Blog Title']}}\\n\\nTarget audience: {{$json['Target Audience'] || 'UK business owners, potential business buyers, and entrepreneurs'}}\\n\\nTopic/Focus: {{$json['Blog Topic'] || $json['Blog Title']}}\\n\\nKey points to include: {{$json['Key Points'] || 'Professional business valuation, market trends, optimization strategies'}}\\n\\nTone: Professional but conversational, authoritative but accessible\\n\\nFormat: Use proper HTML formatting with h2 and h3 headings, paragraphs, bullet points where appropriate, and 1-2 call-to-actions encouraging readers to use Arzani's business valuation services.\\n\\nLength: 1000-1500 words\\n\\nStructure: Include an introduction, 3-5 main sections with subheadings, and a conclusion.\\n\\nMake sure to include relevant UK-specific market information and regulations where appropriate. Use British English spelling and terminology.\"}]}] }}"
+              },
+              {
+                "name": "generationConfig",
+                "value": "={ \"temperature\": 0.7, \"topK\": 40, \"topP\": 0.95, \"maxOutputTokens\": 12000 }"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "name": "Generate Blog with Gemini",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.1,
+        "position": [
+          740,
+          500
+        ],
+        "id": "9"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Extract the AI-generated content\nconst response = $input.item.json;\nconst item = $('Google Sheets Trigger').item.json;\n\nlet generatedContent = '';\n\n// Check if the response has the expected structure\nif (response.candidates && response.candidates[0] && response.candidates[0].content && response.candidates[0].content.parts && response.candidates[0].content.parts[0]) {\n  generatedContent = response.candidates[0].content.parts[0].text;\n} else {\n  throw new Error('Unexpected API response structure from Gemini');\n}\n\n// Generate meta description from first paragraph\nlet metaDescription = '';\nconst firstParagraph = generatedContent.match(/<p>(.*?)<\\/p>/s);\nif (firstParagraph && firstParagraph[1]) {\n  // Strip HTML tags from first paragraph and limit to 160 chars\n  metaDescription = firstParagraph[1].replace(/<[^>]*>/g, '').substring(0, 160);\n  if (metaDescription.length === 160) metaDescription += '...';\n}\n\n// Extract all the fields\nconst title = item['Blog Title'] || '';\nconst author = item.Author || 'Arzani Team';\nconst categoriesAndTags = item['Categories & Tags'] || '';\nconst slug = item['Slug/Permalink'] || '';\nconst imageUrls = item['Image URLs'] || '';\nconst publishDate = item['Publish Date'] || new Date().toISOString().split('T')[0];\n\n// Process image URLs\nlet imageUrlsArray = [];\nif (imageUrls && imageUrls.includes(',')) {\n  imageUrlsArray = imageUrls.split(',').map(url => url.trim());\n} else if (imageUrls) {\n  imageUrlsArray = [imageUrls.trim()];\n}\n\n// Validate slug\nlet cleanSlug = slug;\nif (!cleanSlug) {\n  // Generate slug from title\n  cleanSlug = title.toLowerCase()\n    .replace(/[^\\w\\s-]/g, '') // Remove special chars\n    .replace(/\\s+/g, '-') // Replace spaces with hyphens\n    .replace(/-+/g, '-'); // Remove consecutive hyphens\n}\n\n// Create a structured blog post object\nconst blogPost = {\n  title,\n  metaDescription: metaDescription || item['Meta Description'] || `${title} - Insights from Arzani's expert business marketplace`,\n  author,\n  content: generatedContent,\n  categoriesAndTags,\n  slug: cleanSlug,\n  imageUrls: imageUrlsArray,\n  publishDate,\n  status: 'AI Generated',\n  processedAt: new Date().toISOString(),\n  aiGenerated: true\n};\n\n// Return the processed blog post\nreturn {json: blogPost};"
+        },
+        "name": "Process AI Content",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 1,
+        "position": [
+          960,
+          500
+        ],
+        "id": "10"
+      },
+      {
+        "parameters": {
+          "to": "={{ $('Google Sheets Trigger').item.json['Approver Email'] || 'admin@azani.co.uk' }}",
+          "subject": "AI-Generated Blog Post Ready for Review: {{ $json.title }}",
+          "text": "=Hi {{ $('Google Sheets Trigger').item.json['Approver Name'] || 'there' }},\n\nAn AI-generated blog post is ready for your review before publishing.\n\nTitle: {{ $json.title }}\nMeta Description: {{ $json.metaDescription }}\nSlug: {{ $json.slug }}\n\nPreview of content:\n{{ $json.content.substring(0, 500) }}...\n\n[View Full Content]\n\nPlease approve or reject this content by clicking one of the following links:\n- [Approve and Publish](https://azani.co.uk/api/blog/approve-ai-content?id={{ $('Google Sheets Trigger').item.json.id }}&action=approve&token={{ $env.APPROVAL_TOKEN }})\n- [Edit Before Publishing](https://azani.co.uk/admin/blog/edit-ai-content?id={{ $('Google Sheets Trigger').item.json.id }})\n- [Reject](https://azani.co.uk/api/blog/approve-ai-content?id={{ $('Google Sheets Trigger').item.json.id }}&action=reject&token={{ $env.APPROVAL_TOKEN }})\n\nThank you,\nArzani Blog Automation System",
+          "attachments": [
+            {
+              "name": "{{ $json.title }}.html",
+              "content": "={{ Buffer.from($json.content).toString('base64') }}",
+              "type": "text/html"
+            }
+          ]
+        },
+        "name": "Send Approval Email",
+        "type": "n8n-nodes-base.emailSend",
+        "typeVersion": 2.1,
+        "position": [
+          1180,
+          500
+        ],
+        "id": "11"
+      },
+      {
+        "parameters": {
+          "resource": "sheet",
+          "operation": "updateRow",
+          "documentId": {
+            "__rl": true,
+            "value": "YOUR_GOOGLE_SHEET_ID_HERE",
+            "mode": "list",
+            "cachedResultName": "Blog Content Sheet"
+          },
+          "sheetName": {
+            "__rl": true,
+            "value": "YOUR_SHEET_NAME_HERE",
+            "mode": "list",
+            "cachedResultName": "Blog Posts"
+          },
+          "range": "={{ $('Google Sheets Trigger').item.json.range }}",
+          "options": {
+            "valueInputMode": "RAW"
+          },
+          "valueInputMode": "RAW",
+          "dataMode": "autoMapInputData",
+          "valueToUpdate": {
+            "values": {
+              "Status": "Awaiting Approval",
+              "Content Body": "={{ $json.content }}",
+              "Meta Description": "={{ $json.metaDescription }}"
+            }
+          }
+        },
+        "name": "Update Sheet with AI Content",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4,
+        "position": [
+          1400,
+          500
+        ],
+        "id": "12"
+      },
+      {
+        "parameters": {
+          "httpMethod": "GET",
+          "path": "approve-ai-content",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "name": "Approval Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 1,
+        "position": [
+          300,
+          700
+        ],
+        "webhookId": "ai-content-approval"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "string": [
+              {
+                "value1": "={{ $parameter.query.action }}",
+                "operation": "equals",
+                "value2": "approve"
+              }
+            ]
+          }
+        },
+        "name": "Action = Approve?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 1,
+        "position": [
+          520,
+          700
+        ],
+        "id": "13"
+      },
+      {
+        "parameters": {
+          "resource": "sheet",
+          "operation": "getRows",
+          "documentId": {
+            "__rl": true,
+            "value": "YOUR_GOOGLE_SHEET_ID_HERE",
+            "mode": "list",
+            "cachedResultName": "Blog Content Sheet"
+          },
+          "sheetName": {
+            "__rl": true,
+            "value": "YOUR_SHEET_NAME_HERE",
+            "mode": "list",
+            "cachedResultName": "Blog Posts"
+          },
+          "returnAllMatches": false,
+          "options": {}
+        },
+        "name": "Get AI Blog from Sheet",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4,
+        "position": [
+          740,
+          700
+        ],
+        "id": "14"
+      },
+      {
+        "parameters": {
+          "content": "text/html",
+          "responseCode": 200
+        },
+        "name": "Rejected Response",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1,
+        "position": [
+          740,
+          900
+        ],
+        "id": "15",
+        "webhookId": "ai-content-approval",
+        "parametersUi": {
+          "contentType": "text/html",
+          "responseBody": "<html><body><h1>Content Rejected</h1><p>The AI-generated blog post has been rejected.</p><p><a href=\"https://azani.co.uk/admin/blog\">Return to Blog Admin</a></p></body></html>"
+        }
+      },
+      {
+        "parameters": {
+          "content": "text/html",
+          "responseCode": 200
+        },
+        "name": "Approved Response",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1,
+        "position": [
+          1620,
+          700
+        ],
+        "id": "16",
+        "webhookId": "ai-content-approval",
+        "parametersUi": {
+          "contentType": "text/html",
+          "responseBody": "<html><body><h1>Content Approved</h1><p>The AI-generated blog post has been approved and published.</p><p><a href=\"https://azani.co.uk/blog/{{ $json.slug }}\">View Published Post</a></p></body></html>"
+        }
+      },
+      {
+        "parameters": {
+          "resource": "sheet",
+          "operation": "updateRow",
+          "documentId": {
+            "__rl": true,
+            "value": "YOUR_GOOGLE_SHEET_ID_HERE",
+            "mode": "list",
+            "cachedResultName": "Blog Content Sheet"
+          },
+          "sheetName": {
+            "__rl": true,
+            "value": "YOUR_SHEET_NAME_HERE",
+            "mode": "list",
+            "cachedResultName": "Blog Posts"
+          },
+          "range": "={{ $json.range }}",
+          "options": {
+            "valueInputMode": "RAW"
+          },
+          "valueInputMode": "RAW",
+          "dataMode": "autoMapInputData",
+          "valueToUpdate": {
+            "values": {
+              "Status": "Rejected"
+            }
+          }
+        },
+        "name": "Update Status to Rejected",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4,
+        "position": [
+          520,
+          900
+        ],
+        "id": "17"
+      }
+    ],
+    "connections": {
+      "Google Sheets Trigger": {
+        "main": [
+          [
+            {
+              "node": "Status = Approved?",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Use AI Generation?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Status = Approved?": {
+        "main": [
+          [
+            {
+              "node": "Google Sheets",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Google Sheets": {
+        "main": [
+          [
+            {
+              "node": "Process Content",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Process Content": {
+        "main": [
+          [
+            {
+              "node": "Publish to CMS",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Publish to CMS": {
+        "main": [
+          [
+            {
+              "node": "Update Status to Published",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Update Status to Published": {
+        "main": [
+          [
+            {
+              "node": "Send Email Notification",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Use AI Generation?": {
+        "main": [
+          [
+            {
+              "node": "Generate Blog with Gemini",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          []
+        ]
+      },
+      "Generate Blog with Gemini": {
+        "main": [
+          [
+            {
+              "node": "Process AI Content",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Process AI Content": {
+        "main": [
+          [
+            {
+              "node": "Send Approval Email",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send Approval Email": {
+        "main": [
+          [
+            {
+              "node": "Update Sheet with AI Content",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Approval Webhook": {
+        "main": [
+          [
+            {
+              "node": "Action = Approve?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Action = Approve?": {
+        "main": [
+          [
+            {
+              "node": "Get AI Blog from Sheet",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Update Status to Rejected",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get AI Blog from Sheet": {
+        "main": [
+          [
+            {
+              "node": "Process Content",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Update Status to Rejected": {
+        "main": [
+          [
+            {
+              "node": "Rejected Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send Email Notification": {
+        "main": [
+          [
+            {
+              "node": "Approved Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "pinData": {},
+    "settings": {
+      "executionOrder": "v1",
+      "saveExecutionProgress": true,
+      "callerPolicy": "workflowsFromSameOwner",
+      "errorWorkflow": ""
+    },
+    "staticData": null,
+    "tags": [
+      {
+        "name": "blog"
+      },
+      {
+        "name": "automation"
+      },
+      {
+        "name": "ai"
+      }
+    ],
+    "triggerCount": 2,
+    "updatedAt": "2025-04-06T09:03:00.000Z",
+    "versionId": "1"
+  }
+  

@@ -97,6 +97,36 @@
                     <li><a href="/faq" class="text-gray-300 hover:text-white transition-colors">FAQ</a></li>
                 </ul>
             </div>
+
+            <!-- Blog Categories Section -->
+            <div>
+                <h2 class="text-xl font-semibold mb-4 text-primary">Blog Categories</h2>
+                <ul class="space-y-2">
+                    <% blogCategories.forEach(category => { %>
+                        <li><a href="/blog/category/<%= category.slug %>" class="text-gray-300 hover:text-white transition-colors"><%= category.name %></a></li>
+                    <% }); %>
+                </ul>
+            </div>
+            
+            <!-- Blog Tags Section -->
+            <div>
+                <h2 class="text-xl font-semibold mb-4 text-primary">Blog Tags</h2>
+                <ul class="space-y-2">
+                    <% blogTags.forEach(tag => { %>
+                        <li><a href="/blog/tag/<%= tag.slug %>" class="text-gray-300 hover:text-white transition-colors">#<%= tag.name %></a></li>
+                    <% }); %>
+                </ul>
+            </div>
+
+            <!-- Recent Blog Posts Section -->
+            <div>
+                <h2 class="text-xl font-semibold mb-4 text-primary">Recent Blog Posts</h2>
+                <ul class="space-y-2">
+                    <% recentBlogPosts.forEach(post => { %>
+                        <li><a href="/blog/<%= post.slug %>" class="text-gray-300 hover:text-white transition-colors"><%= post.title %></a></li>
+                    <% }); %>
+                </ul>
+            </div>
             
             <!-- Legal Section -->
             <div>

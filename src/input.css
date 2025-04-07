@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles that should be processed by Tailwind */
+@layer components {
+  .bg-primary-dark {
+    background-color: #121212;
+  }
+  
+  .bg-dark-light {
+    background-color: #1e1e1e;
+  }
+  
+  .bg-dark {
+    background-color: #121212;
+  }
+}

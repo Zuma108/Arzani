@@ -2,7 +2,9 @@ import express from 'express';
 import OpenAI from 'openai';
 import pool from '../db.js';
 import { authenticateToken } from '../middleware/auth.js';
+import dotenv from 'dotenv';
 
+dotenv.config();
 const router = express.Router();
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY
@@ -17,7 +19,29 @@ const OPENAI_CONFIG = {
 
 // Main routes
 router.get('/talk-to-arzani', (req, res) => {
-    res.render('talk-to-arzani');
+    try {
+        // Determine domain for WebSocket connection
+        const domain = process.env.DOMAIN || 
+                      (req.headers.host ? req.headers.host.split(':')[0] : 'arzani.co.uk');
+        
+        // Get environment
+        const nodeEnv = process.env.NODE_ENV || 'development';
+        
+        // Pass configuration to the template
+        res.render('talk-to-Arzani', {
+            title: 'Talk to Arzani - Business Assistant',
+            domain,
+            nodeEnv,
+            wsProtocol: nodeEnv === 'production' ? 'wss' : 'ws',
+            wsPort: nodeEnv === 'production' ? '' : ':5000'
+        });
+    } catch (error) {
+        console.error('Error rendering voice chat page:', error);
+        res.status(500).render('error', { 
+            message: 'Could not load voice chat interface',
+            error: process.env.NODE_ENV === 'development' ? error : {}
+        });
+    }
 });
 
 // Update the voice chat endpoint
@@ -120,6 +144,31 @@ router.post('/synthesize', authenticateToken, async (req, res) => {
     } catch (error) {
         console.error('Speech synthesis error:', error);
         res.status(500).json({ error: 'Failed to synthesize speech' });
+    }
+});
+
+// Voice API endpoint for WebSocket initialization
+router.get('/voice/config', (req, res) => {
+    try {
+        // Return WebSocket configuration based on environment
+        const nodeEnv = process.env.NODE_ENV || 'development';
+        const domain = process.env.DOMAIN || 
+                      (req.headers.host ? req.headers.host.split(':')[0] : 'arzani.co.uk');
+        
+        res.json({
+            wsEndpoint: nodeEnv === 'production' 
+                ? `wss://${domain}/ws` 
+                : 'ws://localhost:5000',
+            openAIKey: process.env.OPENAI_API_KEY_PUBLIC || '',
+            models: {
+                chat: process.env.OPENAI_MODEL || 'gpt-4',
+                tts: process.env.OPENAI_TTS_MODEL || 'tts-1',
+                stt: process.env.OPENAI_WHISPER_MODEL || 'whisper-1'
+            }
+        });
+    } catch (error) {
+        console.error('Error providing voice config:', error);
+        res.status(500).json({ error: 'Could not retrieve voice configuration' });
     }
 });
 

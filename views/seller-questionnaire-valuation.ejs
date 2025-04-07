@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seller Questionnaire - Business Valuation | Arzani Marketplace</title>
+    <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">
+
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <%- include('../views/partials/tailwind-setup') %>
+    <link rel="stylesheet" href="/css/seller-questionnaire.css">
+    <link rel="stylesheet" href="/css/progress-bar.css">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: white;
+            overflow: hidden; /* Hide scrollbar */
+        }
+        .header {
+            height: 87px;
+            border-bottom: 0.8px solid #bfbcc6;
+        }
+        .content-container {
+            height: calc(100vh - 87px - 100px); /* Header height (87px) and footer height (100px) */
+            overflow-y: auto; /* Enable scrolling inside container if needed */
+            padding-bottom: 20px;
+        }
+        .btn-main {
+            background-color: #25224a;
+            color: white;
+            border-radius: 0 1rem 1rem 1rem;
+        }
+        .btn-next {
+            background-color: #041b76;
+            color: white;
+            border-radius: 0 1rem 1rem 1rem;
+            box-shadow: 7px 7px 17px 0px rgba(25,31,64,0.22);
+        }
+        .progress-bar {
+            background-color: #dee8ff;
+            height: 10px;
+        }
+        .progress-active {
+            background-color: #3e50f7;
+        }
+        .exit-link {
+            color: #25224a;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .profile-pics {
+            display: flex;
+            align-items: center;
+        }
+        .profile-pic {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid white;
+            object-fit: cover;
+        }
+        .profile-pic:not(:first-child) {
+            margin-left: -15px;
+        }
+        /* Valuation page specific styles */
+        .valuation-result {
+            background: linear-gradient(to right, #f0f4ff, #e6f0ff);
+            border-radius: 1rem;
+            border: 1px solid #dee8ff;
+            box-shadow: 0 4px 20px rgba(62, 80, 247, 0.1);
+        }
+        .valuation-header {
+            border-bottom: 1px solid rgba(62, 80, 247, 0.2);
+        }
+        .valuation-badge {
+            background-color: #3e50f7;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 99px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .valuation-price {
+            font-size: 32px;
+            font-weight: 800;
+            color: #25224a;
+        }
+        .valuation-range {
+            font-size: 18px;
+            color: #5f5770;
+        }
+        .insights-card {
+            border: 1px solid #dee8ff;
+            border-radius: 0.75rem;
+            background-color: white;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .insights-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(62, 80, 247, 0.1);
+        }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .loading-spinner {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3e50f7;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .factor-badge {
+            border-radius: 99px;
+            padding: 4px 10px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .factor-positive {
+            background-color: rgba(34, 197, 94, 0.1);
+            color: rgb(34, 197, 94);
+        }
+        .factor-negative {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: rgb(239, 68, 68);
+        }
+        .factor-neutral {
+            background-color: rgba(59, 130, 246, 0.1);
+            color: rgb(59, 130, 246);
+        }
+        /* Valuation slider styles */
+        .valuation-slider-container {
+            margin-top: 2rem;
+            border: 1px solid #dee8ff;
+            border-radius: 0.75rem;
+            background-color: white;
+            padding: 1.5rem;
+            box-shadow: 0 4px 10px rgba(62, 80, 247, 0.05);
+        }
+        
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .slider-control {
+            width: 100%;
+            margin: 1.5rem 0 2.5rem 0; /* Increased bottom margin to give more space for labels */
+            position: relative;
+        }
+        
+        .slider-bar {
+            height: 10px;
+            width: 100%;
+            background: linear-gradient(to right, #e63946, #f1faee, #a8dadc, #457b9d, #1d3557);
+            border-radius: 5px;
+            position: relative;
+            z-index: 5; /* Lower z-index than the thumb */
+        }
+        
+        .slider-thumb {
+            width: 24px;
+            height: 24px;
+            background-color: white;
+            border: 3px solid #3e50f7;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+            z-index: 15; /* Higher z-index to stay above the bar */
+        }
+        
+        .slider-thumb:active {
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+        
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px; /* Increased top margin to push labels further down */
+            color: #5f5770;
+            font-size: 12px;
+            position: relative;
+            z-index: 1; /* Lower z-index than both bar and thumb */
+        }
+        
+        /* Position the labels absolutely to avoid being covered by the thumb */
+        .slider-labels span {
+            position: relative;
+            top: 5px; /* Push down slightly */
+        }
+        
+        .likelihood-indicator {
+            text-align: center;
+            margin: 1rem 0;
+        }
+        
+        .likelihood-label {
+            font-weight: 600;
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 99px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .likelihood-high {
+            background-color: rgba(34, 197, 94, 0.1);
+            color: rgb(34, 197, 94);
+        }
+        
+        .likelihood-moderate {
+            background-color: rgba(234, 179, 8, 0.1);
+            color: rgb(234, 179, 8);
+        }
+        
+        .likelihood-low {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: rgb(239, 68, 68);
+        }
+        
+        .adjusted-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #25224a;
+            text-align: center;
+            margin: 1rem 0;
+        }
+        
+        .tooltip {
+            position: absolute;
+            background-color: #25224a;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            transform: translateX(-50%);
+            bottom: 100%;
+            margin-bottom: 10px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+            z-index: 20;
+        }
+        
+        .tooltip:after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #25224a transparent transparent transparent;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading overlay - hidden by default -->
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="loading-spinner"></div>
+        <p class="text-[#25224a] text-lg font-medium">Analyzing your business data...</p>
+        <p class="text-[#5f5770] text-sm mt-2">This may take a moment</p>
+    </div>
+
+    <!-- Add this email collection modal right after the loading overlay div -->
+    <div id="emailCollectionModal" class="fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-[1001] hidden">
+        <div class="bg-white rounded-lg p-8 max-w-md w-full shadow-2xl">
+            <h2 class="text-[#25224a] text-2xl font-bold mb-4">Email Required</h2>
+            <p class="text-[#5f5770] mb-6">Please provide your email address to save your valuation and continue.</p>
+            
+            <div class="mb-6">
+                <label for="userEmail" class="block text-[#25224a] text-sm font-medium mb-2">Email Address</label>
+                <input type="email" id="userEmail" class="w-full px-4 py-2 border border-[#dee8ff] rounded-md focus:outline-none focus:ring-2 focus:ring-[#3e50f7]" placeholder="your@email.com">
+                <p id="emailError" class="mt-1 text-red-500 text-sm hidden">Please enter a valid email address</p>
+            </div>
+            
+            <div class="flex justify-end space-x-4">
+                <button id="saveEmailBtn" class="bg-[#3e50f7] text-white px-6 py-2 rounded-md hover:bg-[#2a3ad3] transition-colors">Save & Continue</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="w-full h-screen flex flex-col bg-white">
+        <!-- Header -->
+        <header class="header w-full bg-white flex items-center flex-shrink-0">
+            <div class="container mx-auto px-4 md:px-8 flex items-center justify-between">
+                <!-- Logo -->
+                <div class="h-12 md:h-16">
+                    <img src="/figma design exports/logos/Arzani black-white background 2.png" alt="Arzani" class="h-full">
+                </div>
+                
+                <!-- Right section -->
+                <div class="flex items-center gap-4">
+                    <!-- Help button -->
+                    <div class="hidden md:flex mr-4 h-12 px-6 items-center border border-[#bfbcc6] rounded">
+                        <span class="text-[#464154] text-base font-medium">Need help?</span>
+                    </div>
+                    
+                    <!-- Profile pictures -->
+                    <div class="profile-pics mr-4">
+                        <img src="https://randomuser.me/api/portraits/women/32.jpg" alt="Support agent" class="profile-pic">
+                        <img src="https://randomuser.me/api/portraits/men/44.jpg" alt="Support agent" class="profile-pic">
+                        <img src="https://randomuser.me/api/portraits/women/68.jpg" alt="Support agent" class="profile-pic">
+                    </div>
+                    
+                    <!-- Exit link -->
+                    <a href="/" class="exit-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                        <span class="hidden sm:inline">Exit</span>
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main content -->
+        <main class="content-container flex-grow page-transition">
+            <div class="container mx-auto px-4 max-w-3xl pt-8 md:pt-12">
+                <h1 class="text-[#25224a] text-2xl md:text-3xl font-black mb-4 text-center">Your Business Valuation</h1>
+                <p class="text-[#5f5770] text-lg mb-6 text-center">Based on your inputs, we've calculated an estimated valuation for your business.</p>
+                
+                <!-- Initial state - Calculate button -->
+                <div id="calculationPrompt" class="text-center py-10 bg-gray-50 rounded-lg mb-8">
+                    <p class="text-[#5f5770] mb-6">Click below to analyze your business data and generate a valuation report.</p>
+                    <button id="calculateValuationBtn" class="btn-main px-6 py-3 mb-3">
+                        Calculate My Business Value
+                    </button>
+                    <p class="text-[#8e8a9a] text-sm">This uses advanced algorithms to analyze your business metrics.</p>
+                </div>
+                
+                <!-- Valuation results - hidden initially -->
+                <div id="valuationResults" class="hidden">
+                    <!-- Enhanced Interactive Valuation Slider - now the main valuation display -->
+                    <div class="valuation-slider-container">
+                        <div class="slider-header">
+                            <h3 class="text-[#25224a] text-xl font-bold">Business Valuation</h3>
+                            <div class="flex items-center">
+                                <span class="text-sm text-[#5f5770] mr-2">Confidence:</span>
+                                <span id="actualConfidenceScore" class="text-sm font-semibold"></span>
+                            </div>
+                        </div>
+                        
+                        <p id="valuationSummary" class="text-[#5f5770] mb-4"></p>
+                        
+                        <div class="adjusted-value">
+                            <span id="adjustedValue">£0</span>
+                        </div>
+                        
+                        <p id="valuationRange" class="text-[#5f5770] text-center mb-2">Range: £0 - £0</p>
+                        <p id="multipleUsed" class="text-[#5f5770] text-center text-sm mb-4"></p>
+                        
+                        <div class="slider-control">
+                            <div class="slider-bar"></div>
+                            <div id="sliderThumb" class="slider-thumb"></div>
+                            <div id="valueTooltip" class="tooltip"></div>
+                        </div>
+                        
+                        <div class="slider-labels">
+                            <span>Low</span>
+                            <span>Market Value</span>
+                            <span>High</span>
+                        </div>
+                        
+                        <div class="likelihood-indicator mt-6">
+                            <span id="likelihoodLabel" class="likelihood-label likelihood-moderate">Likely to Sell</span>
+                            <p id="likelihoodText" class="text-[#5f5770] text-sm">Your price is within market value range, which is optimal for attracting buyers.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Key valuation factors - Add the missing elements here -->
+                    <h3 class="text-[#25224a] text-xl font-bold mb-4 mt-8">Key Valuation Factors</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                        <!-- Growth Factor -->
+                        <div class="insights-card p-5">
+                            <div class="flex justify-between items-center mb-3">
+                                <h4 class="text-[#25224a] font-semibold">Growth</h4>
+                                <span id="growthFactorBadge" class="factor-badge factor-positive">+10%</span>
+                            </div>
+                            <p id="growthFactorAnalysis" class="text-[#5f5770] text-sm">Growth analysis will appear here.</p>
+                        </div>
+                        
+                        <!-- Industry Factor -->
+                        <div class="insights-card p-5">
+                            <div class="flex justify-between items-center mb-3">
+                                <h4 class="text-[#25224a] font-semibold">Industry</h4>
+                                <span id="industryFactorBadge" class="factor-badge factor-neutral">Average</span>
+                            </div>
+                            <p id="industryFactorAnalysis" class="text-[#5f5770] text-sm">Industry analysis will appear here.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Market comparables -->
+                    <div class="insights-card p-6 mb-8">
+                        <h3 class="text-[#25224a] text-xl font-bold mb-4">Market Comparables</h3>
+                        <p id="marketComparablesIntro" class="text-[#5f5770] mb-4">Market comparables information will appear here.</p>
+                        
+                        <div class="overflow-x-auto">
+                            <table id="comparableMetricsTable" class="min-w-full">
+                                <thead>
+                                    <tr class="bg-blue-50">
+                                        <th class="py-2 px-3 text-left text-sm font-semibold text-[#25224a]">Metric</th>
+                                        <th class="py-2 px-3 text-right text-sm font-semibold text-[#25224a]">Your Business</th>
+                                        <th class="py-2 px-3 text-right text-sm font-semibold text-[#25224a]">Industry Average</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Table rows will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Recommendations -->
+                    <div class="bg-blue-50 p-6 rounded-lg mb-8">
+                        <h3 class="text-[#25224a] text-xl font-bold mb-4">Recommendations</h3>
+                        <ul id="recommendationsList" class="list-disc pl-5 space-y-2 text-[#5f5770]">
+                            <!-- Recommendations will be populated by JavaScript -->
+                        </ul>
+                    </div>
+                    
+                    <!-- Disclaimer -->
+                    <div class="text-sm text-[#8e8a9a] italic mb-8">
+                        <p>This valuation is an estimate based on the information provided and industry benchmarks. Actual selling price may vary based on numerous factors including buyer demand, negotiation, and due diligence findings.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Footer progress bar -->
+        <footer class="w-full bg-white flex-shrink-0">
+            <!-- New progress bar system -->
+            <div class="container mx-auto px-4 md:px-20 py-2">
+                <div class="progress-status">
+                    <div class="current-page">Business Valuation</div>
+                    <div class="pages-count">Step 11 of 11</div>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-active" style="width: 100%;"></div>
+                    </div>
+                </div>
+                <div class="step-indicators">
+                    <div class="step-dot completed" data-step="1"></div>
+                    <div class="step-dot completed" data-step="2"></div>
+                    <div class="step-dot completed" data-step="3"></div>
+                    <div class="step-dot completed" data-step="4"></div>
+                    <div class="step-dot completed" data-step="5"></div>
+                    <div class="step-dot completed" data-step="6"></div>
+                    <div class="step-dot completed" data-step="7"></div>
+                    <div class="step-dot completed" data-step="8"></div>
+                    <div class="step-dot completed" data-step="9"></div>
+                    <div class="step-dot completed" data-step="10"></div>
+                    <div class="step-dot active" data-step="11"></div>
+                </div>
+            </div>
+            
+            <!-- Navigation buttons -->
+            <div class="container mx-auto px-4 md:px-20 py-6 md:py-8 flex justify-between items-center">
+                <button id="backBtn" class="text-[#25224a] text-base font-medium">Back</button>
+                <button id="nextBtn" class="btn-next px-6 md:px-8 py-3 md:py-4 text-white text-base font-medium">Continue to Sign Up</button>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/js/questionnaire-navigation.js"></script>
+    <script src="/js/valuation.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get DOM elements
+            const calculateBtn = document.getElementById('calculateValuationBtn');
+            const calculationPrompt = document.getElementById('calculationPrompt');
+            const valuationResults = document.getElementById('valuationResults');
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            
+            // Add click handler for calculation button
+            if (calculateBtn) {
+                calculateBtn.textContent = 'Calculate My Business Value';
+                calculateBtn.addEventListener('click', calculateValuation);
+            } else {
+                console.error('Calculate button not found!');
+            }
+            
+            // Set up validation function for navigation
+            window.validateBeforeNext = function() {
+                // Save valuation data to localStorage if available
+                if (window.valuationData) {
+                    localStorage.setItem('sellerValuationData', JSON.stringify(window.valuationData));
+                    
+                    // Save the questionnaire data to the server anonymously
+                    saveQuestionnaireDataToServer().catch(err => {
+                        console.error('Error saving questionnaire data:', err);
+                    });
+                }
+                
+                // If we don't have valuation data and the valuation results are not showing,
+                // prompt the user to calculate the valuation first
+                if (!window.valuationData && document.getElementById('valuationResults').classList.contains('hidden')) {
+                    alert('Please calculate your business valuation before continuing.');
+                    document.getElementById('calculateValuationBtn').focus();
+                    return false;
+                }
+                
+                return true;
+            };
+            
+            // Function to save questionnaire data to server
+            async function saveQuestionnaireDataToServer() {
+                try {
+                    const questionnaireData = prepareQuestionnaireData();
+                    
+                    // Add valuation data if available
+                    if (window.valuationData) {
+                        questionnaireData.valuation = window.valuationData;
+                    }
+                    
+                    // Ensure we have an anonymous ID to track this submission
+                    const anonymousId = localStorage.getItem('questionnaireAnonymousId') || 
+                        'anon_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                    
+                    if (!localStorage.getItem('questionnaireAnonymousId')) {
+                        localStorage.setItem('questionnaireAnonymousId', anonymousId);
+                    }
+                    
+                    questionnaireData.anonymousId = anonymousId;
+                    
+                    // Make sure email is included (required for database)
+                    if (!questionnaireData.email) {
+                        console.warn('No email found in questionnaire data, redirecting to email step');
+                        showEmailModal();
+                        return false;
+                    }
+                    
+                    console.log('Saving questionnaire data to server:', questionnaireData);
+                    
+                    // Send data to server without any auth token
+                    const response = await fetch('/api/business/save-questionnaire', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(questionnaireData)
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        console.log('Successfully saved questionnaire data with ID:', result.submissionId);
+                        // Store the submission ID for future reference
+                        localStorage.setItem('questionnaireSubmissionId', result.submissionId);
+                        document.cookie = `questionnaireSubmissionId=${result.submissionId}; path=/; max-age=${60*60*24*30}`; // 30 days
+                    } else {
+                        console.error('Server indicated failure saving questionnaire data:', result.message);
+                    }
+                    
+                    return result;
+                } catch (error) {
+                    console.error('Failed to save questionnaire data:', error);
+                    // Don't block navigation if this fails
+                    return { success: false, error: error.message };
+                }
+            }
+            
+            // Function to collect all questionnaire data from localStorage
+            function prepareQuestionnaireData() {
+                return {
+                    email: localStorage.getItem('sellerEmail'),
+                    businessName: localStorage.getItem('sellerBusinessName'),
+                    industry: localStorage.getItem('sellerIndustry'),
+                    description: localStorage.getItem('sellerDescription'),
+                    yearEstablished: localStorage.getItem('sellerYearEstablished'),
+                    yearsInOperation: localStorage.getItem('sellerYearsInOperation'),
+                    contactName: localStorage.getItem('sellerContactName'),
+                    contactPhone: localStorage.getItem('sellerContactPhone'),
+                    location: localStorage.getItem('sellerLocation'),
+                    revenueExact: localStorage.getItem('sellerRevenueExact'),
+                    revenuePrevYear: localStorage.getItem('sellerRevenuePrevYear'),
+                    revenue2YearsAgo: localStorage.getItem('sellerRevenue2YearsAgo'),
+                    revenue3YearsAgo: localStorage.getItem('sellerRevenue3YearsAgo'),
+                    ebitda: localStorage.getItem('sellerEbitda'),
+                    ebitdaPrevYear: localStorage.getItem('sellerEbitdaPrevYear'),
+                    ebitda2YearsAgo: localStorage.getItem('sellerEbitda2YearsAgo'),
+                    cashOnCash: localStorage.getItem('sellerCashOnCash'),
+                    ffeValue: localStorage.getItem('sellerFfeValue'),
+                    ffeItems: localStorage.getItem('sellerFfeItems'),
+                    growthRate: localStorage.getItem('sellerGrowthRate'),
+                    growthAreas: localStorage.getItem('sellerGrowthAreas'),
+                    growthChallenges: localStorage.getItem('sellerGrowthChallenges'),
+                    scalability: localStorage.getItem('sellerScalability'),
+                    totalDebtAmount: localStorage.getItem('sellerTotalDebtAmount'),
+                    debtTransferable: localStorage.getItem('sellerDebtTransferable'),
+                    debtNotes: localStorage.getItem('sellerDebtNotes'),
+                    debtItems: localStorage.getItem('sellerDebtItems'),
+                    timestamp: new Date().toISOString(),
+                    source: 'seller-questionnaire'
+                };
+            }
+            
+            // Function to display error messages
+            function displayError(message) {
+                // Hide loading overlay if visible
+                loadingOverlay.classList.add('hidden');
+                
+                // Show alert with error message
+                alert('Valuation Error: ' + message);
+                
+                console.error('Valuation calculation failed:', message);
+            }
+            
+            // Function to display the valuation results
+            function displayValuationResults(valuation) {
+                try {
+                    // Store the valuation data globally
+                    window.valuationData = valuation;
+                    
+                    // Update the UI with valuation data
+                    updateValuationUI(valuation);
+                    
+                    // Save valuation results to database
+                    saveValuationToDatabase(valuation);
+                    
+                    // Get element references
+                    const loadingOverlay = document.getElementById('loadingOverlay');
+                    const calculationPrompt = document.getElementById('calculationPrompt');
+                    const valuationResults = document.getElementById('valuationResults');
+                    
+                    // Check if all needed elements exist
+                    if (!loadingOverlay || !calculationPrompt || !valuationResults) {
+                        console.error('Missing required DOM elements for displaying results');
+                        alert('Error displaying valuation results. Please try again.');
+                        return;
+                    }
+                    
+                    // Hide loading overlay
+                    loadingOverlay.classList.add('hidden');
+                    
+                    // Hide calculation prompt and show results
+                    calculationPrompt.classList.add('hidden');
+                    valuationResults.classList.remove('hidden');
+                    
+                    // Scroll to results
+                    valuationResults.scrollIntoView({ behavior: 'smooth' });
+                    
+                    console.log('Valuation displayed successfully');
+                } catch (error) {
+                    console.error('Error displaying valuation results:', error);
+                    
+                    // Fallback error handling
+                    const loadingOverlay = document.getElementById('loadingOverlay');
+                    if (loadingOverlay) loadingOverlay.classList.add('hidden');
+                    
+                    alert('Error displaying valuation results: ' + error.message);
+                }
+            }
+            
+            // Function to save valuation results to database
+            async function saveValuationToDatabase(valuation) {
+                try {
+                    // Collect all questionnaire data
+                    const questionnaireData = prepareQuestionnaireData();
+                    
+                    // Add the valuation data
+                    questionnaireData.valuation = valuation;
+                    
+                    // Ensure we have an email (required for database)
+                    if (!questionnaireData.email) {
+                        console.log('No email found, showing email collection modal');
+                        showEmailModal();
+                        return false;
+                    }
+                    
+                    console.log('Saving questionnaire data with valuation:', {
+                        email: questionnaireData.email,
+                        businessName: questionnaireData.businessName,
+                        valuationAmount: valuation.estimatedValue
+                    });
+                    
+                    // Send data to the server
+                    const response = await fetch('/api/business/save-questionnaire', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(questionnaireData)
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        localStorage.setItem('questionnaireSubmissionId', result.submissionId);
+                        document.cookie = `questionnaireSubmissionId=${result.submissionId}; path=/; max-age=${60*60*24*30}`; // 30 days
+                        console.log('Valuation saved successfully with ID:', result.submissionId);
+                        return true;
+                    } else {
+                        console.error('Server error saving valuation:', result.message);
+                        return false;
+                    }
+                } catch (error) {
+                    console.error('Error saving valuation to database:', error);
+                    // Don't let this error affect the user experience
+                    return false;
+                }
+            }
+            
+            // Function to calculate the business valuation
+            async function calculateValuation() {
+                try {
+                    // Show loading overlay
+                    loadingOverlay.classList.remove('hidden');
+                    
+                    // Gather business data from localStorage
+                    const businessData = {
+                        businessName: localStorage.getItem('sellerBusinessName'),
+                        industry: localStorage.getItem('sellerIndustry'),
+                        yearsInOperation: localStorage.getItem('sellerYearsInOperation') || 
+                            (new Date().getFullYear() - parseInt(localStorage.getItem('sellerYearEstablished') || new Date().getFullYear())),
+                        location: localStorage.getItem('sellerLocation'),
+                        revenue: parseFloat(localStorage.getItem('sellerRevenueExact')) || 0,
+                        revenuePrevYear: parseFloat(localStorage.getItem('sellerRevenuePrevYear')) || 0,
+                        revenue2YearsAgo: parseFloat(localStorage.getItem('sellerRevenue2YearsAgo')) || 0,
+                        revenue3YearsAgo: parseFloat(localStorage.getItem('sellerRevenue3YearsAgo')) || 0,
+                        ebitda: parseFloat(localStorage.getItem('sellerEbitda')) || 0,
+                        ebitdaPrevYear: parseFloat(localStorage.getItem('sellerEbitdaPrevYear')) || 0,
+                        ebitda2YearsAgo: parseFloat(localStorage.getItem('sellerEbitda2YearsAgo')) || 0,
+                        cashOnCash: parseFloat(localStorage.getItem('sellerCashOnCash')) || 0,
+                        ffeValue: parseFloat(localStorage.getItem('sellerFfeValue')) || 0,
+                        growthRate: parseFloat(localStorage.getItem('sellerGrowthRate')) || 0,
+                        scalability: localStorage.getItem('sellerScalability') || 'Medium',
+                        totalDebtAmount: parseFloat(localStorage.getItem('sellerTotalDebtAmount')) || 0,
+                        debtTransferable: localStorage.getItem('sellerDebtTransferable') || 'none',
+                        anonymousId: localStorage.getItem('questionnaireAnonymousId') || '',
+                        email: localStorage.getItem('sellerEmail') || ''
+                    };
+                    
+                    console.log('Calculating valuation with data:', businessData);
+                    
+                    // Validate minimum required data
+                    if (!businessData.revenue && !businessData.ebitda) {
+                        throw new Error('Missing required financial data (revenue or EBITDA)');
+                    }
+                    
+                    try {
+                        // Send data to valuation API
+                        const response = await fetch('/api/valuation/calculate', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(businessData)
+                        });
+                        
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        
+                        const result = await response.json();
+                        
+                        if (result.success && result.valuation) {
+                            // Store the result globally and display it
+                            window.valuationData = result.valuation;
+                            displayValuationResults(result.valuation);
+                        } else {
+                            throw new Error(result.message || 'Failed to calculate valuation');
+                        }
+                    } catch (apiError) {
+                        console.error('API error:', apiError);
+                        displayError('Failed to connect to valuation service. Please try again later.');
+                    }
+                } catch (error) {
+                    console.error('Valuation error:', error);
+                    displayError(error.message || 'Failed to calculate valuation. Please try again.');
+                }
+            }
+            
+            // Function to update the UI with valuation data - fixed to ensure slider matches values
+            function updateValuationUI(valuation) {
+                // Verify that valuation object has required properties
+                if (!valuation || !valuation.valuationRange || 
+                    typeof valuation.estimatedValue === 'undefined') {
+                    console.error('Invalid valuation data:', valuation);
+                    displayError('Invalid valuation data received');
+                    return;
+                }
+                
+                // Debug log the valuation data to help troubleshoot
+                console.log('Updating UI with valuation data:', {
+                    estimatedValue: valuation.estimatedValue,
+                    min: valuation.valuationRange.min,
+                    max: valuation.valuationRange.max
+                });
+                
+                // Format currency values
+                const formatCurrency = (value) => {
+                    return '£' + parseInt(value).toLocaleString();
+                };
+                
+                // Format percentages
+                const formatPercentage = (value) => {
+                    return (value > 0 ? '+' : '') + value + '%';
+                };
+                
+                // Verify and safely update DOM elements - helper function
+                const safelyUpdateElement = (id, updateFn) => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        updateFn(element);
+                    } else {
+                        console.warn(`Element with ID '${id}' not found`);
+                    }
+                };
+                
+                // Main valuation information
+                safelyUpdateElement('adjustedValue', el => el.textContent = formatCurrency(valuation.estimatedValue));
+                safelyUpdateElement('valuationRange', el => el.textContent = `Range: ${formatCurrency(valuation.valuationRange.min)} - ${formatCurrency(valuation.valuationRange.max)}`);
+                safelyUpdateElement('multipleUsed', el => el.innerHTML = `Based on <span class="font-medium">${valuation.multiple.toFixed(1)}x</span> ${valuation.multipleType} multiple`);
+                safelyUpdateElement('actualConfidenceScore', el => el.textContent = `${valuation.confidence}%`);
+                safelyUpdateElement('valuationSummary', el => el.textContent = valuation.summary || 'Business valuation based on your provided information.');
+                
+                // Valuation factors
+                if (valuation.factors) {
+                    if (valuation.factors.growth) {
+                        safelyUpdateElement('growthFactorBadge', el => {
+                            const impact = valuation.factors.growth.impact || 0;
+                            el.textContent = formatPercentage(impact);
+                            setFactorBadgeClass('growthFactorBadge', impact);
+                        });
+                        safelyUpdateElement('growthFactorAnalysis', el => 
+                            el.textContent = valuation.factors.growth.analysis || 'Growth trends impact your business valuation.');
+                    }
+                    
+                    if (valuation.factors.industry) {
+                        safelyUpdateElement('industryFactorBadge', el => {
+                            const impact = valuation.factors.industry.impact || 0;
+                            el.textContent = formatPercentage(impact);
+                            setFactorBadgeClass('industryFactorBadge', impact);
+                        });
+                        safelyUpdateElement('industryFactorAnalysis', el => 
+                            el.textContent = valuation.factors.industry.analysis || 'Industry factors affect how your business is valued.');
+                    }
+                }
+                
+                // Market comparables
+                if (valuation.marketComparables) {
+                    safelyUpdateElement('marketComparablesIntro', el => 
+                        el.textContent = valuation.marketComparables.intro || 'How your business compares to industry standards:');
+                    
+                    // Update comparables table if it exists
+                    const comparablesTable = document.getElementById('comparableMetricsTable');
+                    if (comparablesTable && valuation.marketComparables.metrics) {
+                        const tableBody = comparablesTable.querySelector('tbody');
+                        if (tableBody) {
+                            tableBody.innerHTML = ''; // Clear existing rows
+                            
+                            valuation.marketComparables.metrics.forEach(metric => {
+                                const row = document.createElement('tr');
+                                row.innerHTML = `
+                                    <td class="py-2 px-3 border-t border-gray-200 text-sm text-[#25224a]">${metric.name}</td>
+                                    <td class="py-2 px-3 border-t border-gray-200 text-sm text-right font-medium">${metric.yourValue}</td>
+                                    <td class="py-2 px-3 border-t border-gray-200 text-sm text-right">${metric.industryAverage}</td>
+                                `;
+                                tableBody.appendChild(row);
+                            });
+                        }
+                    }
+                }
+                
+                // Recommendations
+                if (valuation.recommendations) {
+                    const recommendationsList = document.getElementById('recommendationsList');
+                    if (recommendationsList && valuation.recommendations.items) {
+                        recommendationsList.innerHTML = ''; // Clear existing recommendations
+                        
+                        valuation.recommendations.items.forEach(item => {
+                            const listItem = document.createElement('li');
+                            listItem.className = 'mb-2';
+                            listItem.textContent = item;
+                            recommendationsList.appendChild(listItem);
+                        });
+                    } else if (recommendationsList) {
+                        // Add default recommendations if none provided
+                        recommendationsList.innerHTML = `
+                            <li class="mb-2">Consider documenting your business processes to increase transferability.</li>
+                            <li class="mb-2">Focus on improving profit margins to increase business value.</li>
+                            <li class="mb-2">Demonstrating consistent growth can significantly enhance valuation.</li>
+                        `;
+                    }
+                }
+                
+                // Initialize the valuation slider with proper values
+                try {
+                    // Create a slider initializer function
+                    const sliderInitializer = initializeValuationSlider(
+                        valuation.estimatedValue,
+                        valuation.valuationRange.min,
+                        valuation.valuationRange.max
+                    );
+                    
+                    // Make slider controller available globally for later reference
+                    window.sliderController = sliderInitializer;
+                } catch (sliderError) {
+                    console.error('Error initializing slider:', sliderError);
+                    // Don't let slider issues block the overall rendering
+                }
+            }
+            
+            // Add new function to initialize and handle the slider
+            function initializeValuationSlider(estimatedValue, minValue, maxValue) {
+                // Define all variables at the top to avoid accessing before initialization
+                const sliderThumb = document.getElementById('sliderThumb');
+                const sliderBar = document.querySelector('.slider-bar');
+                const adjustedValue = document.getElementById('adjustedValue');
+                const likelihoodLabel = document.getElementById('likelihoodLabel');
+                const likelihoodText = document.getElementById('likelihoodText');
+                const valueTooltip = document.getElementById('valueTooltip');
+                
+                // Calculate the range for the slider - use the exact valuation range provided
+                const sliderMinValue = minValue;
+                const sliderMaxValue = maxValue;
+                
+                // Set initial position to the estimated value or middle of the range if estimated value
+                // is at an extreme, clamped to min/max range
+                let initialValue;
+                
+                // Check if estimated value is near an extreme
+                const range = sliderMaxValue - sliderMinValue;
+                const lowerThreshold = sliderMinValue + (range * 0.25); // Lower 25% of range
+                const upperThreshold = sliderMaxValue - (range * 0.25); // Upper 25% of range
+                
+                if (estimatedValue < lowerThreshold || estimatedValue > upperThreshold) {
+                    // If estimated value is near an extreme, start in the middle
+                    initialValue = sliderMinValue + (range / 2);
+                } else {
+                    // Otherwise use the estimated value
+                    initialValue = estimatedValue;
+                }
+                
+                // Ensure initial value is within range
+                let currentValue = Math.max(sliderMinValue, Math.min(Math.round(initialValue), sliderMaxValue));
+                let isDragging = false;
+                
+                // Format currency for display - define before using
+                function formatCurrency(value) {
+                    return '£' + parseInt(value).toLocaleString();
+                }
+                
+                // Update function to set position and UI based on current value
+                function updateSliderUI(value) {
+                    // Ensure value stays within valid range
+                    const clampedValue = Math.max(sliderMinValue, Math.min(value, sliderMaxValue));
+                    
+                    // Calculate percentage position along the slider
+                    const range = sliderMaxValue - sliderMinValue;
+                    const valuePercentage = ((clampedValue - sliderMinValue) / range) * 100;
+                    
+                    // Set thumb position
+                    sliderThumb.style.left = `${valuePercentage}%`;
+                    
+                    // Update displayed value
+                    adjustedValue.textContent = formatCurrency(clampedValue);
+                    valueTooltip.textContent = formatCurrency(clampedValue);
+                    
+                    // Position tooltip
+                    valueTooltip.style.left = `${valuePercentage}%`;
+                    
+                    // Update likelihood indicators
+                    updateLikelihoodIndicator(clampedValue, estimatedValue);
+                    
+                    // Store actual value (clamped to valid range)
+                    currentValue = clampedValue;
+                    
+                    // Debug output to see what's happening
+                    console.log(`Slider update: value=${clampedValue}, estimated=${estimatedValue}, min=${sliderMinValue}, max=${sliderMaxValue}, percentage=${valuePercentage}%`);
+                }
+                
+                // Function to update likelihood indicator based on value vs. estimated value
+                function updateLikelihoodIndicator(value, estimatedValue) {
+                    // Remove all classes
+                    likelihoodLabel.classList.remove('likelihood-high', 'likelihood-moderate', 'likelihood-low');
+                    
+                    // Calculate how far from the estimated value we are
+                    const ratio = value / estimatedValue;
+                    
+                    if (ratio < 0.85) {
+                        // Value is significantly under estimated value
+                        likelihoodLabel.classList.add('likelihood-high');
+                        likelihoodLabel.textContent = 'High Likelihood';
+                        likelihoodText.textContent = 'Your price is below market value, making it very attractive to potential buyers.';
+                    } else if (ratio > 1.15) {
+                        // Value is significantly over estimated value
+                        likelihoodLabel.classList.add('likelihood-low');
+                        likelihoodLabel.textContent = 'Low Likelihood';
+                        likelihoodText.textContent = 'Your price is above market value, which may reduce the number of interested buyers.';
+                    } else {
+                        // Value is close to estimated value
+                        likelihoodLabel.classList.add('likelihood-moderate');
+                        likelihoodLabel.textContent = 'Moderate Likelihood';
+                        likelihoodText.textContent = 'Your price is close to our estimated value, giving you a balanced chance of attracting buyers.';
+                    }
+                }
+                
+                // Update any related metrics when price changes
+                function updateRelatedMetrics(value, estimatedValue) {
+                    // Calculate price deviation as a percentage
+                    const deviation = ((value - estimatedValue) / estimatedValue) * 100;
+                    const deviationText = deviation >= 0 ? `+${deviation.toFixed(1)}%` : `${deviation.toFixed(1)}%`;
+                    
+                    // Here you could update other elements if needed
+                    console.log(`Asking price set to ${formatCurrency(value)} (${deviationText} from estimate)`);
+                }
+                
+                // Mouse down event on the thumb
+                sliderThumb.addEventListener('mousedown', startDrag);
+                sliderThumb.addEventListener('touchstart', startDrag);
+                
+                // Show tooltip on hover
+                sliderThumb.addEventListener('mouseenter', () => {
+                    valueTooltip.style.opacity = '1';
+                });
+                
+                sliderThumb.addEventListener('mouseleave', () => {
+                    if (!isDragging) {
+                        valueTooltip.style.opacity = '0';
+                    }
+                });
+                
+                // Click on the bar to jump to that position
+                sliderBar.addEventListener('click', function(e) {
+                    const rect = sliderBar.getBoundingClientRect();
+                    const clickX = e.clientX - rect.left;
+                    const percentage = clickX / rect.width;
+                    const newValue = sliderMinValue + (percentage * (sliderMaxValue - sliderMinValue));
+                    
+                    // Ensure new value is within range
+                    const clampedValue = Math.max(sliderMinValue, Math.min(Math.round(newValue), sliderMaxValue));
+                    currentValue = clampedValue;
+                    updateSliderUI(currentValue);
+                    
+                    // Store the new asking price in localStorage when slider is clicked
+                    localStorage.setItem('sellerAskingPrice', currentValue);
+                    
+                    // Trigger recalculation of any related metrics
+                    updateRelatedMetrics(currentValue, estimatedValue);
+                });
+                
+                // Start dragging
+                function startDrag(e) {
+                    e.preventDefault();
+                    isDragging = true;
+                    valueTooltip.style.opacity = '1';
+                    
+                    // Add event listeners for dragging
+                    document.addEventListener('mousemove', drag);
+                    document.addEventListener('touchmove', drag);
+                    document.addEventListener('mouseup', stopDrag);
+                    document.addEventListener('touchend', stopDrag);
+                }
+                
+                // During drag
+                function drag(e) {
+                    if (!isDragging) return;
+                    
+                    const rect = sliderBar.getBoundingClientRect();
+                    
+                    // Get x position (handle both mouse and touch)
+                    let clientX;
+                    if (e.type === 'touchmove') {
+                        clientX = e.touches[0].clientX;
+                    } else {
+                        clientX = e.clientX;
+                    }
+                    
+                    // Calculate position relative to the slider
+                    let x = clientX - rect.left;
+                    
+                    // Clamp x to the bounds of the slider bar
+                    x = Math.max(0, Math.min(x, rect.width));
+                    
+                    // Calculate percentage
+                    const percentage = x / rect.width;
+                    
+                    // Calculate new value based on the range and clamp it
+                    const newValue = sliderMinValue + (percentage * (sliderMaxValue - sliderMinValue));
+                    currentValue = Math.round(newValue);
+                    
+                    // Ensure value stays within defined range (redundant but safe)
+                    currentValue = Math.max(sliderMinValue, Math.min(currentValue, sliderMaxValue));
+                    
+                    // Update the UI
+                    updateSliderUI(currentValue);
+                }
+                
+                // End dragging
+                function stopDrag() {
+                    isDragging = false;
+                    valueTooltip.style.opacity = '0';
+                    
+                    // Remove the event listeners
+                    document.removeEventListener('mousemove', drag);
+                    document.removeEventListener('touchmove', drag);
+                    document.removeEventListener('mouseup', stopDrag);
+                    document.removeEventListener('touchend', stopDrag);
+                    
+                    // Store the new asking price in localStorage (ensuring it's clamped)
+                    const clampedValue = Math.max(sliderMinValue, Math.min(currentValue, sliderMaxValue));
+                    localStorage.setItem('sellerAskingPrice', clampedValue);
+                    
+                    // Trigger recalculation of any related metrics
+                    updateRelatedMetrics(clampedValue, estimatedValue);
+                }
+                
+                // Initialize the slider with the provided estimated value
+                // Force an immediate update to ensure the UI matches the model
+                console.log(`Initializing slider with: estimated=${estimatedValue}, min=${minValue}, max=${maxValue}`);
+                updateSliderUI(currentValue);
+                
+                // Make the tooltip visible initially, then fade out after 2 seconds
+                valueTooltip.style.opacity = '1';
+                setTimeout(() => {
+                    if (!isDragging) {
+                        valueTooltip.style.opacity = '0';
+                    }
+                }, 2000);
+                
+                // Return control functions that can be called externally if needed
+                return {
+                    setValue: (value) => {
+                        // Ensure value is clamped when set externally
+                        currentValue = Math.max(sliderMinValue, Math.min(Math.round(value), sliderMaxValue));
+                        updateSliderUI(currentValue);
+                    },
+                    getValue: () => currentValue,
+                    getMinValue: () => sliderMinValue,
+                    getMaxValue: () => sliderMaxValue
+                };
+            }
+            
+            // Helper function to set the correct class for factor impact badges
+            function setFactorBadgeClass(elementId, impact) {
+                const element = document.getElementById(elementId);
+                if (!element) return;
+                
+                // Remove all existing factor classes
+                element.classList.remove('factor-positive', 'factor-negative', 'factor-neutral');
+                
+                // Add the appropriate class based on impact
+                if (impact > 5) {
+                    element.classList.add('factor-positive');
+                } else if (impact < 0) {
+                    element.classList.add('factor-negative');
+                } else {
+                    element.classList.add('factor-neutral');
+                }
+            }
+            
+            // Check if there's saved valuation data and display it
+            const savedValuation = localStorage.getItem('sellerValuationData');
+            if (savedValuation) {
+                try {
+                    const valuationData = JSON.parse(savedValuation);
+                    window.valuationData = valuationData;
+                    updateValuationUI(valuationData);
+                    calculationPrompt.classList.add('hidden');
+                    valuationResults.classList.remove('hidden');
+                } catch (error) {
+                    console.error('Error loading saved valuation:', error);
+                }
+            }
+
+            // Email validation elements
+            const emailModal = document.getElementById('emailCollectionModal');
+            const userEmailInput = document.getElementById('userEmail');
+            const emailError = document.getElementById('emailError');
+            const saveEmailBtn = document.getElementById('saveEmailBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            
+            // Function to validate email format
+            function isValidEmail(email) {
+                const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+                return re.test(String(email).toLowerCase());
+            }
+            
+            // Function to show the email modal
+            function showEmailModal() {
+                // Pre-fill with existing email if available
+                const existingEmail = localStorage.getItem('sellerEmail');
+                if (existingEmail) {
+                    userEmailInput.value = existingEmail;
+                }
+                
+                // Show the modal
+                emailModal.classList.remove('hidden');
+                userEmailInput.focus();
+            }
+            
+            // Function to hide the email modal
+            function hideEmailModal() {
+                emailModal.classList.add('hidden');
+            }
+            
+            // Event listener for the save email button
+            if (saveEmailBtn) {
+                saveEmailBtn.addEventListener('click', function() {
+                    const email = userEmailInput.value.trim();
+                    
+                    if (isValidEmail(email)) {
+                        // Save the email to localStorage
+                        localStorage.setItem('sellerEmail', email);
+                        console.log('Email saved to localStorage:', email);
+                        
+                        // Hide the email error and modal
+                        emailError.classList.add('hidden');
+                        hideEmailModal();
+                        
+                        // If we have valuation data, trigger saving it with the new email
+                        if (window.valuationData) {
+                            saveValuationToDatabase(window.valuationData);
+                        }
+                    } else {
+                        // Show email validation error
+                        emailError.classList.remove('hidden');
+                    }
+                });
+            }
+            
+            // Check if email exists when the page loads
+            function checkEmailOnLoad() {
+                const email = localStorage.getItem('sellerEmail');
+                console.log('Email from localStorage on page load:', email);
+                
+                // If no email is found or email is invalid, we'll show the modal when needed
+                // but we won't force it immediately to give the user a chance to calculate valuation first
+                return Boolean(email && isValidEmail(email));
+            }
+            
+            // Event listener for the Next button - check email before proceeding
+            if (nextBtn) {
+                nextBtn.addEventListener('click', function(e) {
+                    const hasEmail = checkEmailOnLoad();
+                    const hasValuation = Boolean(window.valuationData);
+                    
+                    // If no valuation has been calculated, alert the user
+                    if (!hasValuation) {
+                        alert('Please calculate your business valuation before continuing.');
+                        return;
+                    }
+                    
+                    // If no email, show modal and prevent navigation
+                    if (!hasEmail) {
+                        e.preventDefault(); // Prevent navigation
+                        e.stopPropagation(); // Stop event propagation
+                        showEmailModal();
+                        return;
+                    }
+                    
+                    // If we have both email and valuation, we can proceed
+                    console.log('Proceeding to next page with email:', localStorage.getItem('sellerEmail'));
+                });
+            }
+            
+            // Override the saveValuationToDatabase function to check for email
+            window.originalSaveValuationToDatabase = saveValuationToDatabase;
+            window.saveValuationToDatabase = function(valuation) {
+                const email = localStorage.getItem('sellerEmail');
+                
+                // Log verbose email check
+                console.log('Checking email before saving valuation:', { 
+                    email: email,
+                    emailExists: Boolean(email),
+                    emailValid: email ? isValidEmail(email) : false
+                });
+                
+                if (!email || !isValidEmail(email)) {
+                    console.warn('Cannot save valuation - email is missing or invalid');
+                    showEmailModal();
+                    return;
+                }
+                
+                // Call the original function now that we've verified email exists
+                return window.originalSaveValuationToDatabase(valuation);
+            };
+            
+            // Override validateBeforeNext for questionnaire navigation
+            window.validateBeforeNext = function() {
+                // If we don't have valuation data, prompt the user to calculate
+                if (!window.valuationData && document.getElementById('valuationResults').classList.contains('hidden')) {
+                    alert('Please calculate your business valuation before continuing.');
+                    document.getElementById('calculateValuationBtn')?.focus();
+                    return false;
+                }
+                
+                // Check if we have a valid email
+                const email = localStorage.getItem('sellerEmail');
+                if (!email || !isValidEmail(email)) {
+                    showEmailModal();
+                    return false;
+                }
+                
+                // Save valuation data to localStorage
+                localStorage.setItem('sellerValuationData', JSON.stringify(window.valuationData));
+                
+                // Save the questionnaire data to the server
+                saveQuestionnaireDataToServer().catch(err => {
+                    console.error('Error saving questionnaire data:', err);
+                });
+                
+                return true;
+            };
+            
+            // Check for enter key press in email input
+            if (userEmailInput) {
+                userEmailInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        saveEmailBtn.click();
+                    }
+                });
+            }
+            
+            // Initial email check - will be used in several places
+            const hasValidEmail = checkEmailOnLoad();
+            console.log('Initial email check:', hasValidEmail);
+        });
+    </script>
+</body>
+</html>

@@ -1,8 +1,8 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
-    "./views/**/*.{ejs,html,js}",
-    "./public/**/*.{js,css}",
+    './views/**/*.ejs',
+    './public/**/*.js',
     "./src/**/*.{js,jsx,ts,tsx}"
   ],
   theme: {
@@ -48,7 +48,10 @@ module.exports = {
         "color-white-solid": "#ffffff",
         "color-black-80": "rgba(0, 0, 0, 0.80)",
         "color-yellow-67": "#f0d466",
-        "color-azure-60": "#3b82f6"
+        "color-azure-60": "#3b82f6",
+        'primary-blue': '#316FD4',
+        'dark': '#121212',
+        'dark-light': '#1e1e1e',
       },
       spacing: {
         'item-spacing-s': '24px',

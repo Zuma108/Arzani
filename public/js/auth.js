@@ -516,6 +516,73 @@ document.addEventListener('DOMContentLoaded', function() {
   setInterval(updateAuthUI, 60000); // Check every minute
 });
 
+// Function to handle login form submission
+async function handleLogin(event) {
+  event.preventDefault();
+  
+  // Get form data
+  const formData = new FormData(event.target);
+  const loginData = Object.fromEntries(formData.entries());
+  
+  // Add questionnaire submission ID if available
+  const submissionId = localStorage.getItem('questionnaireSubmissionId');
+  if (submissionId) {
+    loginData.questionnaireSubmissionId = submissionId;
+  }
+  
+  try {
+    // Send login request
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(loginData)
+    });
+    
+    // ...existing code...
+  } catch (error) {
+    // ...existing code...
+  }
+}
+
+// Function to handle signup form submission
+async function handleSignup(event) {
+  event.preventDefault();
+  
+  // Get form data
+  const formData = new FormData(event.target);
+  const signupData = Object.fromEntries(formData.entries());
+  
+  // Add questionnaire submission ID if available
+  const submissionId = localStorage.getItem('questionnaireSubmissionId');
+  if (submissionId) {
+    signupData.questionnaireSubmissionId = submissionId;
+  }
+  
+  try {
+    // Send signup request
+    const response = await fetch('/api/auth/signup', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(signupData)
+    });
+    
+    // ...existing code...
+    
+    // After successful signup, clear the questionnaire submission ID from localStorage
+    if (response.ok) {
+      localStorage.removeItem('questionnaireSubmissionId');
+    }
+    
+    // ...existing code...
+  } catch (error) {
+    // ...existing code...
+  }
+}
+
 // Export as module if needed
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = auth;

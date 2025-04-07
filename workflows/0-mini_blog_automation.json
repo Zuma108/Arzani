@@ -1,0 +1,1280 @@
+{
+    "name": "My workflow 3",
+    "nodes": [
+      {
+        "parameters": {
+          "documentId": {
+            "__rl": true,
+            "value": "197uchkUU-m5ePCYdz4qJZpApCBaHGrEl4epyysicE50",
+            "mode": "list",
+            "cachedResultName": "Blog sheet",
+            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/197uchkUU-m5ePCYdz4qJZpApCBaHGrEl4epyysicE50/edit?usp=drivesdk"
+          },
+          "sheetName": {
+            "__rl": true,
+            "value": "Sheet1",
+            "mode": "list",
+            "cachedResultName": "Sheet1",
+            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/197uchkUU-m5ePCYdz4qJZpApCBaHGrEl4epyysicE50/edit#gid=0"
+          },
+          "options": {}
+        },
+        "name": "Google Sheets",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4,
+        "position": [
+          -40,
+          80
+        ],
+        "id": "c02077ba-de61-4957-a696-f68c0c98ed4e",
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "N771RNEAERs6VMmz",
+            "name": "Google Sheets account 2"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "pollTimes": {
+            "item": [
+              {
+                "mode": "everyX",
+                "value": 4,
+                "unit": "minutes"
+              }
+            ]
+          },
+          "documentId": {
+            "__rl": true,
+            "value": "197uchkUU-m5ePCYdz4qJZpApCBaHGrEl4epyysicE50",
+            "mode": "list",
+            "cachedResultName": "Blog sheet",
+            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/197uchkUU-m5ePCYdz4qJZpApCBaHGrEl4epyysicE50/edit?usp=drivesdk"
+          },
+          "sheetName": {
+            "__rl": true,
+            "value": "Sheet1",
+            "mode": "list",
+            "cachedResultName": "Sheet1",
+            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/197uchkUU-m5ePCYdz4qJZpApCBaHGrEl4epyysicE50/edit#gid=0"
+          },
+          "event": "rowAdded",
+          "options": {}
+        },
+        "name": "Google Sheets Trigger",
+        "type": "n8n-nodes-base.googleSheetsTrigger",
+        "typeVersion": 1,
+        "position": [
+          -520,
+          100
+        ],
+        "id": "8cd5e94b-aa53-4df0-8f42-cdf7ab60aee3",
+        "credentials": {
+          "googleSheetsTriggerOAuth2Api": {
+            "id": "1BzktJqnwzot73jc",
+            "name": "Google Sheets Trigger account 2"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "string": [
+              {
+                "value1": "={{ $json.Status }}",
+                "value2": "Approved"
+              }
+            ]
+          }
+        },
+        "name": "Status = Approved?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 1,
+        "position": [
+          -300,
+          100
+        ],
+        "id": "fac72f71-ddcb-4a60-b3e0-f9f89c8c85da"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Process the blog content\nconst item = $input.first().json;\n\n// Extract all the fields\nconst title = item['Blog Title'] || '';\nconst metaDescription = item['Meta Description'] || '';\nconst author = item.Author || 'Azani Team';\nconst content = item['Content Body'] || '';\nconst categoriesAndTags = item['Categories & Tags'] || '';\nconst slug = item['Slug/Permalink'] || '';\nconst imageUrls = item['Image URLs'] || '';\nconst publishDate = item['Publish Date'] || new Date().toISOString().split('T')[0];\n\n// Process the content (convert markdown to HTML if needed)\nlet processedContent = content;\n\n// Check if content is markdown and convert if necessary\nif (content.includes('##') || content.includes('*')) {\n  // This is a simple check - in a production environment, \n  // you might want to use a proper markdown parser like 'marked'\n  processedContent = content\n    .replace(/^# (.+)$/gm, '<h1>$1</h1>')\n    .replace(/^## (.+)$/gm, '<h2>$1</h2>')\n    .replace(/^### (.+)$/gm, '<h3>$1</h3>')\n    .replace(/\\*\\*(.+?)\\*\\*/g, '<strong>$1</strong>')\n    .replace(/\\*(.+?)\\*/g, '<em>$1</em>')\n    .replace(/\\[(.+?)\\]\\((.+?)\\)/g, '<a href=\"$2\">$1</a>')\n    .replace(/(?:<li>.*<\\/li>)/gs, match => `<ul>${match}</ul>`)\n    .replace(/\\n\\n/g, '</p><p>');\n  \n  processedContent = `<p>${processedContent}</p>`;\n}\n\n// Process image URLs\nlet imageUrlsArray = [];\nif (imageUrls && imageUrls.includes(',')) {\n  imageUrlsArray = imageUrls.split(',').map(url => url.trim());\n} else if (imageUrls) {\n  imageUrlsArray = [imageUrls.trim()];\n}\n\n// Validate slug\nlet cleanSlug = slug;\nif (!cleanSlug) {\n  // Generate slug from title\n  cleanSlug = title.toLowerCase()\n    .replace(/[^\\w\\s-]/g, '') // Remove special chars\n    .replace(/\\s+/g, '-') // Replace spaces with hyphens\n    .replace(/-+/g, '-'); // Remove consecutive hyphens\n}\n\n// Create a structured blog post object\nconst blogPost = {\n  title,\n  metaDescription,\n  author,\n  content: processedContent,\n  categoriesAndTags,\n  slug: cleanSlug,\n  imageUrls: imageUrlsArray,\n  publishDate,\n  status: 'Approved',\n  processedAt: new Date().toISOString()\n};\n\n// Return the processed blog post\nreturn [{json: blogPost}];\n"
+        },
+        "name": "Process Content",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 1,
+        "position": [
+          360,
+          100
+        ],
+        "id": "1cbb6486-0b8c-43ba-acf4-97c73fecb12b"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "http://localhost:5000/api/blog",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "title",
+                "value": "={{ $json.title }}"
+              },
+              {
+                "name": "metaDescription",
+                "value": "={{ $json.metaDescription }}"
+              },
+              {
+                "name": "author",
+                "value": "={{ $json.author }}"
+              },
+              {
+                "name": "content",
+                "value": "={{ $json.content }}"
+              },
+              {
+                "name": "categoriesAndTags",
+                "value": "={{ $json.categoriesAndTags }}"
+              },
+              {
+                "name": "slug",
+                "value": "={{ $json.slug }}"
+              },
+              {
+                "name": "imageUrls",
+                "value": "={{ $json.imageUrls }}"
+              },
+              {
+                "name": "publishDate",
+                "value": "={{ $json.publishDate }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "name": "Publish to CMS",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.1,
+        "position": [
+          580,
+          100
+        ],
+        "id": "f5ffc9de-e107-4203-9228-2544d623096f",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "Eqli35grA0lCaoDQ",
+            "name": "Header Auth account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "update",
+          "documentId": {
+            "__rl": true,
+            "value": "197uchkUU-m5ePCYdz4qJZpApCBaHGrEl4epyysicE50",
+            "mode": "list",
+            "cachedResultName": "Blog sheet",
+            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/197uchkUU-m5ePCYdz4qJZpApCBaHGrEl4epyysicE50/edit?usp=drivesdk"
+          },
+          "sheetName": {
+            "__rl": true,
+            "value": "Sheet1",
+            "mode": "list",
+            "cachedResultName": "Sheet1",
+            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/197uchkUU-m5ePCYdz4qJZpApCBaHGrEl4epyysicE50/edit#gid=0"
+          },
+          "columns": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "Blog Title": "={{ $('Process AI Content').first().json.title }}",
+              "Meta Description": "={{ $('Process AI Content').first().json.metaDescription }}",
+              "Author": "={{ $('Process AI Content').first().json.author }}",
+              "Content Body": "={{ $('Process AI Content').first().json.content }}",
+              "Categories & Tags": "={{ $('Process AI Content').first().json.categoriesAndTags }}",
+              "Slug/Permalink": "={{ $('Process AI Content').first().json.slug }}",
+              "Publish Date": "={{ $('Process AI Content').first().json.publishDate }}",
+              "Generate with AI": "={{ $('Process AI Content').first().json.aiGenerated }}",
+              "Status": "={{ $('Process AI Content').first().json.status }}",
+              "row_number": "={{ $('Google Sheets Trigger').first().json.rowNumber }}"
+            },
+            "matchingColumns": [
+              "row_number"
+            ],
+            "schema": [
+              {
+                "id": "Blog Title",
+                "displayName": "Blog Title",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Meta Description",
+                "displayName": "Meta Description",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Author",
+                "displayName": "Author",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Content Body",
+                "displayName": "Content Body",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Categories & Tags",
+                "displayName": "Categories & Tags",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Slug/Permalink",
+                "displayName": "Slug/Permalink",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Image URLs",
+                "displayName": "Image URLs",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Publish Date",
+                "displayName": "Publish Date",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Status",
+                "displayName": "Status",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Generate with AI",
+                "displayName": "Generate with AI",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Target Audience",
+                "displayName": "Target Audience",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Blog Topic",
+                "displayName": "Blog Topic",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Key Points",
+                "displayName": "Key Points",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Approver Email",
+                "displayName": "Approver Email",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Approver Name",
+                "displayName": "Approver Name",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "row_number",
+                "displayName": "row_number",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "readOnly": true,
+                "removed": false
+              }
+            ],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": false
+          },
+          "options": {}
+        },
+        "name": "Update Sheet with AI Content",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4,
+        "position": [
+          620,
+          300
+        ],
+        "id": "417f4275-f097-4428-9d75-5113b475be31",
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "N771RNEAERs6VMmz",
+            "name": "Google Sheets account 2"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "documentId": {
+            "__rl": true,
+            "value": "197uchkUU-m5ePCYdz4qJZpApCBaHGrEl4epyysicE50",
+            "mode": "list",
+            "cachedResultName": "Blog sheet",
+            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/197uchkUU-m5ePCYdz4qJZpApCBaHGrEl4epyysicE50/edit?usp=drivesdk"
+          },
+          "sheetName": {
+            "__rl": true,
+            "value": "Sheet1",
+            "mode": "list",
+            "cachedResultName": "Sheet1",
+            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/197uchkUU-m5ePCYdz4qJZpApCBaHGrEl4epyysicE50/edit#gid=0"
+          },
+          "options": {}
+        },
+        "name": "Get AI Blog from Sheet",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4,
+        "position": [
+          -60,
+          500
+        ],
+        "id": "6e4cc9b3-7d74-4fdc-a346-59b7860aa40f",
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "N771RNEAERs6VMmz",
+            "name": "Google Sheets account 2"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "fromEmail": "hello@arzani.co.uk",
+          "toEmail": "hello@arzani.co.uk",
+          "subject": "Blog Post Published: {{ $json.title }}",
+          "options": {}
+        },
+        "name": "Send Approval Email",
+        "type": "n8n-nodes-base.emailSend",
+        "typeVersion": 2.1,
+        "position": [
+          1500,
+          520
+        ],
+        "id": "7309335e-cd13-4177-a795-447a06cb19ff",
+        "webhookId": "d86c695c-cae2-4809-86e9-cf59209478a7",
+        "credentials": {
+          "smtp": {
+            "id": "BrWVFmpl9N6qFpoM",
+            "name": "SMTP account"
+          }
+        },
+        "html": "={{ $file.readFileAsString('c:\\Users\\Micha\\OneDrive\\Documents\\my-marketplace-project\\email-templates\\blog-approval.html')\n  .replace('{{approverName}}', $('Google Sheets Trigger').first().json['Approver Name'] || 'there')\n  .replace('{{blogTitle}}', $json.title)\n  .replace('{{metaDescription}}', $json.metaDescription)\n  .replace('{{blogSlug}}', $json.slug)\n  .replace('{{contentPreview}}', $json.content.substring(0, 500))\n  .replace('{{approveUrl}}', `https://azani.co.uk/api/blog/approve-ai-content?id=${$('Google Sheets Trigger').first().json.rowNumber}&action=approve&token=${$env.APPROVAL_TOKEN}`)\n  .replace('{{editUrl}}', `https://azani.co.uk/admin/blog/edit-ai-content?id=${$('Google Sheets Trigger').first().json.rowNumber}`)\n  .replace('{{rejectUrl}}', `https://azani.co.uk/api/blog/approve-ai-content?id=${$('Google Sheets Trigger').first().json.rowNumber}&action=reject&token=${$env.APPROVAL_TOKEN}`)\n  .replace('{{currentYear}}', new Date().getFullYear()) }}"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "string": [
+              {
+                "value1": "={{ $json['Generate with AI'] }}",
+                "value2": "Yes"
+              }
+            ]
+          }
+        },
+        "name": "Use AI Generation?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 1,
+        "position": [
+          -300,
+          300
+        ],
+        "id": "66ff18d3-8d4d-48d1-b237-a24a37558e45"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": " application/json"
+              },
+              {
+                "name": "x-goog-api-key",
+                "value": "=AIzaSyDXaVCTbHG4APgV5_1PELDjgK8FnhzemBs"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "{\n  \"contents\": [\n    {\n      \"role\": \"user\",\n      \"parts\": [\n        {\n          \"text\": \"You are a professional blog writer for Arzani, a UK business marketplace focused on helping people buy and sell businesses. Write a comprehensive, well-structured blog post with the following specifications:\\n\\nTitle: Should I sell my business? -UK1\\n\\nTarget audience: UK business owners, potential business buyers, and entrepreneurs\\n\\nTopic/Focus: Should I sell my business? -UK1\\n\\nKey points to include: Professional business valuation, market trends, optimization strategies\\n\\nTone: Professional but conversational, authoritative but accessible\\n\\nFormat: Use proper HTML formatting with h2 and h3 headings, paragraphs, bullet points where appropriate, and 1-2 call-to-actions encouraging readers to use Arzani's business valuation services.\\n\\nLength: 1000-1500 words\\n\\nStructure: Include an introduction, 3-5 main sections with subheadings, and a conclusion.\\n\\nMake sure to include relevant UK-specific market information and regulations where appropriate. Use British English spelling and terminology.\"\n        }\n      ]\n    }\n  ],\n  \"generationConfig\": {\n    \"temperature\": 0.7,\n    \"topK\": 40,\n    \"topP\": 0.95,\n    \"maxOutputTokens\": 8192\n  }\n}\n",
+          "options": {}
+        },
+        "name": "Generate Blog with Gemini",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.1,
+        "position": [
+          -80,
+          300
+        ],
+        "id": "aad60541-be8f-447c-b17d-a0472dbcb2f0",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "Eqli35grA0lCaoDQ",
+            "name": "Header Auth account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "// Extract the AI-generated content\nconst response = $input.item.json;\nconst item = $('Google Sheets Trigger').first().json;\n\nlet generatedContent = '';\n\n// Check if the response has the expected structure\nif (response.candidates && response.candidates[0] && response.candidates[0].content && response.candidates[0].content.parts && response.candidates[0].content.parts[0]) {\n  generatedContent = response.candidates[0].content.parts[0].text;\n} else {\n  throw new Error('Unexpected API response structure from Gemini');\n}\n\n// Generate meta description from first paragraph\nlet metaDescription = '';\nconst firstParagraph = generatedContent.match(/<p>(.*?)<\\/p>/s);\nif (firstParagraph && firstParagraph[1]) {\n  // Strip HTML tags from first paragraph and limit to 160 chars\n  metaDescription = firstParagraph[1].replace(/<[^>]*>/g, '').substring(0, 160);\n  if (metaDescription.length === 160) metaDescription += '...';\n}\n\n// Extract all the fields\nconst title = item['Blog Title'] || '';\nconst author = item.Author || 'Arzani Team';\nconst categoriesAndTags = item['Categories & Tags'] || '';\nconst slug = item['Slug/Permalink'] || '';\nconst imageUrls = item['Image URLs'] || '';\nconst publishDate = item['Publish Date'] || new Date().toISOString().split('T')[0];\n\n// Process image URLs\nlet imageUrlsArray = [];\nif (imageUrls && imageUrls.includes(',')) {\n  imageUrlsArray = imageUrls.split(',').map(url => url.trim());\n} else if (imageUrls) {\n  imageUrlsArray = [imageUrls.trim()];\n}\n\n// Validate slug\nlet cleanSlug = slug;\nif (!cleanSlug) {\n  // Generate slug from title\n  cleanSlug = title.toLowerCase()\n    .replace(/[^\\w\\s-]/g, '') // Remove special chars\n    .replace(/\\s+/g, '-') // Replace spaces with hyphens\n    .replace(/-+/g, '-'); // Remove consecutive hyphens\n}\n\n// Create a structured blog post object\nconst blogPost = {\n  title,\n  metaDescription: metaDescription || item['Meta Description'] || `${title} - Insights from Arzani's expert business marketplace`,\n  author,\n  content: generatedContent,\n  categoriesAndTags,\n  slug: cleanSlug,\n  imageUrls: imageUrlsArray,\n  publishDate,\n  status: 'AI Generated',\n  processedAt: new Date().toISOString(),\n  aiGenerated: true\n};\n\n// Return the processed blog post\nreturn {json: blogPost};\n"
+        },
+        "name": "Process AI Content",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 1,
+        "position": [
+          140,
+          300
+        ],
+        "id": "da988380-005b-45f1-bef4-390d0187c3e7"
+      },
+      {
+        "parameters": {
+          "fromEmail": "hello@arzani.co.uk",
+          "toEmail": "hello@arzani.co.uk",
+          "subject": "AI-Generated Blog Post Ready for Review: {{ $json.title }}",
+          "options": {}
+        },
+        "name": "Send Approval Email2",
+        "type": "n8n-nodes-base.emailSend",
+        "typeVersion": 2.1,
+        "position": [
+          1440,
+          760
+        ],
+        "id": "4e4020b3-d87b-44d3-9951-10e43125bf93",
+        "webhookId": "e41a600c-4071-4c83-8df0-d414e3198b4c",
+        "content": "html",
+        "htmlBody": "={{ $file.readFileAsString('c:\\Users\\Micha\\OneDrive\\Documents\\my-marketplace-project\\email-templates\\blog-approval.html')\n  .replace('{{approverName}}', $('Google Sheets Trigger').first().json['Approver Name'] || 'there')\n  .replace('{{blogTitle}}', $json.title)\n  .replace('{{metaDescription}}', $json.metaDescription)\n  .replace('{{blogSlug}}', $json.slug)\n  .replace('{{contentPreview}}', $json.content.substring(0, 500))\n  .replace('{{approveUrl}}', `https://azani.co.uk/api/blog/approve-ai-content?id=${$('Google Sheets Trigger').first().json.rowNumber}&action=approve&token=${$env.APPROVAL_TOKEN}`)\n  .replace('{{editUrl}}', `https://azani.co.uk/admin/blog/edit-ai-content?id=${$('Google Sheets Trigger').first().json.rowNumber}`)\n  .replace('{{rejectUrl}}', `https://azani.co.uk/api/blog/approve-ai-content?id=${$('Google Sheets Trigger').first().json.rowNumber}&action=reject&token=${$env.APPROVAL_TOKEN}`)\n  .replace('{{currentYear}}', new Date().getFullYear()) }}"
+      },
+      {
+        "parameters": {
+          "operation": "update",
+          "documentId": {
+            "__rl": true,
+            "value": "197uchkUU-m5ePCYdz4qJZpApCBaHGrEl4epyysicE50",
+            "mode": "list",
+            "cachedResultName": "Blog sheet",
+            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/197uchkUU-m5ePCYdz4qJZpApCBaHGrEl4epyysicE50/edit?usp=drivesdk"
+          },
+          "sheetName": {
+            "__rl": true,
+            "value": "Sheet1",
+            "mode": "list",
+            "cachedResultName": "Sheet1",
+            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/197uchkUU-m5ePCYdz4qJZpApCBaHGrEl4epyysicE50/edit#gid=0"
+          },
+          "columns": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "Blog Title": "={{ $('Process AI Content').first().json.title }}",
+              "Meta Description": "={{ $('Process AI Content').first().json.metaDescription }}",
+              "Author": "={{ $('Process AI Content').first().json.author }}",
+              "Content Body": "={{ $('Process AI Content').first().json.content }}",
+              "Categories & Tags": "={{ $('Process AI Content').first().json.categoriesAndTags }}",
+              "Slug/Permalink": "={{ $('Process AI Content').first().json.slug }}",
+              "Publish Date": "={{ $('Process AI Content').first().json.publishDate }}",
+              "Generate with AI": "={{ $('Process AI Content').first().json.aiGenerated }}",
+              "Status": "={{ $('Process AI Content').first().json.status }}",
+              "row_number": "={{ $('Google Sheets Trigger').first().json.rowNumber }}"
+            },
+            "matchingColumns": [
+              "row_number"
+            ],
+            "schema": [
+              {
+                "id": "Blog Title",
+                "displayName": "Blog Title",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Meta Description",
+                "displayName": "Meta Description",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Author",
+                "displayName": "Author",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Content Body",
+                "displayName": "Content Body",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Categories & Tags",
+                "displayName": "Categories & Tags",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Slug/Permalink",
+                "displayName": "Slug/Permalink",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Image URLs",
+                "displayName": "Image URLs",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Publish Date",
+                "displayName": "Publish Date",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Status",
+                "displayName": "Status",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Generate with AI",
+                "displayName": "Generate with AI",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Target Audience",
+                "displayName": "Target Audience",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Blog Topic",
+                "displayName": "Blog Topic",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Key Points",
+                "displayName": "Key Points",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Approver Email",
+                "displayName": "Approver Email",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Approver Name",
+                "displayName": "Approver Name",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "row_number",
+                "displayName": "row_number",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "readOnly": true,
+                "removed": false
+              }
+            ],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": false
+          },
+          "options": {}
+        },
+        "name": "Update Status to Published",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4,
+        "position": [
+          800,
+          100
+        ],
+        "id": "12d8ec2c-7749-43d5-97a7-a78e56a49410",
+        "alwaysOutputData": true,
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "N771RNEAERs6VMmz",
+            "name": "Google Sheets account 2"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "fromEmail": "hello@arzani.co.uk",
+          "toEmail": "hello@arzani.co.uk",
+          "subject": "AI-Generated Blog Post Ready for Review: {{ $json.title }}",
+          "options": {}
+        },
+        "name": "Send Email Notification",
+        "type": "n8n-nodes-base.emailSend",
+        "typeVersion": 2.1,
+        "position": [
+          360,
+          300
+        ],
+        "id": "b445b321-cf91-40fe-b2fe-b5ea993e19ff",
+        "credentials": {
+          "sendGridApi": {
+            "id": "WZx60vM8JFEwZ8Yp",
+            "name": "SendGrid account"
+          }
+        },
+        "content": "html",
+        "html": "<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }\n    .container { max-width: 600px; margin: 0 auto; padding: 20px; }\n    .header { text-align: center; margin-bottom: 30px; }\n    .header img { max-width: 150px; }\n    .content { background-color: #f9f9f9; padding: 20px; border-radius: 5px; }\n    .preview { background-color: white; padding: 15px; border-left: 4px solid #316FD4; margin: 20px 0; }\n    .button { display: inline-block; padding: 10px 20px; background-color: #316FD4; color: white !important; text-decoration: none; border-radius: 5px; margin-right: 10px; }\n    .button.secondary { background-color: #777; }\n    .button-container { margin: 25px 0; }\n    .footer { margin-top: 30px; font-size: 12px; color: #777; text-align: center; }\n  </style>\n</head>\n<body>\n  <div class=\"container\">\n    <div class=\"header\">\n      <img src=\"https://arzani.co.uk/figma design exports/logos/white-arzani-logo.svg\" alt=\"Arzani Logo\">\n    </div>\n    <div class=\"content\">\n      <h1>AI-Generated Blog Post Ready for Review</h1>\n      <p>An AI-generated blog post is ready for your review before publishing.</p>\n      <p><strong>Title:</strong> {{ $json.title }}</p>\n      <p><strong>Meta Description:</strong> {{ $json.metaDescription }}</p>\n      <div class=\"preview\">\n        <h3>Content Preview:</h3>\n        <p>{{ $json.content.substring(0, 300) }}...</p>\n      </div>\n      <div class=\"button-container\">\n        <a href=\"https://n8n.arzani.co.uk/webhook/ai-content-approval?action=approve&id={{ $('Google Sheets Trigger').first().json.rowNumber }}\" class=\"button\">Approve & Publish</a>\n        <a href=\"https://n8n.arzani.co.uk/webhook/ai-content-approval?action=reject&id={{ $('Google Sheets Trigger').first().json.rowNumber }}\" class=\"button secondary\">Reject</a>\n      </div>\n      <p>You can also view and edit the full content in the Google Sheet before making a decision.</p>\n    </div>\n    <div class=\"footer\">\n      <p>© {{ new Date().getFullYear() }} Arzani. All rights reserved.</p>\n      <p>If you have any questions, please contact our support team.</p>\n    </div>\n  </div>\n</body>\n</html>"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "string": [
+              {
+                "value1": "={{ $parameter.query.action }}",
+                "value2": "approve"
+              }
+            ]
+          }
+        },
+        "name": "Action = Approve?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 1,
+        "position": [
+          -300,
+          600
+        ],
+        "id": "09db2049-6311-4ca5-b1c3-b1c6b0556429"
+      },
+      {
+        "parameters": {
+          "documentId": {
+            "__rl": true,
+            "value": "197uchkUU-m5ePCYdz4qJZpApCBaHGrEl4epyysicE50",
+            "mode": "list",
+            "cachedResultName": "Blog sheet",
+            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/197uchkUU-m5ePCYdz4qJZpApCBaHGrEl4epyysicE50/edit?usp=drivesdk"
+          },
+          "sheetName": {
+            "__rl": true,
+            "value": "Sheet1",
+            "mode": "list",
+            "cachedResultName": "Sheet1",
+            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/197uchkUU-m5ePCYdz4qJZpApCBaHGrEl4epyysicE50/edit#gid=0"
+          },
+          "options": {}
+        },
+        "name": "Get AI Blog from Sheet",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4,
+        "position": [
+          -60,
+          500
+        ],
+        "id": "6e4cc9b3-7d74-4fdc-a346-59b7860aa40f",
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "N771RNEAERs6VMmz",
+            "name": "Google Sheets account 2"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "options": {}
+        },
+        "name": "Rejected Response",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1,
+        "position": [
+          140,
+          700
+        ],
+        "id": "46445e5f-f135-4188-9e36-211b5a971311",
+        "webhookId": "ai-content-approval",
+        "parametersUi": {
+          "contentType": "text/html",
+          "responseBody": "<html><body><h1>Content Rejected</h1><p>The AI-generated blog post has been rejected.</p><p><a href=\"https://azani.co.uk/admin/blog\">Return to Blog Admin</a></p></body></html>"
+        }
+      },
+      {
+        "parameters": {
+          "options": {}
+        },
+        "name": "Approved Response",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1,
+        "position": [
+          1240,
+          100
+        ],
+        "id": "9775341c-b703-4398-b9d0-9d875bb4bc7b",
+        "webhookId": "ai-content-approval",
+        "parametersUi": {
+          "contentType": "text/html",
+          "responseBody": "<html><body><h1>Content Approved</h1><p>The AI-generated blog post has been approved and published.</p><p><a href=\"https://azani.co.uk/blog/{{ $json.slug }}\">View Published Post</a></p></body></html>"
+        }
+      },
+      {
+        "parameters": {
+          "operation": "update",
+          "documentId": {
+            "__rl": true,
+            "value": "197uchkUU-m5ePCYdz4qJZpApCBaHGrEl4epyysicE50",
+            "mode": "list",
+            "cachedResultName": "Blog sheet",
+            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/197uchkUU-m5ePCYdz4qJZpApCBaHGrEl4epyysicE50/edit?usp=drivesdk"
+          },
+          "sheetName": {
+            "__rl": true,
+            "value": "Sheet1",
+            "mode": "list",
+            "cachedResultName": "Sheet1",
+            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/197uchkUU-m5ePCYdz4qJZpApCBaHGrEl4epyysicE50/edit#gid=0"
+          },
+          "columns": {
+            "mappingMode": "defineBelow",
+            "value": {},
+            "matchingColumns": [
+              "row_number"
+            ],
+            "schema": [
+              {
+                "id": "Blog Title",
+                "displayName": "Blog Title",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Meta Description",
+                "displayName": "Meta Description",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Author",
+                "displayName": "Author",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Content Body",
+                "displayName": "Content Body",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Categories & Tags",
+                "displayName": "Categories & Tags",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Slug/Permalink",
+                "displayName": "Slug/Permalink",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Image URLs",
+                "displayName": "Image URLs",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Publish Date",
+                "displayName": "Publish Date",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Status",
+                "displayName": "Status",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Generate with AI",
+                "displayName": "Generate with AI",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Target Audience",
+                "displayName": "Target Audience",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Blog Topic",
+                "displayName": "Blog Topic",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Key Points",
+                "displayName": "Key Points",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Approver Email",
+                "displayName": "Approver Email",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "Approver Name",
+                "displayName": "Approver Name",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "row_number",
+                "displayName": "row_number",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "readOnly": true,
+                "removed": false
+              }
+            ],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": false
+          },
+          "options": {}
+        },
+        "name": "Update Status to Rejected",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4,
+        "position": [
+          -80,
+          700
+        ],
+        "id": "9eef66b8-7645-4c0a-a7ee-96321774b481",
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "N771RNEAERs6VMmz",
+            "name": "Google Sheets account 2"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "resource": "mail",
+          "fromEmail": "hello@arzani.co.uk",
+          "fromName": "Arzani",
+          "toEmail": "hello@arzani.co.uk",
+          "subject": "AI-Generated Blog Post Ready for Review: {{ $json.title }}",
+          "contentType": "text/html",
+          "contentValue": "<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }\n    .container { max-width: 600px; margin: 0 auto; padding: 20px; }\n    .header { text-align: center; margin-bottom: 30px; }\n    .header img { max-width: 150px; }\n    .content { background-color: #f9f9f9; padding: 20px; border-radius: 5px; }\n    .preview { background-color: white; padding: 15px; border-left: 4px solid #316FD4; margin: 20px 0; }\n    .button { display: inline-block; padding: 10px 20px; background-color: #316FD4; color: white !important; text-decoration: none; border-radius: 5px; }\n    .footer { margin-top: 30px; font-size: 12px; color: #777; text-align: center; }\n  </style>\n</head>\n<body>\n  <div class=\"container\">\n    <div class=\"header\">\n      <img src=\"https://arzani.co.uk/figma design exports/logos/white-arzani-logo.svg\" alt=\"Arzani Logo\">\n    </div>\n    <div class=\"content\">\n      <h1>Blog Post Published!</h1>\n      <p>Your blog post has been successfully published to the Arzani website.</p>\n      <p><strong>Title:</strong> {{ $json.title }}</p>\n      <p><strong>Author:</strong> {{ $json.author }}</p>\n      <p><strong>Publication Date:</strong> {{ $json.publishDate }}</p>\n      <p>You can view your published post by clicking the button below:</p>\n      <p><a href=\"https://arzani.co.uk/blog/{{ $json.slug }}\" class=\"button\">View Published Post</a></p>\n    </div>\n    <div class=\"footer\">\n      <p>© {{ new Date().getFullYear() }} Arzani. All rights reserved.</p>\n      <p>If you have any questions, please contact our support team.</p>\n    </div>\n  </div>\n</body>\n</html>",
+          "additionalFields": {}
+        },
+        "type": "n8n-nodes-base.sendGrid",
+        "typeVersion": 1,
+        "position": [
+          1000,
+          100
+        ],
+        "id": "ddb9609c-86f3-4e40-a9ea-706b6089ca5e",
+        "name": "Send Approval Email2",
+        "credentials": {
+          "sendGridApi": {
+            "id": "WZx60vM8JFEwZ8Yp",
+            "name": "SendGrid account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "// Function to create consistent email templates\nfunction createEmailTemplate(type, data) {\n  // Common styling\n  const styles = `\n    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }\n    .container { max-width: 600px; margin: 0 auto; padding: 20px; }\n    .header { text-align: center; margin-bottom: 30px; }\n    .header img { max-width: 150px; }\n    .content { background-color: #f9f9f9; padding: 20px; border-radius: 5px; }\n    .preview { background-color: white; padding: 15px; border-left: 4px solid #316FD4; margin: 20px 0; }\n    .button { display: inline-block; padding: 10px 20px; background-color: #316FD4; color: white !important; text-decoration: none; border-radius: 5px; margin-right: 10px; }\n    .button.secondary { background-color: #777; }\n    .button-container { margin: 25px 0; }\n    .footer { margin-top: 30px; font-size: 12px; color: #777; text-align: center; }\n  `;\n\n  // Common header and footer\n  const header = `\n    <div class=\"header\">\n      <img src=\"https://arzani.co.uk/figma design exports/logos/white-arzani-logo.svg\" alt=\"Arzani Logo\">\n    </div>\n  `;\n\n  const footer = `\n    <div class=\"footer\">\n      <p>© ${new Date().getFullYear()} Arzani. All rights reserved.</p>\n      <p>If you have any questions, please contact our support team.</p>\n    </div>\n  `;\n\n  // Template-specific content\n  let content = '';\n  \n  if (type === 'published') {\n    content = `\n      <div class=\"content\">\n        <h1>Blog Post Published!</h1>\n        <p>Your blog post has been successfully published to the Arzani website.</p>\n        <p><strong>Title:</strong> ${data.title}</p>\n        <p><strong>Author:</strong> ${data.author}</p>\n        <p><strong>Publication Date:</strong> ${data.publishDate}</p>\n        <p>You can view your published post by clicking the button below:</p>\n        <p><a href=\"https://arzani.co.uk/blog/${data.slug}\" class=\"button\">View Published Post</a></p>\n      </div>\n    `;\n  } else if (type === 'review') {\n    content = `\n      <div class=\"content\">\n        <h1>AI-Generated Blog Post Ready for Review</h1>\n        <p>An AI-generated blog post is ready for your review before publishing.</p>\n        <p><strong>Title:</strong> ${data.title}</p>\n        <p><strong>Meta Description:</strong> ${data.metaDescription}</p>\n        <div class=\"preview\">\n          <h3>Content Preview:</h3>\n          <p>${data.content.substring(0, 300)}...</p>\n        </div>\n        <div class=\"button-container\">\n          <a href=\"https://n8n.arzani.co.uk/webhook/ai-content-approval?action=approve&id=${data.rowNumber}\" class=\"button\">Approve & Publish</a>\n          <a href=\"https://n8n.arzani.co.uk/webhook/ai-content-approval?action=reject&id=${data.rowNumber}\" class=\"button secondary\">Reject</a>\n        </div>\n        <p>You can also view and edit the full content in the Google Sheet before making a decision.</p>\n      </div>\n    `;\n  }\n\n  // Assemble the complete HTML email\n  return `<!DOCTYPE html>\n<html>\n<head>\n  <style>${styles}</style>\n</head>\n<body>\n  <div class=\"container\">\n    ${header}\n    ${content}\n    ${footer}\n  </div>\n</body>\n</html>`;\n}\n\n// Get input data\nconst inputData = $input.item.json;\n\n// Get sheet trigger data\nconst triggerData = $('Google Sheets Trigger').first().json;\n\n// Determine which template to use based on the node connection\nconst templateType = $('Process AI Content') ? 'review' : 'published';\n\n// Prepare data for the template\nconst templateData = {\n  title: inputData.title,\n  author: inputData.author,\n  publishDate: inputData.publishDate,\n  slug: inputData.slug,\n  content: inputData.content,\n  metaDescription: inputData.metaDescription,\n  rowNumber: triggerData.rowNumber\n};\n\n// Generate the appropriate email template\nconst emailTemplate = createEmailTemplate(templateType, templateData);\n\n// Return the email template along with all original data\nreturn {\n  json: {\n    ...inputData,\n    emailTemplate\n  }\n};\n"
+        },
+        "name": "Generate Email Template",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 1,
+        "position": [
+          1600,
+          240
+        ],
+        "id": "d8a725dc-778a-473c-b349-7103fbdb2aa4"
+      }
+    ],
+    "pinData": {},
+    "connections": {
+      "Google Sheets Trigger": {
+        "main": [
+          [
+            {
+              "node": "Status = Approved?",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Use AI Generation?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Status = Approved?": {
+        "main": [
+          [
+            {
+              "node": "Google Sheets",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Google Sheets": {
+        "main": [
+          [
+            {
+              "node": "Process Content",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Process Content": {
+        "main": [
+          [
+            {
+              "node": "Publish to CMS",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Publish to CMS": {
+        "main": [
+          [
+            {
+              "node": "Update Status to Published",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Update Status to Published": {
+        "main": [
+          [
+            {
+              "node": "Send Approval Email2",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Use AI Generation?": {
+        "main": [
+          [
+            {
+              "node": "Generate Blog with Gemini",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Generate Blog with Gemini": {
+        "main": [
+          [
+            {
+              "node": "Process AI Content",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Process AI Content": {
+        "main": [
+          [
+            {
+              "node": "Send Email Notification",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Approval Webhook": {
+        "main": [
+          [
+            {
+              "node": "Action = Approve?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Action = Approve?": {
+        "main": [
+          [
+            {
+              "node": "Get AI Blog from Sheet",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Update Status to Rejected",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get AI Blog from Sheet": {
+        "main": [
+          [
+            {
+              "node": "Process Content",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Update Status to Rejected": {
+        "main": [
+          [
+            {
+              "node": "Rejected Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send Email Notification": {
+        "main": [
+          [
+            {
+              "node": "Update Sheet with AI Content",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send Approval Email2": {
+        "main": [
+          [
+            {
+              "node": "Approved Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "active": false,
+    "settings": {
+      "executionOrder": "v1"
+    },
+    "versionId": "917a46d6-36a7-479a-a100-708e972be2f6",
+    "meta": {
+      "instanceId": "cac95b8f2cca08f3c3fb9bbdc4eeaea309a93918ef2ad6aaa8f7f20747b99afa"
+    },
+    "id": "QF8SFrYdnxwA5qy4",
+    "tags": [
+      {
+        "createdAt": "2025-04-06T14:20:49.383Z",
+        "updatedAt": "2025-04-06T14:20:49.383Z",
+        "id": "FGgfqYBHW3HDGitu",
+        "name": "automation"
+      },
+      {
+        "createdAt": "2025-04-06T14:20:49.347Z",
+        "updatedAt": "2025-04-06T14:20:49.347Z",
+        "id": "GpXc1zQS6rXeO2RQ",
+        "name": "ai"
+      },
+      {
+        "createdAt": "2025-04-06T14:20:49.411Z",
+        "updatedAt": "2025-04-06T14:20:49.411Z",
+        "id": "Wws29qUMxLwJw5rd",
+        "name": "blog"
+      }
+    ]
+  }
+  

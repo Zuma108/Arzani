@@ -21,7 +21,26 @@ router.get('/marketplace', (req, res) => {
 
 // New marketplace page
 router.get('/marketplace2', (req, res) => {
-  res.render('marketplace2', { user: req.user || null });
+  // Check if debug mode is requested
+  const debugMode = req.query.debug === 'true';
+  
+  if (debugMode) {
+    console.log('🔍 Marketplace loaded in DEBUG mode');
+  }
+  
+  res.render('marketplace2', { 
+    title: 'Business Marketplace', 
+    debugMode: debugMode 
+  });
+});
+
+// Add a direct debug route for easier testing
+router.get('/marketplace-debug', (req, res) => {
+  console.log('🔍 Marketplace DEBUG mode automatically enabled');
+  res.render('marketplace2', { 
+    title: 'Business Marketplace - DEBUG MODE', 
+    debugMode: true 
+  });
 });
 
 // Profile page (requires authentication)

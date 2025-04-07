@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Arzani Marketplace - AI-Powered Business Platform</title>
+    <meta name="viewport"="width=device-width, initial-scale=1.0">
+    <title>Arzani</title>
+    <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">
     <link rel="stylesheet" href="/css/modern.css">
     <link rel="stylesheet" href="/css/testimonial-carousel.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -58,7 +59,7 @@
                                 <div class="navbar__drawer_dropdown hidden group-hover:block absolute top-full left-0 mt-2">
                                     <div class="navbar__drawer_dropdown__wrapper">
                                         <div class="navbar__drawer_card bg-dark-light rounded-lg shadow-lg border border-gray-800 overflow-hidden p-4 min-w-[240px]">
-                                            <a href="/business-valuation" class="navbar__link block px-4 py-3 hover:bg-gray-800 transition-colors rounded-md">
+                                            <a href="/seller-questionnaire" class="navbar__link block px-4 py-3 hover:bg-gray-800 transition-colors rounded-md">
                                                 <div class="text-base font-medium">Business Valuation</div>
                                                 <p class="text-xs text-gray-400 mt-1">Get accurate valuations using AI</p>
                                             </a>
@@ -126,6 +127,11 @@
                                     </div>
                                 </div>
                             </div>
+
+                            <a href="/blog" class="navbar__link">
+                                <span class="text-sm font-medium">Blog</span>
+                            </a>
+                           
                             
                             <a href="/pricing" class="navbar__link">
                                 <span class="text-sm font-medium">Pricing</span>
@@ -134,7 +140,7 @@
                     </div>
                     <div class="flex items-center gap-4 md:gap-6">
                         <a href="/login" class="hidden md:block text-sm font-medium">Log in</a>
-                        <a href="/index.html" class="btn-primary text-sm md:text-base px-4 py-2 md:px-6">
+                        <a href="/seller-questionnaire" class="btn-primary text-sm md:text-base px-4 py-2 md:px-6">
                             Get Started
                         </a>
                         <button class="navbar__burger md:hidden flex flex-col items-center" id="mobileMenuBtn" aria-expanded="false">
@@ -157,7 +163,7 @@
                                 </button>
                             </div>
                             <div class="mobile-dropdown-content hidden pl-6 space-y-2">
-                                <a href="/business-valuation" class="block px-3 py-2 text-gray-300">Business Valuation</a>
+                                <a href="/seller-questionnaire" class="block px-3 py-2 text-gray-300">Business Valuation</a>
                                 <a href="/ai-insights" class="block px-3 py-2 text-gray-300">AI Market Insights</a>
                                 <a href="/marketplace" class="block px-3 py-2 text-gray-300">Marketplace</a>
                             </div>
@@ -195,14 +201,14 @@
                         
                         <a href="/pricing" class="px-3 py-2 font-medium">Pricing</a>
                         <a href="/login" class="px-3 py-2 font-medium">Log in</a>
-                        <a href="/index.html" class="btn-primary mt-2 text-center mx-3">Get Started</a>
+                        <a href="/seller-questionnaire" class="btn-primary mt-2 text-center mx-3">Get Started</a>
                     </div>
                 </div>
             </nav>
         </header>
 
         <!-- Hero Section with Video Background -->
-        <section class="relative min-h-screen flex items-center overflow-hidden">
+        <section class="relative min-h-screen flex items-center overflow-hidden hero-section">
             <!-- Video Background -->
             <div class="home-hero_background absolute inset-0 z-0">
                 <div class="home-hero_background-overlay absolute inset-0 bg-gradient-to-b from-transparent to-black opacity-50"></div>
@@ -215,25 +221,64 @@
                 </div>
             </div>
             
-            <div class="container mx-auto px-4 md:px-6 pt-32 relative z-10">
-                <div class="max-w-4xl mx-auto text-center">
-                    <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 md:mb-8 leading-tight">
-                        Discover and trade businesses with the power of <span class="text-gradient-animated">AI</span>
-                    </h1>
-                    <p class="text-lg sm:text-xl md:text-2xl text-gray-300 mb-8 md:mb-12 max-w-2xl mx-auto leading-relaxed">
-                        List, explore, and evaluate businesses seamlessly with AI-driven insights empowering smarter decisions and faster deals
-                    </p>
-                    <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                        <a href="/signup" class="btn-primary">
-                            Join now
-                        </a>
-                        <a href="/login2" class="btn-secondary">
-                            Log in
-                        </a>
+            <div class="container mx-auto px-4 md:px-6 pt-12 pb-12 sm:pt-16 md:pt-28 md:pb-20 relative z-10">
+                <!-- Grid Layout for Hero Content -->
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                    <!-- Left Column: Text Content -->
+                    <!-- Set z-20, added self-center -->
+                    <div class="text-center md:text-left md:col-span-7 hero-text-content relative z-20 self-center">
+                        <!-- Further decreased text sizes -->
+                        <h1 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-6 md:mb-8 leading-tight">
+                            Designed for UK Small Businesses to Buy, Sell, and Scale
+                        </h1>
+                        <!-- Further decreased text sizes -->
+                        <p class="text-sm sm:text-base md:text-lg text-gray-300 mb-8 md:mb-12 max-w-xl mx-auto md:mx-0 leading-relaxed">
+                            Unlock accurate business valuations, discover market insights, and trade businesses seamlessly with our advanced analytics platform.
+                        </p>
+                        <div class="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
+                            <a href="/signup" class="btn-primary">
+                                Join now
+                            </a>
+                            <a href="/login2" class="btn-secondary">
+                                Log in
+                            </a>
+                        </div>
+                        <!-- Unique Selling Points -->
+                        <div class="mt-12 md:mt-16 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-xl mx-auto md:mx-0 usp-section">
+                            <!-- ... existing USP items ... -->
+                             <div class="usp-item text-center p-4 rounded-lg bg-dark-light/30 backdrop-blur-sm border border-gray-800/50">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mx-auto mb-3 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                </svg>
+                                <h3 class="font-semibold text-lg mb-1">Accurate Valuation</h3>
+                                <p class="text-sm text-gray-400">Get precise business worth using advanced data models.</p>
+                            </div>
+                            <div class="usp-item text-center p-4 rounded-lg bg-dark-light/30 backdrop-blur-sm border border-gray-800/50">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mx-auto mb-3 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                </svg>
+                                <h3 class="font-semibold text-lg mb-1">Market Insights</h3>
+                                <p class="text-sm text-gray-400">Leverage data-driven analysis for smarter decisions.</p>
+                            </div>
+                            <div class="usp-item text-center p-4 rounded-lg bg-dark-light/30 backdrop-blur-sm border border-gray-800/50">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mx-auto mb-3 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                                </svg>
+                                <h3 class="font-semibold text-lg mb-1">Seamless Trading</h3>
+                                <p class="text-sm text-gray-400">Experience a streamlined process for buying and selling.</p>
+                            </div>
+                        </div>
+                        <div class="mt-12 md:mt-16 text-center md:text-left">
+                            <p class="text-gray-400 text-sm mb-6">Trusted by innovative UK businesses</p>
+                        </div>
                     </div>
-                    <div class="mt-12 md:mt-16">
-                        <p class="text-gray-400 text-sm mb-6">Trusted by innovative UK businesses</p>
-                        
+
+                    <!-- Right Column: Image -->
+                    <!-- Set z-10, added self-center, removed negative margin -->
+                    <div class="hidden md:flex items-center justify-center relative md:col-span-5 z-10 self-center">
+                        <!-- Added transform scale-133 -->
+                        <img src="/figma design exports/images/model.webp" alt="Business Professional" class="hero-image max-w-full h-auto object-contain relative transform scale-133">
+                        <!-- Optional: Add a subtle background glow or shape -->
                     </div>
                 </div>
             </div>
@@ -472,7 +517,7 @@
                                 <p class="text-sm text-gray-400">Access real-time market data and sector-specific analysis</p>
                             </div>
                             <div class="bg-dark-light/40 backdrop-blur-md border border-gray-800/50 rounded-lg p-4">
-                                <div class="flex items-center mb-2">
+                                <div class="flex items-center mb-2"></div>
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-purple-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                                     </svg>
@@ -494,7 +539,7 @@
             
             <div class="container mx-auto px-6 relative z-10">
                 <div class="text-center mb-16">
-                    <h2 class="text-3xl md:text-5xl font-bold mb-6">Powerful features to grow your business</h2>
+                    <h2 class="text-3xl md:text-5xl font-bold mb-6">Powerful features to streamline business transactions</h2>
                     <p class="text-xl text-gray-300 max-w-3xl mx-auto">Discover the tools that set Arzani apart and help you make smarter decisions</p>
                 </div>
                 
@@ -606,7 +651,7 @@
                                                     <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
                                                 </svg>
                                             </div>
-                                            <h4 class="text-white font-medium">Exploring SaaS Businesses</h4>
+                                            <h4 class="text-white font-medium">Exploring Small Businesses</h4>
                                         </div>
                                         <div class="flex gap-2">
                                             <span class="px-2 py-1 rounded-full bg-blue-500/10 text-blue-400 text-xs">Top Match</span>
@@ -778,7 +823,7 @@
                 <div class="mt-16 text-center" data-animation="fade-in-up" data-delay="300">
                     <h3 class="text-2xl font-bold mb-6">Ready to transform your business journey?</h3>
                     <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                        <a href="/index.html" class="btn-primary">
+                        <a href="/seller-questionnaire" class="btn-primary">
                             Get started today
                         </a>
                         <a href="/demo" class="btn-secondary">
@@ -988,7 +1033,7 @@
                     </div>
                     <div class="stat-item text-center">
                         <p class="text-3xl md:text-4xl font-bold mb-2">
-                            <span data-count-up="143" data-duration="2200">0</span>M+
+                            <span data-count-up="5" data-duration="2200">0</span>M+
                         </p>
                         <p class="text-gray-400 text-sm">Transaction volume</p>
                     </div>
@@ -1277,7 +1322,7 @@
                             <div class="faq-item bg-dark-light/40 backdrop-blur-md rounded-xl p-5 border border-gray-800">
                                 <div class="faq-question flex justify-between items-center cursor-pointer">
                                     <h5 class="font-semibold text-xl">What subscription plans do you offer and what features are included?</h5>
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 faq-icon transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 faq-icon transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"></svg>
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                                     </svg>
                                 </div>
@@ -1309,7 +1354,7 @@
                         <div class="flex space-x-4">
                             <a href="#" class="w-9 h-9 rounded-full flex items-center justify-center bg-dark border border-gray-800 text-gray-400 hover:bg-primary/10 hover:text-white transition-colors">
                                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                    <path fill-rule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clip-rule="evenodd"/>
+                                    <path fill-rule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54v6.988C18.343 21.128 22 16.991 22 12z" clip-rule="evenodd"/>
                                 </svg>
                             </a>
                             <a href="#" class="w-9 h-9 rounded-full flex items-center justify-center bg-dark border border-gray-800 text-gray-400 hover:bg-primary/10 hover:text-white transition-colors">
@@ -1334,7 +1379,7 @@
                     <div class="md:col-span-2">
                         <h5 class="text-sm font-bold tracking-wide text-gray-100 uppercase mb-4">Product</h5>
                         <ul class="space-y-3">
-                            <li><a href="/business-valuation" class="text-gray-400 text-sm hover:text-white transition-colors">Business Valuation</a></li>
+                            <li><a href="/seller-questionnaire" class="text-gray-400 text-sm hover:text-white transition-colors">Business Valuation</a></li>
                             <li><a href="/ai-insights" class="text-gray-400 text-sm hover:text-white transition-colors">AI Market Insights</a></li>
                             <li><a href="/marketplace" class="text-gray-400 text-sm hover:text-white transition-colors">Marketplace</a></li>
                             <li><a href="/arzani-x" class="text-gray-400 text-sm hover:text-white transition-colors">Arzani X</a></li>
@@ -1459,7 +1504,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
-    <script src="/js/navigation.js"></script>
+    <script src="/js/navigation1.js"></script>
     <script src="/js/animations.js"></script>
     <script src="/js/testimonial-carousel.js"></script>
     <script src="/js/scroll-animations.js"></script>

@@ -5,17 +5,25 @@
 
 import { Server as SocketIOServer } from 'socket.io';
 import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
 import pool from '../db.js';
+
+dotenv.config();
 
 /**
  * Initialize the chat socket service
  * @param {Server} server - HTTP server instance
- * @returns {ChatWebSocketService} The chat socket service instance
+ * @returns {Object} The chat socket service instance
  */
 export function initializeChatSocket(server) {
   console.log('Initializing chat socket service');
   
-  // Create Socket.IO server with only polling transport enabled
+  if (!server) {
+    console.error('Cannot initialize chat socket: No server instance provided');
+    return null;
+  }
+  
+  // Create Socket.IO server with both WebSocket and polling transports
   const io = new SocketIOServer(server, {
     cors: {
       origin: process.env.NODE_ENV === 'production' 
@@ -24,42 +32,130 @@ export function initializeChatSocket(server) {
       methods: ['GET', 'POST'],
       credentials: true
     },
-    // Explicitly use only polling transport since WebSocket is failing
-    transports: ['polling'],
+    // Support both WebSocket and polling for maximum compatibility
+    transports: ['websocket', 'polling'],
     pingTimeout: 60000,
-    pingInterval: 25000,
-    allowUpgrades: false // Prevent upgrade to WebSocket
+    pingInterval: 25000
+  });
+  
+  // Set up authentication middleware for socket connections
+  io.use(async (socket, next) => {
+    try {
+      const token = socket.handshake.auth.token || 
+                    socket.handshake.query.token;
+                   
+      if (!token) {
+        return next(new Error('Authentication token is required'));
+      }
+      
+      // Verify token
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        socket.userId = decoded.userId;
+        socket.user = decoded;
+        next();
+      } catch (jwtError) {
+        console.error('Socket JWT verification failed:', jwtError.message);
+        return next(new Error('Invalid authentication token'));
+      }
+    } catch (error) {
+      console.error('Socket authentication error:', error);
+      return next(new Error('Authentication failed'));
+    }
   });
   
   // Set up event handlers
   io.on('connection', (socket) => {
-    console.log('New chat socket connection:', socket.id);
+    console.log(`New chat socket connection: ${socket.id} for user ${socket.userId || 'unknown'}`);
     
-    // Handle authentication
-    socket.on('authenticate', async (data) => {
+    // Join user's personal room for direct messages
+    if (socket.userId) {
+      socket.join(`user:${socket.userId}`);
+      console.log(`User ${socket.userId} joined their personal room`);
+      
+      // Notify client of successful connection
+      socket.emit('connected', { 
+        success: true, 
+        userId: socket.userId,
+        socketId: socket.id
+      });
+    }
+    
+    // Handle joining a conversation
+    socket.on('join', (data) => {
       try {
-        const token = data.token;
+        const { conversationId } = data;
+        if (!conversationId) return;
         
-        if (!token) {
-          socket.emit('auth_error', { message: 'No token provided' });
-          return;
-        }
+        // Join the conversation room
+        socket.join(`conversation:${conversationId}`);
+        console.log(`User ${socket.userId} joined conversation ${conversationId}`);
         
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const userId = decoded.userId;
-        
-        // Store user ID in socket
-        socket.userId = userId;
-        console.log(`Socket ${socket.id} authenticated for user ${userId}`);
-        
-        // Join user's room
-        socket.join(`user:${userId}`);
-        
-        // Let the client know authentication was successful
-        socket.emit('authenticated', { success: true, userId });
+        // Notify others in the room
+        socket.to(`conversation:${conversationId}`).emit('user_joined', {
+          userId: socket.userId,
+          conversationId
+        });
       } catch (error) {
-        console.error('Socket authentication error:', error);
-        socket.emit('auth_error', { message: 'Authentication failed' });
+        console.error('Error joining conversation:', error);
+      }
+    });
+    
+    // Handle sending a message
+    socket.on('message', async (data) => {
+      try {
+        const { conversationId, content } = data;
+        if (!conversationId || !content) return;
+        
+        // Save message to database
+        const message = await saveMessageToDatabase(socket.userId, conversationId, content);
+        
+        // Broadcast to all clients in the conversation room
+        io.to(`conversation:${conversationId}`).emit('new_message', message);
+      } catch (error) {
+        console.error('Error handling message:', error);
+        socket.emit('error', { message: 'Failed to send message' });
+      }
+    });
+    
+    // Handle typing indicator
+    socket.on('typing', (data) => {
+      const { conversationId } = data;
+      if (!conversationId) return;
+      
+      socket.to(`conversation:${conversationId}`).emit('typing', {
+        userId: socket.userId,
+        conversationId
+      });
+    });
+    
+    // Handle stop typing indicator
+    socket.on('stopTyping', (data) => {
+      const { conversationId } = data;
+      if (!conversationId) return;
+      
+      socket.to(`conversation:${conversationId}`).emit('stop_typing', {
+        userId: socket.userId,
+        conversationId
+      });
+    });
+    
+    // Handle marking messages as read
+    socket.on('markRead', async (data) => {
+      try {
+        const { conversationId } = data;
+        if (!conversationId || !socket.userId) return;
+        
+        // Update message status in database
+        await markMessagesAsRead(socket.userId, conversationId);
+        
+        // Notify other users in the conversation
+        socket.to(`conversation:${conversationId}`).emit('messages_read', {
+          userId: socket.userId,
+          conversationId
+        });
+      } catch (error) {
+        console.error('Error marking messages as read:', error);
       }
     });
     
@@ -69,6 +165,42 @@ export function initializeChatSocket(server) {
     });
   });
   
+  // Helper function to save message to database
+  async function saveMessageToDatabase(senderId, conversationId, content) {
+    try {
+      const query = `
+        INSERT INTO messages (sender_id, conversation_id, content, created_at)
+        VALUES ($1, $2, $3, NOW())
+        RETURNING id, sender_id, conversation_id, content, created_at
+      `;
+      
+      const result = await pool.query(query, [senderId, conversationId, content]);
+      return result.rows[0];
+    } catch (error) {
+      console.error('Database error saving message:', error);
+      throw error;
+    }
+  }
+  
+  // Helper function to mark messages as read
+  async function markMessagesAsRead(userId, conversationId) {
+    try {
+      const query = `
+        UPDATE messages
+        SET read = true, read_at = NOW()
+        WHERE conversation_id = $1
+          AND sender_id != $2
+          AND read = false
+      `;
+      
+      await pool.query(query, [conversationId, userId]);
+    } catch (error) {
+      console.error('Database error marking messages as read:', error);
+      throw error;
+    }
+  }
+  
+  // Return the io instance for external use if needed
   return { io };
 }
 

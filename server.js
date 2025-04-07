@@ -9,7 +9,6 @@ import path from 'path';
 import dotenv from 'dotenv';
 import pool from './db.js';
 import bodyParser from 'body-parser'; // To parse JSON bodies       
-import businessRoutes from './businessRoutes.js';
 import bcrypt from 'bcrypt';
 import { sendVerificationEmail } from './utils/email.js';
 import authRoutes from './routes/auth.js';
@@ -44,6 +43,7 @@ import marketTrendsRoutes from './routes/markettrendsroutes.js';
 import trendsRoutes from './routes/trendsroutes.js';
 import googleDriveRoutes from './routes/googleDriveRoutes.js';
 import googleAuthRoutes from './routes/googleAuthRoutes.js';
+import postBusinessValuationRoutes from './routes/postBusinessValuationRoutes.js';
 import { S3Client, ListBucketsCommand } from '@aws-sdk/client-s3'; // Add ListBucketsCommand
 import { uploadToS3 } from './utils/s3.js';
 import { adminAuth } from './middleware/adminAuth.js'; // Add this import
@@ -52,11 +52,14 @@ import voiceRoutes from './routes/voiceRoutes.js'; // Add this import
 import stripeRoutes from './routes/stripe.js';
 import printRoutes from './middleware/routeDebug.js';
 import apiRoutes from './routes/api.js'; // Add this import
+import blogRoutes from './routes/blogRoutes.js'; // Add this import for blog routes
+import blogApiRoutes from './routes/blogApiRoutes.js'; // Add this import
 import { stripeWebhookMiddleware, handleStripeWebhook } from './middleware/webhookHandler.js';
 import profileRoutes from './routes/profile.routes.js';
 import apiSubRoutes from './routes/api/subscription.js';
 import checkoutRoutes from './routes/checkout.js';
 import subscriptionApiRoutes from './routes/api/subscription.js';
+
 import { authenticateUser as authMiddleware, populateUser } from './middleware/auth.js'; // Add this import
 import cookieParser from 'cookie-parser';
 import marketplaceRoutes from './routes/marketplaceRoutes.js';
@@ -78,6 +81,9 @@ import postBusinessRoutes from './routes/post-business.js';
 import { debugAuth } from './middleware/authDebug.js';
 
 import tokenDebugRoutes from './routes/api/token-debug.js'; // Add this import
+import valuationApi from './api/valuation.js';
+
+import debugApiRoutes from './routes/api/debug.js';
 
 // Add this import near the top of the file with other imports
 import { attachRootRoute } from './root-route-fix.js';
@@ -94,6 +100,7 @@ import chatRoutes from './routes/chat.js';
 
 // Import the chat socket initialization function
 import { initializeChatSocket } from './socket/chatSocket.js';
+import publicValuationRouter from './api/public-valuation.js';
 
 // Import chat API routes
 import chatApiRoutes from './routes/api/chat.js';
@@ -105,6 +112,15 @@ import testRoutes from './routes/api/test-routes.js'; // Add this import
 import postBusinessUploadRoutes from './routes/api/post-business-upload.js';
 import s3TestRoutes from './routes/api/s3-test.js';
 import submitBusinessRoutes from './routes/api/submit-business.js';
+import businessRoutes from './routes/businessRoutes.js';
+import userRoutes from './routes/userRoutes.js';
+import sellerQuestionnaireRoutes from './routes/sellerQuestionnaire.js';
+
+// Import valuation routes
+import valuationRoutes from './routes/valuationRoutes.js';
+
+// Import RDS optimization routes
+import rdsOptimizationRoutes from './routes/rdsOptimizationRoutes.js';
 
 // Add businessAuth middleware
 const businessAuth = async (req, res, next) => {
@@ -133,12 +149,75 @@ const businessAuth = async (req, res, next) => {
 dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const PORT = process.env.PORT || 8080; // Update default port to 8080 for Azure
+const PORT = process.env.PORT || 5000; // Update default port to 8080 for Azure
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;
 
+// Add this initialization check function near the beginning of the file
+const initializeAwsConfig = () => {
+  // Clean up any improperly set environment variables
+  if (process.env.AWS_REGION) {
+    process.env.AWS_REGION = process.env.AWS_REGION.trim().split(',')[0].trim();
+    console.log(`Using AWS region: ${process.env.AWS_REGION}`);
+  }
+  
+  if (process.env.AWS_BUCKET_NAME) {
+    process.env.AWS_BUCKET_NAME = process.env.AWS_BUCKET_NAME.trim().split(',')[0].trim();
+    console.log(`Using S3 bucket: ${process.env.AWS_BUCKET_NAME}`);
+  }
+  
+  // Set defaults if not defined
+  if (!process.env.AWS_REGION) {
+    process.env.AWS_REGION = 'eu-west-2';
+    console.log(`Setting default AWS region: ${process.env.AWS_REGION}`);
+  }
+  
+  if (!process.env.AWS_BUCKET_NAME) {
+    process.env.AWS_BUCKET_NAME = 'arzani-images1';
+    console.log(`Setting default S3 bucket: ${process.env.AWS_BUCKET_NAME}`);
+  }
+};
 
+// Call this right after loading environment variables
+initializeAwsConfig();
+
+// Add this right after your imports
+const validateAwsConfig = () => {
+  const region = process.env.AWS_REGION || 'eu-west-2';
+  const bucketName = process.env.AWS_BUCKET_NAME || 'arzani-images1';
+  
+  // Validate region format - should be a simple string without commas
+  if (region.includes(',')) {
+    console.error('⚠️ WARNING: AWS_REGION contains commas, which will cause S3 errors.');
+    process.env.AWS_REGION = region.split(',')[0].trim();
+    console.log(`Fixed AWS_REGION to "${process.env.AWS_REGION}"`);
+  }
+  
+  // Validate bucket name format - should be a simple string without commas
+  if (bucketName.includes(',')) {
+    console.error('⚠️ WARNING: AWS_BUCKET_NAME contains commas, which will cause S3 errors.');
+    process.env.AWS_BUCKET_NAME = bucketName.split(',')[0].trim();
+    console.log(`Fixed AWS_BUCKET_NAME to "${process.env.AWS_BUCKET_NAME}"`);
+  }
+  
+  // Test S3 client initialization
+  try {
+    const s3Client = new S3Client({
+      region: process.env.AWS_REGION,
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+      }
+    });
+    console.log(`✅ S3 client initialized with region: ${process.env.AWS_REGION}`);
+  } catch (error) {
+    console.error('❌ Failed to initialize S3 client:', error);
+  }
+}
+
+// Call validation function during server startup
+validateAwsConfig();
 
 // Initialize Express and create HTTP server
 
@@ -252,6 +331,8 @@ app.get('/homepage', (req, res) => {
   });
 });
 
+// IMPORTANT: Register public API endpoints BEFORE authentication middleware
+app.use('/api/public', publicValuationRouter);
 app.use((req, res, next) => {
   const path = req.path;
   
@@ -350,19 +431,29 @@ const REFRESH_TOKEN_EXPIRY = '7d';
 
 // Update the token checker middleware
 app.use(async (req, res, next) => {
+    // Skip token check for explicitly tagged public valuation requests
+    if (req.isPublicRequest ||
+        req.headers['x-skip-auth'] === 'true' ||
+        req.headers['x-request-source'] === 'valuation-calculator') {
+      console.log('Bypassing authentication for public or calculator request:', req.path);
+      return next();
+    }
+
     // Skip token check for public routes
     if (req.path.match(/^\/(?:login2|signup|public|css|js|images|terms)/)) {
-        return next();
+      return next();
     }
 
     const authHeader = req.headers['authorization'];
     
     if (!authHeader) {
-        return next();
+      console.log('No auth header, continuing without auth for path:', req.path);
+      return next();
     }
 
     if (!authHeader.startsWith('Bearer ') || authHeader.split(' ').length !== 2) {
-        return res.status(401).json({ error: 'Invalid Authorization header format' });
+      console.log('Invalid auth header format, continuing without auth');
+      return next();
     }
 
     const token = authHeader.split(' ')[1];
@@ -374,7 +465,7 @@ app.use(async (req, res, next) => {
     } catch (error) {
         console.error('Token validation error:', error);
         // Don't redirect API calls
-        if (req.path.startsWith('/api/')) {
+        if (req.path.startswith('/api/')) {
             return res.status(401).json({ error: 'Invalid token' });
         }
         // For non-API calls, redirect to login
@@ -441,7 +532,11 @@ app.use(session({
 }));
 app.use(cookieParser());
 
+// Import diagnostic middleware
+import diagnosticMiddleware from './middleware/diagnosticMiddleware.js';
+
 // Routes
+app.use('/api', diagnosticMiddleware);
 app.use('/api', historyRoutes);
 app.use('/api/auth', apiAuthRoutes); // Add API auth routes
 app.use('/api/chat', chatApiRoutes); // Use chatApiRoutes instead of chatRouter
@@ -450,36 +545,120 @@ app.use('/auth', authRoutes); // Update this line to register auth routes
 app.use('/api/market', marketTrendsRoutes);
 app.use('/api/drive', googleDriveRoutes);
 app.use('/api/test', testRoutes); // Add the new test routes
-app.use('/stripe', stripeRoutes);
+app.use('/api/post-business', postBusinessValuationRoutes);
+
+
 app.use('/api/profile', authenticateToken, profileApi); // Keep this one, remove the duplicate below
 // app.use('/api/profile', profileApi); // REMOVE THIS DUPLICATE LINE
 app.use('/api/business', businessRoutes);
 app.use('/api', apiRoutes);
 app.use('/api/business', savedBusinessesRoutes); 
-app.use('/profile', profileRoutes);
-app.use('/api/subscription', apiSubRoutes);
-app.use('/checkout', checkoutRoutes);
-app.use('/checkout-gold', (req, res) => res.redirect('/checkout/gold'));
-app.use('/checkout-platinum', (req, res) => res.redirect('/checkout/platinum'));
-app.use('/api/subscription', subscriptionApiRoutes);
-app.use('/api/market-trends', marketTrendsApiRoutes);
-// app.use('/chat', chatRoutes); // Remove authenticateToken middleware
-app.use('/api/token-debug', tokenDebugRoutes); // ADD THIS LINE
-
+app.use('/api/debug', debugApiRoutes);
 // Add assistant monitoring routes
 app.use('/api/assistant-monitor', assistantMonitorRoutes);
+// Add this before other routes
+app.use('/debug', chatDebugRouter);
 
+// Apply routes
+app.use('/blog', blogRoutes);  // Frontend blog routes
+app.use('/api/blog', blogApiRoutes);  // API blog endpoints
+app.use('/api', blogApiRoutes);  // ALSO register at /api to support both URL patterns
 // Register the AI assistant routes
 app.use('/api/assistant', aiAssistantRoutes);
 
 // Use the new auth middleware where needed
 app.use('/api/protected', authMiddleware);
+// API endpoints
+app.use('/api/valuation', valuationApi);
+// Register the valuation routes WITHOUT authentication middleware
+// IMPORTANT: Move these routes BEFORE any other business routes to avoid conflicts
+app.use('/api/business', (req, res, next) => {
+  // Mark valuation endpoints as public to bypass all authentication
+  if (
+    (req.path === '/calculate-valuation' || req.path === '/save-questionnaire') &&
+    req.method === 'POST'
+  ) {
+    console.log('Public valuation endpoint accessed:', req.path);
+    req.isPublicRequest = true;
+  }
+  next();
+}, valuationRoutes);
+
+// Register the seller questionnaire routes - removed authentication middleware
+app.use('/seller-questionnaire', sellerQuestionnaireRoutes);
+app.use('/api/subscription', apiSubRoutes);
+// Add this before other routes
+app.use('/debug', chatDebugRouter);
+// Apply routes
+app.use('/blog', blogRoutes);
+app.use('/api/subscription', subscriptionApiRoutes);
+app.use('/api/market-trends', marketTrendsApiRoutes);
+// app.use('/chat', chatRoutes); // Remove authenticateToken middleware
+app.use('/api/token-debug', tokenDebugRoutes); // ADD THIS LINE
+app.use('/api/post-business-upload', postBusinessUploadRoutes);
+app.use('/api/s3-test', s3TestRoutes);
+
 app.use('/dashboard', authMiddleware);
 app.use('/marketplace/edit', authMiddleware);
 app.use('/', populateUser); // Optional: populate user for all routes
-app.use('/api/post-business-upload', postBusinessUploadRoutes);
-app.use('/api/s3-test', s3TestRoutes);
-app.use('/api/submit-business', submitBusinessRoutes);
+app.use('/stripe', stripeRoutes);
+app.use('/profile', profileRoutes);
+// Register the seller questionnaire routes - removed authentication middleware
+app.use('/seller-questionnaire', sellerQuestionnaireRoutes);
+app.use('/checkout', checkoutRoutes);
+app.use('/checkout-gold', (req, res) => res.redirect('/checkout/gold'));
+app.use('/checkout-platinum', (req, res) => res.redirect('/checkout/platinum'));
+
+app.use('/users', userRoutes);
+app.use('/auth', authRoutes);
+// Make sure the API endpoints are accessible without the token validation
+// Add this right after the valuation routes registration
+app.post('/api/business/calculate-valuation', async (req, res) => {
+  try {
+    const businessData = req.body;
+    console.log('Public valuation calculation request received');
+    
+    // Import controller only when needed (to avoid circular dependencies)
+    const valuationController = (await import('./controllers/valuationController.js')).default;
+    
+    // Call the controller method directly
+    return valuationController.calculateValuation(req, res);
+  } catch (error) {
+    console.error('Valuation endpoint error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to calculate valuation',
+      error: error.message
+    });
+  }
+});
+
+// Also ensure the questionnaire data saving endpoint is accessible without authentication
+app.post('/api/business/save-questionnaire', async (req, res) => {
+  try {
+    console.log('Public questionnaire data request received');
+    
+    // Import controller only when needed
+    const valuationController = (await import('./controllers/valuationController.js')).default;
+    
+    // Call the save questionnaire data method
+    const questionnaireData = req.body;
+    const submissionId = await valuationController.saveQuestionnaireData(questionnaireData);
+    
+    return res.json({
+      success: true,
+      message: 'Questionnaire data saved successfully',
+      submissionId
+    });
+  } catch (error) {
+    console.error('Error saving questionnaire data:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to save questionnaire data',
+      error: error.message
+    });
+  }
+});
 
 // Set view engine (ensure the public folder is included)
 app.set('view engine', 'ejs');
@@ -520,6 +699,63 @@ app.get('/new-homepage', (req, res) => {
     title: 'Welcome to Arzani Marketplace - New Design'
   });
 });
+
+// Add this BEFORE your auth middleware or any other middleware that checks authentication
+// Public business valuation endpoint - must be registered before auth middleware
+app.post('/api/business/calculate-valuation', async (req, res) => {
+  try {
+    const businessData = req.body;
+    console.log('Public valuation calculation request received');
+    
+    // Import controller only when needed (to avoid circular dependencies)
+    const valuationController = (await import('./controllers/valuationController.js')).default;
+    
+    // Call the controller method directly
+    return valuationController.calculateValuation(req, res);
+  } catch (error) {
+    console.error('Valuation endpoint error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to calculate valuation',
+      error: error.message
+    });
+  }
+});
+
+// Also add an anonymous questionnaire data saving endpoint
+app.post('/api/business/save-questionnaire', async (req, res) => {
+  try {
+    console.log('Public questionnaire data request received');
+    
+    // Import controller only when needed
+    const valuationController = (await import('./controllers/valuationController.js')).default;
+    
+    // Call the save questionnaire data method
+    const questionnaireData = req.body;
+    const submissionId = await valuationController.saveQuestionnaireData(questionnaireData);
+    
+    return res.json({
+      success: true,
+      message: 'Questionnaire data saved successfully',
+      submissionId
+    });
+  } catch (error) {
+    console.error('Error saving questionnaire data:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to save questionnaire data',
+      error: error.message
+    });
+  }
+});
+
+// Add explicit route for chat messages API to ensure proper route matching
+app.get('/api/chat/messages', (req, res, next) => {
+  console.log('Chat messages API route hit directly');
+  // Forward to the router
+  next();
+});
+
 
 // Add a general API verification endpoint directly
 app.get('/api/verify-token', async (req, res) => {
@@ -1882,6 +2118,7 @@ app.get('/market-trends', authenticateToken, async (req, res) => {
     }
 });
 
+
 // Add this with your other routes, before any catch-all routes
 app.get('/privacy', (req, res) => {
   try {
@@ -2317,7 +2554,24 @@ async function getMarketplaceListings() {
     return [];
   }
 }
-
+async function setupBlogDatabase() {
+  try {
+    console.log('Setting up blog database tables...');
+    
+    // Read the SQL file containing blog table definitions
+    const blogTablesSQL = fs.readFileSync(path.join(__dirname, 'migrations/blog_tables.sql'), 'utf8');
+    
+    // Execute the SQL to create blog tables
+    await pool.query(blogTablesSQL);
+    
+    console.log('Blog database setup completed successfully');
+    return { success: true };
+  } catch (error) {
+    console.error('Error setting up blog database:', error);
+    // Don't fail server startup if blog tables can't be created
+    return { success: false, error: error.message };
+  }
+}
 // Update WebSocket connection handler to validate messages before parsing JSON
 wss.on('connection', async (ws) => {
     console.log('WebSocket client connected');
@@ -2560,6 +2814,10 @@ app.use((req, res, next) => {
       console.error('AI assistant functionality may not work. Run scripts/fix-ai-tables.js to fix.');
       // Continue with startup - non-fatal error
     }
+
+    // Set up blog database tables if they don't exist
+    console.log('Checking blog database tables...');
+    await setupBlogDatabase();
 
     // Start server with updated port handling
     server.listen(PORT, '0.0.0.0', () => { // Add host binding for Azure
@@ -2837,10 +3095,7 @@ app.get('/api/migrate-profile-pictures', adminAuth, async (req, res) => {
 console.log("All registered routes:");
 printRoutes(app);
 
-// Add this before other routes
-app.use('/debug', chatDebugRouter);
 
- 
 
 // Document handling endpoints
 app.post('/api/documents/share', authenticateToken, async (req, res) => {
@@ -3014,7 +3269,6 @@ app.get('/post-business', async (req, res, next) => {
     
     // If no valid user ID found, redirect to login
     if (!userId) {
-      console.log('No valid user ID found, redirecting to login');
       return res.redirect(`/login2?returnTo=${encodeURIComponent('/post-business')}`);
     }
     
@@ -3326,8 +3580,454 @@ app.get('/api/chat/messages', (req, res, next) => {
   next();
 });
 
-// Make sure the server and chat socket service are properly exported
+// Add this BEFORE any middleware registration, at the very top of your server.js file
+// after creating the app, but before using any middleware
+app.post('/api/business/public/calculate-valuation', express.json(), async (req, res) => {
+  try {
+    console.log('==== PUBLIC VALUATION ENDPOINT ACCESSED ====');
+    console.log('Request headers:', req.headers);
+    console.log('Request body keys:', Object.keys(req.body));
+    
+    // Force content type to be JSON
+    res.setHeader('Content-Type', 'application/json');
+    
+    // Pass to the valuation controller
+    return valuationController.calculateValuation(req, res);
+  } catch (error) {
+    console.error('Error in public valuation endpoint:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error calculating valuation',
+      error: error.message
+    });
+  }
+});
+
+// Add this BEFORE any middleware registration, at the very top of the server.js file
+// after creating the app, but before using any middleware
+app.post('/api/business/direct-valuation', express.json(), async (req, res) => {
+  // Force Content-Type to application/json
+  res.setHeader('Content-Type', 'application/json');
+  
+  console.log('==== DIRECT VALUATION ENDPOINT REQUEST ====');
+  console.log('Request headers:', req.headers);
+  console.log('Request body:', JSON.stringify(req.body, null, 2));
+  console.log('=============================================');
+  
+  try {
+    // Extract business data from request body
+    const { _debug, ...businessData } = req.body;
+    
+    // Basic validation
+    if (!businessData || Object.keys(businessData).length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No business data provided'
+      });
+    }
+    
+    // Log simplified version of the data for debugging
+    console.log('Processing valuation with data:', {
+      industry: businessData.industry,
+      revenue: businessData.revenue,
+      ebitda: businessData.ebitda,
+      requestId: _debug?.requestId || 'unknown'
+    });
+    
+    // Import valuation service directly to avoid middleware issues
+    const valuationService = (await import('./services/valuationService.js')).default;
+    
+    try {
+      // Calculate valuation directly using the service
+      const valuationResult = await valuationService.calculateBusinessValuation(businessData);
+      
+      console.log('Valuation calculated successfully:', {
+        estimatedValue: valuationResult.estimatedValue,
+        confidence: valuationResult.confidence,
+        requestId: _debug?.requestId || 'unknown'
+      });
+      
+      // Return success response with proper content type
+      return res.status(200).json({
+        success: true,
+        valuation: valuationResult
+      });
+    } catch (calcError) {
+      console.error('Error calculating valuation:', calcError);
+      return res.status(500).json({
+        success: false,
+        message: 'Valuation calculation error: ' + calcError.message
+      });
+    }
+  } catch (error) {
+    console.error('Direct valuation endpoint error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to process valuation request',
+      error: error.message
+    });
+  }
+});
+
+// Add this direct endpoint for saving valuation data specifically before other middleware
+app.post('/api/business/save-valuation-data', express.json(), async (req, res) => {
+  console.log('==== DIRECT SAVE VALUATION DATA ENDPOINT ====');
+  console.log('Request headers:', req.headers);
+  console.log('Request body:', JSON.stringify(req.body, null, 2));
+  console.log('==== END REQUEST INFO ====');
+  
+  try {
+    const data = req.body;
+    
+    // Ensure email exists or use anonymous
+    if (!data.email) {
+      data.email = `anonymous_${Date.now()}@placeholder.com`;
+      console.log('Using generated email:', data.email);
+    }
+    
+    // Create a unique submission ID if not provided
+    const submissionId = data.submissionId || `sub_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
+    
+    // Insert data into the questionnaire_submissions table
+    const query = `
+      INSERT INTO questionnaire_submissions (
+        submission_id, 
+        email, 
+        data, 
+        valuation_data,
+        status
+      ) VALUES ($1, $2, $3, $4, $5)
+      ON CONFLICT (submission_id) 
+      DO UPDATE SET 
+        data = $3,
+        valuation_data = $4,
+        updated_at = NOW()
+      RETURNING id, submission_id
+    `;
+    
+    const values = [
+      submissionId,
+      data.email.toLowerCase().trim(),
+      JSON.stringify(data),
+      data.valuationData ? JSON.stringify(data.valuationData) : null,
+      'pending'
+    ];
+    
+    // Connect to database and execute query
+    const pool = new pg.Pool({
+      user: process.env.DB_USER,
+      host: process.env.DB_HOST,
+      database: process.env.DB_NAME,
+      password: process.env.DB_PASSWORD,
+      port: process.env.DB_PORT || 5432,
+    });
+    
+    const result = await pool.query(query, values);
+    
+    console.log('Valuation data saved successfully with ID:', result.rows[0].id);
+    
+    return res.status(200).json({
+      success: true,
+      message: 'Valuation data saved successfully',
+      submissionId: result.rows[0].submission_id
+    });
+  } catch (error) {
+    console.error('Error saving valuation data:', error);
+    
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to save valuation data',
+      error: error.message
+    });
+  }
+});
+
+const DB_POOL_CONFIG = {
+  user: process.env.DB_USER,
+  host: process.env.DB_HOST,
+  database: process.env.DB_NAME,
+  password: process.env.DB_PASSWORD,
+  port: process.env.DB_PORT || 5432,
+  // Add connection pool optimization
+  max: process.env.DB_MAX_CONNECTIONS || 10, // Reduce from default
+  idleTimeoutMillis: 30000, // Timeout idle connections after 30 seconds
+  connectionTimeoutMillis: 2000, // Fail fast if connection can't be established
+  allowExitOnIdle: true // Allow pool to exit when idle
+};
+
+// Add pool error handler and connection management
+pool.on('error', (err, client) => {
+  console.error('Unexpected database error:', err);
+});
+
+// Add function to gracefully shut down the pool
+async function closePool() {
+  console.log('Closing database connection pool');
+  await pool.end();
+}
+
+// Update shutdown handlers to properly close pool
+process.on('SIGTERM', async () => {
+  console.log('SIGTERM received, shutting down gracefully');
+  await closePool();
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', async () => {
+  console.log('SIGINT received, shutting down gracefully');
+  await closePool();
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
+});
+
+// Apply RDS optimizations to the existing pool
+(() => {
+  // Apply optimization settings to existing pool if possible
+  if (pool) {
+    console.log('Applying database connection pool optimizations');
+    
+    // Note: We can't directly change pool.options in many driver implementations
+    // but we can add event handlers and implement other optimizations
+    
+    // Add pool error handler
+    pool.on('error', (err, client) => {
+      console.error('Unexpected database error:', err);
+    });
+  }
+})();
+
+// Add RDS optimization routes - admin only
+app.use('/api/rds', adminAuth, rdsOptimizationRoutes);
+
+// Add graceful shutdown handlers for database connections
+process.removeAllListeners('SIGTERM');
+process.on('SIGTERM', async () => {
+  console.log('SIGTERM received, shutting down gracefully');
+  try {
+    // Close database connections
+    console.log('Closing database connections...');
+    if (pool && typeof pool.end === 'function') {
+      await pool.end();
+    }
+    // Close server
+    server.close(() => {
+      console.log('Server closed');
+      process.exit(0);
+    });
+  } catch (err) {
+    console.error('Error during shutdown:', err);
+    process.exit(1);
+  }
+});
+
+process.removeAllListeners('SIGINT');
+process.on('SIGINT', async () => {
+  console.log('SIGINT received, shutting down gracefully');
+  try {
+    // Close database connections
+    console.log('Closing database connections...');
+    if (pool && typeof pool.end === 'function') {
+      await pool.end();
+    }
+    // Close server
+    server.close(() => {
+      console.log('Server closed');
+      process.exit(0);
+    });
+  } catch (err) {
+    console.error('Error during shutdown:', err);
+    process.exit(1);
+  }
+});
+
+
+
+// ...existing code...
+
+// Customer email collection endpoint
+app.post('/api/save-customer-email', async (req, res) => {
+  try {
+    const { email, source, anonymousId } = req.body;
+    
+    // Basic validation
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email is required' });
+    }
+    
+    // Check if email already exists in the customer_emails table
+    const checkQuery = 'SELECT id FROM customer_emails WHERE email = $1';
+    const checkResult = await pool.query(checkQuery, [email.toLowerCase().trim()]);
+    
+    if (checkResult.rows.length > 0) {
+      // Email exists, update the entry
+      const updateQuery = `
+        UPDATE customer_emails 
+        SET 
+          last_seen_at = NOW(),
+          updated_at = NOW(),
+          interaction_count = interaction_count + 1,
+          anonymous_id = COALESCE($2, anonymous_id)
+        WHERE email = $1
+        RETURNING id
+      `;
+      
+      const result = await pool.query(updateQuery, [email.toLowerCase().trim(), anonymousId]);
+      console.log(`Updated existing customer email record: ${result.rows[0].id}`);
+      
+      return res.json({ 
+        success: true, 
+        message: 'Email record updated',
+        id: result.rows[0].id
+      });
+    } else {
+      // Insert new email
+      const insertQuery = `
+        INSERT INTO customer_emails (
+          email,
+          source,
+          anonymous_id,
+          created_at,
+          updated_at,
+          last_seen_at,
+          interaction_count
+        ) VALUES ($1, $2, $3, NOW(), NOW(), NOW(), 1)
+        RETURNING id
+      `;
+      
+      const values = [
+        email.toLowerCase().trim(),
+        source || 'seller-questionnaire',
+        anonymousId || null
+      ];
+      
+      const result = await pool.query(insertQuery, values);
+      console.log(`Created new customer email record: ${result.rows[0].id}`);
+      
+      return res.json({ 
+        success: true, 
+        message: 'Email successfully saved',
+        id: result.rows[0].id
+      });
+    }
+    
+  } catch (error) {
+    console.error('Error saving customer email:', error);
+    res.status(500).json({ success: false, message: 'Error saving email' });
+  }
+});
+
+// Business questionnaire submission endpoint
+app.post('/api/business/save-questionnaire', async (req, res) => {
+  try {
+    // Extract key data from the request
+    const { 
+      email, 
+      businessName, 
+      industry, 
+      description,
+      valuation,
+      anonymousId,
+      ...otherData
+    } = req.body;
+    
+    // Basic validation
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email is required' });
+    }
+    
+    // Check if a submission with this anonymousId already exists
+    let submissionId = null;
+    if (anonymousId) {
+      const checkQuery = 'SELECT id FROM business_questionnaires WHERE anonymous_id = $1';
+      const checkResult = await pool.query(checkQuery, [anonymousId]);
+      
+      if (checkResult.rows.length > 0) {
+        submissionId = checkResult.rows[0].id;
+      }
+    }
+    
+    if (submissionId) {
+      // Update existing submission
+      const updateQuery = `
+        UPDATE business_questionnaires
+        SET
+          email = $1,
+          business_name = $2,
+          industry = $3,
+          description = $4,
+          valuation_data = $5,
+          other_data = $6,
+          updated_at = NOW()
+        WHERE id = $7
+        RETURNING id
+      `;
+      
+      const updateValues = [
+        email.toLowerCase().trim(),
+        businessName || null,
+        industry || null,
+        description || null,
+        valuation ? JSON.stringify(valuation) : null,
+        JSON.stringify(otherData),
+        submissionId
+      ];
+      
+      const result = await pool.query(updateQuery, updateValues);
+      console.log(`Updated existing questionnaire: ${result.rows[0].id}`);
+      
+      return res.json({
+        success: true,
+        message: 'Questionnaire updated successfully',
+        submissionId: result.rows[0].id
+      });
+      
+    } else {
+      // Create new submission
+      const insertQuery = `
+        INSERT INTO business_questionnaires (
+          email,
+          business_name,
+          industry,
+          description,
+          anonymous_id,
+          valuation_data,
+          other_data,
+          created_at,
+          updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+        RETURNING id
+      `;
+      
+      const insertValues = [
+        email.toLowerCase().trim(),
+        businessName || null,
+        industry || null,
+        description || null,
+        anonymousId || null,
+        valuation ? JSON.stringify(valuation) : null,
+        JSON.stringify(otherData)
+      ];
+      
+      const result = await pool.query(insertQuery, insertValues);
+      submissionId = result.rows[0].id;
+      console.log(`Created new questionnaire: ${submissionId}`);
+      
+      return res.json({
+        success: true,
+        message: 'Questionnaire saved successfully',
+        submissionId: submissionId
+      });
+    }
+    
+  } catch (error) {
+    console.error('Error saving questionnaire:', error);
+    res.status(500).json({ success: false, message: 'Error saving questionnaire data' });
+  }
+});
+
 export { app, server, chatSocketService };
-
-
-

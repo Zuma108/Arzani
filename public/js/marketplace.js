@@ -4,6 +4,19 @@ import { initializeTracking } from './marketplace-tracking.js';
 let isLoading = false;
 let imageObserver; // Global IntersectionObserver for lazy loading
 
+// Add S3 config - check if it exists globally first
+if (typeof window.S3_CONFIG === 'undefined') {
+  window.S3_CONFIG = {
+    primaryRegion: 'eu-west-2',
+    fallbackRegion: 'eu-north-1',
+    bucket: 'arzani-images1',
+    retryAttempts: 2
+  };
+} else {
+  // Add retryAttempts if it doesn't exist
+  window.S3_CONFIG.retryAttempts = window.S3_CONFIG.retryAttempts || 2;
+}
+
 export async function loadPage(pageNumber = 1, filters = {}) {
   // Set loading state
   isLoading = true;
@@ -59,13 +72,11 @@ function renderBusinesses(businesses) {
     // Only load first image initially for visible businesses
     const isVisible = index < 9; // First 9 businesses (assuming 3x3 grid)
     
-    // Optimize image URLs and use default for non-existent images
-    const firstImage = business.images && business.images.length > 0 
-      ? business.images[0] 
-      : null;
+    // Process image URLs with multi-region awareness
+    business.processedImages = processBusinessImages(business);
     
     // Create card with optimized image loading
-    businessCard.innerHTML = generateBusinessCard(business, firstImage, isVisible);
+    businessCard.innerHTML = generateBusinessCard(business, isVisible);
     fragment.appendChild(businessCard);
   });
   
@@ -82,10 +93,46 @@ function renderBusinesses(businesses) {
   initEventHandlers();
 }
 
-function generateBusinessCard(business, firstImage, isVisible) {
+/**
+ * Process business images to ensure URLs use the correct S3 region format
+ * @param {Object} business - Business object with images array
+ * @returns {Array} - Array of processed image URLs
+ */
+function processBusinessImages(business) {
+  if (!business.images || !Array.isArray(business.images) || business.images.length === 0) {
+    return ['/images/default-business.jpg'];
+  }
+  
+  // Parse PostgreSQL array if needed
+  let images = business.images;
+  if (typeof images === 'string' && images.startsWith('{') && images.endsWith('}')) {
+    // Parse PostgreSQL array format {url1,url2,url3}
+    images = images.substring(1, images.length - 1).split(',');
+  }
+  
+  return images.map(image => {
+    if (!image) return '/images/default-business.jpg';
+    
+    // If already a full URL, use it as is
+    if (image.startsWith('http')) {
+      return image;
+    }
+    
+    // If it's a relative upload path, convert to S3 URL with primary region
+    if (image.startsWith('/uploads/')) {
+      const filename = image.substring('/uploads/'.length);
+      return `https://${S3_CONFIG.bucket}.s3.${S3_CONFIG.primaryRegion}.amazonaws.com/businesses/${business.id}/${filename}`;
+    }
+    
+    // Otherwise it's just a filename, construct the URL
+    return `https://${S3_CONFIG.bucket}.s3.${S3_CONFIG.primaryRegion}.amazonaws.com/businesses/${business.id}/${image}`;
+  });
+}
+
+function generateBusinessCard(business, isVisible) {
   // Basic card shell with key business info
-  const imagesHtml = firstImage 
-    ? generateImageCarousel(business, isVisible)
+  const imagesHtml = business.processedImages && business.processedImages.length > 0
+    ? generateImageCarousel(business, business.processedImages, isVisible)
     : `<div class="card-image-carousel">
         <button class="save-business-btn" data-business-id="${business.id}">
           <i class="bi bi-bookmark"></i>
@@ -126,7 +173,7 @@ function generateBusinessCard(business, firstImage, isVisible) {
         <div class="mt-auto d-flex justify-content-between gap-2">
           <button class="btn btn-primary flex-grow-1 view-details-btn" 
                 data-business-id="${business.id}"
-                onclick="window.location.href='/businesses/${business.id}'">
+                onclick="viewBusinessDetails(${business.id})">
             View Details
           </button>
           <button class="btn btn-outline-secondary flex-grow-1 contact-btn"
@@ -140,8 +187,8 @@ function generateBusinessCard(business, firstImage, isVisible) {
   `;
 }
 
-function generateImageCarousel(business, isVisible) {
-  if (!business.images || business.images.length === 0) {
+function generateImageCarousel(business, images, isVisible) {
+  if (!images || images.length === 0) {
     return `<div class="card-image-carousel">
       <button class="save-business-btn" data-business-id="${business.id}">
         <i class="bi bi-bookmark"></i>
@@ -150,30 +197,42 @@ function generateImageCarousel(business, isVisible) {
     </div>`;
   }
 
-  // Only load first image initially, defer others
   return `<div class="card-image-carousel">
     <button class="save-business-btn" data-business-id="${business.id}">
       <i class="bi bi-bookmark"></i>
     </button>
     <div class="carousel-inner">
-      ${business.images.map((image, index) => {
+      ${images.map((imageUrl, index) => {
         // Only load immediately if it's the first image AND the card is visible
         const shouldLoad = index === 0 && isVisible;
         const loadingAttr = shouldLoad ? "" : "loading=\"lazy\"";
-        const imgSrc = shouldLoad ? `/uploads/${image}` : "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
-        const dataSrc = shouldLoad ? "" : `data-src="/uploads/${image}"`;
+        
+        // Set up image sources for optimal loading
+        const imgSrc = shouldLoad ? imageUrl : "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+        const dataSrc = shouldLoad ? "" : `data-src="${imageUrl}"`;
         const lazyClass = shouldLoad ? "" : "lazy-load";
         
+        // Add multi-region fallback attributes
+        let fallbackSrc = "";
+        if (imageUrl.includes('eu-west-2')) {
+          fallbackSrc = `data-fallback="${imageUrl.replace('eu-west-2', 'eu-north-1')}"`;
+        } else if (imageUrl.includes('eu-north-1')) {
+          fallbackSrc = `data-fallback="${imageUrl.replace('eu-north-1', 'eu-west-2')}"`;
+        }
+        
         return `<div class="carousel-item ${index === 0 ? 'active' : ''}" data-index="${index}">
-          <img src="${imgSrc}" ${dataSrc} class="card-img-top ${lazyClass}" alt="${business.business_name}" ${loadingAttr} width="300" height="200">
+          <img src="${imgSrc}" ${dataSrc} ${fallbackSrc} class="card-img-top ${lazyClass}" 
+               alt="${business.business_name}" ${loadingAttr} width="300" height="200"
+               data-business-id="${business.id}" data-region="${imageUrl.includes('eu-north-1') ? 'eu-north-1' : 'eu-west-2'}"
+               onerror="handleImageError(this)">
         </div>`;
       }).join('')}
     </div>
-    ${business.images.length > 1 ? `
+    ${images.length > 1 ? `
       <div class="carousel-controls">
         <button class="carousel-control prev" data-direction="prev">‹</button>
         <div class="carousel-indicators">
-          ${business.images.map((_, index) => `
+          ${images.map((_, index) => `
             <button class="carousel-indicator ${index === 0 ? 'active' : ''}" data-index="${index}"></button>
           `).join('')}
         </div>
@@ -183,7 +242,69 @@ function generateImageCarousel(business, isVisible) {
   </div>`;
 }
 
-// Initialize lazy loading after all businesses are rendered
+/**
+ * Add global function for handling image errors - fallback to alternate region
+ */
+window.handleImageError = function(img) {
+  // Only log in debug mode or reduce verbosity
+  if (window.DEBUG_MODE) {
+    console.log('Image failed to load, trying fallback:', img.src);
+  }
+  
+  // Check if we've already tried the fallback
+  if (img.dataset.usedFallback === 'true') {
+    // If we already tried fallback, use default image
+    if (window.DEBUG_MODE) {
+      console.log('Fallback also failed, using default image');
+    }
+    img.src = '/images/default-business.jpg';
+    img.onerror = null; // Remove error handler to prevent loops
+    return;
+  }
+  
+  // Try the fallback URL
+  if (img.dataset.fallback) {
+    if (window.DEBUG_MODE) {
+      console.log('Using fallback URL:', img.dataset.fallback);
+    }
+    img.dataset.usedFallback = 'true';
+    img.src = img.dataset.fallback;
+  } 
+  // Or try the alternate region if fallback attribute not present
+  else if (img.src.includes('s3.eu-west-2.amazonaws.com')) {
+    if (window.DEBUG_MODE) {
+      console.log('Switching to eu-north-1 region');
+    }
+    img.dataset.usedFallback = 'true';
+    img.src = img.src.replace('s3.eu-west-2.amazonaws.com', 's3.eu-north-1.amazonaws.com');
+  } else if (img.src.includes('s3.eu-north-1.amazonaws.com')) {
+    if (window.DEBUG_MODE) {
+      console.log('Switching to eu-west-2 region');
+    }
+    img.dataset.usedFallback = 'true';
+    img.src = img.src.replace('s3.eu-north-1.amazonaws.com', 's3.eu-west-2.amazonaws.com');
+  } else {
+    // If no S3 URL pattern found, use default
+    img.src = '/images/default-business.jpg';
+    img.onerror = null;
+  }
+};
+
+// Function to handle proper navigation to business details without redirects
+window.viewBusinessDetails = function(businessId) {
+  if (!businessId) return;
+  
+  // Prevent the default link navigation
+  event.preventDefault();
+  
+  // Log that we're navigating to a specific business
+  console.log(`Navigating to business ${businessId}`);
+  
+  // Use the direct business route to avoid redirects
+  window.location.href = `/business/${businessId}`;
+};
+
+// Initialize lazy loading with improved region fallback
 function initLazyLoading() {
   if ('IntersectionObserver' in window) {
     // Clean up existing observer
@@ -197,27 +318,20 @@ function initLazyLoading() {
         if (entry.isIntersecting) {
           const img = entry.target;
           if (img.dataset.src) {
+            // Create the fallback URL before setting src
+            if (img.dataset.src.includes('eu-west-2')) {
+              img.dataset.fallback = img.dataset.src.replace('eu-west-2', 'eu-north-1');
+            } else if (img.dataset.src.includes('eu-north-1')) {
+              img.dataset.fallback = img.dataset.src.replace('eu-north-1', 'eu-west-2');
+            }
+            
             // Load the image
             img.src = img.dataset.src;
             
-            // Handle S3 URLs correctly
-            if (img.dataset.src.includes('s3.')) {
-              const url = new URL(img.dataset.src);
-              // Check if the URL is malformed (has region as bucket or vice versa)
-              if (url.hostname.includes('.s3.')) {
-                const parts = url.hostname.split('.');
-                if (parts.length >= 4) {
-                  const bucket = parts[0];
-                  const region = parts[2];
-                  // If region looks like a bucket name, it's probably reversed
-                  if (region.includes('arzani') || region === bucket) {
-                    console.log(`Fixing malformed S3 URL: ${url}`);
-                    // Construct a corrected URL
-                    img.src = `https://${bucket}.s3.eu-west-2.amazonaws.com${url.pathname}`;
-                  }
-                }
-              }
-            }
+            // Make sure the error handler is in place
+            img.onerror = function() {
+              handleImageError(this);
+            };
             
             img.removeAttribute('data-src');
             img.classList.remove('lazy-load');
@@ -226,7 +340,7 @@ function initLazyLoading() {
         }
       });
     }, {
-      rootMargin: '200px', // Load images 200px before they become visible
+      rootMargin: '200px',
       threshold: 0.1
     });
     
@@ -238,13 +352,20 @@ function initLazyLoading() {
     // Fallback for browsers that don't support IntersectionObserver
     document.querySelectorAll('img.lazy-load').forEach(img => {
       if (img.dataset.src) {
-        // Handle S3 URLs correctly
-        if (img.dataset.src.includes('s3.eu-north-1.amazonaws.com')) {
-          // Replace north-1 with west-2 if needed
-          img.src = img.dataset.src.replace('s3.eu-north-1.amazonaws.com', 's3.eu-west-2.amazonaws.com');
-        } else {
-          img.src = img.dataset.src;
+        // Create the fallback URL
+        if (img.dataset.src.includes('eu-west-2')) {
+          img.dataset.fallback = img.dataset.src.replace('eu-west-2', 'eu-north-1');
+        } else if (img.dataset.src.includes('eu-north-1')) {
+          img.dataset.fallback = img.dataset.src.replace('eu-north-1', 'eu-west-2');
         }
+        
+        img.src = img.dataset.src;
+        
+        // Make sure error handler is in place
+        img.onerror = function() {
+          handleImageError(this);
+        };
+        
         img.classList.remove('lazy-load');
       }
     });
@@ -582,7 +703,11 @@ async function checkSavedStatus(businessId) {
       saveBtn.querySelector('i').classList.replace('bi-bookmark', 'bi-bookmark-fill');
     }
   } catch (error) {
-    // Handle error silently
+    // Handle error silently without logging
+    // Only log in debug mode
+    if (window.DEBUG_MODE) {
+      console.error('Error checking saved status:', error);
+    }
   }
 }
 
@@ -670,7 +795,7 @@ function debounce(func, wait) {
 }
 
 /**
- * Handle Contact Seller button clicks
+ * Handle Contact Seller button clicks with improved UX
  */
 function initContactSellerButtons() {
   document.querySelectorAll('.contact-btn, .contact-seller-btn').forEach(button => {
@@ -689,61 +814,11 @@ function initContactSellerButtons() {
         return;
       }
       
-      // Extract business and user IDs from data attributes
+      // Get the business ID from the clicked button
       const businessId = this.getAttribute('data-business-id');
-      const otherUserId = this.getAttribute('data-user-id');
       
-      if (!otherUserId) {
-        console.error('Missing user ID');
-        
-        // Try to fetch user ID from parent element if available
-        const cardElement = this.closest('[data-user-id]');
-        if (cardElement && cardElement.dataset.userId) {
-          otherUserId = cardElement.dataset.userId;
-        } else {
-          alert('Cannot contact: Missing user information');
-          return;
-        }
-      }
-      
-      // Get business name for the modal title if available
-      let businessName = "this business";
-      const card = this.closest('.card');
-      if (card) {
-        const nameElement = card.querySelector('.business-name, h5.card-title');
-        if (nameElement) {
-          businessName = nameElement.textContent.trim();
-        }
-      }
-      
-      // Set values in the contact form modal
-      const contactBusinessIdInput = document.getElementById('contactBusinessId');
-      const contactOtherUserIdInput = document.getElementById('contactOtherUserId');
-      
-      if (contactBusinessIdInput) contactBusinessIdInput.value = businessId;
-      if (contactOtherUserIdInput) contactOtherUserIdInput.value = otherUserId;
-      
-      // Update modal title with business name if available
-      const modalTitle = document.getElementById('contactFormModalLabel');
-      if (modalTitle) {
-        modalTitle.textContent = `Contact about ${businessName}`;
-      }
-      
-      // Ensure modal element exists
-      const contactFormModal = document.getElementById('contactFormModal');
-      if (!contactFormModal) {
-        console.error('Contact form modal element not found');
-        return;
-      }
-      
-      try {
-        // Show the modal
-        const modal = new bootstrap.Modal(contactFormModal);
-        modal.show();
-        console.log('Contact form modal shown');
-      } catch (error) {
-        console.error('Error showing modal:', error);
-      }
+      // Updated to navigate to business page first, which will handle the contact flow
+      window.location.href = `/business/${businessId}#contact`;
     });
   });
   
