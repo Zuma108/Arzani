@@ -53,48 +53,40 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <!-- Main Product Section -->
             <div>
-                <h2 class="text-xl font-semibold mb-4 text-primary">Products</h2>
+                <h2 class="text-xl font-semibold mb-4 text-primary">Main Pages</h2>
                 <ul class="space-y-2">
-                    <li><a href="/business-valuation" class="text-gray-300 hover:text-white transition-colors">Business Valuation</a></li>
-                    <li><a href="/ai-insights" class="text-gray-300 hover:text-white transition-colors">AI Market Insights</a></li>
-                    <li><a href="/marketplace" class="text-gray-300 hover:text-white transition-colors">Marketplace</a></li>
-                    <li><a href="/arzani-x" class="text-gray-300 hover:text-white transition-colors">Arzani X</a></li>
+                    <li><a href="/" class="text-gray-300 hover:text-white transition-colors">Homepage</a></li>
+                    <li><a href="/seller-questionnaire" class="text-gray-300 hover:text-white transition-colors">Seller Questionnaire</a></li>
+                    <li><a href="/marketplace2" class="text-gray-300 hover:text-white transition-colors">Marketplace</a></li>
                     <li><a href="/pricing" class="text-gray-300 hover:text-white transition-colors">Pricing</a></li>
-                </ul>
-            </div>
-            
-            <!-- Features Section -->
-            <div>
-                <h2 class="text-xl font-semibold mb-4 text-primary">Features</h2>
-                <ul class="space-y-2">
-                    <li><a href="/features/brain-ai" class="text-gray-300 hover:text-white transition-colors">Brain AI</a></li>
-                    <li><a href="/features/power-ups" class="text-gray-300 hover:text-white transition-colors">Power-ups</a></li>
-                    <li><a href="/features/ai-assistant" class="text-gray-300 hover:text-white transition-colors">AI Assistant</a></li>
-                    <li><a href="/features/analytics" class="text-gray-300 hover:text-white transition-colors">Analytics</a></li>
-                    <li><a href="/features/insights" class="text-gray-300 hover:text-white transition-colors">Insights</a></li>
-                </ul>
-            </div>
-            
-            <!-- Company Section -->
-            <div>
-                <h2 class="text-xl font-semibold mb-4 text-primary">Company</h2>
-                <ul class="space-y-2">
-                    <li><a href="/about-us" class="text-gray-300 hover:text-white transition-colors">About Us</a></li>
-                    <li><a href="/contact" class="text-gray-300 hover:text-white transition-colors">Contact</a></li>
-                    <li><a href="/careers" class="text-gray-300 hover:text-white transition-colors">Careers</a></li>
-                    <li><a href="/press" class="text-gray-300 hover:text-white transition-colors">Press</a></li>
-                </ul>
-            </div>
-            
-            <!-- Resources Section -->
-            <div>
-                <h2 class="text-xl font-semibold mb-4 text-primary">Resources</h2>
-                <ul class="space-y-2">
-                    <li><a href="/blog" class="text-gray-300 hover:text-white transition-colors">Blog</a></li>
-                    <li><a href="/market-reports" class="text-gray-300 hover:text-white transition-colors">Market Reports</a></li>
-                    <li><a href="/guides" class="text-gray-300 hover:text-white transition-colors">Seller Guides</a></li>
-                    <li><a href="/webinars" class="text-gray-300 hover:text-white transition-colors">Webinars</a></li>
                     <li><a href="/faq" class="text-gray-300 hover:text-white transition-colors">FAQ</a></li>
+                </ul>
+            </div>
+            
+            <!-- Account Section -->
+            <div>
+                <h2 class="text-xl font-semibold mb-4 text-primary">Account</h2>
+                <ul class="space-y-2">
+                    <li><a href="/login" class="text-gray-300 hover:text-white transition-colors">Log In</a></li>
+                    <li><a href="/signup" class="text-gray-300 hover:text-white transition-colors">Sign Up</a></li>
+                </ul>
+            </div>
+            
+            <!-- Legal Section -->
+            <div>
+                <h2 class="text-xl font-semibold mb-4 text-primary">Legal</h2>
+                <ul class="space-y-2">
+                    <li><a href="/terms" class="text-gray-300 hover:text-white transition-colors">Terms of Service</a></li>
+                    <li><a href="/privacy" class="text-gray-300 hover:text-white transition-colors">Privacy Policy</a></li>
+                    <li><a href="/cookies" class="text-gray-300 hover:text-white transition-colors">Cookie Policy</a></li>
+                </ul>
+            </div>
+
+            <!-- Blog Main -->
+            <div>
+                <h2 class="text-xl font-semibold mb-4 text-primary">Blog</h2>
+                <ul class="space-y-2">
+                    <li><a href="/blog" class="text-gray-300 hover:text-white transition-colors">Blog Home</a></li>
                 </ul>
             </div>
 
@@ -119,42 +111,15 @@
             </div>
 
             <!-- Recent Blog Posts Section -->
-            <div>
+            <div class="lg:col-span-2">
                 <h2 class="text-xl font-semibold mb-4 text-primary">Recent Blog Posts</h2>
                 <ul class="space-y-2">
                     <% recentBlogPosts.forEach(post => { %>
                         <li><a href="/blog/<%= post.slug %>" class="text-gray-300 hover:text-white transition-colors"><%= post.title %></a></li>
                     <% }); %>
-                </ul>
-            </div>
-            
-            <!-- Legal Section -->
-            <div>
-                <h2 class="text-xl font-semibold mb-4 text-primary">Legal</h2>
-                <ul class="space-y-2">
-                    <li><a href="/terms" class="text-gray-300 hover:text-white transition-colors">Terms of Service</a></li>
-                    <li><a href="/privacy" class="text-gray-300 hover:text-white transition-colors">Privacy Policy</a></li>
-                    <li><a href="/cookies" class="text-gray-300 hover:text-white transition-colors">Cookie Policy</a></li>
-                    <li><a href="/security" class="text-gray-300 hover:text-white transition-colors">Security</a></li>
-                    <li><a href="/accessibility" class="text-gray-300 hover:text-white transition-colors">Accessibility</a></li>
-                </ul>
-            </div>
-            
-            <!-- Account Section -->
-            <div>
-                <h2 class="text-xl font-semibold mb-4 text-primary">Account</h2>
-                <ul class="space-y-2">
-                    <li><a href="/login" class="text-gray-300 hover:text-white transition-colors">Log In</a></li>
-                    <li><a href="/signup" class="text-gray-300 hover:text-white transition-colors">Sign Up</a></li>
-                </ul>
-            </div>
-            
-            <!-- Other Pages Section -->
-            <div>
-                <h2 class="text-xl font-semibold mb-4 text-primary">Other Pages</h2>
-                <ul class="space-y-2">
-                    <li><a href="/demo" class="text-gray-300 hover:text-white transition-colors">Request Demo</a></li>
-                    <li><a href="/testimonials" class="text-gray-300 hover:text-white transition-colors">Testimonials</a></li>
+                    <% if (recentBlogPosts.length === 0) { %>
+                        <li class="text-gray-400">No posts found</li>
+                    <% } %>
                 </ul>
             </div>
         </div>
