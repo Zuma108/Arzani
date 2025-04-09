@@ -1,0 +1,274 @@
+{
+  "name": "cold outreach automation step 1",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -320,
+        -80
+      ],
+      "id": "257dafff-bef4-4d10-99be-8eefe9da13b3",
+      "name": "When chat message received",
+      "webhookId": "d9541a3a-e6a9-47e6-8d12-74664cc2bb16"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "=You are ApolloSearchGPT, a friendly assistant that helps users build targeted B2B prospect searches. Your goal is to collect specific search parameters and generate an Apollo.io search URL that can be used for lead generation.\n\nFIXED PARAMETERS (NEVER MODIFY THESE):\n- Email verification status: verified\n- Sort order: recommendations_score (descending)\n- Page: 1\n- includedOrganizationKeywordFields[]=tags\n- includedOrganizationKeywordFields[]=name\n\nUSER INPUT PARAMETERS TO COLLECT:\n1. Location(s): Countries, states, or cities where prospects are located\n2. Seniority levels: From [owner, founder, c_suite, partner, vp, head, director, manager]\n3. Company size ranges: From [1-10, 11-20, 21-50, 51-100, 101-250, 251-500, 501-1000, 1001-5000, 5001-10000, 10001+]\n4. Industry keywords: 2-5 specific keywords related to the target industry\n\nGUARDRAILS:\n- If the user requests inappropriate or illegal targeting, politely decline and redirect them to legitimate business use cases\n- If user requests are vague, ask clarifying questions before generating the URL\n- If a user requests parameters outside what Apollo supports, explain the limitations\n- Never suggest or imply scraping is for circumventing Apollo's terms of service\n- Verify the user provides at least one location, one seniority level, and one company size range\n\nCONVERSATION STRUCTURE:\n1. Begin with a friendly welcome and brief explanation of what you'll help them build\n2. For each parameter category:\n   - Provide brief explanations of available options\n   - Ask simple, direct questions \n   - Confirm their selections before moving to the next category\n3. Before generating the URL, summarize all selected parameters\n4. Present the final URL clearly\n5. Create an Airtable record of the search using the create-airtable-record tool\n\nURL CONSTRUCTION:\nBase: https://app.apollo.io/#/people?page=1&sortAscending=false&sortByField=recommendations_score&contactEmailStatusV2[]=verified\nParameters formats:\n- personLocations[]=LOCATION (URL encoded)\n- personSeniorities[]=LEVEL (for each seniority level)\n- organizationNumEmployeesRanges[]=MIN%2CMAX (for each size range)\n- qOrganizationKeywordTags[]=KEYWORD (for each industry keyword)\n- Always include: includedOrganizationKeywordFields[]=tags&includedOrganizationKeywordFields[]=name\n\nAIRTABLE RECORD CREATION:\nAfter generating the Apollo search URL, you must use the create-airtable-record tool to store the search parameters\nEXAMPLES:\n- For Tech VPs in California: ...personLocations[]=California&personSeniorities[]=vp&qOrganizationKeywordTags[]=software\n- For Real Estate owners in Florida: ...personLocations[]=Florida&personSeniorities[]=owner&qOrganizationKeywordTags[]=realtor\n\nvery very very important -  \"sometimes you miss adding the apollo url to the airtable to make sure the url is added successfully all the time you have access to a tool get-all-records-airtable that will get all the airtable record and you have to check the url is generated is added there or not, if the url is not added use the create-airtable-record tool again to create a new record with the URL\n\nif url is already present it means you already added the url to airtable\"\n\nin the endbriefly explain that this URL will be processed through n8n and Apify to deliver their targeted leads."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        -80,
+        -100
+      ],
+      "id": "1373df23-c4b1-4fdd-9f3d-bc2d24960276",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "qwen-2.5-32b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        140
+      ],
+      "id": "3a8d5423-ac36-47ab-acba-a34ce5a282d8",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "VMmvpO4gBzVK2XQc",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 20
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -80,
+        160
+      ],
+      "id": "98a21ecb-8b40-41d7-90e6-ee7b9da54182",
+      "name": "Window Buffer Memory"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appZO1xy7wHgPlNWj",
+          "mode": "list",
+          "cachedResultName": "testing base",
+          "cachedResultUrl": "https://airtable.com/appZO1xy7wHgPlNWj"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbl6sA23LB5qWLa4h",
+          "mode": "list",
+          "cachedResultName": "apollo search urls",
+          "cachedResultUrl": "https://airtable.com/appZO1xy7wHgPlNWj/tbl6sA23LB5qWLa4h"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "URL": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('URL', ``, 'string') }}",
+            "location": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('location', ``, 'string') }}",
+            "Seniority levels": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Seniority_levels', ``, 'string') }}",
+            "Company size ranges": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Company_size_ranges', ``, 'string') }}",
+            "Industry keywords": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Industry_keywords', ``, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "URL",
+              "displayName": "URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "location",
+              "displayName": "location",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Seniority levels",
+              "displayName": "Seniority levels",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Company size ranges",
+              "displayName": "Company size ranges",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Industry keywords",
+              "displayName": "Industry keywords",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtableTool",
+      "typeVersion": 2.1,
+      "position": [
+        280,
+        100
+      ],
+      "id": "6e9aa3d4-4854-428f-ae8b-e6fc2c2b588f",
+      "name": "create-airtable-record",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "JItVgUAOp1KRmDA9",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appZO1xy7wHgPlNWj",
+          "mode": "list",
+          "cachedResultName": "testing base",
+          "cachedResultUrl": "https://airtable.com/appZO1xy7wHgPlNWj"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbl6sA23LB5qWLa4h",
+          "mode": "list",
+          "cachedResultName": "apollo search urls",
+          "cachedResultUrl": "https://airtable.com/appZO1xy7wHgPlNWj/tbl6sA23LB5qWLa4h"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtableTool",
+      "typeVersion": 2.1,
+      "position": [
+        440,
+        -80
+      ],
+      "id": "d7324951-e147-4ca3-94cd-95a954a51833",
+      "name": "get-all-records-airtable",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "JItVgUAOp1KRmDA9",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Window Buffer Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "create-airtable-record": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get-all-records-airtable": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "5f860624-3b1e-4442-8c9f-f6446b59d24a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5a0a76182bd09eea5621bb15ef93ef701b83329e9b3fda0846323a6093377564"
+  },
+  "id": "ioMf1DRhlPFwNU08",
+  "tags": []
+}
