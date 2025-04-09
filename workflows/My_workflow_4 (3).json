@@ -1038,7 +1038,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://www.arzani.co.uk/webhooks/n8n/update-sitemap",
+        "url": "http://localhost:5000/webhooks/n8n/update-sitemap",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
@@ -1050,7 +1050,11 @@
             },
             {
               "name": "Authorization",
-              "value": "=Bearer {{ $env.SITEMAP_API_SECRET }}"
+              "value": "Bearer efgnwokejfneofi2i213290nskoqdwqwenjoo"
+            },
+            {
+              "name": "X-Webhook-Token",
+              "value": "efgnwokejfneofi2i213290nskoqdwqwenjoo"
             }
           ]
         },
