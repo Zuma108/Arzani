@@ -978,67 +978,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://arzani.co.uk/api/blog/n8n/webhook",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "title",
-              "value": "={{ $json['Blog Title'] }}"
-            },
-            {
-              "name": "metaDescription",
-              "value": "={{ $json['Meta Description'] }}"
-            },
-            {
-              "name": "author",
-              "value": "={{ $json.Author }}"
-            },
-            {
-              "name": "content",
-              "value": "={{ $json['Content Body'] }}"
-            },
-            {
-              "name": "categoriesAndTags",
-              "value": "={{ $json['Categories & Tags'] }}"
-            },
-            {
-              "name": "slug",
-              "value": "={{ $json['Slug/Permalink'] }}"
-            },
-            {
-              "name": "imageUrls",
-              "value": "={{ $('Google Sheets Trigger').item.json['Image URLs'] }}"
-            },
-            {
-              "name": "publishDate",
-              "value": "={{ $json['Publish Date'] }}"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "name": "Publish to CMS1",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [
-        760,
-        920
-      ],
-      "id": "d33c4018-0cf4-4d01-8d79-3f0c6be39522",
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "Z8WV9xVSkhFIsDfL",
-          "name": "Header Auth account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "http://localhost:5000/webhooks/n8n/update-sitemap",
+        "url": "https://arzani.co.uk/webhooks/n8n/update-sitemap",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
@@ -1047,10 +987,6 @@
             {
               "name": "Content-Type",
               "value": "application/json"
-            },
-            {
-              "name": "Authorization",
-              "value": "Bearer efgnwokejfneofi2i213290nskoqdwqwenjoo"
             },
             {
               "name": "X-Webhook-Token",

@@ -142,7 +142,7 @@
             <div class="container mx-auto px-4 md:px-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     <% blogPosts.forEach(post => { %>
-                        <a href="/blog/<%= post.slug %>" class="block group animate-fade-in-up" style="animation-delay: <%= blogPosts.indexOf(post) * 0.1 %>s">
+                        <a href="/blog/<%= post.slug %>" class="block group animate-fade-in-up" style="animation-delay: '<%= blogPosts.indexOf(post) * 0.1 %>s'">
                             <article class="bg-white border border-gray-200 rounded-xl overflow-hidden transition-all group-hover:border-primary/30 h-full flex flex-col shadow-sm hover:shadow">
                                 <div class="h-32 overflow-hidden">
                                     <img src="<%= post.hero_image || post.heroImage || 'https://arzani-images1.s3.eu-west-2.amazonaws.com/blogs/default-blog-hero.jpg' %>" 

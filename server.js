@@ -465,7 +465,7 @@ app.use(async (req, res, next) => {
     } catch (error) {
         console.error('Token validation error:', error);
         // Don't redirect API calls
-        if (req.path.startswith('/api/')) {
+        if (req.path.startsWith('/api/')) {
             return res.status(401).json({ error: 'Invalid token' });
         }
         // For non-API calls, redirect to login
@@ -2772,6 +2772,14 @@ app.use((req, res, next) => {
     hasAuthHeader: !!req.headers['authorization'],
     tokenPresent: !!(req.headers['authorization'] && req.headers['authorization'].split(' ')[1])
   });
+  next();
+});
+
+// Fix the startsWith method to use proper case - startsWith
+app.use(async (req, res, next) => {
+  if (req.path.startsWith('/api/')) {
+    console.log('API route accessed:', req.path);
+  }
   next();
 });
 
