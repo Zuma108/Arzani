@@ -428,27 +428,90 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         // Listen for form submission
-        signupForm.addEventListener('submit', function(event) {
-            // Clear localStorage after successful submission to prevent duplicate linking
-            if (anonymousId || questionnaireEmail) {
-                const originalSubmitHandler = event.target.onsubmit;
+        signupForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            
+            // Disable submit button to prevent multiple submissions
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.innerHTML = 'Creating Account...';
+            }
+            
+            // Get form data
+            const formData = new FormData(signupForm);
+            const signupData = Object.fromEntries(formData.entries());
+            
+            // Add questionnaire data if available
+            const questionnaireSubmissionId = localStorage.getItem('questionnaireSubmissionId');
+            const anonymousId = localStorage.getItem('questionnaireAnonymousId');
+            
+            if (questionnaireSubmissionId) {
+                signupData.questionnaireSubmissionId = questionnaireSubmissionId;
+            }
+            
+            if (anonymousId) {
+                signupData.anonymousId = anonymousId;
+            }
+            
+            try {
+                // Send signup request
+                const response = await fetch('/api/auth/signup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(signupData)
+                });
                 
-                event.target.onsubmit = function(e) {
-                    // First run the original handler if it exists
-                    if (originalSubmitHandler) {
-                        const result = originalSubmitHandler.call(this, e);
-                        if (result === false) return false;
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Success - handle accordingly
+                    console.log('Account created successfully!');
+                    
+                    // After successful signup, clear the questionnaire data from localStorage
+                    if (questionnaireSubmissionId || anonymousId) {
+                        // Keep this data in case it's needed later, but mark it as linked
+                        localStorage.setItem('questionnaireLinkStatus', 'linked');
                     }
                     
-                    // On successful submission, clear localStorage items
-                    setTimeout(function() {
-                        localStorage.removeItem('questionnaireAnonymousId');
-                        localStorage.removeItem('questionnaireSubmissionId');
-                        console.log('Cleared questionnaire data from localStorage after successful signup');
-                    }, 2000);
+                    // Redirect to login page or dashboard
+                    window.location.href = '/auth/login?verified=pending';
+                } else {
+                    // Handle errors
+                    const errorMessage = data.message || 'Failed to create account';
+                    // Display error to user
+                    const errorElement = document.getElementById('signup-error');
+                    if (errorElement) {
+                        errorElement.textContent = errorMessage;
+                        errorElement.style.display = 'block';
+                    } else {
+                        alert(errorMessage);
+                    }
                     
-                    return true;
-                };
+                    // Re-enable submit button
+                    if (submitButton) {
+                        submitButton.disabled = false;
+                        submitButton.innerHTML = 'Create Account';
+                    }
+                }
+            } catch (error) {
+                console.error('Signup error:', error);
+                
+                // Display generic error
+                const errorElement = document.getElementById('signup-error');
+                if (errorElement) {
+                    errorElement.textContent = 'An error occurred. Please try again.';
+                    errorElement.style.display = 'block';
+                } else {
+                    alert('An error occurred. Please try again.');
+                }
+                
+                // Re-enable submit button
+                if (submitButton) {
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = 'Create Account';
+                }
             }
         });
     }

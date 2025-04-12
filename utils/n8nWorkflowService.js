@@ -114,6 +114,9 @@ async function handleBlogPostCreation(postData, res) {
       meta_description: postData.metaDescription || postData.excerpt || '',
       hero_image: postData.heroImage || postData.hero_image || postData.imageUrl || '',
       author_id: null, // Will be resolved based on username if provided
+      author_name: postData.author_name || postData.authorName || 'Arzani Team',
+      author_image: postData.author_image || postData.authorImage || '/figma design exports/images/default-avatar.png',
+      author_bio: postData.author_bio || postData.authorBio || 'Arzani contributor',
       status: postData.status || 'Published',
       is_featured: postData.isFeatured || postData.is_featured || false,
       reading_time: postData.readingTime || postData.reading_time || 5,
@@ -153,9 +156,9 @@ async function handleBlogPostCreation(postData, res) {
     const result = await db.query(
       `INSERT INTO blog_posts (
         title, slug, content, excerpt, meta_description, hero_image,
-        author_id, status, is_featured, reading_time, publish_date,
+        author_id, author_name, author_image, author_bio, status, is_featured, reading_time, publish_date,
         created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), NOW())
       RETURNING *`,
       [
         blogPost.title,
@@ -165,6 +168,9 @@ async function handleBlogPostCreation(postData, res) {
         blogPost.meta_description,
         blogPost.hero_image,
         blogPost.author_id,
+        blogPost.author_name,
+        blogPost.author_image,
+        blogPost.author_bio,
         blogPost.status,
         blogPost.is_featured,
         blogPost.reading_time,
@@ -241,12 +247,152 @@ async function handleBlogPostCreation(postData, res) {
  * Handle blog post update webhook
  */
 async function handleBlogPostUpdate(postData, res) {
-  // Implementation for updating posts
-  console.log('Blog post update not yet implemented');
-  return res.json({
-    success: true,
-    message: 'Update post webhook received, but not yet implemented'
-  });
+  console.log('Handling blog post update webhook');
+  
+  try {
+    // For image updates we only need the slug
+    if (!postData.slug) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required field: slug',
+        requiredFields: ['slug']
+      });
+    }
+    
+    // Check if this post exists
+    const existingPostResult = await db.query(
+      'SELECT id FROM blog_posts WHERE slug = $1',
+      [postData.slug]
+    );
+    
+    if (existingPostResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Blog post not found',
+        slug: postData.slug
+      });
+    }
+    
+    const postId = existingPostResult.rows[0].id;
+    
+    // Prepare update fields
+    const updateFields = [];
+    const updateValues = [];
+    let valueIndex = 1;
+    
+    // Hero image - this is the main update from our image generation workflow
+    if (postData.hero_image) {
+      updateFields.push(`hero_image = $${valueIndex}`);
+      updateValues.push(postData.hero_image);
+      valueIndex++;
+    }
+    
+    // Title
+    if (postData.title) {
+      updateFields.push(`title = $${valueIndex}`);
+      updateValues.push(postData.title);
+      valueIndex++;
+    }
+    
+    // Content
+    if (postData.content) {
+      updateFields.push(`content = $${valueIndex}`);
+      updateValues.push(postData.content);
+      valueIndex++;
+    }
+    
+    // Excerpt
+    if (postData.excerpt || postData.metaDescription) {
+      updateFields.push(`excerpt = $${valueIndex}`);
+      updateValues.push(postData.excerpt || postData.metaDescription);
+      valueIndex++;
+    }
+    
+    // Meta description
+    if (postData.metaDescription || postData.excerpt) {
+      updateFields.push(`meta_description = $${valueIndex}`);
+      updateValues.push(postData.metaDescription || postData.excerpt);
+      valueIndex++;
+    }
+    
+    // Status
+    if (postData.status) {
+      updateFields.push(`status = $${valueIndex}`);
+      updateValues.push(postData.status);
+      valueIndex++;
+    }
+    
+    // Featured flag
+    if (postData.is_featured !== undefined || postData.isFeatured !== undefined) {
+      updateFields.push(`is_featured = $${valueIndex}`);
+      updateValues.push(postData.is_featured || postData.isFeatured || false);
+      valueIndex++;
+    }
+    
+    // Updated timestamp
+    updateFields.push(`updated_at = $${valueIndex}`);
+    updateValues.push(new Date());
+    valueIndex++;
+    
+    // Add post ID as the last parameter
+    updateValues.push(postId);
+    
+    // If there's nothing to update, return early
+    if (updateFields.length === 0) {
+      return res.json({
+        success: true,
+        message: 'No fields to update',
+        postId,
+        slug: postData.slug
+      });
+    }
+    
+    // Run the update query
+    const result = await db.query(
+      `UPDATE blog_posts SET ${updateFields.join(', ')} 
+       WHERE id = $${valueIndex} RETURNING *`,
+      updateValues
+    );
+    
+    const updatedPost = result.rows[0];
+    
+    // Log the success
+    await logWebhookActivity('update_post', {
+      postId: updatedPost.id,
+      slug: updatedPost.slug,
+      updatedFields: Object.keys(postData)
+    }, true);
+    
+    return res.json({
+      success: true,
+      message: 'Blog post updated successfully',
+      post: {
+        id: updatedPost.id,
+        title: updatedPost.title,
+        slug: updatedPost.slug,
+        hero_image: updatedPost.hero_image,
+        url: `/blog/${updatedPost.slug}`
+      }
+    });
+  } catch (error) {
+    console.error('Error handling blog post update webhook:', error);
+    
+    // Log the error
+    await logWebhookActivity('update_post', {
+      error: error.message,
+      stack: error.stack,
+      postData: {
+        slug: postData.slug,
+        fields: Object.keys(postData)
+      }
+    }, false);
+    
+    return res.status(500).json({
+      success: false,
+      error: 'Error updating blog post',
+      message: error.message
+    });
+  }
 }
 
 /**

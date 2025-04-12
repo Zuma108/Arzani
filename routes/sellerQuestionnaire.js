@@ -17,6 +17,37 @@ router.get('/basics', (req, res) => {
     });
 });
 
+// API endpoint to save questionnaire data without user account
+router.post('/save-data', async (req, res) => {
+    try {
+        // Extract all data from the request
+        const formData = req.body;
+        console.log('Received questionnaire data to save');
+        
+        // Ensure anonymous ID exists
+        if (!formData.anonymousId) {
+            formData.anonymousId = 'anon_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+        
+        // Here we'll use the ValuationController to save the data to the questionnaire_submissions table
+        const submissionId = await valuationController.saveQuestionnaireData(formData);
+        
+        // Return success response
+        res.status(200).json({
+            success: true,
+            message: 'Questionnaire data saved successfully',
+            submissionId: submissionId
+        });
+    } catch (error) {
+        console.error('Error saving questionnaire data:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to save questionnaire data',
+            error: error.message
+        });
+    }
+});
+
 // Route for the email page
 router.get('/email', (req, res) => {
     res.render('seller-questionnaire-email', {
@@ -129,32 +160,6 @@ router.post('/api/business/calculate-valuation', async (req, res) => {
         return res.status(500).json({
             success: false,
             message: 'Failed to calculate valuation',
-            error: error.message
-        });
-    }
-});
-
-// API endpoint to save questionnaire data without user account
-router.post('/save-data', async (req, res) => {
-    try {
-        // Extract all data from the request
-        const formData = req.body;
-        console.log('Received questionnaire data:', formData);
-        
-        // Here we'll use the ValuationController to save the data to the questionnaire_submissions table
-        const submissionId = await valuationController.saveQuestionnaireData(formData);
-        
-        // Return success response
-        res.status(200).json({
-            success: true,
-            message: 'Questionnaire data saved successfully',
-            submissionId: submissionId
-        });
-    } catch (error) {
-        console.error('Error saving questionnaire data:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to save questionnaire data',
             error: error.message
         });
     }

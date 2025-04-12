@@ -169,129 +169,231 @@ async function saveValuationToDatabase(email, businessData, valuation) {
  * Save questionnaire data submitted via authenticated or fallback routes
  */
 export const saveQuestionnaireData = async (req, res) => {
-  // Force content type early
-  res.setHeader('Content-Type', 'application/json');
+  // Normalize input - handle both direct API calls and router forwarded calls
+  const formData = req.body || req;
+  const isHttpRequest = res && typeof res.setHeader === 'function';
+  
+  // If this is an HTTP request, set content type
+  if (isHttpRequest) {
+    res.setHeader('Content-Type', 'application/json');
+  }
+  
   try {
     console.log('Controller: saveQuestionnaireData request received');
 
-    const formData = req.body;
-
     if (!formData) {
       console.warn('Controller save failed: No form data');
-      return res.status(400).json({
-        success: false,
-        message: 'No questionnaire data provided'
-      });
-    }
-    if (!formData.email) {
-      console.warn('Controller save failed: Missing email');
-      return res.status(400).json({
-        success: false,
-        message: 'Email is required to save questionnaire data'
-      });
+      if (isHttpRequest) {
+        return res.status(400).json({
+          success: false,
+          message: 'No questionnaire data provided'
+        });
+      }
+      return null;
     }
 
-    // Option 1: Re-use the robust save function from public-valuation.js
-    // This requires careful import/export setup or moving the function to a shared service.
-    // Example (if saveQuestionnaireSubmission was exported from public-valuation):
-    // import { saveQuestionnaireSubmission as publicSave } from '../api/public-valuation.js'; // Adjust path as needed
-    // const result = await publicSave(formData, formData.valuationData || null);
-
-    // Option 2: Enhance this controller's save logic (shown below)
-    // This duplicates logic but keeps controller self-contained for now.
+    // For anonymous users, we still need a way to identify them
+    if (!formData.email && !formData.anonymousId) {
+      console.warn('Controller save failed: Missing both email and anonymousId');
+      if (isHttpRequest) {
+        return res.status(400).json({
+          success: false,
+          message: 'Either email or anonymousId is required to save questionnaire data'
+        });
+      }
+      return null;
+    }
 
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
 
         const submissionId = formData.submissionId || `sub_${Date.now()}_${uuidv4().substring(0, 8)}`;
-        const email = formData.email.toLowerCase().trim();
-        const valuationData = formData.valuationData || null; // Extract valuation data if present
+        const email = formData.email ? formData.email.toLowerCase().trim() : null;
+        const anonymousId = formData.anonymousId || null;
+        const valuationData = formData.valuationData || formData.valuation || null;
 
         // Check if submission exists
         const checkQuery = 'SELECT id FROM questionnaire_submissions WHERE submission_id = $1';
         const checkResult = await client.query(checkQuery, [submissionId]);
 
+        let submissionDbId;
         if (checkResult.rows.length > 0) {
-            // Update existing submission (Simplified example - copy full logic if needed)
+            // Update existing submission
             const updateQuery = `
                 UPDATE questionnaire_submissions
-                SET email = $1, data = $2, valuation_data = $3, updated_at = NOW()
-                WHERE submission_id = $4
+                SET 
+                    email = COALESCE($1, email),
+                    anonymous_id = COALESCE($2, anonymous_id),
+                    data = $3, 
+                    valuation_data = COALESCE($4, valuation_data),
+                    updated_at = NOW()
+                WHERE submission_id = $5
                 RETURNING id
             `;
-            await client.query(updateQuery, [
-                email,
+            const updateResult = await client.query(updateQuery, [
+                email, 
+                anonymousId,
                 JSON.stringify(formData),
                 valuationData ? JSON.stringify(valuationData) : null,
                 submissionId
             ]);
+            submissionDbId = updateResult.rows[0].id;
             console.log(`Controller: Updated questionnaire submission ${submissionId}`);
         } else {
-            // Insert new submission
+            // Insert new submission - now accepting anonymous submissions
             const insertQuery = `
                 INSERT INTO questionnaire_submissions (
-                    submission_id, email, data, valuation_data, status, created_at, updated_at
-                ) VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+                    submission_id, email, anonymous_id, data, valuation_data, status, created_at, updated_at
+                ) VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
                 RETURNING id
             `;
-            await client.query(insertQuery, [
+            const insertResult = await client.query(insertQuery, [
                 submissionId,
                 email,
+                anonymousId,
                 JSON.stringify(formData),
                 valuationData ? JSON.stringify(valuationData) : null,
-                'pending' // Or 'linked' if user context is available
+                'pending' // All new submissions start as pending
             ]);
+            submissionDbId = insertResult.rows[0].id;
             console.log(`Controller: Inserted new questionnaire submission ${submissionId}`);
+        }
+
+        // Save to business_questionnaires table for anonymous data collection
+        // This helps with marketing and tracking of questionnaire starts
+        if (anonymousId) {
+            const checkBQQuery = 'SELECT id FROM business_questionnaires WHERE anonymous_id = $1';
+            const checkBQResult = await client.query(checkBQQuery, [anonymousId]);
+            
+            if (checkBQResult.rows.length > 0) {
+                // Update existing business questionnaire
+                const updateBQQuery = `
+                    UPDATE business_questionnaires
+                    SET 
+                        email = COALESCE($1, email),
+                        business_name = COALESCE($2, business_name),
+                        industry = COALESCE($3, industry),
+                        description = COALESCE($4, description),
+                        other_data = $5,
+                        valuation_data = COALESCE($6, valuation_data),
+                        updated_at = NOW()
+                    WHERE anonymous_id = $7
+                    RETURNING id
+                `;
+                await client.query(updateBQQuery, [
+                    email,
+                    formData.businessName || null,
+                    formData.industry || null,
+                    formData.description || null,
+                    JSON.stringify(formData),
+                    valuationData ? JSON.stringify(valuationData) : null,
+                    anonymousId
+                ]);
+                console.log(`Controller: Updated business questionnaire for anonymous ID ${anonymousId}`);
+            } else {
+                // Insert new business questionnaire
+                const insertBQQuery = `
+                    INSERT INTO business_questionnaires (
+                        email, business_name, industry, description, anonymous_id, other_data, valuation_data, created_at, updated_at
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+                    RETURNING id
+                `;
+                await client.query(insertBQQuery, [
+                    email,
+                    formData.businessName || null,
+                    formData.industry || null,
+                    formData.description || null,
+                    anonymousId,
+                    JSON.stringify(formData),
+                    valuationData ? JSON.stringify(valuationData) : null
+                ]);
+                console.log(`Controller: Inserted new business questionnaire for anonymous ID ${anonymousId}`);
+            }
         }
 
         // Save to business_valuations table if valuation data exists
         if (valuationData) {
-             const checkValuationQuery = 'SELECT id FROM business_valuations WHERE submission_id = $1';
-             const checkValuationResult = await client.query(checkValuationQuery, [submissionId]);
+            // Get valuation fields or provide defaults
+            const valuationMin = parseFloat(valuationData.valuationRange?.min) || null;
+            const valuationMax = parseFloat(valuationData.valuationRange?.max) || null;
+            const estimatedValue = parseFloat(valuationData.estimatedValue) || null;
+            const confidence = parseFloat(valuationData.confidence) || null;
+            const multiple = parseFloat(valuationData.multiple) || null;
+            const multipleType = valuationData.multipleType || null;
+            const summary = valuationData.summary || null;
 
-             const valuationValues = [
-                 submissionId,
-                 email,
-                 parseFloat(valuationData.valuationRange?.min) || null,
-                 parseFloat(valuationData.valuationRange?.max) || null,
-                 parseFloat(valuationData.estimatedValue) || null,
-                 parseFloat(valuationData.confidence) || null,
-                 parseFloat(valuationData.multiple) || null,
-                 valuationData.multipleType || null,
-                 valuationData.summary || null,
-                 JSON.stringify(valuationData)
-             ];
+            const checkValuationQuery = 'SELECT id FROM business_valuations WHERE submission_id = $1';
+            const checkValuationResult = await client.query(checkValuationQuery, [submissionId]);
 
-             if (checkValuationResult.rows.length > 0) {
-                 // Update existing valuation
-                 const updateValuationQuery = `
-                     UPDATE business_valuations SET email=$2, valuation_min=$3, valuation_max=$4, estimated_value=$5,
-                     confidence=$6, multiple=$7, multiple_type=$8, summary=$9, valuation_data=$10, updated_at=NOW()
-                     WHERE submission_id = $1 RETURNING id
-                 `;
-                 await client.query(updateValuationQuery, valuationValues);
-                 console.log(`Controller: Updated business valuation for submission ${submissionId}`);
-             } else {
-                 // Insert new valuation
-                 const insertValuationQuery = `
-                     INSERT INTO business_valuations (submission_id, email, valuation_min, valuation_max, estimated_value,
-                     confidence, multiple, multiple_type, summary, valuation_data, created_at, updated_at)
-                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW()) RETURNING id
-                 `;
-                 await client.query(insertValuationQuery, valuationValues);
-                 console.log(`Controller: Inserted new business valuation for submission ${submissionId}`);
-             }
+            if (checkValuationResult.rows.length > 0) {
+                // Update existing valuation
+                const updateValuationQuery = `
+                    UPDATE business_valuations SET 
+                        email = COALESCE($2, email),
+                        valuation_min = COALESCE($3, valuation_min),
+                        valuation_max = COALESCE($4, valuation_max),
+                        estimated_value = COALESCE($5, estimated_value),
+                        confidence = COALESCE($6, confidence),
+                        multiple = COALESCE($7, multiple),
+                        multiple_type = COALESCE($8, multiple_type),
+                        summary = COALESCE($9, summary),
+                        valuation_data = COALESCE($10, valuation_data),
+                        updated_at = NOW()
+                    WHERE submission_id = $1 
+                    RETURNING id
+                `;
+                await client.query(updateValuationQuery, [
+                    submissionId,
+                    email,
+                    valuationMin,
+                    valuationMax,
+                    estimatedValue,
+                    confidence,
+                    multiple,
+                    multipleType,
+                    summary,
+                    JSON.stringify(valuationData)
+                ]);
+                console.log(`Controller: Updated business valuation for submission ${submissionId}`);
+            } else {
+                // Insert new valuation
+                const insertValuationQuery = `
+                    INSERT INTO business_valuations (
+                        submission_id, email, valuation_min, valuation_max, estimated_value,
+                        confidence, multiple, multiple_type, summary, valuation_data, 
+                        created_at, updated_at
+                    )
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW()) 
+                    RETURNING id
+                `;
+                await client.query(insertValuationQuery, [
+                    submissionId,
+                    email,
+                    valuationMin,
+                    valuationMax,
+                    estimatedValue,
+                    confidence,
+                    multiple,
+                    multipleType,
+                    summary,
+                    JSON.stringify(valuationData)
+                ]);
+                console.log(`Controller: Inserted new business valuation for submission ${submissionId}`);
+            }
         }
 
         await client.query('COMMIT');
 
-        // Return success response
-        return res.status(200).json({
-            success: true,
-            message: 'Questionnaire data saved successfully via controller',
-            submissionId: submissionId
-        });
+        // Return success response based on context
+        if (isHttpRequest) {
+            return res.status(200).json({
+                success: true,
+                message: 'Questionnaire data saved successfully via controller',
+                submissionId: submissionId
+            });
+        }
+        return submissionId;
 
     } catch (dbError) {
         await client.query('ROLLBACK');
@@ -303,39 +405,50 @@ export const saveQuestionnaireData = async (req, res) => {
 
   } catch (error) {
     console.error('Controller: Error saving questionnaire data:', error);
-    // Ensure JSON response for errors
-    if (!res.headersSent) {
+    // Ensure JSON response for errors in HTTP context
+    if (isHttpRequest && !res.headersSent) {
         res.status(500).json({
             success: false,
             message: 'Failed to save questionnaire data via controller',
             error: error.message
         });
     }
+    return null;
   }
 };
 
 /**
  * Link previously submitted questionnaire data to a user account
+ * - Now updates all relevant tables (questionnaire_submissions, business_questionnaires, business_valuations)
  */
 export const linkQuestionnaireData = async (userId, email) => {
+  const client = await pool.connect();
+  
   try {
+    await client.query('BEGIN');
+    
     // Look for any submissions with this email that aren't linked to a user yet
     const findQuery = `
-      SELECT id, submission_id 
+      SELECT id, submission_id, anonymous_id
       FROM questionnaire_submissions 
       WHERE email = $1 AND (user_id IS NULL OR is_linked = FALSE)
       ORDER BY created_at DESC
       LIMIT 1
     `;
     
-    const findResult = await pool.query(findQuery, [email.toLowerCase().trim()]);
+    const findResult = await client.query(findQuery, [email.toLowerCase().trim()]);
     
     if (findResult.rows.length === 0) {
       console.log(`No unlinked questionnaire data found for email: ${email}`);
+      await client.query('COMMIT');
       return null;
     }
     
-    // Link the submission to the user
+    const submissionId = findResult.rows[0].submission_id;
+    const submissionDbId = findResult.rows[0].id;
+    const anonymousId = findResult.rows[0].anonymous_id;
+    
+    // 1. Link the questionnaire_submissions to the user
     const updateQuery = `
       UPDATE questionnaire_submissions
       SET user_id = $1, is_linked = TRUE, updated_at = NOW(), status = 'linked'
@@ -343,9 +456,35 @@ export const linkQuestionnaireData = async (userId, email) => {
       RETURNING submission_id
     `;
     
-    const updateResult = await pool.query(updateQuery, [userId, findResult.rows[0].id]);
+    await client.query(updateQuery, [userId, submissionDbId]);
     
-    // Also update the users table to show they have questionnaire data
+    // 2. Update the business_questionnaires table if there's an anonymous_id
+    if (anonymousId) {
+      const updateBQQuery = `
+        UPDATE business_questionnaires
+        SET user_id = $1, conversion_status = 'converted', updated_at = NOW()
+        WHERE anonymous_id = $2 OR email = $3
+      `;
+      
+      const bqResult = await client.query(updateBQQuery, [userId, anonymousId, email.toLowerCase().trim()]);
+      console.log(`Updated ${bqResult.rowCount} business_questionnaires records`);
+    }
+    
+    // 3. Update the business_valuations table
+    const updateValuationsQuery = `
+      UPDATE business_valuations
+      SET user_id = $1, updated_at = NOW()
+      WHERE submission_id = $2 OR email = $3
+    `;
+    
+    const valResult = await client.query(updateValuationsQuery, [
+      userId, 
+      submissionId, 
+      email.toLowerCase().trim()
+    ]);
+    console.log(`Updated ${valResult.rowCount} business_valuations records`);
+    
+    // 4. Also update the users table to show they have questionnaire data
     const userUpdateQuery = `
       UPDATE users
       SET has_questionnaire = TRUE, 
@@ -354,49 +493,114 @@ export const linkQuestionnaireData = async (userId, email) => {
       WHERE id = $2
     `;
     
-    await pool.query(userUpdateQuery, [findResult.rows[0].id, userId]);
+    await client.query(userUpdateQuery, [submissionDbId, userId]);
     
-    console.log(`Questionnaire data linked to user ${userId} with submission ID: ${updateResult.rows[0].submission_id}`);
+    await client.query('COMMIT');
     
-    return updateResult.rows[0].submission_id;
+    console.log(`Questionnaire data linked to user ${userId} with submission ID: ${submissionId}`);
+    return submissionId;
+    
   } catch (error) {
+    await client.query('ROLLBACK');
     console.error('Error linking questionnaire data:', error);
     return null;
+  } finally {
+    client.release();
   }
 };
 
 /**
  * Link a specific questionnaire submission to a user by ID
+ * - Now updates all relevant tables (questionnaire_submissions, business_questionnaires, business_valuations)
  */
 export const linkQuestionnaireSubmissionById = async (userId, submissionId) => {
+  const client = await pool.connect();
+  
   try {
-    const query = `
-      UPDATE questionnaire_submissions
-      SET user_id = $1, is_linked = TRUE, updated_at = NOW(), status = 'linked'
-      WHERE submission_id = $2 AND (user_id IS NULL OR is_linked = FALSE)
-      RETURNING id
+    await client.query('BEGIN');
+    
+    // 1. First get the submission data including anonymous_id and email
+    const getSubmissionQuery = `
+      SELECT id, anonymous_id, email
+      FROM questionnaire_submissions
+      WHERE submission_id = $1 AND (user_id IS NULL OR is_linked = FALSE)
     `;
     
-    const result = await pool.query(query, [userId, submissionId]);
+    const subResult = await client.query(getSubmissionQuery, [submissionId]);
     
-    // If we found and updated a submission, also update the user
-    if (result.rows.length > 0) {
-      const userUpdateQuery = `
-        UPDATE users
-        SET has_questionnaire = TRUE, 
-            questionnaire_id = $1, 
-            questionnaire_linked_at = NOW()
-        WHERE id = $2
-      `;
-      
-      await pool.query(userUpdateQuery, [result.rows[0].id, userId]);
-      return result.rows[0].id;
+    if (subResult.rows.length === 0) {
+      console.log(`No unlinked questionnaire found with ID: ${submissionId}`);
+      await client.query('COMMIT');
+      return null;
     }
     
-    return null;
+    const submissionDbId = subResult.rows[0].id;
+    const anonymousId = subResult.rows[0].anonymous_id;
+    const email = subResult.rows[0].email;
+    
+    // 2. Update the questionnaire_submissions table
+    const updateQuery = `
+      UPDATE questionnaire_submissions
+      SET user_id = $1, is_linked = TRUE, updated_at = NOW(), status = 'linked'
+      WHERE id = $2
+    `;
+    
+    await client.query(updateQuery, [userId, submissionDbId]);
+    
+    // 3. Update business_questionnaires table if there's an anonymous_id or email
+    if (anonymousId || email) {
+      const updateBQQuery = `
+        UPDATE business_questionnaires
+        SET user_id = $1, conversion_status = 'converted', updated_at = NOW()
+        WHERE ($2::text IS NULL OR anonymous_id = $2) 
+           OR ($3::text IS NULL OR email = $3)
+      `;
+      
+      const bqResult = await client.query(updateBQQuery, [
+        userId, 
+        anonymousId, 
+        email ? email.toLowerCase().trim() : null
+      ]);
+      console.log(`Updated ${bqResult.rowCount} business_questionnaires records`);
+    }
+    
+    // 4. Update business_valuations table
+    const updateValuationsQuery = `
+      UPDATE business_valuations
+      SET user_id = $1, updated_at = NOW()
+      WHERE submission_id = $2
+        OR ($3::text IS NULL OR email = $3)
+    `;
+    
+    const valResult = await client.query(updateValuationsQuery, [
+      userId, 
+      submissionId, 
+      email ? email.toLowerCase().trim() : null
+    ]);
+    console.log(`Updated ${valResult.rowCount} business_valuations records`);
+    
+    // 5. Update the users table
+    const userUpdateQuery = `
+      UPDATE users
+      SET has_questionnaire = TRUE, 
+          questionnaire_id = $1, 
+          questionnaire_linked_at = NOW()
+      WHERE id = $2
+    `;
+    
+    await client.query(userUpdateQuery, [submissionDbId, userId]);
+    
+    await client.query('COMMIT');
+    
+    console.log(`Linked submission ${submissionId} to user ${userId} successfully`);
+    return submissionDbId;
+    
   } catch (error) {
+    await client.query('ROLLBACK');
     console.error('Error linking questionnaire submission by ID:', error);
     return null;
+  } finally {
+    client.release();
   }
 };
 

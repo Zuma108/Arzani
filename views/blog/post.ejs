@@ -44,7 +44,7 @@
         gtag('config', 'G-W50GKB6F3M');
     </script>
     
-    <!-- Prevent layout shift when opening mobile menu -->
+    <!-- Blog styles -->
     <style>
         /* Reset any margins on html and body */
         html, body {
@@ -78,42 +78,32 @@
             width: 100%;
             left: 0;
             right: 0;
-        }
-                /* Reset any margins on html and body */
-                html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            overflow-x: hidden;
-        }
-        
-        /* Fix for mobile menu */
-        body.menu-open {
-            overflow: hidden;
-        }
-        
-        /* Ensure page wrapper takes full width */
-        .page-wrapper {
-            width: 100%;
-            overflow-x: hidden;
-            position: relative;
-        }
-        
-        /* Fix for scrollbar width compensation */
-        @media (min-width: 768px) {
-            body {
-                overflow-y: scroll;
-            }
-        }
-        
-        /* Ensure header is properly positioned */
-        header.header-transparent {
-            width: 100%;
-            left: 0;
-            right: 0;
             position: fixed; /* Make the header fixed */
             top: 0; /* Position at the very top */
             z-index: 50; /* Ensure it stays above other content */
+        }
+        
+        /* Blog content image sizing */
+        .blog-content img {
+            max-width: 600px !important;
+            height: auto;
+            margin: 2rem auto;
+            display: block;
+            border: none !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border-radius: 8px;
+        }
+        
+        /* Internal link styling */
+        .internal-link {
+            color: #316FD4;
+            text-decoration: underline;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .internal-link:hover {
+            color: #2454A3;
         }
     </style>
 </head>
@@ -205,6 +195,44 @@
                         </div>
                     </div>
                     <% } %>
+                </div>
+                
+                <!-- SEO Meta Information Box -->
+                <div class="mt-8 p-6 bg-gray-50 border border-gray-200 rounded-xl">
+                    <h3 class="text-xl font-bold mb-4 text-gray-900">Optimize Your Business</h3>
+                    <p class="text-gray-700 mb-4">Looking to implement these strategies for your business? Explore our resources:</p>
+                    <ul class="space-y-3">
+                        <li class="flex items-start">
+                            <svg class="h-6 w-6 text-primary mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <div class="ml-3">
+                                <h4 class="font-semibold text-gray-900">Internal Linking Strategy</h4>
+                                <p class="text-sm text-gray-600 mb-1">Create connections to related content to guide readers.</p>
+                                <a href="/blog/content-marketing-strategies" class="text-sm font-medium text-primary internal-link">Content Marketing Guide →</a>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <svg class="h-6 w-6 text-primary mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <div class="ml-3">
+                                <h4 class="font-semibold text-gray-900">Meta Information Optimization</h4>
+                                <p class="text-sm text-gray-600 mb-1">Craft engaging titles and descriptions to improve SEO.</p>
+                                <a href="/blog/seo-for-small-businesses" class="text-sm font-medium text-primary internal-link">SEO Best Practices →</a>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <svg class="h-6 w-6 text-primary mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <div class="ml-3">
+                                <h4 class="font-semibold text-gray-900">Business Valuation</h4>
+                                <p class="text-sm text-gray-600 mb-1">Understand what your business is worth in today's market.</p>
+                                <a href="/services/business-valuation" class="text-sm font-medium text-primary internal-link">Get a Valuation →</a>
+                            </div>
+                        </li>
+                    </ul>
                 </div>
                 
                 <!-- Author Bio - updated to use direct author fields -->

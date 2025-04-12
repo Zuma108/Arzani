@@ -6,6 +6,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import pool from '../db.js';
 import { linkUserData } from '../middleware/userDataLinking.js';
+import { linkQuestionnaireData as linkQuestionnaire, linkQuestionnaireSubmissionById } from '../controllers/valuationController.js';
 
 /**
  * Link questionnaire data if available (based on email or cookie)
@@ -19,27 +20,12 @@ async function linkQuestionnaireData(userId, email, req) {
     if (submissionId) {
       console.log(`Attempting to link questionnaire submission ${submissionId} to user ${userId}`);
       
-      // Try to link by submission ID
-      const linkByIdQuery = `
-        UPDATE questionnaire_submissions
-        SET user_id = $1, is_linked = TRUE, updated_at = NOW(), status = 'linked'
-        WHERE submission_id = $2 AND (user_id IS NULL OR is_linked = FALSE)
-        RETURNING id, submission_id;
-      `;
+      // Use the enhanced function to link all tables by submission ID
+      const result = await linkQuestionnaireSubmissionById(userId, submissionId);
+      linked = Boolean(result);
       
-      const linkResult = await pool.query(linkByIdQuery, [userId, submissionId]);
-      
-      if (linkResult.rows.length > 0) {
+      if (linked) {
         console.log(`Successfully linked questionnaire data by submission ID: ${submissionId}`);
-        
-        // Also update any business valuations linked to this submission
-        await pool.query(`
-          UPDATE business_valuations
-          SET user_id = $1, updated_at = NOW()
-          WHERE submission_id = $2
-        `, [userId, submissionId]);
-        
-        linked = true;
       }
     }
     
@@ -47,28 +33,12 @@ async function linkQuestionnaireData(userId, email, req) {
     if (!linked && email) {
       console.log(`Attempting to link questionnaire data for email: ${email}`);
       
-      const linkByEmailQuery = `
-        UPDATE questionnaire_submissions
-        SET user_id = $1, is_linked = TRUE, updated_at = NOW(), status = 'linked'
-        WHERE email = $2 AND (user_id IS NULL OR is_linked = FALSE)
-        ORDER BY created_at DESC
-        LIMIT 1
-        RETURNING id, submission_id;
-      `;
+      // Use the enhanced function to link all tables by email
+      const result = await linkQuestionnaire(userId, email);
+      linked = Boolean(result);
       
-      const linkResult = await pool.query(linkByEmailQuery, [userId, email.toLowerCase().trim()]);
-      
-      if (linkResult.rows.length > 0) {
-        console.log(`Successfully linked questionnaire data by email for user ${userId}, submission: ${linkResult.rows[0].submission_id}`);
-        
-        // Also update any business valuations linked to this submission or email
-        await pool.query(`
-          UPDATE business_valuations
-          SET user_id = $1, updated_at = NOW()
-          WHERE submission_id = $2 OR email = $3
-        `, [userId, linkResult.rows[0].submission_id, email.toLowerCase().trim()]);
-        
-        linked = true;
+      if (linked) {
+        console.log(`Successfully linked questionnaire data by email for user ${userId}`);
       }
     }
     
@@ -466,17 +436,26 @@ exports.signup = async (req, res) => {
       
       const user = userResult.rows[0];
       
-      // If we have an anonymous ID, update any existing questionnaire submissions
-      if (anonymousId) {
-        // Update business_questionnaires table
-        const updateQuestionnairesQuery = `
+      // Link all questionnaire data using our enhanced functions
+      let linkedData = false;
+      
+      // First try linking by submission ID if provided
+      if (questionnaireSubmissionId) {
+        const result = await linkQuestionnaireSubmissionById(user.id, questionnaireSubmissionId);
+        linkedData = Boolean(result);
+      }
+      
+      // If that didn't work or wasn't provided, try linking by anonymous ID
+      if (!linkedData && anonymousId) {
+        // Update using transaction for consistency
+        const updateBQQuery = `
           UPDATE business_questionnaires
-          SET user_id = $1, updated_at = NOW()
+          SET user_id = $1, conversion_status = 'converted', updated_at = NOW()
           WHERE anonymous_id = $2
         `;
-        await client.query(updateQuestionnairesQuery, [user.id, anonymousId]);
+        await client.query(updateBQQuery, [user.id, anonymousId]);
         
-        // Update customer_emails table
+        // Update other tables that may use anonymous_id
         const updateEmailsQuery = `
           UPDATE customer_emails
           SET user_id = $1, updated_at = NOW()
@@ -484,7 +463,6 @@ exports.signup = async (req, res) => {
         `;
         await client.query(updateEmailsQuery, [user.id, anonymousId]);
         
-        // Update valuation_requests table
         const updateValuationsQuery = `
           UPDATE valuation_requests
           SET user_id = $1, updated_at = NOW()
@@ -492,7 +470,30 @@ exports.signup = async (req, res) => {
         `;
         await client.query(updateValuationsQuery, [user.id, anonymousId]);
         
+        // Also update questionnaire_submissions table
+        const updateQSQuery = `
+          UPDATE questionnaire_submissions
+          SET user_id = $1, is_linked = TRUE, status = 'linked', updated_at = NOW()
+          WHERE anonymous_id = $2
+        `;
+        await client.query(updateQSQuery, [user.id, anonymousId]);
+        
+        // Update business_valuations table
+        const updateBVQuery = `
+          UPDATE business_valuations
+          SET user_id = $1, updated_at = NOW()
+          WHERE anonymous_id = $2 OR email = $3
+        `;
+        await client.query(updateBVQuery, [user.id, anonymousId, email.toLowerCase()]);
+        
         console.log(`Associated anonymous ID ${anonymousId} with new user ${user.id}`);
+        linkedData = true;
+      }
+      
+      // If still no linking happened, try by email as a last resort
+      if (!linkedData) {
+        const result = await linkQuestionnaire(user.id, email);
+        linkedData = Boolean(result);
       }
       
       // Send verification email

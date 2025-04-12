@@ -26,108 +26,146 @@ class Auth {
   }
   
   /**
-   * Load authentication token from available sources
+   * Load token from storage
    */
   loadToken() {
-    // Try localStorage first
-    const localToken = localStorage.getItem('token') || localStorage.getItem('authToken');
-    
-    // Then try sessionStorage
-    const sessionToken = sessionStorage.getItem('token');
-    
-    // Then try cookies
-    const cookieToken = this.getCookie('token');
+    // Check all possible token sources
+    const storageToken = localStorage.getItem('token');
+    const cookieToken = this.getTokenFromCookie();
+    const metaToken = document.querySelector('meta[name="auth-token"]')?.content;
     
     // Use the first available token
-    const token = localToken || sessionToken || cookieToken;
+    this.token = storageToken || cookieToken || metaToken || null;
     
-    if (token) {
-      try {
-        // Parse the token to get expiry and user ID
-        const tokenData = this.parseJwt(token);
+    if (this.token) {
+      // Parse token to get user ID and expiry
+      const tokenData = this.parseJwt(this.token);
+      
+      if (tokenData) {
+        this.userId = tokenData.userId;
+        this.tokenExpiry = new Date(tokenData.exp * 1000);
+        this.authenticated = new Date() < this.tokenExpiry;
         
-        if (tokenData && tokenData.exp && tokenData.userId) {
-          const expiryDate = new Date(tokenData.exp * 1000);
-          const now = new Date();
-          
-          // Only set as authenticated if the token is not expired
-          if (expiryDate > now) {
-            this.token = token;
-            this.userId = tokenData.userId;
-            this.tokenExpiry = expiryDate;
-            this.authenticated = true;
-            
-            // Store the token in localStorage for consistency
-            localStorage.setItem('token', token);
-            return;
-          }
-        }
-      } catch (error) {
-        console.error('Error parsing token:', error);
+        // Sync token across all storage mechanisms
+        this.syncTokenAcrossStorage(this.token);
       }
     }
-    
-    // If we got here, no valid token was found
-    this.authenticated = false;
-    this.token = null;
-    this.userId = null;
-    this.tokenExpiry = null;
   }
   
   /**
-   * Parse a JWT token to extract payload
+   * Set up token refresh mechanism
+   */
+  setupTokenRefresh() {
+    // Check token expiry and refresh if needed
+    setInterval(() => {
+      if (this.token && this.tokenExpiry) {
+        const now = new Date();
+        const expiresIn = this.tokenExpiry.getTime() - now.getTime();
+        
+        // If token expires in less than 15 minutes, refresh it
+        if (expiresIn < 15 * 60 * 1000 && expiresIn > 0) {
+          this.refreshToken();
+        }
+      }
+    }, 60000); // Check every minute
+  }
+  
+  /**
+   * Parse JWT token
    * @param {string} token - JWT token
    * @returns {Object|null} Decoded token payload or null if invalid
    */
   parseJwt(token) {
     try {
-      // Split the token and decode the payload
       const base64Url = token.split('.')[1];
       const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
         return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
       }).join(''));
       
       return JSON.parse(jsonPayload);
     } catch (error) {
-      console.error('Error parsing JWT token:', error);
+      console.error('Error parsing JWT:', error);
       return null;
     }
   }
   
   /**
-   * Get a cookie value by name
-   * @param {string} name - Cookie name
-   * @returns {string|null} Cookie value or null if not found
+   * Get token from cookie
+   * @returns {string|null} Token from cookie or null if not found
    */
-  getCookie(name) {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop().split(';').shift();
+  getTokenFromCookie() {
+    const cookies = document.cookie.split('; ');
+    const tokenCookie = cookies.find(cookie => cookie.startsWith('token='));
+    
+    if (tokenCookie) {
+      return tokenCookie.split('=')[1];
+    }
+    
     return null;
   }
   
   /**
-   * Set up automatic token refresh based on expiry
+   * Synchronize token across all storage mechanisms
+   * @param {string} token - JWT token
    */
-  setupTokenRefresh() {
-    // Check token expiry every minute
-    setInterval(() => {
-      if (this.authenticated && this.tokenExpiry) {
-        const now = new Date();
-        const expiryTime = this.tokenExpiry.getTime();
-        const timeUntilExpiry = expiryTime - now.getTime();
-        
-        // If token expires in less than 15 minutes, refresh it
-        if (timeUntilExpiry < 15 * 60 * 1000 && timeUntilExpiry > 0) {
-          this.refreshToken();
+  syncTokenAcrossStorage(token) {
+    if (!token) return;
+    
+    // Save to localStorage
+    localStorage.setItem('token', token);
+    
+    // Save as cookie (accessible to both client and server)
+    const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+    document.cookie = `token=${token}; path=/; max-age=14400${secure}; SameSite=Lax`;
+    
+    // Ensure fetch requests include the token
+    this.setupFetchInterceptor(token);
+  }
+  
+  /**
+   * Set up fetch interceptor to add token to requests
+   * @param {string} token - JWT token
+   */
+  setupFetchInterceptor(token) {
+    if (!token) return;
+    
+    // Save the original fetch function
+    if (!window._originalFetch) {
+      window._originalFetch = window.fetch;
+    }
+    
+    // Override fetch to add auth header
+    window.fetch = (url, options = {}) => {
+      // Skip for certain static resources or external domains
+      if (typeof url === 'string') {
+        // Don't add token to external requests
+        if (!url.startsWith('/') && !url.startsWith(window.location.origin)) {
+          return window._originalFetch(url, options);
         }
-        // If token is expired, clear it
-        else if (timeUntilExpiry <= 0) {
-          this.clearAuthData();
+        
+        // Skip for static resources
+        if (url.match(/\.(css|js|png|jpg|gif|svg|ico|woff|woff2)(\?.*)?$/)) {
+          return window._originalFetch(url, options);
         }
       }
-    }, 60000); // Check every minute
+      
+      // Add token to options
+      options = options || {};
+      options.headers = options.headers || {};
+      
+      // Only add token if not already present
+      if (!options.headers['Authorization'] && !options.headers['authorization']) {
+        options.headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      // Include credentials for same-origin requests
+      if (!options.credentials) {
+        options.credentials = 'same-origin';
+      }
+      
+      return window._originalFetch(url, options);
+    };
   }
   
   /**
@@ -136,36 +174,35 @@ class Auth {
    */
   async refreshToken() {
     try {
-      // Call the token refresh endpoint
       const response = await fetch('/api/auth/refresh', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        credentials: 'include' // Include cookies
+        credentials: 'include'
       });
       
-      if (response.ok) {
-        const data = await response.json();
+      const data = await response.json();
+      
+      if (response.ok && data.token) {
+        // Update token
+        this.token = data.token;
         
-        if (data.token) {
-          // Update token data
-          this.token = data.token;
-          localStorage.setItem('token', data.token);
+        // Parse token for expiry and user ID
+        const tokenData = this.parseJwt(data.token);
+        
+        if (tokenData) {
+          this.userId = tokenData.userId;
+          this.tokenExpiry = new Date(tokenData.exp * 1000);
+          this.authenticated = true;
           
-          // Parse the new token
-          const tokenData = this.parseJwt(data.token);
-          
-          if (tokenData && tokenData.exp) {
-            this.tokenExpiry = new Date(tokenData.exp * 1000);
-            this.userId = tokenData.userId;
-            this.authenticated = true;
-            return true;
-          }
+          // Sync token across storage mechanisms
+          this.syncTokenAcrossStorage(data.token);
         }
+        
+        return true;
       }
       
-      // If we get here, token refresh failed
       return false;
     } catch (error) {
       console.error('Error refreshing token:', error);
@@ -201,12 +238,27 @@ class Auth {
    */
   async login(email, password) {
     try {
+      // Prepare login data with questionnaire identifiers if available
+      const loginData = { email, password };
+      
+      // Add questionnaire data identifiers if available
+      const questionnaireSubmissionId = localStorage.getItem('questionnaireSubmissionId');
+      const anonymousId = localStorage.getItem('questionnaireAnonymousId');
+      
+      if (questionnaireSubmissionId) {
+        loginData.questionnaireSubmissionId = questionnaireSubmissionId;
+      }
+      
+      if (anonymousId) {
+        loginData.anonymousId = anonymousId;
+      }
+      
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify(loginData),
         credentials: 'include'
       });
       
@@ -215,7 +267,6 @@ class Auth {
       if (response.ok && data.token) {
         // Store token
         this.token = data.token;
-        localStorage.setItem('token', data.token);
         
         // Parse token for expiry and user ID
         const tokenData = this.parseJwt(data.token);
@@ -224,6 +275,14 @@ class Auth {
           this.userId = tokenData.userId;
           this.tokenExpiry = new Date(tokenData.exp * 1000);
           this.authenticated = true;
+          
+          // Sync token across all storage mechanisms
+          this.syncTokenAcrossStorage(data.token);
+        }
+        
+        // Mark questionnaire data as linked if applicable
+        if (questionnaireSubmissionId || anonymousId) {
+          localStorage.setItem('questionnaireLinkStatus', 'linked');
         }
         
         return {
@@ -284,13 +343,20 @@ class Auth {
    * @returns {boolean} True if the user is authenticated
    */
   isAuthenticated() {
-    // If we have a token and it's not expired, the user is authenticated
-    if (this.token && this.tokenExpiry) {
-      const now = new Date();
-      return this.tokenExpiry > now;
+    // If no token, not authenticated
+    if (!this.token) {
+      return false;
     }
     
-    return false;
+    // Check if token has expired
+    if (this.tokenExpiry) {
+      const now = new Date();
+      if (now >= this.tokenExpiry) {
+        return false;
+      }
+    }
+    
+    return this.authenticated;
   }
   
   /**
@@ -316,7 +382,19 @@ class Auth {
    */
   async register(userData) {
     try {
-      const response = await fetch('/api/auth/register', {
+      // Add questionnaire data identifiers if available
+      const questionnaireSubmissionId = localStorage.getItem('questionnaireSubmissionId');
+      const anonymousId = localStorage.getItem('questionnaireAnonymousId');
+      
+      if (questionnaireSubmissionId) {
+        userData.questionnaireSubmissionId = questionnaireSubmissionId;
+      }
+      
+      if (anonymousId) {
+        userData.anonymousId = anonymousId;
+      }
+      
+      const response = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -330,7 +408,6 @@ class Auth {
       if (response.ok && data.token) {
         // Store token
         this.token = data.token;
-        localStorage.setItem('token', data.token);
         
         // Parse token for expiry and user ID
         const tokenData = this.parseJwt(data.token);
@@ -339,6 +416,14 @@ class Auth {
           this.userId = tokenData.userId;
           this.tokenExpiry = new Date(tokenData.exp * 1000);
           this.authenticated = true;
+          
+          // Sync token across all storage mechanisms
+          this.syncTokenAcrossStorage(data.token);
+        }
+        
+        // Mark questionnaire data as linked if applicable
+        if (questionnaireSubmissionId || anonymousId) {
+          localStorage.setItem('questionnaireLinkStatus', 'linked');
         }
         
         return {
@@ -361,62 +446,21 @@ class Auth {
       };
     }
   }
-  
-  /**
-   * Add authentication headers to fetch options
-   * @param {Object} options - Fetch options
-   * @returns {Object} Updated fetch options with auth headers
-   */
-  addAuthHeaders(options = {}) {
-    if (!options.headers) {
-      options.headers = {};
-    }
-    
-    if (this.token) {
-      options.headers['Authorization'] = `Bearer ${this.token}`;
-    }
-    
-    options.credentials = 'include';
-    return options;
-  }
-  
-  /**
-   * Authenticated fetch - wrapper around fetch with auth headers
-   * @param {string} url - URL to fetch
-   * @param {Object} options - Fetch options
-   * @returns {Promise<Response>} Fetch response
-   */
-  async authFetch(url, options = {}) {
-    const authOptions = this.addAuthHeaders(options);
-    return fetch(url, authOptions);
-  }
 }
 
 // Create a singleton instance
 const auth = new Auth();
 
-// Export the singleton instance
-window.Auth = auth;
-
-// Add fetch interceptor to automatically add auth headers
+// Replace fetch with a version that automatically includes auth token
 const originalFetch = window.fetch;
-window.fetch = async function(url, options = {}) {
+window.fetch = function(url, options = {}) {
   // Skip for certain static resources
   if (typeof url === 'string' && url.match(/\.(css|js|png|jpg|gif|svg|ico|woff|woff2)(\?.*)?$/)) {
     return originalFetch(url, options);
   }
   
-  // Skip for auth endpoints
-  if (typeof url === 'string' && (
-      url.includes('/auth/login') ||
-      url.includes('/auth/register')
-    )) {
-    return originalFetch(url, options);
-  }
-  
-  // Only add auth header if this is likely an API request to our domain
-  // or if this is a relative URL (same domain)
-  const isRelativeUrl = typeof url === 'string' && !url.startsWith('http');
+  // Determine if this is a relative URL or same domain
+  const isRelativeUrl = typeof url === 'string' && url.startsWith('/');
   const isSameDomain = typeof url === 'string' && (
     url.startsWith(window.location.origin) ||
     url.startsWith('/')
@@ -540,9 +584,21 @@ async function handleLogin(event) {
       body: JSON.stringify(loginData)
     });
     
-    // ...existing code...
+    // Handle response
+    const data = await response.json();
+    if (response.ok) {
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('questionnaireLinkStatus', 'linked');
+      
+      // Sync token across all storage mechanisms
+      const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+      document.cookie = `token=${data.token}; path=/; max-age=14400${secure}; SameSite=Lax`;
+      
+      // Reload the page or redirect
+      window.location.reload();
+    }
   } catch (error) {
-    // ...existing code...
+    console.error('Login error:', error);
   }
 }
 
@@ -570,20 +626,72 @@ async function handleSignup(event) {
       body: JSON.stringify(signupData)
     });
     
-    // ...existing code...
-    
-    // After successful signup, clear the questionnaire submission ID from localStorage
+    // Handle response
+    const data = await response.json();
     if (response.ok) {
-      localStorage.removeItem('questionnaireSubmissionId');
+      // Store token if provided
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+        
+        // Sync token across all storage
+        const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+        document.cookie = `token=${data.token}; path=/; max-age=14400${secure}; SameSite=Lax`;
+      }
+      
+      // Mark questionnaire as linked
+      localStorage.setItem('questionnaireLinkStatus', 'linked');
+      
+      // Show success message
+      alert('Account created successfully! Please check your email to verify your account.');
+      
+      // Redirect to login
+      window.location.href = '/login2';
     }
-    
-    // ...existing code...
   } catch (error) {
-    // ...existing code...
+    console.error('Signup error:', error);
   }
 }
 
-// Export as module if needed
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = auth;
-}
+// When a page loads, immediately check for token and enforce consistency across storage
+document.addEventListener('DOMContentLoaded', function() {
+  // Check if we have a token in any storage mechanism
+  const localToken = localStorage.getItem('token');
+  const cookieToken = document.cookie.split('; ').find(row => row.startsWith('token='))?.split('=')[1];
+  const metaToken = document.querySelector('meta[name="auth-token"]')?.content;
+  
+  // Use the first available token
+  const token = localToken || cookieToken || metaToken;
+  
+  if (token) {
+    // Make sure it's stored consistently
+    localStorage.setItem('token', token);
+    const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+    document.cookie = `token=${token}; path=/; max-age=14400${secure}; SameSite=Lax`;
+    
+    // Check if we're on a protected page
+    const protectedPages = ['/post-business', '/profile', '/dashboard', '/saved-searches'];
+    const currentPath = window.location.pathname;
+    
+    // If on a protected page, make an immediate verification request
+    if (protectedPages.some(path => currentPath.startsWith(path))) {
+      fetch('/api/auth/verify', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      .then(response => {
+        if (!response.ok) {
+          // If verification fails, redirect to login
+          window.location.href = `/login2?returnTo=${encodeURIComponent(currentPath)}`;
+        }
+      })
+      .catch(error => {
+        console.error('Auth verification error:', error);
+      });
+    }
+  }
+});
+
+// Export the auth object
+window.auth = auth;
+export default auth;
