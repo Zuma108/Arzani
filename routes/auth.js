@@ -10,7 +10,7 @@ import {
   verifyUser, 
   createOrUpdateOAuthUser 
 } from '../database.js';
-import { sendVerificationEmail } from '../utils/email.js';
+import { sendVerificationEmail, sendPasswordResetEmail, sendWelcomeEmail } from '../utils/email.js';
 import { repairUserAccount } from '../database-repair.js';
 import { authenticateUser } from '../middleware/auth.js';
 
@@ -368,6 +368,23 @@ router.get('/verify-email', async (req, res) => {
         console.log('Created new auth record with verified=true for user:', decoded.userId);
       } else {
         console.log('Successfully verified user:', decoded.userId);
+      }
+
+      // Get user details to send welcome email
+      const userDetails = await pool.query(
+        'SELECT email, username FROM users WHERE id = $1',
+        [decoded.userId]
+      );
+
+      if (userDetails.rows.length > 0) {
+        // Send welcome email
+        try {
+          await sendWelcomeEmail(userDetails.rows[0].email, userDetails.rows[0].username);
+          console.log('Welcome email sent to:', userDetails.rows[0].email);
+        } catch (emailError) {
+          console.error('Failed to send welcome email:', emailError);
+          // Continue anyway, this shouldn't block the verification process
+        }
       }
 
       // If request wants JSON

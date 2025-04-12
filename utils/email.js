@@ -139,7 +139,7 @@ export async function sendPasswordResetEmail(email, username, resetUrl) {
         <p><a href="${resetUrl}">${resetUrl}</a></p>
         <p>This password reset link is valid for 1 hour.</p>
         <p>If you did not request a password reset, please ignore this email or contact support if you have concerns.</p>
-        <p>Best regards,<br>The Arzani Marketplace Team</p>
+        <p>Best regards,<br>Team Arzani</p>
       </div>
     </div>
   `;
@@ -188,4 +188,95 @@ export async function sendPasswordResetEmail(email, username, resetUrl) {
   }
 }
 
-export default { sendVerificationEmail, sendPasswordResetEmail };
+export async function sendWelcomeEmail(email, username) {
+  if (!email) {
+    throw new Error('Email is required');
+  }
+  
+  const SERVER_URL = process.env.NODE_ENV === 'production' ? 'https://www.arzani.co.uk' : 'http://localhost:5000';
+  console.log('Sending welcome email to:', email);
+
+  // Email content
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background-color: #041b76; color: white; padding: 20px; text-align: center;">
+        <h2>Welcome to Arzani Marketplace!</h2>
+      </div>
+      <div style="padding: 20px; border: 1px solid #ddd; border-top: none;">
+        <p>Hello ${username || 'there'},</p>
+        <p><strong>Excited to have you on board. Let's get you up and running fast. Here's everything you need to get started:</strong></p>
+        
+        <div style="background-color: #f9f9f9; padding: 15px; margin: 20px 0; border-left: 4px solid #041b76;">
+          <h3 style="margin-top: 0; color: #333;">Your Marketplace Hub</h3>
+          <p>You'll be automatically redirected to our marketplace after login, where you can browse all businesses.</p>
+          <p><a href="${SERVER_URL}/marketplace2" style="color: #041b76; text-decoration: none; font-weight: bold;">/marketplace2</a> - Find and explore businesses for sale or investment opportunities.</p>
+        </div>
+        
+        <h3>Key Features:</h3>
+        <ul style="line-height: 1.6;">
+          <li><a href="${SERVER_URL}/post-business" style="color: #041b76; font-weight: bold;">/post-business</a> - List your business for sale and reach qualified buyers.</li>
+          <li><a href="${SERVER_URL}/profile" style="color: #041b76; font-weight: bold;">/profile</a> - Manage your account settings, saved listings, and personal information.</li>
+          <li><a href="${SERVER_URL}/seller-questionnaire" style="color: #041b76; font-weight: bold;">/seller-questionnaire</a> - Get an estimated valuation for your business before listing.</li>
+          <li><a href="${SERVER_URL}/market-trends" style="color: #041b76; font-weight: bold;">/market-trends</a> - Explore industry insights and current market conditions.</li>
+          <li><a href="${SERVER_URL}/saved-searches" style="color: #041b76; font-weight: bold;">/saved-searches</a> - Save your search criteria to receive personalized updates.</li>
+          <li><a href="${SERVER_URL}/dashboard" style="color: #041b76; font-weight: bold;">/dashboard</a> - View all your activities, listings and communications in one place.</li>
+        </ul>
+        
+        <p style="margin-top: 25px;">If you have any questions or need assistance, please don't hesitate to contact our support team at <a href="mailto:support@arzani.co.uk" style="color: #041b76;">support@arzani.co.uk</a>.</p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${SERVER_URL}/marketplace2" style="background-color: #041b76; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">
+            Explore Marketplace
+          </a>
+        </div>
+        
+        <p>Best regards,<br>The Arzani Marketplace Team</p>
+      </div>
+    </div>
+  `;
+
+  try {
+    if (useSendGrid) {
+      // Use SendGrid
+      const msg = {
+        to: email,
+        from: {
+          email: 'hello@arzani.co.uk',
+          name: 'Arzani Marketplace'
+        },
+        subject: 'Welcome to Arzani Marketplace!',
+        html: htmlContent
+      };
+
+      const response = await sgMail.send(msg);
+      console.log('Welcome email sent successfully via SendGrid');
+      return response;
+    } else {
+      // Use Nodemailer
+      const transporter = getTransporter();
+      const info = await transporter.sendMail({
+        from: '"Arzani Marketplace" <hello@arzani.co.uk>',
+        to: email,
+        subject: 'Welcome to Arzani!',
+        html: htmlContent
+      });
+      
+      console.log('Welcome email sent successfully via Nodemailer:', info.messageId);
+      
+      // For development, log preview URL
+      if (process.env.NODE_ENV === 'development' && info.previewUrl) {
+        console.log('Preview URL:', info.previewUrl);
+      }
+      
+      return info;
+    }
+  } catch (error) {
+    console.error('Failed to send welcome email:', error);
+    if (error.response) {
+      console.error(error.response.body);
+    }
+    throw new Error(`Failed to send welcome email: ${error.message}`);
+  }
+}
+
+export default { sendVerificationEmail, sendPasswordResetEmail, sendWelcomeEmail };

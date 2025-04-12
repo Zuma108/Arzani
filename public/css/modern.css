@@ -11,6 +11,69 @@ body {
   background-color: var(--primary-dark);
   color: white;
   overflow-x: hidden;
+  max-width: 100vw; /* Limit maximum width */
+  position: relative; /* Add position relative to body */
+}
+
+/* Fix horizontal overflow issues in mobile */
+.page-wrapper {
+  overflow-x: hidden;
+  width: 100%;
+  position: relative; /* Add position relative */
+  max-width: 100vw; /* Enforce maximum width */
+}
+
+html, body {
+  overflow-x: hidden; /* Ensure both html and body have overflow-x hidden */
+  max-width: 100vw; /* Limit maximum width */
+  position: relative; /* Add position relative to body */
+}
+
+/* Fix horizontal overflow issues on mobile devices */
+html, body {
+  overflow-x: hidden !important; /* Force hidden overflow with !important */
+  width: 100%;
+  max-width: 100vw;
+  position: relative;
+}
+
+.page-wrapper {
+  overflow-x: hidden !important; /* Force hidden overflow with !important */
+  width: 100%;
+  max-width: 100vw;
+  position: relative;
+}
+
+/* Fix for full-width sections */
+section {
+  max-width: 100vw;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+/* Fix for testimonials section */
+.testimonials-scroll-container {
+  max-width: 100vw;
+  box-sizing: border-box;
+  overflow: hidden; /* Contain the scroll within container */
+}
+
+.testimonials-wrapper {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Ensure video backgrounds don't cause overflow */
+.home-hero_background-video,
+.home-hero_background-video video {
+  max-width: 100vw;
+  overflow: hidden;
+}
+
+/* Ensure hero image doesn't cause overflow on scale transform */
+.hero-image {
+  max-width: 100%;
+  transform-origin: center center;
 }
 
 /* Header & Navigation */
@@ -73,6 +136,33 @@ header.scrolled {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+/* Hero Section - Video Background */
+.home-hero_background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  max-width: 100%; /* Ensure background doesn't overflow */
+}
+
+.home-hero_background-video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  max-width: 100%; /* Ensure video container doesn't overflow */
+}
+
+.home-hero_background-video video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  max-width: 100%; /* Ensure video itself doesn't overflow */
 }
 
 /* Buttons */
@@ -588,40 +678,6 @@ footer ul li a:hover {
   max-height: 500px;
 }
 
-/* Hero Section - Video Background */
-.home-hero_background {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-}
-
-.home-hero_background-video {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.home-hero_background-video::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: radial-gradient(circle at center, rgba(49,111,212,0.15) 0%, rgba(20,20,20,0) 70%);
-}
-
-.home-hero_background-video video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
 /* Grid Pattern Background */
 .grid-pattern {
   width: 100%;
@@ -642,7 +698,14 @@ footer ul li a:hover {
   }
 }
 
-/* Media Queries */
+/* Testimonials wrapper fix */
+.testimonials-wrapper {
+  width: 100%;
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+/* Responsive styles */
 @media (max-width: 768px) {
   .navbar__burger.open .burger-line:first-child {
     transform: rotate(45deg) translate(5px, 5px);
@@ -2500,6 +2563,21 @@ footer select {
 .page-wrapper {
   overflow-x: hidden;
   width: 100%;
+  position: relative; /* Add position relative */
+  max-width: 100vw; /* Enforce maximum width */
+}
+
+html, body {
+  overflow-x: hidden; /* Ensure both html and body have overflow-x hidden */
+  max-width: 100vw; /* Limit maximum width */
+  position: relative; /* Add position relative to body */
+}
+
+/* Ensure containers don't cause overflow */
+.container {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box; /* Ensure padding is included in width calculation */
 }
 
 /* Responsive cards in features sections */
@@ -2536,37 +2614,6 @@ footer select {
 
 .usp-section .usp-item:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 25px rgba(49, 111, 212, 0.15);
-}
-
-/* Responsive hero section */
-@media (max-width: 768px) {
-  .hero-section h1 {
-    font-size: 2.5rem !important; /* Adjusted font size */
-  }
-  
-  .hero-section p {
-    font-size: 1rem !important; /* Adjusted font size */
-  }
-  
-  /* Adjust spacing for mobile */
-  section {
-    padding-left: 16px !important;
-    padding-right: 16px !important;
-  }
-
-  .usp-section {
-    grid-template-columns: 1fr; /* Stack USPs vertically on mobile */
-    gap: 1rem; /* Adjust gap for mobile */
-  }
-}
-
-/* Hero Image Styles */
-.hero-image {
-  max-height: 100vh; /* Adjust max height as needed */
-  filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.3));
-}
-
 /* Responsive hero section */
 @media (max-width: 768px) {
   .hero-section .grid {

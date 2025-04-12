@@ -4,6 +4,7 @@ import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
 import { getUserByEmail, getUserById, createUser } from '../../database.js';
 import { authDebug } from '../../middleware/authDebug.js';
+import { sendVerificationEmail, sendWelcomeEmail } from '../../utils/email.js';
 
 dotenv.config();
 const router = express.Router();
@@ -116,6 +117,22 @@ router.post('/signup', async (req, res) => {
       process.env.JWT_SECRET, 
       { expiresIn: '4h' }
     );
+    
+    // Generate verification token
+    const verificationToken = jwt.sign(
+      { userId: newUser.id }, 
+      process.env.EMAIL_SECRET || process.env.JWT_SECRET, 
+      { expiresIn: '24h' }
+    );
+    
+    // Send verification email
+    try {
+      await sendVerificationEmail(email, verificationToken);
+      console.log('Verification email sent to:', email);
+    } catch (emailError) {
+      console.error('Failed to send verification email:', emailError);
+      // Continue anyway, don't block signup
+    }
     
     // Save user ID to session
     req.session.userId = newUser.id;
