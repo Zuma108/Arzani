@@ -2645,7 +2645,7 @@ html, body {
   section.hero-section { /* Be more specific to avoid affecting other sections */
     padding-left: 16px !important;
     padding-right: 16px !important;
-    padding-top: 10rem !important; /* Increased top padding from 8rem to 10rem to create more space below navbar */
+    padding-top: 8rem !important; /* Adjust top padding if needed */
     padding-bottom: 4rem !important; /* Adjust bottom padding */
     min-height: auto; /* Allow height to adjust on mobile */
   }
