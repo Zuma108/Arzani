@@ -196,45 +196,7 @@
                     </div>
                     <% } %>
                 </div>
-                
-                <!-- SEO Meta Information Box -->
-                <div class="mt-8 p-6 bg-gray-50 border border-gray-200 rounded-xl">
-                    <h3 class="text-xl font-bold mb-4 text-gray-900">Optimize Your Business</h3>
-                    <p class="text-gray-700 mb-4">Looking to implement these strategies for your business? Explore our resources:</p>
-                    <ul class="space-y-3">
-                        <li class="flex items-start">
-                            <svg class="h-6 w-6 text-primary mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            <div class="ml-3">
-                                <h4 class="font-semibold text-gray-900">Internal Linking Strategy</h4>
-                                <p class="text-sm text-gray-600 mb-1">Create connections to related content to guide readers.</p>
-                                <a href="/blog/content-marketing-strategies" class="text-sm font-medium text-primary internal-link">Content Marketing Guide →</a>
-                            </div>
-                        </li>
-                        <li class="flex items-start">
-                            <svg class="h-6 w-6 text-primary mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            <div class="ml-3">
-                                <h4 class="font-semibold text-gray-900">Meta Information Optimization</h4>
-                                <p class="text-sm text-gray-600 mb-1">Craft engaging titles and descriptions to improve SEO.</p>
-                                <a href="/blog/seo-for-small-businesses" class="text-sm font-medium text-primary internal-link">SEO Best Practices →</a>
-                            </div>
-                        </li>
-                        <li class="flex items-start">
-                            <svg class="h-6 w-6 text-primary mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            <div class="ml-3">
-                                <h4 class="font-semibold text-gray-900">Business Valuation</h4>
-                                <p class="text-sm text-gray-600 mb-1">Understand what your business is worth in today's market.</p>
-                                <a href="/services/business-valuation" class="text-sm font-medium text-primary internal-link">Get a Valuation →</a>
-                            </div>
-                        </li>
-                    </ul>
-                </div>
-                
+               
                 <!-- Author Bio - updated to use direct author fields -->
                 <div class="mt-12 p-6 bg-gray-100 border border-gray-200 rounded-xl">
                     <div class="flex items-start">
@@ -243,7 +205,9 @@
                              class="w-16 h-16 rounded-full mr-4 border border-gray-200">
                         <div>
                             <h3 class="text-xl font-bold mb-2 text-gray-900">About <%= post.author_name || 'Arzani Team' %></h3>
-                            <p class="text-gray-700"><%= post.author_bio || 'Arzani contributor' %></p>
+                            <p class="text-gray-700"><%= post.author_bio || 'The Arzani team provides expert insights on business valuation, market trends, and growth strategies for UK small businesses.
+
+                                ' %></p>
                         </div>
                     </div>
                 </div>
