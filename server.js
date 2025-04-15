@@ -13,7 +13,9 @@ import bcrypt from 'bcrypt';
 import { sendVerificationEmail } from './utils/email.js';
 import authRoutes from './routes/auth.js';
 import paymentRoutes from './routes/payment.routes.js';
+
 import Stripe from 'stripe';
+
 import { 
   createUserTable, 
   createUser, 
@@ -54,6 +56,7 @@ import printRoutes from './middleware/routeDebug.js';
 import apiRoutes from './routes/api.js'; // Add this import
 import blogRoutes from './routes/blogRoutes.js'; // Add this import for blog routes
 import blogApiRoutes from './routes/blogApiRoutes.js'; // Add this import
+import adminRoutes from './routes/adminRoutes.js'; // <-- Import admin routes
 import { stripeWebhookMiddleware, handleStripeWebhook } from './middleware/webhookHandler.js';
 import profileRoutes from './routes/profile.routes.js';
 import apiSubRoutes from './routes/api/subscription.js';
@@ -122,7 +125,17 @@ import valuationRoutes from './routes/valuationRoutes.js';
 // Import RDS optimization routes
 import rdsOptimizationRoutes from './routes/rdsOptimizationRoutes.js';
 
-// Add businessAuth middleware
+import roleRoutes from './routes/roleRoutes.js';
+
+// Add this with other route imports
+import roleSelectionRoutes from './routes/roleSelectionRoutes.js';
+
+// Import verification upload routes
+import verificationUploadRoutes from './routes/verificationUploadRoutes.js';
+
+// Import professional routes
+import professionalRoutes from './routes/professionalRoutes.js';
+
 const businessAuth = async (req, res, next) => {
   try {
     const authHeader = req.headers['authorization'];
@@ -381,7 +394,7 @@ app.use((req, res, next) => {
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
   next();
 });
-
+app.use('/api/admin', adminAuth, adminRoutes); // <-- Register admin API routes, protected by adminAuth
 // Add specific headers for Stripe.js
 app.use('/checkout-gold', (req, res, next) => {
   res.setHeader('Cross-Origin-Embedder-Policy', 'credentialless');
@@ -538,6 +551,9 @@ import diagnosticMiddleware from './middleware/diagnosticMiddleware.js';
 // Routes
 app.use('/api', diagnosticMiddleware);
 app.use('/api', historyRoutes);
+// IMPORTANT: Register public API endpoints BEFORE authentication middleware
+app.use('/api/public', publicValuationRouter);
+app.use('/api/public-valuation', publicValuationRouter);
 app.use('/api/auth', apiAuthRoutes); // Add API auth routes
 app.use('/api/chat', chatApiRoutes); // Use chatApiRoutes instead of chatRouter
 app.use('/payment', paymentRoutes);
@@ -547,6 +563,12 @@ app.use('/api/drive', googleDriveRoutes);
 app.use('/api/test', testRoutes); // Add the new test routes
 app.use('/api/post-business', postBusinessValuationRoutes);
 
+
+// Register role management routes
+app.use('/api/users/roles', roleRoutes);
+
+// Register admin routes (protected by adminAuth middleware within the router file)
+app.use('/api/admin', adminRoutes); // <-- Register admin routes
 
 app.use('/api/profile', authenticateToken, profileApi); // Keep this one, remove the duplicate below
 // app.use('/api/profile', profileApi); // REMOVE THIS DUPLICATE LINE
@@ -608,7 +630,7 @@ app.use('/seller-questionnaire', sellerQuestionnaireRoutes);
 app.use('/checkout', checkoutRoutes);
 app.use('/checkout-gold', (req, res) => res.redirect('/checkout/gold'));
 app.use('/checkout-platinum', (req, res) => res.redirect('/checkout/platinum'));
-
+app.use('/admin', adminAuth, adminRoutes); // <-- Register frontend admin routes
 app.use('/users', userRoutes);
 app.use('/auth', authRoutes);
 // Make sure the API endpoints are accessible without the token validation
@@ -814,6 +836,11 @@ app.use('/', businessRoutes); // <-- Ensure this line is present
 app.use('/', voiceRoutes); // Now this will work
 app.use('/', googleAuthRoutes);
 
+// Apply routes
+app.use('/professional', professionalRoutes);
+app.use('/api/professional', professionalRoutes);
+app.use('/api/verification', verificationUploadRoutes); // Add the verification upload routes
+
 // Serve static files from the 'views/partials/public' directory
 app.use(express.static(path.join(__dirname, 'views/partials/public')));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -896,7 +923,8 @@ app.use('/post-business*', (req, res, next) => {
   }
   next();
 });
-
+// Register role selection routes
+app.use('/role-selection', roleSelectionRoutes)
 // Standard debug middleware for post-business routes
 app.use('/post-business*', (req, res, next) => {
   console.log('Post-business request debug:', {
@@ -1364,6 +1392,37 @@ app.get('/history', authenticateToken, async (req, res) => {
   }
 });
 
+app.get('/professional-verification', authenticateToken, (req, res) => {
+  res.render('professional-verification', {
+    title: 'Professional Verification',
+    user: req.user
+  });
+});
+
+// Professional dashboard page route - only accessible to verified professionals
+app.get('/professional-dashboard', authenticateToken, async (req, res) => {
+  try {
+    // Check if user is a verified professional
+    const userQuery = await pool.query(
+      'SELECT is_verified_professional, professional_type FROM users WHERE id = $1',
+      [req.user.userId]
+    );
+    
+    if (!userQuery.rows[0]?.is_verified_professional) {
+      return res.redirect('/professional-verification');
+    }
+    
+    res.render('professional-dashboard', {
+      title: 'Professional Dashboard',
+      user: req.user,
+      professionalType: userQuery.rows[0].professional_type
+    });
+  } catch (error) {
+    console.error('Error loading professional dashboard:', error);
+    res.status(500).send('Error loading dashboard');
+  }
+});
+
   let businesses = [];
 
   app.post('/api/submit-business', businessAuth, upload.array('images', 5), async (req, res) => {
@@ -1523,9 +1582,6 @@ Provide a helpful answer based on the website data.
             model: 'gpt-3.5-turbo',
             messages: [{ role: 'user', content: prompt }],
         });
-
-        const aiResponse = completion.choices[0].message.content;
-
         res.json({ answer: aiResponse });
     } catch (error) {
         console.error('Error handling chat message:', error);
@@ -1946,17 +2002,25 @@ app.get('/market-trends', authenticateToken, async (req, res) => {
 app.use('/api/market', authenticateToken, marketTrendsRoutes);
 
 
-// Modify the catch-all route to exclude /chat
+// Modify the catch-all route to exclude /chat AND /professional-verification
 app.get('*', (req, res, next) => {
-  // Don't redirect chat routes to index.html
+  // Don't redirect specific server-rendered pages or API calls to index.html
   if (req.path.startsWith('/chat') || 
       req.path === '/market-trends' || 
       req.path === '/saved-searches' || 
       req.path === '/history' || 
-      req.path.startsWith('/post-business')) {
-      next();
+      req.path === '/profile' || // Ensure profile isn't caught
+      req.path === '/professional-verification' || // Exclude professional verification
+      req.path.startsWith('/post-business') ||
+      req.path.startsWith('/api/')) { // Exclude all API routes
+    return next(); // Let specific handlers manage these
   } else {
-      res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    // For any other GET request, serve the main frontend entry point (if applicable)
+    // Or handle as a 404 if it's not meant to be caught by a client-side router
+    // console.log(`Catch-all serving index.html for path: ${req.path}`);
+    // res.sendFile(path.join(__dirname, 'public', 'index.html')); 
+    // Consider sending 404 instead if index.html isn't the desired fallback
+     res.status(404).render('error', { message: 'Page not found', error: {} });
   }
 });
 
@@ -2994,10 +3058,6 @@ app.use('/uploads/', (req, res, next) => {
 // Replace all debug middleware with this single version
 app.use((req, res, next) => {
   // Skip logging for static assets and common files
-  if (/^\/(css|js|images|uploads|favicon\.ico)/.test(req.path)) {
-    return next();
-  }
-
   // Only log important requests
   if (req.path.startsWith('/api/') || req.path === '/profile') {
     console.log('Request:', {
@@ -3103,73 +3163,9 @@ app.get('/api/migrate-profile-pictures', adminAuth, async (req, res) => {
 console.log("All registered routes:");
 printRoutes(app);
 
-
-
-// Document handling endpoints
-app.post('/api/documents/share', authenticateToken, async (req, res) => {
-  try {
-    const { recipientEmail, documentId, documentType } = req.body;
-    
-    // Log the document sharing request
-    console.log(`Document sharing request: ${documentId} to ${recipientEmail}`);
-    
-    // Here you would implement actual document sharing logic
-    // For example, sending an email with a secure link
-    
-    res.status(200).json({ success: true, message: 'Document shared successfully' });
-  } catch (error) {
-    console.error('Error sharing document:', error);
-    res.status(500).json({ success: false, error: 'Failed to share document' });
-  }
-});
-
-// Lead capture endpoint
-app.post('/api/leads', async (req, res) => {
-  try {
-    const { email, name, phone, interests, interactionHistory, source } = req.body;
-    
-    // Basic validation
-    if (!email) {
-      return res.status(400).json({ success: false, error: 'Email is required' });
-    }
-    
-    // Save lead to database
-    // This is a placeholder - you would implement actual database storage
-    console.log('New lead captured:', { email, name, phone, interests, source });
-    
-    // In a real implementation you might:
-    // const newLead = await Lead.create({ email, name, phone, interests, source });
-    
-    res.status(201).json({ 
-      success: true, 
-      message: 'Lead captured successfully'
-    });
-  } catch (error) {
-    console.error('Error capturing lead:', error);
-    res.status(500).json({ success: false, error: 'Failed to capture lead' });
-  }
-});
-
-// Analytics endpoint
-app.post('/api/analytics/events', async (req, res) => {
-  try {
-    const { eventName, properties, userId, sessionId } = req.body;
-    
-    // Log the analytics event
-    console.log(`Analytics event: ${eventName}`, properties);
-    
-    // Here you would implement actual analytics storage
-    // For example, saving to a database or forwarding to an analytics service
-    
-    res.status(200).json({ success: true });
-  } catch (error) {
-    console.error('Error tracking analytics event:', error);
-    res.status(500).json({ success: false, error: 'Failed to track event' });
-  }
-});
-
 // Apply routes
 app.use('/post-business', postBusinessRoutes);
+app.use('/api/verification', verificationUploadRoutes); // Add the verification upload routes
 
 // Fix for post-business authentication - add fallback handler
 app.get('/post-business/*', (req, res, next) => {

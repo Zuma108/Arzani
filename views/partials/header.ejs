@@ -1,1 +1,187 @@
-<!-- Header has been moved directly into pages -->
+<!-- Updated Header with Role Toggle -->
+<header class="main-header">
+    <div class="container mx-auto px-4 py-3">
+        <div class="flex justify-between items-center">
+            <div class="logo">
+                <a href="/">
+                    <img src="/images/logo.png" alt="Arzani Marketplace Logo" class="h-10">
+                </a>
+            </div>
+            
+            <nav class="main-nav">
+                <ul class="flex items-center space-x-6">
+                    <li><a href="/marketplace2" class="nav-link">Marketplace</a></li>
+                    <li><a href="/pricing" class="nav-link">Pricing</a></li>
+                    <li><a href="/blog" class="nav-link">Blog</a></li>
+                    <li><a href="/market-trends" class="nav-link">Market Trends</a></li>
+                </ul>
+            </nav>
+            
+            <div class="user-actions flex items-center">
+                <% if (typeof user !== 'undefined' && user) { %>
+                    <!-- Include Role Toggle Component -->
+                    <%- include('./role-toggle') %>
+                    
+                    <div class="user-dropdown relative">
+                        <button class="user-menu-btn flex items-center space-x-2">
+                            <div class="avatar">
+                                <img src="<%= user.profile_picture || '/images/default-avatar.png' %>" alt="User Avatar" class="rounded-full w-8 h-8">
+                            </div>
+                            <span class="user-name"><%= user.username || 'User' %></span>
+                            <i class="fas fa-chevron-down text-xs text-gray-500"></i>
+                        </button>
+                        
+                        <div class="dropdown-menu">
+                            <ul>
+                                <li><a href="/profile"><i class="fas fa-user"></i> Profile</a></li>
+                                <li><a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                                <% if (user.primary_role === 'seller' || user.roles && user.roles.seller) { %>
+                                    <li><a href="/post-business"><i class="fas fa-plus-circle"></i> List Business</a></li>
+                                <% } %>
+                                <% if (user.primary_role === 'buyer' || user.roles && user.roles.buyer) { %>
+                                    <li><a href="/saved-businesses"><i class="fas fa-heart"></i> Saved Businesses</a></li>
+                                <% } %>
+                                <% if (user.primary_role === 'broker' || user.roles && user.roles.broker || 
+                                       user.primary_role === 'advisor' || user.roles && user.roles.advisor) { %>
+                                    <% if (user.is_verified_professional) { %>
+                                        <li><a href="/professional-dashboard"><i class="fas fa-briefcase"></i> Pro Dashboard</a></li>
+                                    <% } else { %>
+                                        <li><a href="/professional-verification"><i class="fas fa-id-badge"></i> Verify Status</a></li>
+                                    <% } %>
+                                <% } %>
+                                <li class="divider"></li>
+                                <li><a href="/logout" id="logout-link"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                <% } else { %>
+                    <a href="/login2" class="btn btn-outline-primary mr-2">Log In</a>
+                    <a href="/signup" class="btn btn-primary">Sign Up</a>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</header>
+
+<style>
+    .main-header {
+        background-color: #ffffff;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    
+    .nav-link {
+        color: #4b5563;
+        font-weight: 500;
+        transition: color 0.2s ease;
+    }
+    
+    .nav-link:hover {
+        color: #3b82f6;
+    }
+    
+    .user-menu-btn {
+        cursor: pointer;
+        padding: 5px 10px;
+        border-radius: 20px;
+        transition: all 0.2s ease;
+    }
+    
+    .user-menu-btn:hover {
+        background-color: #f3f4f6;
+    }
+    
+    .user-name {
+        font-size: 14px;
+        font-weight: 500;
+        color: #4b5563;
+    }
+    
+    .dropdown-menu {
+        position: absolute;
+        right: 0;
+        top: 100%;
+        width: 220px;
+        margin-top: 5px;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        z-index: 100;
+        display: none;
+        overflow: hidden;
+    }
+    
+    .dropdown-menu.show {
+        display: block;
+    }
+    
+    .dropdown-menu ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .dropdown-menu ul li a {
+        display: flex;
+        align-items: center;
+        padding: 12px 15px;
+        color: #4b5563;
+        text-decoration: none;
+        transition: background-color 0.2s ease;
+    }
+    
+    .dropdown-menu ul li a:hover {
+        background-color: #f3f4f6;
+    }
+    
+    .dropdown-menu ul li a i {
+        width: 20px;
+        margin-right: 10px;
+        color: #6b7280;
+    }
+    
+    .dropdown-menu ul li.divider {
+        height: 1px;
+        background-color: #e5e7eb;
+        margin: 5px 0;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // User dropdown menu toggle
+        const userMenuBtn = document.querySelector('.user-menu-btn');
+        const dropdownMenu = document.querySelector('.dropdown-menu');
+        
+        if (userMenuBtn && dropdownMenu) {
+            userMenuBtn.addEventListener('click', function(event) {
+                event.stopPropagation();
+                dropdownMenu.classList.toggle('show');
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function() {
+                dropdownMenu.classList.remove('show');
+            });
+            
+            // Prevent dropdown from closing when clicking inside it
+            dropdownMenu.addEventListener('click', function(event) {
+                event.stopPropagation();
+            });
+        }
+        
+        // Logout functionality
+        const logoutLink = document.getElementById('logout-link');
+        if (logoutLink) {
+            logoutLink.addEventListener('click', function(event) {
+                event.preventDefault();
+                
+                // Clear token from localStorage
+                localStorage.removeItem('token');
+                localStorage.removeItem('refreshToken');
+                
+                // Redirect to login page
+                window.location.href = '/login2';
+            });
+        }
+    });
+</script>

@@ -341,6 +341,28 @@
                         <i class="fas fa-history"></i> History
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/professional-verification">
+                        <i class="fas fa-user-check"></i> Professional Verification
+                    </a>
+                </li>
+                <!-- Add Professional Dashboard link if verified -->
+                <% if (locals.user && locals.user.is_verified_professional) { %>
+                   <li class="nav-item">
+                       <a class="nav-link" href="/professional-dashboard">
+                           <i class="fas fa-tachometer-alt"></i> Professional Dashboard
+                       </a>
+                   </li>
+               <% } %>
+               <!-- Admin Verification Review link - enhanced with admin badge -->
+               <% if (locals.user && locals.user.role === 'admin') { %>
+                   <li class="nav-item">
+                       <a class="nav-link" href="/admin/verification-review">
+                           <i class="fas fa-user-shield"></i> Admin Verification
+                           <span class="badge bg-danger ms-2">Admin</span>
+                       </a>
+                   </li>
+               <% } %>
             </ul>
             <div class="mt-auto mb-3">
                 <button class="btn btn-outline-danger w-100 mx-3" id="signOutBtn">

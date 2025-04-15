@@ -35,9 +35,30 @@ function sanitizeRedirectUrl(url) {
   if (url.includes('/login') || 
       url.includes('/login2') || 
       url.includes('/signup') || 
-      url.includes('/auth/login')) {
+      url.includes('/auth/login') ||
+      url.includes('/auth/signup')) {
+    
     console.log('Prevented redirect loop to:', url);
-    return '/';
+    
+    // Check for deep path to preserve post-login destination
+    // Example: /login?returnTo=/dashboard -> Extract /dashboard
+    const match = url.match(/[?&](returnTo|returnUrl|redirect)=([^&]+)/);
+    if (match && match[2]) {
+      const deepReturnUrl = decodeURIComponent(match[2]);
+      // Recursively sanitize the deeper URL
+      return sanitizeRedirectUrl(deepReturnUrl);
+    }
+    
+    return '/marketplace2'; // Default to marketplace if no deeper path
+  }
+  
+  // If URL is absolute, only allow our own domain
+  if (url.startsWith('http') || url.startsWith('//')) {
+    const hostname = url.replace(/^https?:\/\//, '').split('/')[0];
+    if (!hostname.includes('localhost') && !hostname.includes('arzani.co.uk')) {
+      console.log('Prevented redirect to external domain:', hostname);
+      return '/';
+    }
   }
   
   return url;
@@ -277,9 +298,28 @@ const validateToken = async (req, res, next) => {
  * Use this for routes that should only be accessible to authenticated users
  */
 const requireAuth = (req, res, next) => {
+  // If this is an auth page, check if the user is already authenticated
+  const isAuthPage = req.path.match(/^\/(login2|signup|logout|login|auth\/login|auth\/signup)/i);
+  
+  if (isAuthPage) {
+    // Extract token and verify
+    const token = extractTokenFromRequest(req);
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        // User is already authenticated, redirect to marketplace instead of auth page
+        console.log('User already authenticated, redirecting from auth page to marketplace');
+        return res.redirect('/marketplace2');
+      } catch (error) {
+        // Token invalid, continue to auth page
+        console.log('Invalid token on auth page access, continuing to auth page');
+      }
+    }
+  }
+
   // Skip authentication for public paths
   if (
-    req.path.match(/^\/(login2|signup|logout|login|public|css|js|images|fonts|favicon)/i) ||
+    req.path.match(/^\/(public|css|js|images|fonts|favicon)/i) ||
     req.path.match(/\.(css|js|png|jpg|jpeg|gif|svg|ico|woff|woff2)$/i)
   ) {
     return next();
@@ -298,6 +338,29 @@ const requireAuth = (req, res, next) => {
           message: 'Authentication required',
           redirectTo: '/login2?returnTo=' + encodeURIComponent(req.originalUrl)
         });
+      }
+      
+      // Track redirects in session to prevent loops
+      if (!req.session.redirectHistory) {
+        req.session.redirectHistory = [];
+      }
+      
+      // Add current path to history
+      req.session.redirectHistory.push(req.originalUrl);
+      
+      // Keep only the last 5 entries
+      if (req.session.redirectHistory.length > 5) {
+        req.session.redirectHistory.shift();
+      }
+      
+      // Check for redirect loops
+      const redirectCount = req.session.redirectHistory.filter(
+        url => url === req.originalUrl
+      ).length;
+      
+      if (redirectCount > 2) {
+        console.log('Detected redirect loop, redirecting to marketplace');
+        return res.redirect('/marketplace2');
       }
       
       // Sanitize the return URL to prevent redirect loops

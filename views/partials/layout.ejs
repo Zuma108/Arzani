@@ -42,6 +42,11 @@
       .fa-regular.fa-circle-star::before { content: "⭐"; }
       .fa-regular.fa-sparkles::before { content: "✨"; }
     </style>
+    
+    <!-- Authentication token (if available) -->
+    <% if (locals.user && locals.user.token) { %>
+    <meta name="auth-token" content="<%= locals.user.token %>">
+    <% } %>
 </head>
 <body>
     <!-- Header/Navbar goes here -->
@@ -55,6 +60,9 @@
     <footer>
         <!-- Footer content here -->
     </footer>
+    
+    <!-- Unified Authentication JS (load before other scripts) -->
+    <script src="/js/auth-unified.js"></script>
     
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>

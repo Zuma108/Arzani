@@ -1,0 +1,63 @@
+<%
+/**
+ * Verification Badge Component
+ * 
+ * Displays a badge indicating the verification status of a professional
+ * 
+ * Parameters:
+ * - status: String - 'verified', 'pending', or 'none'
+ * - size: String (optional) - 'sm', 'md', or 'lg' (default: 'md')
+ * - showLabel: Boolean (optional) - whether to show text label (default: true)
+ */
+
+// Set default values
+const badgeSize = typeof size !== 'undefined' ? size : 'md';
+const displayLabel = typeof showLabel !== 'undefined' ? showLabel : true;
+
+// Determine badge appearance based on status
+let badgeClass = '';
+let badgeIcon = '';
+let badgeLabel = '';
+let badgeTooltip = '';
+
+switch(status) {
+    case 'verified':
+        badgeClass = 'bg-green-100 text-green-800 border-green-200';
+        badgeIcon = 'fa-check-circle';
+        badgeLabel = 'Verified Professional';
+        badgeTooltip = 'This professional has been verified by our team';
+        break;
+    case 'pending':
+        badgeClass = 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        badgeIcon = 'fa-clock';
+        badgeLabel = 'Verification Pending';
+        badgeTooltip = 'Verification documents are under review';
+        break;
+    default:
+        badgeClass = 'bg-gray-100 text-gray-600 border-gray-200';
+        badgeIcon = 'fa-user';
+        badgeLabel = 'Not Verified';
+        badgeTooltip = 'This professional has not submitted verification';
+}
+
+// Size classes
+let sizeClasses = '';
+switch(badgeSize) {
+    case 'sm':
+        sizeClasses = displayLabel ? 'text-xs py-1 px-2' : 'text-xs p-1';
+        break;
+    case 'lg':
+        sizeClasses = displayLabel ? 'text-sm py-2 px-3' : 'text-sm p-2';
+        break;
+    default: // md
+        sizeClasses = displayLabel ? 'text-xs py-1.5 px-2.5' : 'text-xs p-1.5';
+}
+%>
+
+<span class="inline-flex items-center rounded-full border <%= badgeClass %> <%= sizeClasses %>" 
+      title="<%= badgeTooltip %>">
+    <i class="fas <%= badgeIcon %> <%= displayLabel ? 'mr-1' : '' %>"></i>
+    <% if (displayLabel) { %>
+        <span><%= badgeLabel %></span>
+    <% } %>
+</span>

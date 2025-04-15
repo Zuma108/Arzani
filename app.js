@@ -2,10 +2,12 @@ import express from 'express';
 import voiceRoutes from './routes/voiceRoutes.js';
 import chatRoutes from './routes/chatRoutes.js';
 import authRoutes from './routes/auth.js';
-import { authenticateUser } from './middleware/auth.js';
 import path from 'path';
 import { setupWebSocketServer } from './websocket-server.js';
 import http from 'http';
+import { authMiddleware } from './utils/auth-unified.js';
+import authDebug from './middleware/authDebug.js';
+
 const app = express();
 
 // Make sure you have EJS set up as your view engine
@@ -46,6 +48,9 @@ import sitemapRoutes from './routes/sitemap.js';
 import businessApiRoutes from './routes/api/businessApi.js';
 import debugApiRoutes from './routes/api/debug.js';
 
+// Import the verification routes
+const verificationRoutes = require('./routes/verificationRoutes');
+
 // Import routes
 import businessRoutes from './routes/businessRoutes.js';
 import userRoutes from './routes/userRoutes.js';
@@ -57,6 +62,15 @@ import imageRoutes from './routes/imageRoutes.js';
 // Import direct business listings API
 import businessListingsRoutes from './routes/api/businessListings.js';
 
+// Debug middleware for all requests - helps trace authentication issues
+app.use((req, res, next) => {
+  if (!req.path.match(/\.(css|js|png|jpg|jpeg|gif|svg|ico|woff|woff2)$/i)) {
+    console.log(`[Request] ${req.method} ${req.path}`);
+  }
+  next();
+});
+
+// Public routes that don't require authentication
 app.use('/', voiceRoutes);
 app.use('/', chatRoutes);
 app.use('/checkout', checkoutRouter);
@@ -73,9 +87,6 @@ app.use('/', sitemapRoutes);
 
 // Add the image routes - make sure to add this before other routes
 app.use('/api', imageRoutes);
-
-// Add pricing route
-  
 
 // Clean up homepage routes to resolve conflicts - remove duplicates and keep one clear implementation
 app.get('/new-homepage', (req, res) => {
@@ -142,31 +153,72 @@ app.use('/api/business', businessListingsRoutes);
 
 app.use('/api/debug', debugApiRoutes);
 
-// IMPORTANT: Register public API endpoints BEFORE authentication middleware
-app.use('/api/public', publicValuationRouter);
+// Register verification routes
+app.use('/api/verification', verificationRoutes);
 
-// Then apply authentication middleware (if you have global auth middleware)
-// app.use(authenticateToken); // This line would be your global auth middleware if you have one
+
+
+// Define public paths that should never require authentication
+const publicPaths = [
+  '/api/public',
+  '/api/public-valuation',
+  '/api/business/calculate-valuation',
+  '/api/business/save-questionnaire',
+  '/api/verification/business',  // Make verification endpoints public
+  '/api/verification/stats',     // Make verification stats public
+  '/login',
+  '/login2',
+  '/signup',
+  '/auth/login',
+  '/auth/signup',
+  '/marketplace',
+  '/marketplace2'
+];
+
+// Apply authentication middleware to all routes except explicitly public ones
+app.use((req, res, next) => {
+  // Skip authentication for static files and public paths
+  if (
+    req.path.match(/\.(css|js|png|jpg|jpeg|gif|svg|ico|woff|woff2)$/i) ||
+    publicPaths.some(path => req.path.startsWith(path)) ||
+    req.isPublicRequest
+  ) {
+    return next();
+  }
+  
+  // Use our standardized auth middleware with appropriate options
+  return authMiddleware({ required: true })(req, res, next);
+});
 
 // Mount routes
 app.use('/', businessRoutes);
 app.use('/users', userRoutes);
-app.use('/auth', authRoutes);
 
-// Mount the public valuation API - No authentication middleware
-app.use('/api/public-valuation', publicValuationRouter);
+// Add admin routes with admin-specific middleware
+app.use('/admin', authMiddleware({ required: true, adminRequired: true }), (req, res, next) => {
+  // This middleware will only be reached if the user is authenticated as an admin
+  next();
+});
 
-// Protect routes that need authentication
-const protectedRoutes = [
-  '/api/user/profile',
-  '/api/listings/create',
-  '/api/listings/edit',
-  '/dashboard'
-];
-
-// Apply authentication middleware to protected routes
-protectedRoutes.forEach(route => {
-  app.use(route, authenticateUser);
+// Set up error handler for authentication failures
+app.use((err, req, res, next) => {
+  console.error('Global error handler:', err);
+  
+  if (err.name === 'UnauthorizedError' || err.status === 401) {
+    // For API requests, return JSON
+    if (req.path.startsWith('/api/')) {
+      return res.status(401).json({ 
+        error: 'Authentication required',
+        message: err.message || 'Please log in to access this resource' 
+      });
+    }
+    
+    // For regular pages, redirect to login
+    return res.redirect(`/login2?returnTo=${encodeURIComponent(req.originalUrl)}`);
+  }
+  
+  // For other errors, pass to Express's default error handler
+  next(err);
 });
 
 // Set up server

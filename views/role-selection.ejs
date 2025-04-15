@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Your Role - Arzani Marketplace</title>
+    <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #1A237E;
+            --secondary-color: #E8EAF6;
+            --accent-color: #3949AB;
+            --text-color: #333;
+            --border-color: rgba(0, 0, 0, 0.12);
+            --shadow-color: rgba(0, 0, 0, 0.08);
+            --success-color: #4CAF50;
+            --danger-color: #F44336;
+            --warning-color: #f59e0b;
+            --card-border-radius: 12px;
+            --input-border-radius: 8px;
+            --button-border-radius: 8px;
+            --transition-speed: 0.2s;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .btn { padding: 0.75rem 1.5rem; border-radius: var(--button-border-radius); transition: all var(--transition-speed); font-weight: 500; }
+        .btn-primary { background-color: var(--primary-color); border-color: var(--primary-color); color: white; }
+        .btn-primary:hover { background-color: var(--accent-color); border-color: var(--accent-color); transform: translateY(-1px); }
+        .btn-warning { background-color: var(--warning-color); border-color: var(--warning-color); color: white; }
+        .btn-warning:hover { background-color: #d97706; border-color: #d97706; transform: translateY(-1px); }
+        .btn-outline-secondary { border-color: #6c757d; color: #6c757d; }
+        .btn-outline-secondary:hover { background-color: #6c757d; color: white; }
+
+        .role-card {
+            background-color: #fff;
+            border-radius: var(--card-border-radius);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 10px var(--shadow-color);
+            transition: all var(--transition-speed);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .role-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px var(--shadow-color);
+            border-color: var(--accent-color);
+        }
+
+        .role-card.active {
+            border-color: var(--primary-color);
+            border-width: 2px;
+            box-shadow: 0 0 0 3px rgba(26, 35, 126, 0.2);
+        }
+
+        .role-card.disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+            background-color: #f8f9fa;
+        }
+
+        .role-card.disabled:hover {
+            transform: none;
+            box-shadow: 0 2px 10px var(--shadow-color);
+            border-color: var(--border-color);
+        }
+
+        .role-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        .role-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+
+        .role-description {
+            color: #6c757d;
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+            flex-grow: 1;
+        }
+
+        .role-features {
+            text-align: left;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            padding-left: 0;
+            list-style: none;
+        }
+
+        .feature-item {
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            color: #495057;
+        }
+
+        .feature-item i {
+            margin-right: 0.5rem;
+            color: var(--success-color);
+            width: 16px;
+            text-align: center;
+        }
+
+        .verification-notice {
+            background-color: #fff3cd;
+            border-left: 4px solid var(--warning-color);
+            padding: 0.75rem 1rem;
+            margin-top: 1rem;
+            border-radius: var(--input-border-radius);
+            text-align: left;
+            font-size: 0.85rem;
+            color: #664d03;
+        }
+
+        .verification-notice p { margin-bottom: 0; }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="min-vh-100 d-flex flex-column">
+        <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+            <div class="container">
+                <a class="navbar-brand d-flex align-items-center" href="/">
+                    <img src="/figma design exports/images.webp/arzani-icon-nobackground.png" alt="Arzani Logo" height="30" class="me-2">
+                    Arzani
+                </a>
+            </div>
+        </nav>
+
+        <main class="flex-grow-1 py-5">
+            <div class="container">
+                <div class="text-center mb-5">
+                    <h1 class="display-6 mb-2">Welcome to Arzani Marketplace</h1>
+                    <p class="lead text-muted">Let's personalize your experience. Select your primary role.</p>
+                </div>
+
+                <div class="row g-4 justify-content-center">
+                    <div class="col-lg-4 col-md-6">
+                        <div class="role-card p-4 <%= user && user.primaryRole === 'buyer' ? 'active' : '' %>" id="role-buyer" onclick="setRole('buyer')">
+                            <div class="role-icon"><i class="fas fa-search-dollar"></i></div>
+                            <h2 class="role-title">Buyer</h2>
+                            <p class="role-description">Looking to purchase a business? Access our marketplace of available listings.</p>
+                            <ul class="role-features">
+                                <li class="feature-item"><i class="fas fa-check"></i> Search and filter businesses</li>
+                                <li class="feature-item"><i class="fas fa-check"></i> Contact sellers directly</li>
+                                <li class="feature-item"><i class="fas fa-check"></i> Save favorite listings</li>
+                                <li class="feature-item"><i class="fas fa-check"></i> Receive new listing alerts</li>
+                            </ul>
+                            <button class="btn <%= user && user.primaryRole === 'buyer' ? 'btn-outline-secondary disabled' : 'btn-primary' %> w-100 mt-auto">
+                                <%= user && user.primaryRole === 'buyer' ? 'Current Role' : 'Select Buyer' %>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6">
+                        <div class="role-card p-4 <%= user && user.primaryRole === 'seller' ? 'active' : '' %>" id="role-seller" onclick="setRole('seller')">
+                            <div class="role-icon"><i class="fas fa-store-alt"></i></div>
+                            <h2 class="role-title">Seller</h2>
+                            <p class="role-description">Want to sell your business? Reach potential buyers through our platform.</p>
+                            <ul class="role-features">
+                                <li class="feature-item"><i class="fas fa-check"></i> List your business for sale</li>
+                                <li class="feature-item"><i class="fas fa-check"></i> Receive and manage inquiries</li>
+                                <li class="feature-item"><i class="fas fa-check"></i> Track listing performance</li>
+                                <li class="feature-item"><i class="fas fa-check"></i> Access valuation tools</li>
+                            </ul>
+                            <button class="btn <%= user && user.primaryRole === 'seller' ? 'btn-outline-secondary disabled' : 'btn-primary' %> w-100 mt-auto">
+                                <%= user && user.primaryRole === 'seller' ? 'Current Role' : 'Select Seller' %>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6">
+                        <div class="role-card p-4 <%= user && user.primaryRole === 'professional' ? 'active' : '' %> <%= user && !user.isVerifiedProfessional ? 'disabled' : '' %>" id="role-professional">
+                            <div class="role-icon"><i class="fas fa-user-tie"></i></div>
+                            <h2 class="role-title">Professional</h2>
+                            <p class="role-description">Business broker, accountant, or advisor? Access specialized tools and features.</p>
+                            <ul class="role-features">
+                                <li class="feature-item"><i class="fas fa-check"></i> Represent multiple clients</li>
+                                <li class="feature-item"><i class="fas fa-check"></i> Professional dashboard</li>
+                                <li class="feature-item"><i class="fas fa-check"></i> Advanced analytics</li>
+                                <li class="feature-item"><i class="fas fa-check"></i> Verified professional badge</li>
+                            </ul>
+                            <% if (user && user.isVerifiedProfessional) { %>
+                                <button class="btn <%= user.primaryRole === 'professional' ? 'btn-outline-secondary disabled' : 'btn-primary' %> w-100 mt-auto" onclick="setRole('professional')">
+                                    <%= user.primaryRole === 'professional' ? 'Current Role' : 'Select Professional' %>
+                                </button>
+                            <% } else if (user && user.verificationStatus === 'pending') { %>
+                                <button class="btn btn-warning w-100 mt-auto disabled">
+                                    Verification Pending
+                                </button>
+                                <div class="verification-notice">
+                                    <p>Your professional verification is being processed.</p>
+                                </div>
+                            <% } else { %>
+                                <button class="btn btn-warning w-100 mt-auto" onclick="startVerification()">
+                                    Get Verified
+                                </button>
+                                <div class="verification-notice">
+                                    <p>Verification required to access professional features.</p>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-5">
+                    <p class="text-muted">Need help deciding? <a href="/role-selection/questionnaire" class="link-primary text-decoration-none">Take our quick questionnaire</a>.</p>
+                </div>
+
+                <div class="text-center mt-4" id="continue-button-container" style="display: none;">
+                    <button class="btn btn-success btn-lg" onclick="confirmRoleSelection()">Continue as <span id="selected-role-name"></span></button>
+                </div>
+            </div>
+        </main>
+
+        <footer class="bg-white mt-auto py-3 border-top">
+            <div class="container text-center text-muted small">
+                &copy; <%= new Date().getFullYear() %> Arzani Marketplace. All rights reserved.
+            </div>
+        </footer>
+    </div>
+
+    <div id="user-data"
+         data-is-verified-professional="<%= typeof user !== 'undefined' && user && user.isVerifiedProfessional ? 'true' : 'false' %>"
+         data-verification-status="<%= typeof user !== 'undefined' && user && user.verificationStatus ? user.verificationStatus : '' %>"
+         data-primary-role="<%= typeof user !== 'undefined' && user && user.primaryRole ? user.primaryRole : '' %>"
+         style="display: none;"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/user-role-data.js"></script>
+    <script>
+        const cards = document.querySelectorAll('.role-card');
+        const continueContainer = document.getElementById('continue-button-container');
+        const selectedRoleName = document.getElementById('selected-role-name');
+        let currentSelectedRole = document.getElementById('user-data').getAttribute('data-primary-role');
+
+        function highlightCard(role) {
+            cards.forEach(card => card.classList.remove('active'));
+            const selectedCard = document.getElementById(`role-${role}`);
+            if (selectedCard && !selectedCard.classList.contains('disabled')) {
+                selectedCard.classList.add('active');
+                selectedRoleName.textContent = role.charAt(0).toUpperCase() + role.slice(1);
+                continueContainer.style.display = 'block';
+            } else {
+                continueContainer.style.display = 'none';
+            }
+        }
+
+        const originalSetRole = window.setRole;
+        window.setRole = function(role) {
+            const card = document.getElementById(`role-${role}`);
+            if (card && card.classList.contains('disabled')) {
+                console.log('Professional role requires verification.');
+                return;
+            }
+
+            highlightCard(role);
+
+            if (typeof originalSetRole === 'function') {
+                originalSetRole(role);
+            } else {
+                console.error('setRole function from user-role-data.js not found.');
+            }
+        };
+
+        function startVerification() {
+            window.location.href = '/professional-verification';
+        }
+
+        function confirmRoleSelection() {
+            console.log(`Continuing with role: ${selectedRoleName.textContent}`);
+            continueContainer.style.display = 'none';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const initialRole = document.getElementById('user-data').getAttribute('data-primary-role');
+            if (initialRole) {
+                const initialCard = document.getElementById(`role-${initialRole}`);
+                if (initialCard) {
+                    initialCard.classList.add('active');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

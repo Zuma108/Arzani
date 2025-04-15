@@ -10,6 +10,7 @@ class Auth {
     this.userId = null;
     this.authenticated = false;
     this.tokenExpiry = null;
+    this.redirectHistory = [];
     
     // Load token on init
     this.loadToken();
@@ -23,6 +24,7 @@ class Auth {
     this.isAuthenticated = this.isAuthenticated.bind(this);
     this.getAuthToken = this.getAuthToken.bind(this);
     this.getUserId = this.getUserId.bind(this);
+    this.preNavigationAuthCheck = this.preNavigationAuthCheck.bind(this);
   }
   
   /**
@@ -48,6 +50,18 @@ class Auth {
         
         // Sync token across all storage mechanisms
         this.syncTokenAcrossStorage(this.token);
+        
+        // Log authentication status for debugging
+        console.log('Auth loaded from storage:', {
+          userId: this.userId,
+          tokenExpiry: this.tokenExpiry,
+          authenticated: this.authenticated,
+          source: storageToken ? 'localStorage' : (cookieToken ? 'cookie' : 'meta')
+        });
+      } else {
+        // Token parsing failed, clear invalid token
+        console.warn('Clearing invalid token during load');
+        this.clearAuthData();
       }
     }
   }
@@ -112,15 +126,25 @@ class Auth {
   syncTokenAcrossStorage(token) {
     if (!token) return;
     
-    // Save to localStorage
-    localStorage.setItem('token', token);
-    
-    // Save as cookie (accessible to both client and server)
-    const secure = window.location.protocol === 'https:' ? '; Secure' : '';
-    document.cookie = `token=${token}; path=/; max-age=14400${secure}; SameSite=Lax`;
-    
-    // Ensure fetch requests include the token
-    this.setupFetchInterceptor(token);
+    try {
+      // Save to localStorage
+      localStorage.setItem('token', token);
+      
+      // Save as cookie (accessible to both client and server)
+      const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+      const sameSite = 'Lax'; // Less restrictive than Strict, but still secure
+      document.cookie = `token=${token}; path=/; max-age=14400${secure}; SameSite=${sameSite}`;
+      
+      // Save to sessionStorage as well for tab-specific state
+      sessionStorage.setItem('token', token);
+      
+      // Ensure fetch requests include the token
+      this.setupFetchInterceptor(token);
+      
+      console.log('Token synchronized across storage mechanisms');
+    } catch (error) {
+      console.error('Error syncing token across storage:', error);
+    }
   }
   
   /**
@@ -220,14 +244,23 @@ class Auth {
     this.authenticated = false;
     this.tokenExpiry = null;
     
-    // Clear storage
+    // Clear localStorage
     localStorage.removeItem('token');
     localStorage.removeItem('authToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('tokenExpiry');
+    localStorage.removeItem('user');
+    
+    // Clear sessionStorage
     sessionStorage.removeItem('token');
+    sessionStorage.removeItem('authToken');
     
     // Clear cookies - use path matching logic of server
     document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
     document.cookie = 'refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/api/auth/refresh;';
+    document.cookie = 'refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    
+    console.log('All auth data cleared');
   }
   
   /**
@@ -352,6 +385,12 @@ class Auth {
     if (this.tokenExpiry) {
       const now = new Date();
       if (now >= this.tokenExpiry) {
+        console.log('Token expired, attempting refresh');
+        // Attempt token refresh if expired
+        this.refreshToken().catch(err => {
+          console.error('Failed to refresh expired token:', err);
+          this.clearAuthData();
+        });
         return false;
       }
     }
@@ -446,10 +485,83 @@ class Auth {
       };
     }
   }
+  
+  /**
+   * Verify authentication before navigation
+   * @param {string} targetUrl - Target URL
+   * @returns {string} Sanitized URL to prevent redirect loops
+   */
+  preNavigationAuthCheck(targetUrl) {
+    // Track redirect history to detect loops
+    this.redirectHistory.push(targetUrl);
+    
+    // Keep only the last 5 entries to limit memory usage
+    if (this.redirectHistory.length > 5) {
+      this.redirectHistory.shift();
+    }
+    
+    // Detect redirect loops
+    if (this.redirectHistory.length >= 3) {
+      let loopDetected = false;
+      const authPagePatterns = ['/login', '/signup', '/auth/login', '/auth/signup'];
+      
+      // Check if recent history contains auth pages
+      const recentAuthRedirects = this.redirectHistory.filter(url => 
+        authPagePatterns.some(pattern => url.includes(pattern))
+      );
+      
+      if (recentAuthRedirects.length >= 2) {
+        console.warn('Auth redirect loop detected:', this.redirectHistory);
+        loopDetected = true;
+      }
+      
+      if (loopDetected) {
+        console.log('Breaking redirect loop, sending to home');
+        this.redirectHistory = []; // Clear history
+        return '/marketplace2'; // Redirect to main marketplace
+      }
+    }
+    
+    // If navigating to auth pages, check if already authenticated
+    if (targetUrl.includes('/login') || targetUrl.includes('/signup')) {
+      if (this.isAuthenticated()) {
+        console.log('Already authenticated, redirecting to marketplace');
+        return '/marketplace2';
+      }
+    }
+    
+    // Extract deep returnTo URL if present
+    const returnToMatch = targetUrl.match(/[?&](returnTo|returnUrl|redirect)=([^&]+)/);
+    if (returnToMatch && returnToMatch[2]) {
+      const returnTo = decodeURIComponent(returnToMatch[2]);
+      
+      // Prevent loops in returnTo parameter
+      if (returnTo.includes('/login') || returnTo.includes('/signup')) {
+        console.log('Removing problematic returnTo param:', returnTo);
+        return targetUrl.replace(/([?&])(returnTo|returnUrl|redirect)=([^&]+)(&|$)/, '$1');
+      }
+    }
+    
+    return targetUrl;
+  }
 }
 
 // Create a singleton instance
 const auth = new Auth();
+
+// Override navigation methods to prevent auth loops
+const originalAssign = window.location.assign;
+window.location.assign = function(url) {
+  return originalAssign.call(this, auth.preNavigationAuthCheck(url));
+};
+
+const originalHref = Object.getOwnPropertyDescriptor(window.Location.prototype, 'href').set;
+Object.defineProperty(window.Location.prototype, 'href', {
+  set(url) {
+    return originalHref.call(this, auth.preNavigationAuthCheck(url));
+  },
+  configurable: true
+});
 
 // Replace fetch with a version that automatically includes auth token
 const originalFetch = window.fetch;
@@ -482,7 +594,7 @@ window.fetch = function(url, options = {}) {
     }
     
     // If we have a token and no Authorization header is set yet
-    if (!options.headers['Authorization']) {
+    if (!options.headers['Authorization'] && !options.headers['authorization']) {
       options.headers['Authorization'] = `Bearer ${auth.getAuthToken()}`;
     }
     
@@ -560,98 +672,6 @@ document.addEventListener('DOMContentLoaded', function() {
   setInterval(updateAuthUI, 60000); // Check every minute
 });
 
-// Function to handle login form submission
-async function handleLogin(event) {
-  event.preventDefault();
-  
-  // Get form data
-  const formData = new FormData(event.target);
-  const loginData = Object.fromEntries(formData.entries());
-  
-  // Add questionnaire submission ID if available
-  const submissionId = localStorage.getItem('questionnaireSubmissionId');
-  if (submissionId) {
-    loginData.questionnaireSubmissionId = submissionId;
-  }
-  
-  try {
-    // Send login request
-    const response = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(loginData)
-    });
-    
-    // Handle response
-    const data = await response.json();
-    if (response.ok) {
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('questionnaireLinkStatus', 'linked');
-      
-      // Sync token across all storage mechanisms
-      const secure = window.location.protocol === 'https:' ? '; Secure' : '';
-      document.cookie = `token=${data.token}; path=/; max-age=14400${secure}; SameSite=Lax`;
-      
-      // Reload the page or redirect
-      window.location.reload();
-    }
-  } catch (error) {
-    console.error('Login error:', error);
-  }
-}
-
-// Function to handle signup form submission
-async function handleSignup(event) {
-  event.preventDefault();
-  
-  // Get form data
-  const formData = new FormData(event.target);
-  const signupData = Object.fromEntries(formData.entries());
-  
-  // Add questionnaire submission ID if available
-  const submissionId = localStorage.getItem('questionnaireSubmissionId');
-  if (submissionId) {
-    signupData.questionnaireSubmissionId = submissionId;
-  }
-  
-  try {
-    // Send signup request
-    const response = await fetch('/api/auth/signup', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(signupData)
-    });
-    
-    // Handle response
-    const data = await response.json();
-    if (response.ok) {
-      // Store token if provided
-      if (data.token) {
-        localStorage.setItem('token', data.token);
-        
-        // Sync token across all storage
-        const secure = window.location.protocol === 'https:' ? '; Secure' : '';
-        document.cookie = `token=${data.token}; path=/; max-age=14400${secure}; SameSite=Lax`;
-      }
-      
-      // Mark questionnaire as linked
-      localStorage.setItem('questionnaireLinkStatus', 'linked');
-      
-      // Show success message
-      alert('Account created successfully! Please check your email to verify your account.');
-      
-      // Redirect to login
-      window.location.href = '/login2';
-    }
-  } catch (error) {
-    console.error('Signup error:', error);
-  }
-}
-
 // When a page loads, immediately check for token and enforce consistency across storage
 document.addEventListener('DOMContentLoaded', function() {
   // Check if we have a token in any storage mechanism
@@ -669,7 +689,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.cookie = `token=${token}; path=/; max-age=14400${secure}; SameSite=Lax`;
     
     // Check if we're on a protected page
-    const protectedPages = ['/post-business', '/profile', '/dashboard', '/saved-searches'];
+    const protectedPages = ['/post-business', '/profile', '/dashboard', '/saved-searches', '/marketplace2'];
     const currentPath = window.location.pathname;
     
     // If on a protected page, make an immediate verification request
@@ -682,13 +702,53 @@ document.addEventListener('DOMContentLoaded', function() {
       .then(response => {
         if (!response.ok) {
           // If verification fails, redirect to login
-          window.location.href = `/login2?returnTo=${encodeURIComponent(currentPath)}`;
+          const sanitizedPath = auth.preNavigationAuthCheck(
+            `/login2?returnTo=${encodeURIComponent(currentPath)}`
+          );
+          window.location.href = sanitizedPath;
+        } else {
+          console.log('Token verified successfully on page load');
         }
       })
       .catch(error => {
         console.error('Auth verification error:', error);
+        // Clear invalid token
+        auth.clearAuthData();
+        
+        // Only redirect if not already on login page to prevent loops
+        if (!currentPath.includes('/login') && !currentPath.includes('/signup')) {
+          const sanitizedPath = auth.preNavigationAuthCheck(
+            `/login2?returnTo=${encodeURIComponent(currentPath)}`
+          );
+          window.location.href = sanitizedPath;
+        }
       });
     }
+    
+    // Check if we're on an auth page while already logged in
+    const authPages = ['/login', '/login2', '/signup', '/auth/login', '/auth/signup'];
+    if (authPages.some(path => currentPath.startsWith(path))) {
+      // Verify token and redirect to home if valid
+      fetch('/api/auth/verify', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      .then(response => {
+        if (response.ok) {
+          // If verification succeeds while on login/signup page, redirect to marketplace
+          console.log('Already authenticated while on auth page, redirecting');
+          window.location.href = '/marketplace2';
+        }
+      })
+      .catch(error => {
+        console.error('Auth verification error on auth page:', error);
+        // Invalid token on auth page is fine, user can log in again
+      });
+    }
+  } else if (window.location.pathname.startsWith('/marketplace2')) {
+    // If no token but on marketplace, no need to redirect, marketplace can be browsed anonymously
+    console.log('Browsing marketplace anonymously');
   }
 });
 

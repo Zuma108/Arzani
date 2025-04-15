@@ -279,4 +279,120 @@ export async function sendWelcomeEmail(email, username) {
   }
 }
 
-export default { sendVerificationEmail, sendPasswordResetEmail, sendWelcomeEmail };
+export async function sendVerificationStatusEmail(email, username, status, professionalType, notes) {
+  if (!email || !status) {
+    throw new Error('Email and status are required');
+  }
+  
+  const SERVER_URL = process.env.NODE_ENV === 'production' ? 'https://www.arzani.co.uk' : 'http://localhost:5000';
+  console.log(`Sending verification ${status} email to:`, email);
+
+  // Customize content based on status
+  let subject = '';
+  let statusMessage = '';
+  let actionButton = '';
+  let statusColor = '';
+  
+  if (status === 'approved') {
+    subject = 'Professional Verification Approved - Arzani Marketplace';
+    statusMessage = `<p>Congratulations! Your professional verification as a ${professionalType} has been <strong style="color: #28a745;">approved</strong>. You now have access to all verified professional features on the Arzani Marketplace.</p>`;
+    actionButton = `
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${SERVER_URL}/professional-dashboard" style="background-color: #28a745; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">
+          Explore Professional Features
+        </a>
+      </div>
+    `;
+    statusColor = '#28a745'; // Green
+  } else if (status === 'rejected') {
+    subject = 'Professional Verification Update - Arzani Marketplace';
+    statusMessage = `
+      <p>Thank you for submitting your professional verification request as a ${professionalType}.</p>
+      <p>After careful review, we were unable to approve your verification at this time. ${notes ? `<br><strong>Reason:</strong> ${notes}` : ''}</p>
+      <p>You are welcome to submit a new verification request with additional documentation.</p>
+    `;
+    actionButton = `
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${SERVER_URL}/professional-verification" style="background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">
+          Submit New Verification
+        </a>
+      </div>
+    `;
+    statusColor = '#dc3545'; // Red
+  } else if (status === 'pending') {
+    subject = 'Professional Verification Request Received - Arzani Marketplace';
+    statusMessage = `
+      <p>We have received your professional verification request as a ${professionalType}.</p>
+      <p>Our team will review your documentation and credentials shortly. This process typically takes 1-2 business days.</p>
+    `;
+    actionButton = `
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${SERVER_URL}/verification-status" style="background-color: #ffc107; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">
+          Check Verification Status
+        </a>
+      </div>
+    `;
+    statusColor = '#ffc107'; // Yellow
+  }
+
+  // Email content
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background-color: ${statusColor}; color: white; padding: 20px; text-align: center;">
+        <h2>Professional Verification Status Update</h2>
+      </div>
+      <div style="padding: 20px; border: 1px solid #ddd; border-top: none;">
+        <p>Hello ${username || 'there'},</p>
+        ${statusMessage}
+        ${actionButton}
+        <p>If you have any questions about your verification status, please contact our support team at <a href="mailto:support@arzani.co.uk" style="color: #041b76;">support@arzani.co.uk</a>.</p>
+        <p>Best regards,<br>The Arzani Marketplace Team</p>
+      </div>
+    </div>
+  `;
+
+  try {
+    if (useSendGrid) {
+      // Use SendGrid
+      const msg = {
+        to: email,
+        from: {
+          email: 'hello@arzani.co.uk',
+          name: 'Arzani Marketplace'
+        },
+        subject: subject,
+        html: htmlContent
+      };
+
+      const response = await sgMail.send(msg);
+      console.log(`Verification ${status} email sent successfully via SendGrid`);
+      return response;
+    } else {
+      // Use Nodemailer
+      const transporter = getTransporter();
+      const info = await transporter.sendMail({
+        from: '"Arzani Marketplace" <hello@arzani.co.uk>',
+        to: email,
+        subject: subject,
+        html: htmlContent
+      });
+      
+      console.log(`Verification ${status} email sent successfully via Nodemailer:`, info.messageId);
+      
+      // For development, log preview URL
+      if (process.env.NODE_ENV === 'development' && info.previewUrl) {
+        console.log('Preview URL:', info.previewUrl);
+      }
+      
+      return info;
+    }
+  } catch (error) {
+    console.error(`Failed to send verification ${status} email:`, error);
+    if (error.response) {
+      console.error(error.response.body);
+    }
+    throw new Error(`Failed to send verification ${status} email: ${error.message}`);
+  }
+}
+
+export default { sendVerificationEmail, sendPasswordResetEmail, sendWelcomeEmail, sendVerificationStatusEmail };
