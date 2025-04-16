@@ -336,7 +336,7 @@
                     <!-- Exit link -->
                     <a href="/" class="exit-link">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1-2-2h4"></path>
                             <polyline points="16 17 21 12 16 7"></polyline>
                             <line x1="21" y1="12" x2="9" y2="12"></line>
                         </svg>
@@ -1255,7 +1255,13 @@
                         
                         // If we have valuation data, trigger saving it with the new email
                         if (window.valuationData) {
-                            saveValuationToDatabase(window.valuationData);
+                            saveValuationToDatabase(window.valuationData)
+                                .then(() => {
+                                    console.log('Valuation saved after email collection');
+                                })
+                                .catch(err => {
+                                    console.error('Error saving valuation after email collection:', err);
+                                });
                         }
                     } else {
                         // Show email validation error
@@ -1341,11 +1347,21 @@
                 localStorage.setItem('sellerValuationData', JSON.stringify(window.valuationData));
                 
                 // Save the questionnaire data to the server
-                saveQuestionnaireDataToServer().catch(err => {
-                    console.error('Error saving questionnaire data:', err);
-                });
-                
-                return true;
+                try {
+                    // Use Promise instead of async/await to avoid blocking
+                    saveQuestionnaireDataToServer()
+                        .catch(err => {
+                            console.error('Error saving questionnaire data:', err);
+                        });
+                    
+                    // Always return true to continue navigation
+                    // Don't wait for the save operation to complete
+                    return true;
+                } catch (err) {
+                    console.error('Error in validateBeforeNext:', err);
+                    // Continue anyway - don't block navigation for saving errors
+                    return true;
+                }
             };
             
             // Check for enter key press in email input
