@@ -1346,24 +1346,20 @@
                 // Save valuation data to localStorage
                 localStorage.setItem('sellerValuationData', JSON.stringify(window.valuationData));
                 
-                // Save the questionnaire data to the server
-                try {
-                    // Use Promise instead of async/await to avoid blocking
-                    saveQuestionnaireDataToServer()
-                        .catch(err => {
-                            console.error('Error saving questionnaire data:', err);
-                        });
-                    
-                    // Always return true to continue navigation
-                    // Don't wait for the save operation to complete
-                    return true;
-                } catch (err) {
-                    console.error('Error in validateBeforeNext:', err);
-                    // Continue anyway - don't block navigation for saving errors
-                    return true;
+                // Use non-blocking save to prevent the perma-loading issue
+                if (typeof window.saveQuestionnaireDataToServerNonBlocking === 'function') {
+                    window.saveQuestionnaireDataToServerNonBlocking();
+                } else {
+                    // Fallback if non-blocking function isn't available
+                    saveQuestionnaireDataToServer().catch(err => {
+                        console.error('Error saving questionnaire data:', err);
+                    });
                 }
+                
+                // Always return true to continue navigation
+                return true;
             };
-            
+
             // Check for enter key press in email input
             if (userEmailInput) {
                 userEmailInput.addEventListener('keypress', function(e) {

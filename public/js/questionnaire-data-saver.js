@@ -74,30 +74,45 @@ document.addEventListener('DOMContentLoaded', function() {
             
             console.log('Saving questionnaire data to server:', questionnaireData);
             
-            // Send data to server
-            const response = await fetch('/seller-questionnaire/save-data', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(questionnaireData)
-            });
+            // Send data to server with timeout to prevent blocking too long
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
             
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                console.log('Successfully saved questionnaire data with ID:', result.submissionId);
-                // Store the submission ID for future reference
-                localStorage.setItem('questionnaireSubmissionId', result.submissionId);
-                document.cookie = `questionnaireSubmissionId=${result.submissionId}; path=/; max-age=${60*60*24*30}`; // 30 days
-                return true;
-            } else {
-                console.error('Server indicated failure saving questionnaire data:', result.message);
-                return false;
+            try {
+                const response = await fetch('/seller-questionnaire/save-data', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(questionnaireData),
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    console.log('Successfully saved questionnaire data with ID:', result.submissionId);
+                    // Store the submission ID for future reference
+                    localStorage.setItem('questionnaireSubmissionId', result.submissionId);
+                    document.cookie = `questionnaireSubmissionId=${result.submissionId}; path=/; max-age=${60*60*24*30}`; // 30 days
+                    return true;
+                } else {
+                    console.error('Server indicated failure saving questionnaire data:', result.message);
+                    return false;
+                }
+            } catch (fetchError) {
+                clearTimeout(timeoutId);
+                if (fetchError.name === 'AbortError') {
+                    console.warn('Save operation timed out but continuing navigation');
+                    return false;
+                }
+                throw fetchError;
             }
         } catch (error) {
             console.error('Failed to save questionnaire data:', error);
@@ -106,38 +121,74 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    // Create a non-blocking version that never awaits or throws
+    function saveQuestionnaireDataToServerNonBlocking() {
+        saveQuestionnaireDataToServer()
+            .catch(err => {
+                console.error('Non-blocking save error (can be ignored):', err);
+            });
+        return true; // Always return true to allow navigation
+    }
+    
     // Detect when the user is about to leave a page and save data
     const nextBtn = document.getElementById('nextBtn');
     if (nextBtn) {
         const originalClickHandler = nextBtn.onclick;
         
-        nextBtn.addEventListener('click', async function(e) {
-            // Don't interfere with the original validation logic
-            if (window.validateBeforeNext && !window.validateBeforeNext()) {
-                return false;
-            }
-            
-            // Automatically save data before proceeding
-            try {
-                await saveQuestionnaireDataToServer();
-            } catch (error) {
-                console.error('Error saving data before navigation:', error);
-                // Continue anyway - don't block navigation for saving errors
-            }
-            
-            // If there was an original click handler, let it proceed
-            if (originalClickHandler) {
-                return originalClickHandler.call(this, e);
-            }
-        });
+        // For valuation page that has the perma-loading issue, use special handling
+        const isValuationPage = window.location.href.includes('/valuation');
+        
+        if (isValuationPage) {
+            nextBtn.addEventListener('click', function(e) {
+                // Check validation but don't wait for save
+                if (window.validateBeforeNext && !window.validateBeforeNext()) {
+                    return false;
+                }
+                
+                // Fire and forget - don't block navigation
+                saveQuestionnaireDataToServerNonBlocking();
+                
+                // Continue with navigation immediately
+                console.log('Proceeding with navigation without waiting for save (valuation page)');
+                
+                // Original handler can proceed
+                if (originalClickHandler) {
+                    return originalClickHandler.call(this, e);
+                }
+                
+                return true;
+            });
+        } else {
+            // For other pages, use normal async approach
+            nextBtn.addEventListener('click', async function(e) {
+                // Don't interfere with the original validation logic
+                if (window.validateBeforeNext && !window.validateBeforeNext()) {
+                    return false;
+                }
+                
+                // Automatically save data before proceeding
+                try {
+                    await saveQuestionnaireDataToServer();
+                } catch (error) {
+                    console.error('Error saving data before navigation:', error);
+                    // Continue anyway - don't block navigation for saving errors
+                }
+                
+                // If there was an original click handler, let it proceed
+                if (originalClickHandler) {
+                    return originalClickHandler.call(this, e);
+                }
+            });
+        }
     }
     
     // Also save periodically (every 30 seconds) to minimize data loss
-    setInterval(saveQuestionnaireDataToServer, 30000);
+    setInterval(saveQuestionnaireDataToServerNonBlocking, 30000);
     
     // Make save function available globally
     window.saveQuestionnaireDataToServer = saveQuestionnaireDataToServer;
+    window.saveQuestionnaireDataToServerNonBlocking = saveQuestionnaireDataToServerNonBlocking;
     
-    // Initial save attempt when script loads
-    setTimeout(saveQuestionnaireDataToServer, 2000);
+    // Initial save attempt when script loads (non-blocking)
+    setTimeout(saveQuestionnaireDataToServerNonBlocking, 2000);
 });
