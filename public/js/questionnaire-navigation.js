@@ -124,29 +124,48 @@ class QuestionnaireNavigation {
     
     // Navigate to the next page
     async nextPage() {
-        console.log('nextPage called'); // Add log
+        console.log('nextPage called');
+        
         // Run page validation if available
         if (typeof window.validateBeforeNext === 'function') {
-            console.log('Calling validateBeforeNext...'); // Add log
-            const isValid = window.validateBeforeNext();
-            console.log(`validateBeforeNext returned: ${isValid}`); // Add log
-            if (!isValid) {
-                console.log('Validation failed, staying on current page');
-                return; // Stop navigation if validation fails
+            console.log('Calling validateBeforeNext...');
+            try {
+                const isValid = window.validateBeforeNext();
+                console.log(`validateBeforeNext returned: ${isValid}`);
+                if (!isValid) {
+                    console.log('Validation failed, staying on current page');
+                    return; // Stop navigation if validation fails
+                }
+            } catch (validationError) {
+                console.error('Error in validateBeforeNext:', validationError);
+                alert('There was an error validating your data. Please try again.');
+                return;
             }
             // If validation passes, the non-blocking save has been initiated. Proceed with navigation.
         } else {
-            console.log('No validateBeforeNext function found.'); // Add log
+            console.log('No validateBeforeNext function found.');
         }
         
         this.currentIndex = this.pageOrder.indexOf(this.getCurrentPageSlug());
-        console.log(`Current index: ${this.currentIndex}, Total pages: ${this.pageOrder.length}`); // Add log
+        console.log(`Current index: ${this.currentIndex}, Total pages: ${this.pageOrder.length}`);
         
         // Check if we're on the last page
         if (this.currentIndex >= this.pageOrder.length - 1) {
             console.log('On last page or beyond, redirecting to thank-you');
             await this.addExitAnimation();
-            window.location.href = '/seller-questionnaire/thank-you';
+            try {
+                // Try to save one last time before redirect
+                if (typeof window.saveQuestionnaireDataToServerNonBlocking === 'function') {
+                    window.saveQuestionnaireDataToServerNonBlocking();
+                }
+                window.location.href = '/seller-questionnaire/thank-you';
+            } catch (e) {
+                console.error('Navigation error:', e);
+                // Force navigation if there's an error
+                setTimeout(() => {
+                    window.location.href = '/seller-questionnaire/thank-you';
+                }, 500);
+            }
             return;
         }
         
@@ -160,8 +179,17 @@ class QuestionnaireNavigation {
         // Add exit animation then navigate
         await this.addExitAnimation();
         
-        // Navigate to the next page
-        window.location.href = `/seller-questionnaire/${nextPageSlug}`;
+        // Force navigation with a small delay to ensure animations complete
+        const nextUrl = `/seller-questionnaire/${nextPageSlug}`;
+        try {
+            window.location.href = nextUrl;
+        } catch (e) {
+            console.error('Navigation error:', e);
+            // Force navigation if there's an error
+            setTimeout(() => {
+                window.location.href = nextUrl;
+            }, 500);
+        }
     }
     
     // Navigate to the previous page

@@ -555,6 +555,102 @@
                 return true;
             };
             
+            // Function to save questionnaire data to server (Keep for fallback/direct calls if needed elsewhere)
+            async function saveQuestionnaireDataToServer() {
+                try {
+                    const questionnaireData = prepareQuestionnaireData();
+                    
+                    // Add valuation data if available
+                    if (window.valuationData) {
+                        questionnaireData.valuation = window.valuationData;
+                    }
+                    
+                    // Ensure we have an anonymous ID to track this submission
+                    const anonymousId = localStorage.getItem('questionnaireAnonymousId') || 
+                        'anon_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                    
+                    if (!localStorage.getItem('questionnaireAnonymousId')) {
+                        localStorage.setItem('questionnaireAnonymousId', anonymousId);
+                    }
+                    
+                    questionnaireData.anonymousId = anonymousId;
+                    
+                    // Make sure email is included (required for database)
+                    if (!questionnaireData.email) {
+                        console.warn('No email found in questionnaire data, redirecting to email step');
+                        showEmailModal();
+                        return false;
+                    }
+                    
+                    console.log('Saving questionnaire data to server:', questionnaireData);
+                    
+                    // Send data to server without any auth token
+                    const response = await fetch('/api/business/save-questionnaire', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(questionnaireData)
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        console.log('Successfully saved questionnaire data with ID:', result.submissionId);
+                        // Store the submission ID for future reference
+                        localStorage.setItem('questionnaireSubmissionId', result.submissionId);
+                        document.cookie = `questionnaireSubmissionId=${result.submissionId}; path=/; max-age=${60*60*24*30}`; // 30 days
+                    } else {
+                        console.error('Server indicated failure saving questionnaire data:', result.message);
+                    }
+                    
+                    return result;
+                } catch (error) {
+                    console.error('Failed to save questionnaire data:', error);
+                    // Don't block navigation if this fails
+                    return { success: false, error: error.message };
+                }
+            }
+            
+            // Function to collect all questionnaire data from localStorage
+            function prepareQuestionnaireData() {
+                return {
+                    email: localStorage.getItem('sellerEmail'),
+                    businessName: localStorage.getItem('sellerBusinessName'),
+                    industry: localStorage.getItem('sellerIndustry'),
+                    description: localStorage.getItem('sellerDescription'),
+                    yearEstablished: localStorage.getItem('sellerYearEstablished'),
+                    yearsInOperation: localStorage.getItem('sellerYearsInOperation'),
+                    contactName: localStorage.getItem('sellerContactName'),
+                    contactPhone: localStorage.getItem('sellerContactPhone'),
+                    location: localStorage.getItem('sellerLocation'),
+                    revenueExact: localStorage.getItem('sellerRevenueExact'),
+                    revenuePrevYear: localStorage.getItem('sellerRevenuePrevYear'),
+                    revenue2YearsAgo: localStorage.getItem('sellerRevenue2YearsAgo'),
+                    revenue3YearsAgo: localStorage.getItem('sellerRevenue3YearsAgo'),
+                    ebitda: localStorage.getItem('sellerEbitda'),
+                    ebitdaPrevYear: localStorage.getItem('sellerEbitdaPrevYear'),
+                    ebitda2YearsAgo: localStorage.getItem('sellerEbitda2YearsAgo'),
+                    cashOnCash: localStorage.getItem('sellerCashOnCash'),
+                    ffeValue: localStorage.getItem('sellerFfeValue'),
+                    ffeItems: localStorage.getItem('sellerFfeItems'),
+                    growthRate: localStorage.getItem('sellerGrowthRate'),
+                    growthAreas: localStorage.getItem('sellerGrowthAreas'),
+                    growthChallenges: localStorage.getItem('sellerGrowthChallenges'),
+                    scalability: localStorage.getItem('sellerScalability'),
+                    totalDebtAmount: localStorage.getItem('sellerTotalDebtAmount'),
+                    debtTransferable: localStorage.getItem('sellerDebtTransferable'),
+                    debtNotes: localStorage.getItem('sellerDebtNotes'),
+                    debtItems: localStorage.getItem('sellerDebtItems'),
+                    timestamp: new Date().toISOString(),
+                    source: 'seller-questionnaire'
+                };
+            }
+            
             // Function to display error messages
             function displayError(message) {
                 // Hide loading overlay if visible
@@ -575,13 +671,8 @@
                     // Update the UI with valuation data
                     updateValuationUI(valuation);
                     
-                    // Save valuation results using the non-blocking global function
-                    if (typeof window.saveQuestionnaireDataToServerNonBlocking === 'function') {
-                        console.log('Calling non-blocking save from displayValuationResults');
-                        window.saveQuestionnaireDataToServerNonBlocking();
-                    } else {
-                        console.warn('Non-blocking save function not found when trying to save valuation results.');
-                    }
+                    // Save valuation results to database
+                    saveValuationToDatabase(valuation);
                     
                     // Get element references
                     const loadingOverlay = document.getElementById('loadingOverlay');
@@ -614,6 +705,59 @@
                     if (loadingOverlay) loadingOverlay.classList.add('hidden');
                     
                     alert('Error displaying valuation results: ' + error.message);
+                }
+            }
+            
+            // Function to save valuation results to database (Keep original logic, but ensure email check happens within saveQuestionnaireDataToServer)
+            async function saveValuationToDatabase(valuation) {
+                try {
+                    // Collect all questionnaire data
+                    const questionnaireData = prepareQuestionnaireData();
+                    
+                    // Add the valuation data
+                    questionnaireData.valuation = valuation;
+                    
+                    // Ensure we have an email (required for database)
+                    if (!questionnaireData.email) {
+                        console.log('No email found, showing email collection modal');
+                        showEmailModal();
+                        return false;
+                    }
+                    
+                    console.log('Saving questionnaire data with valuation:', {
+                        email: questionnaireData.email,
+                        businessName: questionnaireData.businessName,
+                        valuationAmount: valuation.estimatedValue
+                    });
+                    
+                    // Send data to the server
+                    const response = await fetch('/api/business/save-questionnaire', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(questionnaireData)
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        localStorage.setItem('questionnaireSubmissionId', result.submissionId);
+                        document.cookie = `questionnaireSubmissionId=${result.submissionId}; path=/; max-age=${60*60*24*30}`; // 30 days
+                        console.log('Valuation saved successfully with ID:', result.submissionId);
+                        return true;
+                    } else {
+                        console.error('Server error saving valuation:', result.message);
+                        return false;
+                    }
+                } catch (error) {
+                    console.error('Error saving valuation to database:', error);
+                    // Don't let this error affect the user experience
+                    return false;
                 }
             }
             

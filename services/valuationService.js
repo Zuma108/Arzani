@@ -540,79 +540,121 @@ class ValuationService {
 
     // Get Industry Multiplier Data (Ensure robust fallback)
     async getIndustryMultiplierData(industry) {
-        const defaultIndustry = 'Other'; // Define default explicitly
-        const targetIndustry = industry || defaultIndustry;
-        console.log(`Fetching multipliers for industry: ${targetIndustry}`);
+        console.log(`Fetching multipliers for industry: ${industry}`);
+
+        if (!industry) {
+            console.warn('No industry provided, using default multipliers');
+            return this.getDefaultMultipliers();
+        }
 
         try {
-            const query = `SELECT * FROM industry_multipliers WHERE industry = $1`;
-            let result = await pool.query(query, [targetIndustry]);
+            // Normalize the industry name to improve matching
+            const normalizedIndustry = industry.toLowerCase().trim();
 
-            if (result.rows.length > 0) {
-                console.log(`Found multipliers for ${targetIndustry}`);
-                return this.validateMultiplierData(result.rows[0]);
+            // Try exact match first
+            const exactQuery = `
+                SELECT 
+                    industry, 
+                    avg_sales_multiple, 
+                    avg_ebitda_multiple,
+                    avg_cash_flow,
+                    avg_profit_margin,
+                    business_count
+                FROM industry_metrics 
+                WHERE LOWER(industry) = $1
+            `;
+
+            const exactResult = await pool.query(exactQuery, [normalizedIndustry]);
+
+            if (exactResult.rows.length > 0) {
+                console.log(`Found exact match for industry: ${industry}`);
+                return this.processIndustryData(exactResult.rows[0]);
             }
 
-            // If specific industry not found, try 'Other'
-            if (targetIndustry !== defaultIndustry) {
-                console.log(`Multipliers for ${targetIndustry} not found, trying ${defaultIndustry}`);
-                result = await pool.query(query, [defaultIndustry]);
-                if (result.rows.length > 0) {
-                    console.log(`Found multipliers for ${defaultIndustry}`);
-                    return this.validateMultiplierData(result.rows[0]);
+            // No exact match, try with keyword matching
+            console.log(`No exact match for "${industry}", trying keyword matching`);
+            const keywordQuery = `
+                SELECT 
+                    industry, 
+                    avg_sales_multiple, 
+                    avg_ebitda_multiple,
+                    avg_cash_flow,
+                    avg_profit_margin,
+                    business_count
+                FROM industry_metrics 
+                WHERE LOWER(industry) LIKE $1
+                LIMIT 1
+            `;
+
+            const keywordResult = await pool.query(keywordQuery, [`%${normalizedIndustry}%`]);
+
+            if (keywordResult.rows.length > 0) {
+                console.log(`Found similar industry: "${keywordResult.rows[0].industry}" for "${industry}"`);
+                return this.processIndustryData(keywordResult.rows[0]);
+            }
+
+            // Try to match by first word (category)
+            const firstWord = normalizedIndustry.split(' ')[0];
+            if (firstWord && firstWord.length > 3) {
+                console.log(`Trying to match by first word: "${firstWord}"`);
+                const categoryResult = await pool.query(keywordQuery, [`%${firstWord}%`]);
+
+                if (categoryResult.rows.length > 0) {
+                    console.log(`Found category match: "${categoryResult.rows[0].industry}" for "${industry}"`);
+                    return this.processIndustryData(categoryResult.rows[0]);
                 }
             }
 
-            // If 'Other' also not found, use hardcoded fallback
-            console.warn(`No multipliers found in DB for ${targetIndustry} or ${defaultIndustry}. Using hardcoded fallback.`);
-            return this.getHardcodedFallbackMultipliers(targetIndustry);
+            // Fall back to "Other" or a generic category
+            console.log(`No matches found for "${industry}", trying "Other" category`);
+            const fallbackResult = await pool.query(exactQuery, ['other']);
+
+            if (fallbackResult.rows.length > 0) {
+                console.log(`Using "Other" category for "${industry}"`);
+                return this.processIndustryData(fallbackResult.rows[0]);
+            }
+
+            // If all fails, use default values
+            console.warn(`No industry metrics found for "${industry}". Using default multipliers.`);
+            return this.getDefaultMultipliers();
 
         } catch (error) {
-            console.error('Error getting industry multiplier data from DB:', error);
-            // Use hardcoded fallback if DB query fails
-            return this.getHardcodedFallbackMultipliers(targetIndustry);
+            console.error('Error getting industry multipliers:', error);
+            return this.getDefaultMultipliers();
         }
     }
 
-    // Validate multiplier data retrieved from DB or hardcoded
-    validateMultiplierData(data) {
-         const validated = { ...data }; // Copy data
-         const defaultMinRev = 0.5;
-         const defaultMaxRev = 1.5;
-         const defaultEbitda = 3.0;
-
-         validated.min_revenue_multiplier = parseFloat(validated.min_revenue_multiplier);
-         validated.max_revenue_multiplier = parseFloat(validated.max_revenue_multiplier);
-         validated.ebitda_multiplier = parseFloat(validated.ebitda_multiplier);
-
-         if (isNaN(validated.min_revenue_multiplier) || validated.min_revenue_multiplier <= 0) {
-             validated.min_revenue_multiplier = defaultMinRev;
-         }
-         if (isNaN(validated.max_revenue_multiplier) || validated.max_revenue_multiplier <= validated.min_revenue_multiplier) {
-             validated.max_revenue_multiplier = Math.max(defaultMaxRev, validated.min_revenue_multiplier * 1.5);
-         }
-         if (isNaN(validated.ebitda_multiplier) || validated.ebitda_multiplier <= 0) {
-             validated.ebitda_multiplier = defaultEbitda;
-         }
-         // Ensure min_revenue is less than max_revenue
-         if (validated.min_revenue_multiplier >= validated.max_revenue_multiplier) {
-             validated.min_revenue_multiplier = validated.max_revenue_multiplier * 0.7;
-         }
-
-         return validated;
+    /**
+     * Convert database industry data to multipliers object
+     */
+    processIndustryData(data) {
+        return {
+            industry: data.industry,
+            minRevenueMultiplier: parseFloat(data.avg_sales_multiple) * 0.8 || 0.5,
+            maxRevenueMultiplier: parseFloat(data.avg_sales_multiple) * 1.2 || 2.5,
+            avgRevenueMultiple: parseFloat(data.avg_sales_multiple) || 1.5,
+            avgEbitdaMultiple: parseFloat(data.avg_ebitda_multiple) || 3.5,
+            avgCashFlow: parseFloat(data.avg_cash_flow) || 0,
+            avgProfitMargin: parseFloat(data.avg_profit_margin) || 15,
+            businessCount: parseInt(data.business_count) || 0
+        };
     }
 
-    // Hardcoded fallback multipliers
-    getHardcodedFallbackMultipliers(industry) {
-        return this.validateMultiplierData({ // Pass through validation
-            industry: industry || 'Other',
-            min_revenue_multiplier: 0.5,
-            max_revenue_multiplier: 1.5,
-            ebitda_multiplier: 3.0,
-            avg_profit_margin: 15 // Example default margin
-        });
+    /**
+     * Get default multipliers when industry data is not available
+     */
+    getDefaultMultipliers() {
+        return {
+            industry: 'General Business',
+            minRevenueMultiplier: 0.5,
+            maxRevenueMultiplier: 2.5,
+            avgRevenueMultiple: 1.5,
+            avgEbitdaMultiple: 3.5,
+            avgCashFlow: 0,
+            avgProfitMargin: 15,
+            businessCount: 0
+        };
     }
-
 
     // Calculate Confidence Score (Ensure fields match data structure)
     calculateConfidenceScore(businessData) {
@@ -654,132 +696,6 @@ class ValuationService {
     // ... other existing methods like calculateAdvancedValuation, calculateLocationScore etc. ...
     // Ensure these methods also use robust parsing and checks if they rely on businessData directly.
 
-}
-
-// Ensure this function exists and is correctly named
-async function calculateBusinessValuation(businessData) {
-  // Validate required fields
-  if (!businessData) {
-    throw new Error('No business data provided');
-  }
-
-  // Extract key metrics
-  const { 
-    industry, 
-    revenue, 
-    ebitda, 
-    yearsInOperation,
-    cashOnCash,
-    ffeValue,
-    growthRate,
-    totalDebtAmount
-  } = businessData;
-
-  // Basic validation
-  if (!revenue && !ebitda) {
-    throw new Error('At least one financial metric (revenue or EBITDA) is required');
-  }
-
-  // Implement valuation logic
-  let estimatedValue = 0;
-  let revenueMultiple = 0;
-  let ebitdaMultiple = 0;
-  let confidenceLevel = 'medium';
-  
-  // Industry-specific multipliers (simplified)
-  const industryMultipliers = getIndustryMultipliers(industry);
-  
-  // Calculate based on revenue
-  if (revenue) {
-    revenueMultiple = industryMultipliers.revenue;
-    let revenueComponent = parseFloat(revenue) * revenueMultiple;
-    estimatedValue += revenueComponent;
-  }
-  
-  // Calculate based on EBITDA (usually weighted more heavily)
-  if (ebitda) {
-    ebitdaMultiple = industryMultipliers.ebitda;
-    let ebitdaComponent = parseFloat(ebitda) * ebitdaMultiple;
-    
-    // If we have both metrics, weight EBITDA more heavily
-    if (revenue) {
-      estimatedValue = (estimatedValue * 0.3) + (ebitdaComponent * 0.7);
-    } else {
-      estimatedValue = ebitdaComponent;
-    }
-  }
-  
-  // Adjust for other factors
-  if (yearsInOperation) {
-    // Businesses operating longer are generally more valuable
-    const maturityFactor = Math.min(parseFloat(yearsInOperation) / 10, 1.5);
-    estimatedValue *= (1 + (maturityFactor * 0.1));
-  }
-  
-  // Adjust for growth rate if provided
-  if (growthRate) {
-    const growthFactor = parseFloat(growthRate) / 100;
-    estimatedValue *= (1 + (growthFactor * 0.5));
-  }
-  
-  // Calculate final range (±20%)
-  const lowerBound = Math.round(estimatedValue * 0.8);
-  const upperBound = Math.round(estimatedValue * 1.2);
-  
-  // Round estimated value
-  estimatedValue = Math.round(estimatedValue);
-  
-  // Determine confidence level
-  if (revenue && ebitda && yearsInOperation && cashOnCash) {
-    confidenceLevel = 'high';
-  } else if ((!revenue || !ebitda) && !yearsInOperation) {
-    confidenceLevel = 'low';
-  }
-  
-  // Return valuation result
-  return {
-    estimatedValue,
-    revenueMultiple: revenue ? revenueMultiple : null,
-    ebitdaMultiple: ebitda ? ebitdaMultiple : null,
-    valueRange: {
-      low: lowerBound,
-      high: upperBound
-    },
-    confidence: confidenceLevel,
-    industry,
-    factors: {
-      revenue: !!revenue,
-      ebitda: !!ebitda,
-      yearsInOperation: !!yearsInOperation,
-      growthRate: !!growthRate
-    }
-  };
-}
-
-// Helper to get industry-specific multipliers
-function getIndustryMultipliers(industry) {
-  // Default multipliers
-  const defaultMultipliers = {
-    revenue: 0.8,
-    ebitda: 3.5
-  };
-  
-  // Industry-specific multipliers (simplified)
-  const industryMap = {
-    'Technology': { revenue: 1.5, ebitda: 6.0 },
-    'Retail': { revenue: 0.5, ebitda: 3.0 },
-    'Manufacturing': { revenue: 0.7, ebitda: 4.0 },
-    'Healthcare': { revenue: 1.0, ebitda: 5.0 },
-    'Food Services': { revenue: 0.6, ebitda: 3.0 },
-    'Financial Services': { revenue: 1.2, ebitda: 5.5 },
-    'Construction': { revenue: 0.6, ebitda: 3.5 },
-    'Transportation': { revenue: 0.7, ebitda: 3.5 },
-    'Hospitality': { revenue: 0.5, ebitda: 3.0 },
-    'Software': { revenue: 1.8, ebitda: 7.0 },
-    'Other': defaultMultipliers
-  };
-  
-  return industryMap[industry] || defaultMultipliers;
 }
 
 // Export the ValuationService instance
