@@ -131,6 +131,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Detect when the user is about to leave a page and save data
+    // This listener might still be useful for saving data if the user navigates away unexpectedly
+    window.addEventListener('beforeunload', (event) => {
+        console.log('beforeunload triggered, attempting non-blocking save.');
+        // Use the non-blocking version here as well to avoid delaying closure
+        saveQuestionnaireDataToServerNonBlocking();
+        // Don't prevent default or show confirmation dialog
+    });
+
+    // Remove or comment out the specific 'Next' button listener for the valuation page
+    /*
     const nextBtn = document.getElementById('nextBtn');
     if (nextBtn) {
         const originalClickHandler = nextBtn.onclick;
@@ -139,55 +149,24 @@ document.addEventListener('DOMContentLoaded', function() {
         const isValuationPage = window.location.href.includes('/valuation');
         
         if (isValuationPage) {
-            nextBtn.addEventListener('click', function(e) {
-                // Check validation but don't wait for save
-                if (window.validateBeforeNext && !window.validateBeforeNext()) {
-                    return false;
-                }
-                
-                // Fire and forget - don't block navigation
-                saveQuestionnaireDataToServerNonBlocking();
-                
-                // Continue with navigation immediately
-                console.log('Proceeding with navigation without waiting for save (valuation page)');
-                
-                // Original handler can proceed
-                if (originalClickHandler) {
-                    return originalClickHandler.call(this, e);
-                }
-                
-                return true;
-            });
+            // Remove this listener entirely - let questionnaire-navigation.js handle it via validateBeforeNext
+            // nextBtn.addEventListener('click', function(e) { ... });
+            console.log('Removed redundant nextBtn listener from questionnaire-data-saver.js for valuation page.');
         } else {
-            // For other pages, use normal async approach
-            nextBtn.addEventListener('click', async function(e) {
-                // Don't interfere with the original validation logic
-                if (window.validateBeforeNext && !window.validateBeforeNext()) {
-                    return false;
-                }
-                
-                // Automatically save data before proceeding
-                try {
-                    await saveQuestionnaireDataToServer();
-                } catch (error) {
-                    console.error('Error saving data before navigation:', error);
-                    // Continue anyway - don't block navigation for saving errors
-                }
-                
-                // If there was an original click handler, let it proceed
-                if (originalClickHandler) {
-                    return originalClickHandler.call(this, e);
-                }
-            });
+            // Keep the listener for other pages if needed, or consolidate logic
+            // nextBtn.addEventListener('click', async function(e) { ... });
         }
     }
+    */
     
+    // Make the non-blocking save function globally available for validateBeforeNext
+    window.saveQuestionnaireDataToServerNonBlocking = saveQuestionnaireDataToServerNonBlocking;
+
     // Also save periodically (every 30 seconds) to minimize data loss
     setInterval(saveQuestionnaireDataToServerNonBlocking, 30000);
     
     // Make save function available globally
     window.saveQuestionnaireDataToServer = saveQuestionnaireDataToServer;
-    window.saveQuestionnaireDataToServerNonBlocking = saveQuestionnaireDataToServerNonBlocking;
     
     // Initial save attempt when script loads (non-blocking)
     setTimeout(saveQuestionnaireDataToServerNonBlocking, 2000);

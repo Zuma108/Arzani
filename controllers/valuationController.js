@@ -213,12 +213,22 @@ export const saveQuestionnaireData = async (req, res) => {
         const anonymousId = formData.anonymousId || null;
         const valuationData = formData.valuationData || formData.valuation || null;
 
+        // Add logging to see if this specific submission ID is being processed frequently
+        console.log(`Controller: Processing save request for submissionId: ${submissionId}, email: ${email}, anonymousId: ${anonymousId}`);
+
         // Check if submission exists
-        const checkQuery = 'SELECT id FROM questionnaire_submissions WHERE submission_id = $1';
+        const checkQuery = 'SELECT id, updated_at FROM questionnaire_submissions WHERE submission_id = $1';
         const checkResult = await client.query(checkQuery, [submissionId]);
 
         let submissionDbId;
         if (checkResult.rows.length > 0) {
+            // Log if we are updating an existing record shortly after its last update
+            const lastUpdate = new Date(checkResult.rows[0].updated_at);
+            const now = new Date();
+            if (now - lastUpdate < 5000) { // Log if updated within last 5 seconds
+                console.warn(`Controller: Rapid update detected for submissionId: ${submissionId}. Last update was at ${lastUpdate.toISOString()}`);
+            }
+
             // Update existing submission
             const updateQuery = `
                 UPDATE questionnaire_submissions
@@ -387,12 +397,14 @@ export const saveQuestionnaireData = async (req, res) => {
 
         // Return success response based on context
         if (isHttpRequest) {
+            console.log(`Controller: Successfully saved/updated submissionId: ${submissionId}. Sending HTTP response.`); // Log success before response
             return res.status(200).json({
                 success: true,
                 message: 'Questionnaire data saved successfully via controller',
                 submissionId: submissionId
             });
         }
+        console.log(`Controller: Successfully saved/updated submissionId: ${submissionId}. Returning ID.`); // Log success for non-HTTP context
         return submissionId;
 
     } catch (dbError) {

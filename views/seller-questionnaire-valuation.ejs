@@ -517,28 +517,45 @@
             
             // Set up validation function for navigation
             window.validateBeforeNext = function() {
-                // Save valuation data to localStorage if available
-                if (window.valuationData) {
-                    localStorage.setItem('sellerValuationData', JSON.stringify(window.valuationData));
-                    
-                    // Save the questionnaire data to the server anonymously
-                    saveQuestionnaireDataToServer().catch(err => {
-                        console.error('Error saving questionnaire data:', err);
-                    });
-                }
-                
-                // If we don't have valuation data and the valuation results are not showing,
-                // prompt the user to calculate the valuation first
+                // Check if valuation has been calculated
                 if (!window.valuationData && document.getElementById('valuationResults').classList.contains('hidden')) {
                     alert('Please calculate your business valuation before continuing.');
-                    document.getElementById('calculateValuationBtn').focus();
-                    return false;
+                    document.getElementById('calculateValuationBtn')?.focus();
+                    return false; // Validation fails
                 }
-                
+
+                // Check if we have a valid email
+                const email = localStorage.getItem('sellerEmail');
+                if (!email || !isValidEmail(email)) {
+                    showEmailModal();
+                    return false; // Validation fails
+                }
+
+                // Save valuation data to localStorage (if available)
+                if (window.valuationData) {
+                    localStorage.setItem('sellerValuationData', JSON.stringify(window.valuationData));
+                }
+
+                // Trigger the non-blocking save function from questionnaire-data-saver.js
+                // This function should handle preparing data and sending it without blocking navigation.
+                if (typeof window.saveQuestionnaireDataToServerNonBlocking === 'function') {
+                    console.log('Calling non-blocking save from validateBeforeNext');
+                    window.saveQuestionnaireDataToServerNonBlocking();
+                } else {
+                    console.warn('Non-blocking save function not found. Saving might block navigation.');
+                    // Fallback to potentially blocking save if non-blocking isn't available
+                    // This might still cause issues, but ensures data is saved.
+                    saveQuestionnaireDataToServer().catch(err => {
+                        console.error('Error during fallback save in validateBeforeNext:', err);
+                    });
+                }
+
+                // Validation passed, allow navigation to proceed
+                console.log('Validation passed in validateBeforeNext');
                 return true;
             };
             
-            // Function to save questionnaire data to server
+            // Function to save questionnaire data to server (Keep for fallback/direct calls if needed elsewhere)
             async function saveQuestionnaireDataToServer() {
                 try {
                     const questionnaireData = prepareQuestionnaireData();
@@ -691,7 +708,7 @@
                 }
             }
             
-            // Function to save valuation results to database
+            // Function to save valuation results to database (Keep original logic, but ensure email check happens within saveQuestionnaireDataToServer)
             async function saveValuationToDatabase(valuation) {
                 try {
                     // Collect all questionnaire data
@@ -1280,86 +1297,6 @@
                 return Boolean(email && isValidEmail(email));
             }
             
-            // Event listener for the Next button - check email before proceeding
-            if (nextBtn) {
-                nextBtn.addEventListener('click', function(e) {
-                    const hasEmail = checkEmailOnLoad();
-                    const hasValuation = Boolean(window.valuationData);
-                    
-                    // If no valuation has been calculated, alert the user
-                    if (!hasValuation) {
-                        alert('Please calculate your business valuation before continuing.');
-                        return;
-                    }
-                    
-                    // If no email, show modal and prevent navigation
-                    if (!hasEmail) {
-                        e.preventDefault(); // Prevent navigation
-                        e.stopPropagation(); // Stop event propagation
-                        showEmailModal();
-                        return;
-                    }
-                    
-                    // If we have both email and valuation, we can proceed
-                    console.log('Proceeding to next page with email:', localStorage.getItem('sellerEmail'));
-                });
-            }
-            
-            // Override the saveValuationToDatabase function to check for email
-            window.originalSaveValuationToDatabase = saveValuationToDatabase;
-            window.saveValuationToDatabase = function(valuation) {
-                const email = localStorage.getItem('sellerEmail');
-                
-                // Log verbose email check
-                console.log('Checking email before saving valuation:', { 
-                    email: email,
-                    emailExists: Boolean(email),
-                    emailValid: email ? isValidEmail(email) : false
-                });
-                
-                if (!email || !isValidEmail(email)) {
-                    console.warn('Cannot save valuation - email is missing or invalid');
-                    showEmailModal();
-                    return;
-                }
-                
-                // Call the original function now that we've verified email exists
-                return window.originalSaveValuationToDatabase(valuation);
-            };
-            
-            // Override validateBeforeNext for questionnaire navigation
-            window.validateBeforeNext = function() {
-                // If we don't have valuation data, prompt the user to calculate
-                if (!window.valuationData && document.getElementById('valuationResults').classList.contains('hidden')) {
-                    alert('Please calculate your business valuation before continuing.');
-                    document.getElementById('calculateValuationBtn')?.focus();
-                    return false;
-                }
-                
-                // Check if we have a valid email
-                const email = localStorage.getItem('sellerEmail');
-                if (!email || !isValidEmail(email)) {
-                    showEmailModal();
-                    return false;
-                }
-                
-                // Save valuation data to localStorage
-                localStorage.setItem('sellerValuationData', JSON.stringify(window.valuationData));
-                
-                // Use non-blocking save to prevent the perma-loading issue
-                if (typeof window.saveQuestionnaireDataToServerNonBlocking === 'function') {
-                    window.saveQuestionnaireDataToServerNonBlocking();
-                } else {
-                    // Fallback if non-blocking function isn't available
-                    saveQuestionnaireDataToServer().catch(err => {
-                        console.error('Error saving questionnaire data:', err);
-                    });
-                }
-                
-                // Always return true to continue navigation
-                return true;
-            };
-
             // Check for enter key press in email input
             if (userEmailInput) {
                 userEmailInput.addEventListener('keypress', function(e) {

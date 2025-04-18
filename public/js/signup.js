@@ -257,13 +257,22 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Function to clear questionnaire data from localStorage
     function clearQuestionnaireData() {
-        console.log('Clearing questionnaire data from localStorage...');
+        console.log('Clearing questionnaire data flags from localStorage...');
         
-        // Don't immediately clear - we'll use a flag to indicate data has been submitted
+        // Mark data as submitted/linked instead of clearing everything immediately
         localStorage.setItem('questionnaireDataSubmitted', 'true');
+        localStorage.setItem('questionnaireLinkStatus', 'linked'); // Mark as linked after signup attempt
+        
+        // Optionally remove specific sensitive items if needed, but keep IDs for potential debugging
+        // localStorage.removeItem('sellerValuationData'); 
         
         // Save the anonymous ID to a session variable in case we need it
-        sessionStorage.setItem('previousAnonymousId', localStorage.getItem('questionnaireAnonymousId'));
+        const anonId = localStorage.getItem('questionnaireAnonymousId');
+        if (anonId) {
+            sessionStorage.setItem('previousAnonymousId', anonId);
+        }
+        // Consider removing the anonymous ID from local storage now?
+        // localStorage.removeItem('questionnaireAnonymousId'); 
     }
     
     // Handle API error responses
@@ -402,7 +411,7 @@ document.addEventListener('DOMContentLoaded', () => {
         signupError.innerHTML = '<strong>Registration successful!</strong> Please check your email to verify your account.';
     }
     
-    // Check for questionnaire anonymous ID
+    // Check for questionnaire anonymous ID and prefill email
     const anonymousId = localStorage.getItem('questionnaireAnonymousId');
     const questionnaireEmail = localStorage.getItem('sellerEmail');
     
@@ -426,93 +435,5 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('Pre-filled email from questionnaire data:', questionnaireEmail);
             }
         }
-        
-        // Listen for form submission
-        signupForm.addEventListener('submit', async (event) => {
-            event.preventDefault();
-            
-            // Disable submit button to prevent multiple submissions
-            if (submitButton) {
-                submitButton.disabled = true;
-                submitButton.innerHTML = 'Creating Account...';
-            }
-            
-            // Get form data
-            const formData = new FormData(signupForm);
-            const signupData = Object.fromEntries(formData.entries());
-            
-            // Add questionnaire data if available
-            const questionnaireSubmissionId = localStorage.getItem('questionnaireSubmissionId');
-            const anonymousId = localStorage.getItem('questionnaireAnonymousId');
-            
-            if (questionnaireSubmissionId) {
-                signupData.questionnaireSubmissionId = questionnaireSubmissionId;
-            }
-            
-            if (anonymousId) {
-                signupData.anonymousId = anonymousId;
-            }
-            
-            try {
-                // Send signup request
-                const response = await fetch('/api/auth/signup', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(signupData)
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    // Success - handle accordingly
-                    console.log('Account created successfully!');
-                    
-                    // After successful signup, clear the questionnaire data from localStorage
-                    if (questionnaireSubmissionId || anonymousId) {
-                        // Keep this data in case it's needed later, but mark it as linked
-                        localStorage.setItem('questionnaireLinkStatus', 'linked');
-                    }
-                    
-                    // Redirect to login page or dashboard
-                    window.location.href = '/auth/login?verified=pending';
-                } else {
-                    // Handle errors
-                    const errorMessage = data.message || 'Failed to create account';
-                    // Display error to user
-                    const errorElement = document.getElementById('signup-error');
-                    if (errorElement) {
-                        errorElement.textContent = errorMessage;
-                        errorElement.style.display = 'block';
-                    } else {
-                        alert(errorMessage);
-                    }
-                    
-                    // Re-enable submit button
-                    if (submitButton) {
-                        submitButton.disabled = false;
-                        submitButton.innerHTML = 'Create Account';
-                    }
-                }
-            } catch (error) {
-                console.error('Signup error:', error);
-                
-                // Display generic error
-                const errorElement = document.getElementById('signup-error');
-                if (errorElement) {
-                    errorElement.textContent = 'An error occurred. Please try again.';
-                    errorElement.style.display = 'block';
-                } else {
-                    alert('An error occurred. Please try again.');
-                }
-                
-                // Re-enable submit button
-                if (submitButton) {
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = 'Create Account';
-                }
-            }
-        });
     }
 });

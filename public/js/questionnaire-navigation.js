@@ -124,20 +124,27 @@ class QuestionnaireNavigation {
     
     // Navigate to the next page
     async nextPage() {
+        console.log('nextPage called'); // Add log
         // Run page validation if available
         if (typeof window.validateBeforeNext === 'function') {
+            console.log('Calling validateBeforeNext...'); // Add log
             const isValid = window.validateBeforeNext();
+            console.log(`validateBeforeNext returned: ${isValid}`); // Add log
             if (!isValid) {
                 console.log('Validation failed, staying on current page');
-                return;
+                return; // Stop navigation if validation fails
             }
+            // If validation passes, the non-blocking save has been initiated. Proceed with navigation.
+        } else {
+            console.log('No validateBeforeNext function found.'); // Add log
         }
         
         this.currentIndex = this.pageOrder.indexOf(this.getCurrentPageSlug());
+        console.log(`Current index: ${this.currentIndex}, Total pages: ${this.pageOrder.length}`); // Add log
         
         // Check if we're on the last page
-        if (this.currentIndex === this.pageOrder.length - 1) {
-            console.log('On last page, redirecting to thank-you');
+        if (this.currentIndex >= this.pageOrder.length - 1) {
+            console.log('On last page or beyond, redirecting to thank-you');
             await this.addExitAnimation();
             window.location.href = '/seller-questionnaire/thank-you';
             return;
@@ -147,18 +154,25 @@ class QuestionnaireNavigation {
         this.animateProgressForward();
         
         // Get the next page in order
-        const nextPage = this.pageOrder[this.currentIndex + 1];
-        console.log(`Navigating to next page: ${nextPage}`);
+        const nextPageSlug = this.pageOrder[this.currentIndex + 1];
+        console.log(`Navigating to next page: ${nextPageSlug}`);
         
         // Add exit animation then navigate
         await this.addExitAnimation();
         
         // Navigate to the next page
-        window.location.href = `/seller-questionnaire/${nextPage}`;
+        window.location.href = `/seller-questionnaire/${nextPageSlug}`;
     }
     
     // Navigate to the previous page
     async prevPage() {
+        console.log('prevPage called'); // Add log
+        // Optionally trigger non-blocking save on back navigation too?
+        if (typeof window.saveQuestionnaireDataToServerNonBlocking === 'function') {
+             console.log('Calling non-blocking save on prevPage');
+             window.saveQuestionnaireDataToServerNonBlocking();
+        }
+
         this.currentIndex = this.pageOrder.indexOf(this.getCurrentPageSlug());
         
         // If we're on the first page, confirm exit
