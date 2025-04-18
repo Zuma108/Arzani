@@ -119,5 +119,65 @@
             </div>
         </footer>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Thank you page loaded. Clearing questionnaire data from localStorage.');
+
+            // List of keys to potentially clear or mark as completed
+            const questionnaireKeys = [
+                'sellerEmail',
+                'sellerBusinessName',
+                'sellerIndustry',
+                'sellerDescription',
+                'sellerYearEstablished',
+                'sellerYearsInOperation',
+                'sellerContactName',
+                'sellerContactPhone',
+                'sellerLocation',
+                'sellerRevenueExact',
+                'sellerRevenuePrevYear',
+                'sellerRevenue2YearsAgo',
+                'sellerRevenue3YearsAgo',
+                'sellerEbitda',
+                'sellerEbitdaPrevYear',
+                'sellerEbitda2YearsAgo',
+                'sellerCashOnCash',
+                'sellerFfeValue',
+                'sellerFfeItems',
+                'sellerGrowthRate',
+                'sellerGrowthAreas',
+                'sellerGrowthChallenges',
+                'sellerScalability',
+                'sellerTotalDebtAmount',
+                'sellerDebtTransferable',
+                'sellerDebtNotes',
+                'sellerDebtItems',
+                'sellerValuationData',
+                'sellerAskingPrice',
+                // Keep IDs for potential linking during signup/login
+                // 'questionnaireAnonymousId', 
+                // 'questionnaireSubmissionId',
+                'questionnaireDataSubmitted', // Mark as submitted
+                'questionnaireLinkStatus' // Update status
+            ];
+
+            // Clear most keys, but keep IDs and set status flags
+            questionnaireKeys.forEach(key => {
+                if (key !== 'questionnaireAnonymousId' && key !== 'questionnaireSubmissionId') {
+                    localStorage.removeItem(key);
+                }
+            });
+
+            // Set flags indicating completion
+            localStorage.setItem('questionnaireDataSubmitted', 'true');
+            localStorage.setItem('questionnaireLinkStatus', 'completed'); // Or 'pending_link' if signup is next
+
+            console.log('Questionnaire data cleared/marked as completed.');
+            
+            // Optional: If anonymous ID is no longer needed after completion, remove it too
+            // localStorage.removeItem('questionnaireAnonymousId');
+        });
+    </script>
 </body>
 </html>
