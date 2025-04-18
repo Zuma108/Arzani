@@ -651,10 +651,14 @@
                 };
             }
             
-            // Function to display error messages
+            // Function to display error messages - make sure it always hides the overlay
             function displayError(message) {
                 // Hide loading overlay if visible
-                loadingOverlay.classList.add('hidden');
+                if (loadingOverlay) {
+                    loadingOverlay.classList.add('hidden');
+                } else {
+                    document.getElementById('loadingOverlay')?.classList.add('hidden');
+                }
                 
                 // Show alert with error message
                 alert('Valuation Error: ' + message);
@@ -672,7 +676,10 @@
                     updateValuationUI(valuation);
                     
                     // Save valuation results to database
-                    saveValuationToDatabase(valuation);
+                    saveValuationToDatabase(valuation).catch(err => {
+                        // Just log the error but don't block UI update
+                        console.warn('Error in database save, but continuing with UI update:', err);
+                    });
                     
                     // Get element references
                     const loadingOverlay = document.getElementById('loadingOverlay');
@@ -680,14 +687,20 @@
                     const valuationResults = document.getElementById('valuationResults');
                     
                     // Check if all needed elements exist
-                    if (!loadingOverlay || !calculationPrompt || !valuationResults) {
+                    if (!calculationPrompt || !valuationResults) {
                         console.error('Missing required DOM elements for displaying results');
                         alert('Error displaying valuation results. Please try again.');
+                        // Always make sure to hide loading overlay
+                        if (loadingOverlay) loadingOverlay.classList.add('hidden');
                         return;
                     }
                     
-                    // Hide loading overlay
-                    loadingOverlay.classList.add('hidden');
+                    // Hide loading overlay - try both global reference and getElementById
+                    if (loadingOverlay) {
+                        loadingOverlay.classList.add('hidden');
+                    } else {
+                        document.getElementById('loadingOverlay')?.classList.add('hidden');
+                    }
                     
                     // Hide calculation prompt and show results
                     calculationPrompt.classList.add('hidden');
@@ -700,9 +713,8 @@
                 } catch (error) {
                     console.error('Error displaying valuation results:', error);
                     
-                    // Fallback error handling
-                    const loadingOverlay = document.getElementById('loadingOverlay');
-                    if (loadingOverlay) loadingOverlay.classList.add('hidden');
+                    // Fallback error handling - make absolutely sure the loading overlay is hidden
+                    document.getElementById('loadingOverlay')?.classList.add('hidden');
                     
                     alert('Error displaying valuation results: ' + error.message);
                 }
@@ -767,6 +779,13 @@
                     // Show loading overlay
                     loadingOverlay.classList.remove('hidden');
                     
+                    // Create a safety timeout to ensure loading overlay is hidden after a maximum time
+                    const safetyTimeout = setTimeout(() => {
+                        console.warn('Safety timeout triggered after 30 seconds - forcing loading overlay to hide');
+                        if (loadingOverlay) loadingOverlay.classList.add('hidden');
+                        displayError('The calculation is taking longer than expected. Please try again.');
+                    }, 30000); // 30 second maximum wait
+                    
                     // Gather business data from localStorage
                     const businessData = {
                         businessName: localStorage.getItem('sellerBusinessName'),
@@ -799,22 +818,35 @@
                     }
                     
                     try {
-                        // Send data to valuation API
+                        // Create an AbortController to timeout the fetch if it takes too long
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+                        
+                        // Send data to valuation API with timeout
                         const response = await fetch('/api/valuation/calculate', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
                             },
-                            body: JSON.stringify(businessData)
+                            body: JSON.stringify(businessData),
+                            signal: controller.signal
                         });
                         
+                        // Clear the fetch timeout since we got a response
+                        clearTimeout(timeoutId);
+                        
                         if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
+                            const errorText = await response.text();
+                            console.error('API error response:', errorText);
+                            throw new Error(`Server error (${response.status}): ${errorText || 'Unknown error'}`);
                         }
                         
                         const result = await response.json();
                         
                         if (result.success && result.valuation) {
+                            // Clear the safety timeout since we got success
+                            clearTimeout(safetyTimeout);
+                            
                             // Store the result globally and display it
                             window.valuationData = result.valuation;
                             displayValuationResults(result.valuation);
@@ -823,391 +855,19 @@
                         }
                     } catch (apiError) {
                         console.error('API error:', apiError);
-                        displayError('Failed to connect to valuation service. Please try again later.');
+                        // Clear the safety timeout since we've handled the error
+                        clearTimeout(safetyTimeout);
+                        
+                        // Determine if this was a timeout
+                        if (apiError.name === 'AbortError') {
+                            displayError('The valuation request timed out. Please try again.');
+                        } else {
+                            displayError('Failed to connect to valuation service. Please try again later.');
+                        }
                     }
                 } catch (error) {
                     console.error('Valuation error:', error);
                     displayError(error.message || 'Failed to calculate valuation. Please try again.');
-                }
-            }
-            
-            // Function to update the UI with valuation data - fixed to ensure slider matches values
-            function updateValuationUI(valuation) {
-                // Verify that valuation object has required properties
-                if (!valuation || !valuation.valuationRange || 
-                    typeof valuation.estimatedValue === 'undefined') {
-                    console.error('Invalid valuation data:', valuation);
-                    displayError('Invalid valuation data received');
-                    return;
-                }
-                
-                // Debug log the valuation data to help troubleshoot
-                console.log('Updating UI with valuation data:', {
-                    estimatedValue: valuation.estimatedValue,
-                    min: valuation.valuationRange.min,
-                    max: valuation.valuationRange.max
-                });
-                
-                // Format currency values
-                const formatCurrency = (value) => {
-                    return '£' + parseInt(value).toLocaleString();
-                };
-                
-                // Format percentages
-                const formatPercentage = (value) => {
-                    return (value > 0 ? '+' : '') + value + '%';
-                };
-                
-                // Verify and safely update DOM elements - helper function
-                const safelyUpdateElement = (id, updateFn) => {
-                    const element = document.getElementById(id);
-                    if (element) {
-                        updateFn(element);
-                    } else {
-                        console.warn(`Element with ID '${id}' not found`);
-                    }
-                };
-                
-                // Main valuation information
-                safelyUpdateElement('adjustedValue', el => el.textContent = formatCurrency(valuation.estimatedValue));
-                safelyUpdateElement('valuationRange', el => el.textContent = `Range: ${formatCurrency(valuation.valuationRange.min)} - ${formatCurrency(valuation.valuationRange.max)}`);
-                safelyUpdateElement('multipleUsed', el => el.innerHTML = `Based on <span class="font-medium">${valuation.multiple.toFixed(1)}x</span> ${valuation.multipleType} multiple`);
-                safelyUpdateElement('actualConfidenceScore', el => el.textContent = `${valuation.confidence}%`);
-                safelyUpdateElement('valuationSummary', el => el.textContent = valuation.summary || 'Business valuation based on your provided information.');
-                
-                // Valuation factors
-                if (valuation.factors) {
-                    if (valuation.factors.growth) {
-                        safelyUpdateElement('growthFactorBadge', el => {
-                            const impact = valuation.factors.growth.impact || 0;
-                            el.textContent = formatPercentage(impact);
-                            setFactorBadgeClass('growthFactorBadge', impact);
-                        });
-                        safelyUpdateElement('growthFactorAnalysis', el => 
-                            el.textContent = valuation.factors.growth.analysis || 'Growth trends impact your business valuation.');
-                    }
-                    
-                    if (valuation.factors.industry) {
-                        safelyUpdateElement('industryFactorBadge', el => {
-                            const impact = valuation.factors.industry.impact || 0;
-                            el.textContent = formatPercentage(impact);
-                            setFactorBadgeClass('industryFactorBadge', impact);
-                        });
-                        safelyUpdateElement('industryFactorAnalysis', el => 
-                            el.textContent = valuation.factors.industry.analysis || 'Industry factors affect how your business is valued.');
-                    }
-                }
-                
-                // Market comparables
-                if (valuation.marketComparables) {
-                    safelyUpdateElement('marketComparablesIntro', el => 
-                        el.textContent = valuation.marketComparables.intro || 'How your business compares to industry standards:');
-                    
-                    // Update comparables table if it exists
-                    const comparablesTable = document.getElementById('comparableMetricsTable');
-                    if (comparablesTable && valuation.marketComparables.metrics) {
-                        const tableBody = comparablesTable.querySelector('tbody');
-                        if (tableBody) {
-                            tableBody.innerHTML = ''; // Clear existing rows
-                            
-                            valuation.marketComparables.metrics.forEach(metric => {
-                                const row = document.createElement('tr');
-                                row.innerHTML = `
-                                    <td class="py-2 px-3 border-t border-gray-200 text-sm text-[#25224a]">${metric.name}</td>
-                                    <td class="py-2 px-3 border-t border-gray-200 text-sm text-right font-medium">${metric.yourValue}</td>
-                                    <td class="py-2 px-3 border-t border-gray-200 text-sm text-right">${metric.industryAverage}</td>
-                                `;
-                                tableBody.appendChild(row);
-                            });
-                        }
-                    }
-                }
-                
-                // Recommendations
-                if (valuation.recommendations) {
-                    const recommendationsList = document.getElementById('recommendationsList');
-                    if (recommendationsList && valuation.recommendations.items) {
-                        recommendationsList.innerHTML = ''; // Clear existing recommendations
-                        
-                        valuation.recommendations.items.forEach(item => {
-                            const listItem = document.createElement('li');
-                            listItem.className = 'mb-2';
-                            listItem.textContent = item;
-                            recommendationsList.appendChild(listItem);
-                        });
-                    } else if (recommendationsList) {
-                        // Add default recommendations if none provided
-                        recommendationsList.innerHTML = `
-                            <li class="mb-2">Consider documenting your business processes to increase transferability.</li>
-                            <li class="mb-2">Focus on improving profit margins to increase business value.</li>
-                            <li class="mb-2">Demonstrating consistent growth can significantly enhance valuation.</li>
-                        `;
-                    }
-                }
-                
-                // Initialize the valuation slider with proper values
-                try {
-                    // Create a slider initializer function
-                    const sliderInitializer = initializeValuationSlider(
-                        valuation.estimatedValue,
-                        valuation.valuationRange.min,
-                        valuation.valuationRange.max
-                    );
-                    
-                    // Make slider controller available globally for later reference
-                    window.sliderController = sliderInitializer;
-                } catch (sliderError) {
-                    console.error('Error initializing slider:', sliderError);
-                    // Don't let slider issues block the overall rendering
-                }
-            }
-            
-            // Add new function to initialize and handle the slider
-            function initializeValuationSlider(estimatedValue, minValue, maxValue) {
-                // Define all variables at the top to avoid accessing before initialization
-                const sliderThumb = document.getElementById('sliderThumb');
-                const sliderBar = document.querySelector('.slider-bar');
-                const adjustedValue = document.getElementById('adjustedValue');
-                const likelihoodLabel = document.getElementById('likelihoodLabel');
-                const likelihoodText = document.getElementById('likelihoodText');
-                const valueTooltip = document.getElementById('valueTooltip');
-                
-                // Calculate the range for the slider - use the exact valuation range provided
-                const sliderMinValue = minValue;
-                const sliderMaxValue = maxValue;
-                
-                // Set initial position to the estimated value or middle of the range if estimated value
-                // is at an extreme, clamped to min/max range
-                let initialValue;
-                
-                // Check if estimated value is near an extreme
-                const range = sliderMaxValue - sliderMinValue;
-                const lowerThreshold = sliderMinValue + (range * 0.25); // Lower 25% of range
-                const upperThreshold = sliderMaxValue - (range * 0.25); // Upper 25% of range
-                
-                if (estimatedValue < lowerThreshold || estimatedValue > upperThreshold) {
-                    // If estimated value is near an extreme, start in the middle
-                    initialValue = sliderMinValue + (range / 2);
-                } else {
-                    // Otherwise use the estimated value
-                    initialValue = estimatedValue;
-                }
-                
-                // Ensure initial value is within range
-                let currentValue = Math.max(sliderMinValue, Math.min(Math.round(initialValue), sliderMaxValue));
-                let isDragging = false;
-                
-                // Format currency for display - define before using
-                function formatCurrency(value) {
-                    return '£' + parseInt(value).toLocaleString();
-                }
-                
-                // Update function to set position and UI based on current value
-                function updateSliderUI(value) {
-                    // Ensure value stays within valid range
-                    const clampedValue = Math.max(sliderMinValue, Math.min(value, sliderMaxValue));
-                    
-                    // Calculate percentage position along the slider
-                    const range = sliderMaxValue - sliderMinValue;
-                    const valuePercentage = ((clampedValue - sliderMinValue) / range) * 100;
-                    
-                    // Set thumb position
-                    sliderThumb.style.left = `${valuePercentage}%`;
-                    
-                    // Update displayed value
-                    adjustedValue.textContent = formatCurrency(clampedValue);
-                    valueTooltip.textContent = formatCurrency(clampedValue);
-                    
-                    // Position tooltip
-                    valueTooltip.style.left = `${valuePercentage}%`;
-                    
-                    // Update likelihood indicators
-                    updateLikelihoodIndicator(clampedValue, estimatedValue);
-                    
-                    // Store actual value (clamped to valid range)
-                    currentValue = clampedValue;
-                    
-                    // Debug output to see what's happening
-                    console.log(`Slider update: value=${clampedValue}, estimated=${estimatedValue}, min=${sliderMinValue}, max=${sliderMaxValue}, percentage=${valuePercentage}%`);
-                }
-                
-                // Function to update likelihood indicator based on value vs. estimated value
-                function updateLikelihoodIndicator(value, estimatedValue) {
-                    // Remove all classes
-                    likelihoodLabel.classList.remove('likelihood-high', 'likelihood-moderate', 'likelihood-low');
-                    
-                    // Calculate how far from the estimated value we are
-                    const ratio = value / estimatedValue;
-                    
-                    if (ratio < 0.85) {
-                        // Value is significantly under estimated value
-                        likelihoodLabel.classList.add('likelihood-high');
-                        likelihoodLabel.textContent = 'High Likelihood';
-                        likelihoodText.textContent = 'Your price is below market value, making it very attractive to potential buyers.';
-                    } else if (ratio > 1.15) {
-                        // Value is significantly over estimated value
-                        likelihoodLabel.classList.add('likelihood-low');
-                        likelihoodLabel.textContent = 'Low Likelihood';
-                        likelihoodText.textContent = 'Your price is above market value, which may reduce the number of interested buyers.';
-                    } else {
-                        // Value is close to estimated value
-                        likelihoodLabel.classList.add('likelihood-moderate');
-                        likelihoodLabel.textContent = 'Moderate Likelihood';
-                        likelihoodText.textContent = 'Your price is close to our estimated value, giving you a balanced chance of attracting buyers.';
-                    }
-                }
-                
-                // Update any related metrics when price changes
-                function updateRelatedMetrics(value, estimatedValue) {
-                    // Calculate price deviation as a percentage
-                    const deviation = ((value - estimatedValue) / estimatedValue) * 100;
-                    const deviationText = deviation >= 0 ? `+${deviation.toFixed(1)}%` : `${deviation.toFixed(1)}%`;
-                    
-                    // Here you could update other elements if needed
-                    console.log(`Asking price set to ${formatCurrency(value)} (${deviationText} from estimate)`);
-                }
-                
-                // Mouse down event on the thumb
-                sliderThumb.addEventListener('mousedown', startDrag);
-                sliderThumb.addEventListener('touchstart', startDrag);
-                
-                // Show tooltip on hover
-                sliderThumb.addEventListener('mouseenter', () => {
-                    valueTooltip.style.opacity = '1';
-                });
-                
-                sliderThumb.addEventListener('mouseleave', () => {
-                    if (!isDragging) {
-                        valueTooltip.style.opacity = '0';
-                    }
-                });
-                
-                // Click on the bar to jump to that position
-                sliderBar.addEventListener('click', function(e) {
-                    const rect = sliderBar.getBoundingClientRect();
-                    const clickX = e.clientX - rect.left;
-                    const percentage = clickX / rect.width;
-                    const newValue = sliderMinValue + (percentage * (sliderMaxValue - sliderMinValue));
-                    
-                    // Ensure new value is within range
-                    const clampedValue = Math.max(sliderMinValue, Math.min(Math.round(newValue), sliderMaxValue));
-                    currentValue = clampedValue;
-                    updateSliderUI(currentValue);
-                    
-                    // Store the new asking price in localStorage when slider is clicked
-                    localStorage.setItem('sellerAskingPrice', currentValue);
-                    
-                    // Trigger recalculation of any related metrics
-                    updateRelatedMetrics(currentValue, estimatedValue);
-                });
-                
-                // Start dragging
-                function startDrag(e) {
-                    e.preventDefault();
-                    isDragging = true;
-                    valueTooltip.style.opacity = '1';
-                    
-                    // Add event listeners for dragging
-                    document.addEventListener('mousemove', drag);
-                    document.addEventListener('touchmove', drag);
-                    document.addEventListener('mouseup', stopDrag);
-                    document.addEventListener('touchend', stopDrag);
-                }
-                
-                // During drag
-                function drag(e) {
-                    if (!isDragging) return;
-                    
-                    const rect = sliderBar.getBoundingClientRect();
-                    
-                    // Get x position (handle both mouse and touch)
-                    let clientX;
-                    if (e.type === 'touchmove') {
-                        clientX = e.touches[0].clientX;
-                    } else {
-                        clientX = e.clientX;
-                    }
-                    
-                    // Calculate position relative to the slider
-                    let x = clientX - rect.left;
-                    
-                    // Clamp x to the bounds of the slider bar
-                    x = Math.max(0, Math.min(x, rect.width));
-                    
-                    // Calculate percentage
-                    const percentage = x / rect.width;
-                    
-                    // Calculate new value based on the range and clamp it
-                    const newValue = sliderMinValue + (percentage * (sliderMaxValue - sliderMinValue));
-                    currentValue = Math.round(newValue);
-                    
-                    // Ensure value stays within defined range (redundant but safe)
-                    currentValue = Math.max(sliderMinValue, Math.min(currentValue, sliderMaxValue));
-                    
-                    // Update the UI
-                    updateSliderUI(currentValue);
-                }
-                
-                // End dragging
-                function stopDrag() {
-                    isDragging = false;
-                    valueTooltip.style.opacity = '0';
-                    
-                    // Remove the event listeners
-                    document.removeEventListener('mousemove', drag);
-                    document.removeEventListener('touchmove', drag);
-                    document.removeEventListener('mouseup', stopDrag);
-                    document.removeEventListener('touchend', stopDrag);
-                    
-                    // Store the new asking price in localStorage (ensuring it's clamped)
-                    const clampedValue = Math.max(sliderMinValue, Math.min(currentValue, sliderMaxValue));
-                    localStorage.setItem('sellerAskingPrice', clampedValue);
-                    
-                    // Trigger recalculation of any related metrics
-                    updateRelatedMetrics(clampedValue, estimatedValue);
-                }
-                
-                // Initialize the slider with the provided estimated value
-                // Force an immediate update to ensure the UI matches the model
-                console.log(`Initializing slider with: estimated=${estimatedValue}, min=${minValue}, max=${maxValue}`);
-                updateSliderUI(currentValue);
-                
-                // Make the tooltip visible initially, then fade out after 2 seconds
-                valueTooltip.style.opacity = '1';
-                setTimeout(() => {
-                    if (!isDragging) {
-                        valueTooltip.style.opacity = '0';
-                    }
-                }, 2000);
-                
-                // Return control functions that can be called externally if needed
-                return {
-                    setValue: (value) => {
-                        // Ensure value is clamped when set externally
-                        currentValue = Math.max(sliderMinValue, Math.min(Math.round(value), sliderMaxValue));
-                        updateSliderUI(currentValue);
-                    },
-                    getValue: () => currentValue,
-                    getMinValue: () => sliderMinValue,
-                    getMaxValue: () => sliderMaxValue
-                };
-            }
-            
-            // Helper function to set the correct class for factor impact badges
-            function setFactorBadgeClass(elementId, impact) {
-                const element = document.getElementById(elementId);
-                if (!element) return;
-                
-                // Remove all existing factor classes
-                element.classList.remove('factor-positive', 'factor-negative', 'factor-neutral');
-                
-                // Add the appropriate class based on impact
-                if (impact > 5) {
-                    element.classList.add('factor-positive');
-                } else if (impact < 0) {
-                    element.classList.add('factor-negative');
-                } else {
-                    element.classList.add('factor-neutral');
                 }
             }
             

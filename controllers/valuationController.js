@@ -105,12 +105,23 @@ async function getIndustryMultipliers(industry) {
 async function calculateValuation(req, res) {
   try {
     const businessData = req.body;
+    console.log('Received valuation request with data:', 
+      JSON.stringify({...businessData, _summary: 'Data details omitted from log'}));
     
     console.log('Database connected');
     
-    // Fix the function name: change calculateBusinessValue to calculateBusinessValuation
-    // This is the line causing the error at line 152
-    const result = await valuationService.calculateBusinessValuation(businessData);
+    // Add a timeout to ensure the request doesn't hang
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Valuation calculation timed out')), 20000);
+    });
+    
+    // Race the calculation against the timeout
+    const result = await Promise.race([
+      valuationService.calculateBusinessValuation(businessData),
+      timeoutPromise
+    ]);
+    
+    console.log('Valuation calculation completed successfully');
     
     // Return the valuation result
     return res.status(200).json({
@@ -123,7 +134,7 @@ async function calculateValuation(req, res) {
     if (!res.headersSent) {
       return res.status(500).json({
         success: false,
-        message: 'Failed to calculate valuation',
+        message: 'Failed to calculate valuation: ' + (error.message || 'Unknown error'),
         error: error.message
       });
     }

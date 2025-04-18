@@ -123,45 +123,69 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Create a non-blocking version that never awaits or throws
     function saveQuestionnaireDataToServerNonBlocking() {
-        saveQuestionnaireDataToServer()
-            .catch(err => {
-                console.error('Non-blocking save error (can be ignored):', err);
-            });
-        return true; // Always return true to allow navigation
+        console.log('Starting non-blocking save operation');
+        
+        // Get data first so we have it even if the async operation takes time
+        const questionnaireData = prepareQuestionnaireData();
+        
+        // Add valuation data if available
+        if (window.valuationData) {
+            questionnaireData.valuation = window.valuationData;
+        }
+        
+        // Add the anonymous ID
+        const anonymousId = localStorage.getItem('questionnaireAnonymousId') || 
+            'anon_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        questionnaireData.anonymousId = anonymousId;
+        
+        // Start the save operation but don't await it
+        // This ensures navigation can continue regardless of API response
+        fetch('/api/business/save-questionnaire', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(questionnaireData),
+            // Set a reasonable timeout but don't await the promise
+            signal: AbortSignal.timeout(10000) // 10 second timeout
+        })
+        .then(response => {
+            if (!response.ok) {
+                console.warn('Non-blocking save returned error status:', response.status);
+                return response.text().then(text => {
+                    throw new Error(`Server error ${response.status}: ${text}`);
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                console.log('Non-blocking save operation succeeded:', data.submissionId);
+                localStorage.setItem('questionnaireSubmissionId', data.submissionId);
+            } else {
+                console.warn('Non-blocking save operation failed:', data.message);
+            }
+        })
+        .catch(error => {
+            // Just log the error - we never want to stop navigation
+            console.warn('Error in non-blocking save (safely caught):', error.message);
+        });
+        
+        // Return immediately to unblock navigation
+        console.log('Non-blocking save initiated, continuing navigation');
     }
     
     // Detect when the user is about to leave a page and save data
-    // This listener might still be useful for saving data if the user navigates away unexpectedly
     window.addEventListener('beforeunload', (event) => {
         console.log('beforeunload triggered, attempting non-blocking save.');
         // Use the non-blocking version here as well to avoid delaying closure
         saveQuestionnaireDataToServerNonBlocking();
         // Don't prevent default or show confirmation dialog
     });
-
-    // Remove or comment out the specific 'Next' button listener for the valuation page
-    /*
-    const nextBtn = document.getElementById('nextBtn');
-    if (nextBtn) {
-        const originalClickHandler = nextBtn.onclick;
-        
-        // For valuation page that has the perma-loading issue, use special handling
-        const isValuationPage = window.location.href.includes('/valuation');
-        
-        if (isValuationPage) {
-            // Remove this listener entirely - let questionnaire-navigation.js handle it via validateBeforeNext
-            // nextBtn.addEventListener('click', function(e) { ... });
-            console.log('Removed redundant nextBtn listener from questionnaire-data-saver.js for valuation page.');
-        } else {
-            // Keep the listener for other pages if needed, or consolidate logic
-            // nextBtn.addEventListener('click', async function(e) { ... });
-        }
-    }
-    */
     
     // Make the non-blocking save function globally available for validateBeforeNext
     window.saveQuestionnaireDataToServerNonBlocking = saveQuestionnaireDataToServerNonBlocking;
-
+    
     // Also save periodically (every 30 seconds) to minimize data loss
     setInterval(saveQuestionnaireDataToServerNonBlocking, 30000);
     
