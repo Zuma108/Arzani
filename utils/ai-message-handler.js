@@ -79,9 +79,9 @@ export async function processAIMessage({
       { role: 'user', content: message }
     ];
     
-    // Call the OpenAI API with GPT-4o model
+    // Call the OpenAI API with GPT-4.1-nano model
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o', // Updated to use GPT-4o instead of gpt-4 or gpt-3.5-turbo
+      model: 'gpt-4.1-nano', // Updated to use GPT-4.1-nano instead of gpt-4o
       messages,
       temperature: 0.7,
       max_tokens: 500
@@ -95,7 +95,7 @@ export async function processAIMessage({
     let suggestions = [];
     try {
       const suggestionsCompletion = await openai.chat.completions.create({
-        model: 'gpt-4o', // Also use GPT-4o for suggestions to ensure consistency
+        model: 'gpt-4.1-nano', // Updated to use GPT-4.1-nano for suggestions
         messages: [
           ...messages,
           { role: 'assistant', content: aiResponse },
@@ -218,7 +218,7 @@ export async function processAIMessage({
       suggestions,
       credits: creditInfo,
       interactionId: interactionResult.rows[0].id,
-      model: 'gpt-4o' // Add model information to the response
+      model: 'gpt-4.1-nano' // Updated model information in the response
     };
   } catch (error) {
     console.error('AI message processing error:', error);
@@ -242,9 +242,9 @@ export async function processPublicAIMessage(message) {
       Do not provide specific business listings as this is a public query.`
     };
     
-    // Call the OpenAI API with GPT-4o for public queries as well
+    // Call the OpenAI API with GPT-4.1-nano for public queries
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o', // Updated to use GPT-4o instead of gpt-3.5-turbo
+      model: 'gpt-4.1-nano', // Updated to use GPT-4.1-nano
       messages: [
         systemMessage,
         { role: 'user', content: message }

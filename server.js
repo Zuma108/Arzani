@@ -16,6 +16,7 @@ import paymentRoutes from './routes/payment.routes.js';
 
 import Stripe from 'stripe';
 
+
 import { 
   createUserTable, 
   createUser, 
@@ -32,8 +33,6 @@ import { OAuth2Client } from 'google-auth-library';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import BusinessMetricsService from './services/businessMetricsService.js';
-// Remove realtime-api-beta import
-import RateLimiter from './utils/rateLimit.js';
 import OpenAI from 'openai';
 import fetch from 'node-fetch';
 import { authenticateToken } from './middleware/auth.js';
@@ -1579,7 +1578,7 @@ Provide a helpful answer based on the website data.
 
         // Call the OpenAI API
         const completion = await openai.chat.completions.create({
-            model: 'gpt-3.5-turbo',
+            model: 'gpt-4.1-nano', // Updated from gpt-3.5-turbo to gpt-4.1-nano
             messages: [{ role: 'user', content: prompt }],
         });
         res.json({ answer: aiResponse });
@@ -2703,7 +2702,7 @@ async function handleVoiceMessage(data, ws) {
     const listingsContext = JSON.stringify(listings);
 
     const completion = await openai.chat.completions.create({
-        model: "gpt-4",
+        model: "gpt-4.1-nano", // Updated from gpt-4 to gpt-4.1-nano
         messages: [
             {
                 role: "system",

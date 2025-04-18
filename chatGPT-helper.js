@@ -11,11 +11,11 @@ const openai = new OpenAI({
 /**
  * Simple function to call OpenAI API with a prompt
  * @param {string} prompt - The prompt to send to OpenAI
- * @param {string} model - The model to use, defaults to gpt-4
+ * @param {string} model - The model to use, defaults to gpt-4.1-nano
  * @param {number} maxTokens - Maximum tokens for response, defaults to 1000
  * @returns {Promise<string>} The response text from OpenAI
  */
-export async function callOpenAI(prompt, model = 'gpt-4', maxTokens = 1000) {
+export async function callOpenAI(prompt, model = 'gpt-4.1-nano', maxTokens = 1000) {
   try {
     const response = await openai.chat.completions.create({
       model: model,
@@ -170,7 +170,7 @@ class ChatGPTHelper {
 
       // Call the OpenAI API
       const response = await openai.chat.completions.create({
-        model: 'gpt-4', // Use GPT-4 for best results, or gpt-3.5-turbo for lower cost
+        model: 'gpt-4.1-nano', // Updated from gpt-4 for best results, or gpt-3.5-turbo for lower cost
         messages,
         max_tokens: 1000,
         temperature: 0.7,
@@ -379,7 +379,7 @@ class ChatGPTHelper {
       
       // Call OpenAI for verification analysis
       const response = await openai.chat.completions.create({
-        model: 'gpt-4', // Use GPT-4 for highest accuracy in verification
+        model: 'gpt-4.1-nano', // Updated from gpt-4 for highest accuracy in verification
         messages: [
           { 
             role: 'system', 
@@ -804,7 +804,7 @@ Keep the report professional, balanced, and focused on factual observations rath
       
       // Call OpenAI for report generation
       const response = await openai.chat.completions.create({
-        model: 'gpt-4',
+        model: 'gpt-4.1-nano', // Updated from gpt-4
         messages: [
           { 
             role: 'system', 
