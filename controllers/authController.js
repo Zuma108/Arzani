@@ -50,6 +50,29 @@ async function linkQuestionnaireData(userId, email, req) {
 }
 
 /**
+ * Handle post-login redirects with questionnaire data
+ */
+const handlePostLoginQuestionnaire = async (userId, email, req, res) => {
+  // If there's a returnTo parameter and it points to the thank-you page,
+  // we should set a flag to check for pending questionnaire data
+  const returnTo = req.query.returnTo || req.body.returnTo;
+  
+  if (returnTo && returnTo.includes('/seller-questionnaire/thank-you')) {
+    // Set a flag in the session to check for pending data
+    req.session.checkQuestionnaire = true;
+    
+    try {
+      // Attempt to link any existing questionnaire data with this user
+      const valuationController = require('../controllers/valuationController');
+      await valuationController.linkQuestionnaireData(userId, email);
+    } catch (err) {
+      console.error('Error linking questionnaire data after login:', err);
+      // Non-critical error, continue with login flow
+    }
+  }
+};
+
+/**
  * Register a new user
  */
 export const register = async (req, res) => {
@@ -171,6 +194,9 @@ export const login = async (req, res) => {
     // After successful login, link any questionnaire data
     await linkUserData(req, res, () => {});
     await linkQuestionnaireData(user.id, user.email, req);
+    
+    // Handle questionnaire data if present
+    await handlePostLoginQuestionnaire(user.id, user.email, req, res);
     
     res.json({
       success: true,

@@ -55,72 +55,6 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     }
     
-    // Function to save data to server
-    async function saveQuestionnaireDataToServer() {
-        try {
-            const questionnaireData = prepareQuestionnaireData();
-            
-            // Skip if we don't have any data yet
-            if (!questionnaireData.businessName && !questionnaireData.industry && !questionnaireData.email) {
-                console.log('Not enough data to save yet');
-                return false;
-            }
-            
-            // Use existing submissionId if available
-            const submissionId = localStorage.getItem('questionnaireSubmissionId');
-            if (submissionId) {
-                questionnaireData.submissionId = submissionId;
-            }
-            
-            console.log('Saving questionnaire data to server:', questionnaireData);
-            
-            // Send data to server with timeout to prevent blocking too long
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
-            
-            try {
-                const response = await fetch('/seller-questionnaire/save-data', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(questionnaireData),
-                    signal: controller.signal
-                });
-                
-                clearTimeout(timeoutId);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    console.log('Successfully saved questionnaire data with ID:', result.submissionId);
-                    // Store the submission ID for future reference
-                    localStorage.setItem('questionnaireSubmissionId', result.submissionId);
-                    document.cookie = `questionnaireSubmissionId=${result.submissionId}; path=/; max-age=${60*60*24*30}`; // 30 days
-                    return true;
-                } else {
-                    console.error('Server indicated failure saving questionnaire data:', result.message);
-                    return false;
-                }
-            } catch (fetchError) {
-                clearTimeout(timeoutId);
-                if (fetchError.name === 'AbortError') {
-                    console.warn('Save operation timed out but continuing navigation');
-                    return false;
-                }
-                throw fetchError;
-            }
-        } catch (error) {
-            console.error('Failed to save questionnaire data:', error);
-            // Don't block navigation if this fails
-            return false;
-        }
-    }
-    
     // Create a non-blocking version that never awaits or throws
     function saveQuestionnaireDataToServerNonBlocking() {
         console.log('Starting non-blocking save operation');
@@ -138,90 +72,77 @@ document.addEventListener('DOMContentLoaded', function() {
             'anon_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         questionnaireData.anonymousId = anonymousId;
         
-        // Start the save operation but don't await it
-        // This ensures navigation can continue regardless of API response
-        fetch('/api/business/save-questionnaire', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(questionnaireData),
-            // Set a reasonable timeout but don't await the promise
-            signal: AbortSignal.timeout(10000), // 10 second timeout
-            // Don't follow redirects - we want to handle them ourselves
-            redirect: 'manual'
-        })
-        .then(response => {
-            // If we get redirected to login, that's actually "expected" behavior in production
-            // when no auth token is present
-            if (response.type === 'opaqueredirect' || response.status === 302) {
-                console.log('Got redirect response (likely to login page) - considering save successful for navigation purposes');
-                // Store the data in localStorage as a backup in case user logs in later
-                try {
-                    localStorage.setItem('pendingQuestionnaireData', JSON.stringify(questionnaireData));
-                    localStorage.setItem('pendingQuestionnaireSaveTime', new Date().toISOString());
-                } catch (storageError) {
-                    console.warn('Could not save pending data to localStorage:', storageError);
-                }
-                return { success: false, message: 'Authentication required', pendingData: true };
-            }
-            
-            if (!response.ok) {
-                console.warn('Non-blocking save returned error status:', response.status);
-                return response.text().then(text => {
-                    // Try to parse as JSON first
-                    try {
-                        return JSON.parse(text);
-                    } catch (e) {
-                        // If not JSON, it might be HTML (like a login page)
-                        if (text.includes('<!DOCTYPE') || text.includes('<html')) {
-                            console.warn('Response contains HTML instead of JSON (likely login page)');
-                            return { 
-                                success: false, 
-                                message: 'Authentication required',
-                                pendingData: true 
-                            };
-                        }
-                        throw new Error(`Server error ${response.status}: ${text}`);
-                    }
-                });
-            }
-            
-            return response.json();
-        })
-        .then(data => {
-            if (data.success) {
-                console.log('Non-blocking save operation succeeded:', data.submissionId);
-                localStorage.setItem('questionnaireSubmissionId', data.submissionId);
-            } else if (data.pendingData) {
-                console.log('Data saved to localStorage for future submission after login');
-            } else {
-                console.warn('Non-blocking save operation failed:', data.message);
-            }
-        })
-        .catch(error => {
-            // Just log the error - we never want to stop navigation
-            console.warn('Error in non-blocking save (safely caught):', error.message);
-            
-            // Store the data in localStorage as a backup in case of network errors
-            try {
-                localStorage.setItem('pendingQuestionnaireData', JSON.stringify(questionnaireData));
-                localStorage.setItem('pendingQuestionnaireSaveTime', new Date().toISOString());
-            } catch (storageError) {
-                console.warn('Could not save pending data to localStorage:', storageError);
-            }
-        });
+        // Store this data now in localStorage for redirect recovery
+        try {
+            localStorage.setItem('pendingQuestionnaireData', JSON.stringify(questionnaireData));
+            localStorage.setItem('pendingQuestionnaireSaveTime', new Date().toISOString());
+            localStorage.setItem('questionnaireRedirectCount', 
+                (parseInt(localStorage.getItem('questionnaireRedirectCount') || '0') + 1).toString());
+        } catch (storageErr) {
+            console.warn('Failed to store pending data in localStorage:', storageErr);
+        }
         
-        // Return immediately to unblock navigation
+        // Use XMLHttpRequest instead of fetch to better handle redirects
+        const xhr = new XMLHttpRequest();
+        
+        // Create timeout handler
+        const xhrTimeout = setTimeout(() => {
+            if (xhr.readyState < 4) {
+                xhr.abort();
+                console.warn('Non-blocking save request timed out');
+            }
+        }, 10000); // 10 second timeout
+        
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4) {
+                clearTimeout(xhrTimeout);
+                
+                // Check if we got redirected to login page
+                if (xhr.responseURL && xhr.responseURL.includes('/login')) {
+                    console.log('Detected redirect to login page. Data is saved for later submission.');
+                    // Data is already stored in localStorage above
+                    return;
+                }
+                
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    try {
+                        const result = JSON.parse(xhr.responseText);
+                        console.log('Non-blocking save succeeded:', result.submissionId);
+                        
+                        if (result.success) {
+                            localStorage.setItem('questionnaireSubmissionId', result.submissionId);
+                            
+                            // Clear pending data since save was successful
+                            localStorage.removeItem('pendingQuestionnaireData');
+                            localStorage.removeItem('pendingQuestionnaireSaveTime');
+                        }
+                    } catch (e) {
+                        console.warn('Error parsing response:', e);
+                    }
+                } else {
+                    console.warn('Non-blocking save failed with status:', xhr.status);
+                }
+            }
+        };
+        
+        xhr.open('POST', '/api/business/save-questionnaire', true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.withCredentials = true; // Include cookies
+        
+        try {
+            xhr.send(JSON.stringify(questionnaireData));
+        } catch (e) {
+            console.warn('Error sending XHR request:', e);
+        }
+        
         console.log('Non-blocking save initiated, continuing navigation');
+        return true;
     }
     
     // Detect when the user is about to leave a page and save data
     window.addEventListener('beforeunload', (event) => {
         console.log('beforeunload triggered, attempting non-blocking save.');
-        // Use the non-blocking version here as well to avoid delaying closure
         saveQuestionnaireDataToServerNonBlocking();
-        // Don't prevent default or show confirmation dialog
     });
     
     // Make the non-blocking save function globally available for validateBeforeNext
@@ -231,7 +152,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setInterval(saveQuestionnaireDataToServerNonBlocking, 30000);
     
     // Make save function available globally
-    window.saveQuestionnaireDataToServer = saveQuestionnaireDataToServer;
+    window.saveQuestionnaireDataToServer = saveQuestionnaireDataToServerNonBlocking;
     
     // Initial save attempt when script loads (non-blocking)
     setTimeout(saveQuestionnaireDataToServerNonBlocking, 2000);
