@@ -221,3 +221,23 @@
     }
   });
 })();
+
+/**
+ * Utility functions to check authentication status
+ */
+
+// Function to check if user appears to be logged in based on cookies/localStorage
+function checkUserLoggedIn() {
+    // Check for authentication tokens in localStorage or cookies
+    const hasAuthToken = Boolean(
+        localStorage.getItem('authToken') || 
+        document.cookie.includes('authToken=') || 
+        document.cookie.includes('connect.sid=')
+    );
+    
+    console.log(`Auth check: User appears ${hasAuthToken ? 'logged in' : 'not logged in'}`);
+    return hasAuthToken;
+}
+
+// Make available globally
+window.checkUserLoggedIn = checkUserLoggedIn;

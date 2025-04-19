@@ -535,16 +535,17 @@
                 if (window.valuationData) {
                     localStorage.setItem('sellerValuationData', JSON.stringify(window.valuationData));
                 }
+                
+                // Set a flag indicating we've completed the questionnaire flow
+                localStorage.setItem('questionnaireCompleted', 'true');
 
                 // Trigger the non-blocking save function from questionnaire-data-saver.js
-                // This function should handle preparing data and sending it without blocking navigation.
                 if (typeof window.saveQuestionnaireDataToServerNonBlocking === 'function') {
                     console.log('Calling non-blocking save from validateBeforeNext');
                     window.saveQuestionnaireDataToServerNonBlocking();
                 } else {
                     console.warn('Non-blocking save function not found. Saving might block navigation.');
                     // Fallback to potentially blocking save if non-blocking isn't available
-                    // This might still cause issues, but ensures data is saved.
                     saveQuestionnaireDataToServer().catch(err => {
                         console.error('Error during fallback save in validateBeforeNext:', err);
                     });

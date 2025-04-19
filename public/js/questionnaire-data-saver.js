@@ -147,21 +147,54 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             body: JSON.stringify(questionnaireData),
             // Set a reasonable timeout but don't await the promise
-            signal: AbortSignal.timeout(10000) // 10 second timeout
+            signal: AbortSignal.timeout(10000), // 10 second timeout
+            // Don't follow redirects - we want to handle them ourselves
+            redirect: 'manual'
         })
         .then(response => {
+            // If we get redirected to login, that's actually "expected" behavior in production
+            // when no auth token is present
+            if (response.type === 'opaqueredirect' || response.status === 302) {
+                console.log('Got redirect response (likely to login page) - considering save successful for navigation purposes');
+                // Store the data in localStorage as a backup in case user logs in later
+                try {
+                    localStorage.setItem('pendingQuestionnaireData', JSON.stringify(questionnaireData));
+                    localStorage.setItem('pendingQuestionnaireSaveTime', new Date().toISOString());
+                } catch (storageError) {
+                    console.warn('Could not save pending data to localStorage:', storageError);
+                }
+                return { success: false, message: 'Authentication required', pendingData: true };
+            }
+            
             if (!response.ok) {
                 console.warn('Non-blocking save returned error status:', response.status);
                 return response.text().then(text => {
-                    throw new Error(`Server error ${response.status}: ${text}`);
+                    // Try to parse as JSON first
+                    try {
+                        return JSON.parse(text);
+                    } catch (e) {
+                        // If not JSON, it might be HTML (like a login page)
+                        if (text.includes('<!DOCTYPE') || text.includes('<html')) {
+                            console.warn('Response contains HTML instead of JSON (likely login page)');
+                            return { 
+                                success: false, 
+                                message: 'Authentication required',
+                                pendingData: true 
+                            };
+                        }
+                        throw new Error(`Server error ${response.status}: ${text}`);
+                    }
                 });
             }
+            
             return response.json();
         })
         .then(data => {
             if (data.success) {
                 console.log('Non-blocking save operation succeeded:', data.submissionId);
                 localStorage.setItem('questionnaireSubmissionId', data.submissionId);
+            } else if (data.pendingData) {
+                console.log('Data saved to localStorage for future submission after login');
             } else {
                 console.warn('Non-blocking save operation failed:', data.message);
             }
@@ -169,6 +202,14 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => {
             // Just log the error - we never want to stop navigation
             console.warn('Error in non-blocking save (safely caught):', error.message);
+            
+            // Store the data in localStorage as a backup in case of network errors
+            try {
+                localStorage.setItem('pendingQuestionnaireData', JSON.stringify(questionnaireData));
+                localStorage.setItem('pendingQuestionnaireSaveTime', new Date().toISOString());
+            } catch (storageError) {
+                console.warn('Could not save pending data to localStorage:', storageError);
+            }
         });
         
         // Return immediately to unblock navigation

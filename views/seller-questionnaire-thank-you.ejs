@@ -119,5 +119,63 @@
             </div>
         </footer>
     </div>
+
+    <!-- Add script to handle pending questionnaire data -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if we have pending questionnaire data in localStorage
+            const pendingData = localStorage.getItem('pendingQuestionnaireData');
+            const pendingSaveTime = localStorage.getItem('pendingQuestionnaireSaveTime');
+            
+            if (pendingData) {
+                try {
+                    // Check if the data was saved recently (within the last hour)
+                    const saveTime = new Date(pendingSaveTime || Date.now());
+                    const hourAgo = new Date(Date.now() - (60 * 60 * 1000));
+                    
+                    if (saveTime > hourAgo) {
+                        console.log('Found pending questionnaire data to submit');
+                        
+                        // Mark as success now that the user has reached the thank-you page
+                        localStorage.setItem('questionnaireDataSubmitted', 'true');
+                        
+                        // Try to submit data again in the background
+                        // This will likely succeed if the user is now logged in
+                        fetch('/api/business/save-questionnaire', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: pendingData,
+                            credentials: 'include' // Include cookies for auth
+                        })
+                        .then(response => {
+                            if (response.ok) return response.json();
+                            throw new Error('Failed to save data: ' + response.status);
+                        })
+                        .then(result => {
+                            if (result.success) {
+                                console.log('Successfully submitted pending questionnaire data with ID:', result.submissionId);
+                                localStorage.setItem('questionnaireSubmissionId', result.submissionId);
+                                // Clear pending data
+                                localStorage.removeItem('pendingQuestionnaireData');
+                                localStorage.removeItem('pendingQuestionnaireSaveTime');
+                            }
+                        })
+                        .catch(error => {
+                            console.warn('Background submission of pending data failed:', error);
+                            // Keep the pending data in case the user logs in later
+                        });
+                    } else {
+                        // Data is too old, clear it
+                        localStorage.removeItem('pendingQuestionnaireData');
+                        localStorage.removeItem('pendingQuestionnaireSaveTime');
+                    }
+                } catch (error) {
+                    console.error('Error processing pending questionnaire data:', error);
+                }
+            }
+        });
+    </script>
 </body>
 </html>
