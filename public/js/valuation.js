@@ -75,10 +75,25 @@ async function saveQuestionnaireData(questionnaireData) {
         console.log('Saving questionnaire data...');
         console.log('Sending to endpoint: /api/business/save-questionnaire');
         
-        // Prevent duplicate submissions - NEW DEBOUNCE LOGIC
+        // NEW: Check if a request is already in progress
+        const requestInProgress = localStorage.getItem('questionnaireRequestInProgress');
+        const currentTime = Date.now();
+
+        if (requestInProgress && currentTime - parseInt(requestInProgress) < 10000) {
+            console.log('Request already in progress, aborting duplicate request');
+            return Promise.resolve({
+                success: true,
+                message: 'Already processing a submission',
+                aborted: true
+            });
+        }
+
+        // Mark that a request is in progress
+        localStorage.setItem('questionnaireRequestInProgress', currentTime.toString());
+        
+        // Prevent duplicate submissions - debounce logic
         const lastSubmitTime = parseInt(localStorage.getItem('lastQuestionnaireSubmitTime') || '0');
         const lastSubmitData = localStorage.getItem('lastQuestionnaireSubmitData');
-        const currentTime = Date.now();
         const minTimeBetweenSubmits = 5000; // 5 seconds between submissions
 
         // Check if we've recently submitted the same data
@@ -89,6 +104,8 @@ async function saveQuestionnaireData(questionnaireData) {
             const lastResponse = localStorage.getItem('lastQuestionnaireResponse');
             if (lastResponse) {
                 console.log('Returning cached response from previous submission');
+                // Clear in-progress flag
+                localStorage.removeItem('questionnaireRequestInProgress');
                 return JSON.parse(lastResponse);
             }
         }
@@ -105,6 +122,8 @@ async function saveQuestionnaireData(questionnaireData) {
                 const lastResponse = localStorage.getItem('lastQuestionnaireResponse');
                 if (lastResponse) {
                     console.log('Returning cached response from previous identical submission');
+                    // Clear in-progress flag
+                    localStorage.removeItem('questionnaireRequestInProgress');
                     return JSON.parse(lastResponse);
                 }
             }
@@ -115,7 +134,7 @@ async function saveQuestionnaireData(questionnaireData) {
         localStorage.setItem('lastQuestionnaireSubmitData', JSON.stringify(questionnaireData));
         
         // Add headers to ensure API bypasses auth
-        const response = await fetch('/api/business/save-questionnaire', {
+        const response = await fetch(`/api/business/save-questionnaire?nocache=${Date.now()}&clientId=${localStorage.getItem('clientId') || generateClientId()}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -130,7 +149,8 @@ async function saveQuestionnaireData(questionnaireData) {
             body: JSON.stringify({
                 ...questionnaireData,
                 _clientId: localStorage.getItem('clientId') || generateClientId(),
-                _timestamp: Date.now()
+                _timestamp: Date.now(),
+                _nonce: Math.random().toString(36).substring(2, 15)
             })
         });
         
@@ -141,10 +161,14 @@ async function saveQuestionnaireData(questionnaireData) {
             const contentType = response.headers.get('content-type');
             if (contentType && contentType.includes('application/json')) {
                 const errorData = await response.json();
+                // Clear in-progress flag
+                localStorage.removeItem('questionnaireRequestInProgress');
                 throw new Error(`API returned status ${response.status}: ${errorData.message || response.statusText}`);
             } else {
                 const errorText = await response.text();
                 console.error('Non-JSON error response:', errorText.substring(0, 200) + '...');
+                // Clear in-progress flag
+                localStorage.removeItem('questionnaireRequestInProgress');
                 throw new Error(`API returned non-JSON response with status ${response.status}`);
             }
         }
@@ -160,9 +184,14 @@ async function saveQuestionnaireData(questionnaireData) {
             localStorage.setItem('questionnaireSubmissionId', data.submissionId);
         }
         
+        // Clear in-progress flag
+        localStorage.removeItem('questionnaireRequestInProgress');
+        
         return data;
     } catch (error) {
         console.error('Error saving questionnaire data:', error);
+        // Clear in-progress flag even on error
+        localStorage.removeItem('questionnaireRequestInProgress');
         throw error;
     }
 }
