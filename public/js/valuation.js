@@ -75,6 +75,45 @@ async function saveQuestionnaireData(questionnaireData) {
         console.log('Saving questionnaire data...');
         console.log('Sending to endpoint: /api/business/save-questionnaire');
         
+        // Prevent duplicate submissions - NEW DEBOUNCE LOGIC
+        const lastSubmitTime = parseInt(localStorage.getItem('lastQuestionnaireSubmitTime') || '0');
+        const lastSubmitData = localStorage.getItem('lastQuestionnaireSubmitData');
+        const currentTime = Date.now();
+        const minTimeBetweenSubmits = 5000; // 5 seconds between submissions
+
+        // Check if we've recently submitted the same data
+        if (currentTime - lastSubmitTime < minTimeBetweenSubmits) {
+            console.log('Preventing duplicate submission. Last submit was', (currentTime - lastSubmitTime), 'ms ago.');
+            
+            // If we have a previous response, return it
+            const lastResponse = localStorage.getItem('lastQuestionnaireResponse');
+            if (lastResponse) {
+                console.log('Returning cached response from previous submission');
+                return JSON.parse(lastResponse);
+            }
+        }
+        
+        // Check if the data is the same as the previous submission
+        if (lastSubmitData) {
+            const previousData = JSON.parse(lastSubmitData);
+            const currentDataStr = JSON.stringify(questionnaireData);
+            
+            if (currentDataStr === JSON.stringify(previousData)) {
+                console.log('Data is identical to previous submission');
+                
+                // If we have a previous response, return it
+                const lastResponse = localStorage.getItem('lastQuestionnaireResponse');
+                if (lastResponse) {
+                    console.log('Returning cached response from previous identical submission');
+                    return JSON.parse(lastResponse);
+                }
+            }
+        }
+        
+        // Store the submission time and data for debounce check
+        localStorage.setItem('lastQuestionnaireSubmitTime', currentTime.toString());
+        localStorage.setItem('lastQuestionnaireSubmitData', JSON.stringify(questionnaireData));
+        
         // Add headers to ensure API bypasses auth
         const response = await fetch('/api/business/save-questionnaire', {
             method: 'POST',
@@ -82,9 +121,17 @@ async function saveQuestionnaireData(questionnaireData) {
                 'Content-Type': 'application/json',
                 'X-Request-Source': 'valuation-calculator',
                 'X-Skip-Auth': 'true',
-                'Accept': 'application/json' // Explicitly request JSON
+                'Accept': 'application/json', // Explicitly request JSON
+                'Cache-Control': 'no-cache, no-store, must-revalidate', // Prevent caching
+                'Pragma': 'no-cache',
+                'Expires': '0',
+                'X-Timestamp': Date.now().toString() // Add timestamp to make each request unique
             },
-            body: JSON.stringify(questionnaireData)
+            body: JSON.stringify({
+                ...questionnaireData,
+                _clientId: localStorage.getItem('clientId') || generateClientId(),
+                _timestamp: Date.now()
+            })
         });
         
         if (!response.ok) {
@@ -105,6 +152,9 @@ async function saveQuestionnaireData(questionnaireData) {
         const data = await response.json();
         console.log('Questionnaire data saved successfully:', data);
         
+        // Store the successful response
+        localStorage.setItem('lastQuestionnaireResponse', JSON.stringify(data));
+        
         // Store the submission ID in localStorage
         if (data.submissionId) {
             localStorage.setItem('questionnaireSubmissionId', data.submissionId);
@@ -115,6 +165,13 @@ async function saveQuestionnaireData(questionnaireData) {
         console.error('Error saving questionnaire data:', error);
         throw error;
     }
+}
+
+// Helper function to generate a client ID for tracking submissions
+function generateClientId() {
+    const clientId = 'client_' + Date.now() + '_' + Math.random().toString(36).substring(2, 10);
+    localStorage.setItem('clientId', clientId);
+    return clientId;
 }
 
 // Collect data from localStorage to prepare for saving
