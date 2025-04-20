@@ -850,11 +850,16 @@ router.post('/save-questionnaire', async (req, res) => {
         
         await client.query('COMMIT');
         
+        // Set cache control headers to prevent loop
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+        res.setHeader('X-Submission-Status', 'updated');
+        
         // Return the existing submission ID
         return res.status(200).json({
           success: true,
           message: 'Questionnaire data updated successfully',
-          submissionId: updateResult.rows[0].submission_id
+          submissionId: updateResult.rows[0].submission_id,
+          updated: true
         });
       }
     }
@@ -899,10 +904,16 @@ router.post('/save-questionnaire', async (req, res) => {
 
     await client.query('COMMIT');
     
+    // Set cache control headers to prevent loop
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.setHeader('X-Submission-Status', 'created');
+    
+    // Return with clear properties that client code can check
     res.status(200).json({
       success: true,
       message: 'Questionnaire data saved successfully',
-      submissionId: submissionId
+      submissionId: submissionId,
+      created: true
     });
 
   } catch (error) {

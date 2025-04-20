@@ -768,6 +768,53 @@ app.post('/api/business/save-questionnaire', async (req, res) => {
     try {
       await client.query('BEGIN');
       
+      // First check if the anonymous_id already exists to avoid unique constraint violation
+      if (anonymousId && data.anonymousId) {  // Only check if client provided an anonymousId
+        const checkQuery = 'SELECT submission_id FROM questionnaire_submissions WHERE anonymous_id = $1';
+        const checkResult = await client.query(checkQuery, [anonymousId]);
+        
+        if (checkResult.rows.length > 0) {
+          // If anonymousId exists, use its submission_id for the update
+          const existingSubmissionId = checkResult.rows[0].submission_id;
+          console.log(`Found existing submission with anonymous_id ${anonymousId}: ${existingSubmissionId}`);
+          
+          // Update the existing record
+          const updateQuery = `
+            UPDATE questionnaire_submissions 
+            SET 
+              email = COALESCE($1, email),
+              data = $2,
+              updated_at = NOW()
+            WHERE anonymous_id = $3
+            RETURNING id, submission_id
+          `;
+
+          const updateResult = await client.query(updateQuery, [
+            email,
+            JSON.stringify(data),
+            anonymousId
+          ]);
+          
+          await client.query('COMMIT');
+          client.release();
+          
+          // Set cache control headers to prevent client-side loops
+          res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+          res.setHeader('Pragma', 'no-cache');
+          res.setHeader('Expires', '0');
+          res.setHeader('X-Submission-Status', 'updated');
+          
+          // Return the existing submission ID
+          return res.status(200).json({
+            success: true,
+            message: 'Questionnaire data updated successfully',
+            submissionId: updateResult.rows[0].submission_id,
+            updated: true,
+            timestamp: Date.now() // Add a timestamp to help client identify newest response
+          });
+        }
+      }
+      
       // Use a simplified query with data JSON storage to avoid column mismatch issues
       const insertQuery = `
         INSERT INTO questionnaire_submissions (
@@ -797,10 +844,18 @@ app.post('/api/business/save-questionnaire', async (req, res) => {
       
       await client.query('COMMIT');
       
+      // Set cache control headers to prevent client-side loops
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      res.setHeader('X-Submission-Status', 'created');
+      
       return res.json({
         success: true,
         message: 'Questionnaire data saved successfully',
-        submissionId: submissionId
+        submissionId: submissionId,
+        created: true,
+        timestamp: Date.now() // Add a timestamp to help client identify newest response
       });
     } catch (error) {
       await client.query('ROLLBACK');
