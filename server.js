@@ -586,6 +586,19 @@ app.use(session({
 }));
 app.use(cookieParser());
 
+// Add a specific middleware to handle the save-questionnaire endpoint before any auth middleware
+// This ensures the route is properly marked as public
+
+app.use((req, res, next) => {
+  // Specific handling for the save-questionnaire endpoint
+  if ((req.path === '/api/business/save-questionnaire' || req.path === '/business/save-questionnaire') && req.method === 'POST') {
+    console.log('Marking save-questionnaire endpoint as public:', req.path);
+    req.isPublicRequest = true;
+    return next();
+  }
+  next();
+});
+
 // Import diagnostic middleware
 import diagnosticMiddleware from './middleware/diagnosticMiddleware.js';
 
@@ -617,6 +630,18 @@ app.use('/api/business', (req, res, next) => {
     console.log('Marking business API route as public:', req.path);
     req.isPublicRequest = true;
   }
+  next();
+});
+
+// Add this before any route registration that uses authenticateToken
+app.use('/api/business', (req, res, next) => {
+  if (req.path === '/save-questionnaire' && req.method === 'POST') {
+    console.log('Bypassing authentication for public save-questionnaire endpoint');
+    req.isPublicRequest = true;
+    next();
+    return;
+  }
+  // Continue to next middleware
   next();
 });
 

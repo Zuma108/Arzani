@@ -800,6 +800,257 @@ router.get('/is-saved/:businessId', authenticateToken, async (req, res) => {
   }
 });
 
+// Add a public route for saving questionnaires without requiring authentication
+router.post('/save-questionnaire', async (req, res) => {
+  console.log('Public save-questionnaire endpoint accessed');
+  const client = await pool.connect(); // Get a client from the pool for transaction
+
+  try {
+    await client.query('BEGIN'); // Start transaction
+
+    const data = req.body;
+    console.log('Questionnaire data to save:', {
+      email: data.email,
+      businessName: data.businessName,
+      industry: data.industry,
+      hasValuation: !!data.valuation
+    });
+
+    // Helper function for validation
+    const toNumberOrNull = (value) => {
+      if (value === undefined || value === null || value === '') return null;
+      const num = parseFloat(value);
+      return isNaN(num) ? null : num;
+    };
+
+    // Helper function for strings
+    const toNullableString = (value) => {
+      return (value === undefined || value === null || value === '') ? null : String(value);
+    };
+
+    const submissionId = data.submissionId || `sub_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
+    const valuation = data.valuation ? (typeof data.valuation === 'string' ? JSON.parse(data.valuation) : data.valuation) : null;
+
+    // Check if a submission with this ID already exists
+    const checkQuery = `
+      SELECT id FROM questionnaire_submissions 
+      WHERE submission_id = $1
+    `;
+    const checkResult = await client.query(checkQuery, [submissionId]);
+    let submissionDbId = null;
+
+    if (checkResult.rows.length > 0) {
+      // Update existing submission
+      submissionDbId = checkResult.rows[0].id;
+      console.log(`Updating existing submission ID: ${submissionId} (DB ID: ${submissionDbId})`);
+
+      const updateQuery = `
+        UPDATE questionnaire_submissions
+        SET
+          email = $1, business_name = $2, industry = $3, location = $4, description = $5,
+          year_established = $6, years_in_operation = $7, contact_name = $8, contact_phone = $9,
+          revenue = $10, revenue_prev_year = $11, revenue_2_years_ago = $12, revenue_3_years_ago = $13,
+          ebitda = $14, ebitda_prev_year = $15, ebitda_2_years_ago = $16,
+          cash_on_cash = $17, ffe_value = $18, ffe_items = $19,
+          growth_rate = $20, growth_areas = $21, growth_challenges = $22, scalability = $23,
+          debt_amount = $24, debt_transferable = $25, debt_notes = $26, debt_items = $27,
+          asking_price = $28,
+          valuation_min = $29, valuation_max = $30, estimated_value = $31,
+          raw_data = $32
+        WHERE id = $33
+        RETURNING id
+      `;
+
+      const updateValues = [
+        data.email ? data.email.toLowerCase().trim() : null,
+        toNullableString(data.businessName),
+        toNullableString(data.industry),
+        toNullableString(data.location),
+        toNullableString(data.description),
+        toNumberOrNull(data.yearEstablished),
+        toNumberOrNull(data.yearsInOperation),
+        toNullableString(data.contactName),
+        toNullableString(data.contactPhone),
+        toNumberOrNull(data.revenueExact),
+        toNumberOrNull(data.revenuePrevYear),
+        toNumberOrNull(data.revenue2YearsAgo),
+        toNumberOrNull(data.revenue3YearsAgo),
+        toNumberOrNull(data.ebitda),
+        toNumberOrNull(data.ebitdaPrevYear),
+        toNumberOrNull(data.ebitda2YearsAgo),
+        toNumberOrNull(data.cashOnCash), toNumberOrNull(data.ffeValue), toNullableString(data.ffeItems),
+        toNumberOrNull(data.growthRate), toNullableString(data.growthAreas), toNullableString(data.growthChallenges), toNullableString(data.scalability),
+        toNumberOrNull(data.totalDebtAmount), toNullableString(data.debtTransferable), toNullableString(data.debtNotes), toNullableString(data.debtItems),
+        toNumberOrNull(data.askingPrice),
+        valuation ? toNumberOrNull(valuation.valuationRange?.min) : null,
+        valuation ? toNumberOrNull(valuation.valuationRange?.max) : null,
+        valuation ? toNumberOrNull(valuation.estimatedValue) : null,
+        JSON.stringify(data), // Store the complete raw data
+        submissionDbId
+      ];
+
+      await client.query(updateQuery, updateValues);
+      console.log(`Successfully updated questionnaire submission ${submissionId}`);
+    } else {
+      // Insert new submission
+      console.log(`Inserting new submission ID: ${submissionId}`);
+      const insertQuery = `
+        INSERT INTO questionnaire_submissions (
+          submission_id, email, business_name, industry, location, description,
+          year_established, years_in_operation, contact_name, contact_phone,
+          revenue, revenue_prev_year, revenue_2_years_ago, revenue_3_years_ago,
+          ebitda, ebitda_prev_year, ebitda_2_years_ago,
+          cash_on_cash, ffe_value, ffe_items,
+          growth_rate, growth_areas, growth_challenges, scalability,
+          debt_amount, debt_transferable, debt_notes, debt_items,
+          asking_price,
+          valuation_min, valuation_max, estimated_value,
+          raw_data, status, created_at, updated_at
+        ) VALUES (
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+          $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
+          $21, $22, $23, $24, $25, $26, $27, $28, $29, $30,
+          $31, $32, $33, $34, NOW(), NOW()
+        )
+        RETURNING id
+      `;
+
+      const insertValues = [
+        submissionId,
+        data.email ? data.email.toLowerCase().trim() : null,
+        toNullableString(data.businessName),
+        toNullableString(data.industry),
+        toNullableString(data.location),
+        toNullableString(data.description),
+        toNumberOrNull(data.yearEstablished),
+        toNumberOrNull(data.yearsInOperation),
+        toNullableString(data.contactName),
+        toNullableString(data.contactPhone),
+        toNumberOrNull(data.revenueExact),
+        toNumberOrNull(data.revenuePrevYear),
+        toNumberOrNull(data.revenue2YearsAgo),
+        toNumberOrNull(data.revenue3YearsAgo),
+        toNumberOrNull(data.ebitda),
+        toNumberOrNull(data.ebitdaPrevYear),
+        toNumberOrNull(data.ebitda2YearsAgo),
+        toNumberOrNull(data.cashOnCash),
+        toNumberOrNull(data.ffeValue),
+        toNullableString(data.ffeItems),
+        toNumberOrNull(data.growthRate),
+        toNullableString(data.growthAreas),
+        toNullableString(data.growthChallenges),
+        toNullableString(data.scalability),
+        toNumberOrNull(data.totalDebtAmount),
+        toNullableString(data.debtTransferable),
+        toNullableString(data.debtNotes),
+        toNullableString(data.debtItems),
+        toNumberOrNull(data.askingPrice),
+        valuation ? toNumberOrNull(valuation.valuationRange?.min) : null,
+        valuation ? toNumberOrNull(valuation.valuationRange?.max) : null,
+        valuation ? toNumberOrNull(valuation.estimatedValue) : null,
+        JSON.stringify(data),
+        'pending' // Initial status
+      ];
+
+      const insertResult = await client.query(insertQuery, insertValues);
+      submissionDbId = insertResult.rows[0].id;
+      console.log(`Successfully inserted new questionnaire submission ${submissionId} with DB ID ${submissionDbId}`);
+    }
+
+    // If we have valuation data, save/update it in the business_valuations table
+    if (valuation && submissionId) {
+      const valuationQuery = `
+        INSERT INTO business_valuations
+          (business_id, submission_id, industry, valuation_type,
+          estimated_value, valuation_min, valuation_max, confidence,
+          multiplier, multiplier_type, risk_factor, growth_factor,
+          summary, full_valuation)
+        VALUES
+          (NULL, $1, $2, 'questionnaire',
+          $3, $4, $5, $6,
+          $7, $8, $9, $10,
+          $11, $12)
+        ON CONFLICT (submission_id)
+        DO UPDATE SET
+          industry = $2,
+          estimated_value = $3,
+          valuation_min = $4,
+          valuation_max = $5,
+          confidence = $6,
+          multiplier = $7,
+          multiplier_type = $8,
+          risk_factor = $9,
+          growth_factor = $10,
+          summary = $11,
+          full_valuation = $12,
+          updated_at = NOW()
+        RETURNING id
+      `;
+
+      await client.query(valuationQuery, [
+          submissionId,
+          toNullableString(data.industry),
+          toNumberOrNull(valuation.estimatedValue),
+          toNumberOrNull(valuation.valuationRange?.min),
+          toNumberOrNull(valuation.valuationRange?.max),
+          toNumberOrNull(valuation.confidence),
+          toNumberOrNull(valuation.multiple),
+          toNullableString(valuation.multipleType),
+          toNullableString(valuation.riskFactor),
+          toNullableString(valuation.growthFactor),
+          toNullableString(valuation.summary),
+          JSON.stringify(valuation)
+      ]);
+      console.log(`Successfully inserted new business valuation for submission ${submissionId}`);
+    }
+
+    // Commit the transaction
+    await client.query('COMMIT');
+    console.log(`Transaction committed for submission ${submissionId}`);
+
+    // Set cookie with submission ID
+    res.cookie('questionnaireSubmissionId', submissionId, {
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+        httpOnly: true, // Recommended for security
+        secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+        sameSite: 'Lax', // Good default for CSRF protection
+        path: '/'
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Questionnaire data saved successfully',
+      submissionId: submissionId
+    });
+
+  } catch (error) {
+    // Rollback the transaction in case of error
+    await client.query('ROLLBACK');
+    console.error('Database error saving questionnaire data:', error);
+    // Log the data that caused the error for debugging
+    console.error('Data causing error:', JSON.stringify(req.body, null, 2));
+
+    // Provide better error diagnostics
+    let errorMessage = 'Failed to save questionnaire data';
+    if (error.code === '23502') { // NOT NULL constraint error
+        errorMessage = `Failed to save: Missing required field (${error.column}). Please ensure all necessary information is provided.`;
+    } else if (error.code === '22P02') { // Invalid text representation (e.g., bad number format)
+        errorMessage = `Failed to save: Invalid data format encountered. Please check your inputs.`;
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: errorMessage,
+      error: error.message, // Include original error message for debugging
+      errorCode: error.code // Include error code if available
+    });
+  } finally {
+    // Release the client back to the pool
+    client.release();
+    console.log('Database client released.');
+  }
+});
+
 // Export the router
 export { router };
 export default router;
