@@ -551,71 +551,91 @@ class ValuationService {
             // Normalize the industry name to improve matching
             const normalizedIndustry = industry.toLowerCase().trim();
 
-            // Try exact match first
-            const exactQuery = `
+            // Try to get multipliers from industry_multipliers table first (correct table structure)
+            const multiplierQuery = `
                 SELECT 
                     industry, 
-                    avg_sales_multiple, 
-                    avg_ebitda_multiple,
-                    avg_cash_flow,
-                    avg_profit_margin,
-                    business_count
-                FROM industry_metrics 
+                    min_revenue_multiplier,
+                    max_revenue_multiplier,
+                    ebitda_multiplier
+                FROM industry_multipliers 
                 WHERE LOWER(industry) = $1
             `;
 
-            const exactResult = await pool.query(exactQuery, [normalizedIndustry]);
+            const multiplierResult = await pool.query(multiplierQuery, [normalizedIndustry]);
 
-            if (exactResult.rows.length > 0) {
-                console.log(`Found exact match for industry: ${industry}`);
-                return this.processIndustryData(exactResult.rows[0]);
+            if (multiplierResult.rows.length > 0) {
+                console.log(`Found exact match in industry_multipliers for: ${industry}`);
+                // Process data with the correct column names
+                return {
+                    industry: multiplierResult.rows[0].industry,
+                    min_revenue_multiplier: parseFloat(multiplierResult.rows[0].min_revenue_multiplier) || 0.5,
+                    max_revenue_multiplier: parseFloat(multiplierResult.rows[0].max_revenue_multiplier) || 2.5,
+                    ebitda_multiplier: parseFloat(multiplierResult.rows[0].ebitda_multiplier) || 3.5,
+                    avg_profit_margin: 15 // Default profit margin if not in data
+                };
             }
 
-            // No exact match, try with keyword matching
-            console.log(`No exact match for "${industry}", trying keyword matching`);
-            const keywordQuery = `
+            // Keyword search in industry_multipliers
+            const keywordMultiplierQuery = `
                 SELECT 
                     industry, 
-                    avg_sales_multiple, 
-                    avg_ebitda_multiple,
-                    avg_cash_flow,
-                    avg_profit_margin,
-                    business_count
-                FROM industry_metrics 
+                    min_revenue_multiplier,
+                    max_revenue_multiplier,
+                    ebitda_multiplier
+                FROM industry_multipliers 
                 WHERE LOWER(industry) LIKE $1
                 LIMIT 1
             `;
 
-            const keywordResult = await pool.query(keywordQuery, [`%${normalizedIndustry}%`]);
+            const keywordMultiplierResult = await pool.query(keywordMultiplierQuery, [`%${normalizedIndustry}%`]);
 
-            if (keywordResult.rows.length > 0) {
-                console.log(`Found similar industry: "${keywordResult.rows[0].industry}" for "${industry}"`);
-                return this.processIndustryData(keywordResult.rows[0]);
+            if (keywordMultiplierResult.rows.length > 0) {
+                console.log(`Found similar industry in industry_multipliers: "${keywordMultiplierResult.rows[0].industry}" for "${industry}"`);
+                return {
+                    industry: keywordMultiplierResult.rows[0].industry,
+                    min_revenue_multiplier: parseFloat(keywordMultiplierResult.rows[0].min_revenue_multiplier) || 0.5,
+                    max_revenue_multiplier: parseFloat(keywordMultiplierResult.rows[0].max_revenue_multiplier) || 2.5,
+                    ebitda_multiplier: parseFloat(keywordMultiplierResult.rows[0].ebitda_multiplier) || 3.5,
+                    avg_profit_margin: 15 // Default profit margin if not in data
+                };
             }
 
-            // Try to match by first word (category)
+            // Try to match by first word (category) in industry_multipliers
             const firstWord = normalizedIndustry.split(' ')[0];
             if (firstWord && firstWord.length > 3) {
-                console.log(`Trying to match by first word: "${firstWord}"`);
-                const categoryResult = await pool.query(keywordQuery, [`%${firstWord}%`]);
+                console.log(`Trying to match by first word in industry_multipliers: "${firstWord}"`);
+                const categoryResult = await pool.query(keywordMultiplierQuery, [`%${firstWord}%`]);
 
                 if (categoryResult.rows.length > 0) {
-                    console.log(`Found category match: "${categoryResult.rows[0].industry}" for "${industry}"`);
-                    return this.processIndustryData(categoryResult.rows[0]);
+                    console.log(`Found category match in industry_multipliers: "${categoryResult.rows[0].industry}" for "${industry}"`);
+                    return {
+                        industry: categoryResult.rows[0].industry,
+                        min_revenue_multiplier: parseFloat(categoryResult.rows[0].min_revenue_multiplier) || 0.5,
+                        max_revenue_multiplier: parseFloat(categoryResult.rows[0].max_revenue_multiplier) || 2.5,
+                        ebitda_multiplier: parseFloat(categoryResult.rows[0].ebitda_multiplier) || 3.5,
+                        avg_profit_margin: 15 // Default profit margin if not in data
+                    };
                 }
             }
 
-            // Fall back to "Other" or a generic category
-            console.log(`No matches found for "${industry}", trying "Other" category`);
-            const fallbackResult = await pool.query(exactQuery, ['other']);
+            // Fall back to "Other" in industry_multipliers
+            console.log(`No matches found for "${industry}", trying "Other" category in industry_multipliers`);
+            const fallbackResult = await pool.query(multiplierQuery, ['other']);
 
             if (fallbackResult.rows.length > 0) {
-                console.log(`Using "Other" category for "${industry}"`);
-                return this.processIndustryData(fallbackResult.rows[0]);
+                console.log(`Using "Other" category from industry_multipliers for "${industry}"`);
+                return {
+                    industry: fallbackResult.rows[0].industry,
+                    min_revenue_multiplier: parseFloat(fallbackResult.rows[0].min_revenue_multiplier) || 0.5,
+                    max_revenue_multiplier: parseFloat(fallbackResult.rows[0].max_revenue_multiplier) || 2.5,
+                    ebitda_multiplier: parseFloat(fallbackResult.rows[0].ebitda_multiplier) || 3.5,
+                    avg_profit_margin: 15 // Default profit margin if not in data
+                };
             }
 
             // If all fails, use default values
-            console.warn(`No industry metrics found for "${industry}". Using default multipliers.`);
+            console.warn(`No industry multipliers found for "${industry}". Using default multipliers.`);
             return this.getDefaultMultipliers();
 
         } catch (error) {

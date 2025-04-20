@@ -517,43 +517,54 @@
             
             // Set up validation function for navigation
             window.validateBeforeNext = function() {
-                // Check if valuation has been calculated
-                if (!window.valuationData && document.getElementById('valuationResults').classList.contains('hidden')) {
-                    alert('Please calculate your business valuation before continuing.');
-                    document.getElementById('calculateValuationBtn')?.focus();
-                    return false; // Validation fails
-                }
+                try {
+                    // Check if valuation has been calculated
+                    if (!window.valuationData && document.getElementById('valuationResults').classList.contains('hidden')) {
+                        alert('Please calculate your business valuation before continuing.');
+                        document.getElementById('calculateValuationBtn')?.focus();
+                        return false; // Validation fails
+                    }
 
-                // Check if we have a valid email
-                const email = localStorage.getItem('sellerEmail');
-                if (!email || !isValidEmail(email)) {
-                    showEmailModal();
-                    return false; // Validation fails
-                }
+                    // Check if we have a valid email - if not, still allow proceeding but show modal
+                    const email = localStorage.getItem('sellerEmail');
+                    if (!email || !isValidEmail(email)) {
+                        // Save data first as anonymous
+                        if (typeof window.saveQuestionnaireDataToServerNonBlocking === 'function') {
+                            window.saveQuestionnaireDataToServerNonBlocking();
+                        }
+                        
+                        // Save valuation data to localStorage
+                        if (window.valuationData) {
+                            localStorage.setItem('sellerValuationData', JSON.stringify(window.valuationData));
+                        }
+                        
+                        // Now show email modal - user can still proceed to thank-you page as anonymous
+                        showEmailModal();
+                        return false;
+                    }
 
-                // Save valuation data to localStorage (if available)
-                if (window.valuationData) {
-                    localStorage.setItem('sellerValuationData', JSON.stringify(window.valuationData));
-                }
-                
-                // Set a flag indicating we've completed the questionnaire flow
-                localStorage.setItem('questionnaireCompleted', 'true');
+                    // Save valuation data to localStorage
+                    if (window.valuationData) {
+                        localStorage.setItem('sellerValuationData', JSON.stringify(window.valuationData));
+                    }
+                    
+                    // Set a flag indicating we've completed the questionnaire flow
+                    localStorage.setItem('questionnaireCompleted', 'true');
 
-                // Trigger the non-blocking save function from questionnaire-data-saver.js
-                if (typeof window.saveQuestionnaireDataToServerNonBlocking === 'function') {
-                    console.log('Calling non-blocking save from validateBeforeNext');
-                    window.saveQuestionnaireDataToServerNonBlocking();
-                } else {
-                    console.warn('Non-blocking save function not found. Saving might block navigation.');
-                    // Fallback to potentially blocking save if non-blocking isn't available
-                    saveQuestionnaireDataToServer().catch(err => {
-                        console.error('Error during fallback save in validateBeforeNext:', err);
-                    });
-                }
+                    // Trigger the non-blocking save function
+                    if (typeof window.saveQuestionnaireDataToServerNonBlocking === 'function') {
+                        window.saveQuestionnaireDataToServerNonBlocking();
+                    } else {
+                        console.warn('Non-blocking save function not found, continuing navigation without saving');
+                    }
 
-                // Validation passed, allow navigation to proceed
-                console.log('Validation passed in validateBeforeNext');
-                return true;
+                    console.log('Validation passed, proceeding to thank-you page');
+                    return true;
+                } catch (error) {
+                    console.error('Error in validation:', error);
+                    // Still allow navigation in case of JS errors
+                    return true;
+                }
             };
             
             // Function to save questionnaire data to server (Keep for fallback/direct calls if needed elsewhere)
@@ -585,17 +596,25 @@
                     
                     console.log('Saving questionnaire data to server:', questionnaireData);
                     
-                    // Send data to server without any auth token
-                    const response = await fetch('/api/business/save-questionnaire', {
+                    // Send data to server without any auth token - use the public endpoint
+                    const response = await fetch('/api/public/valuation/save-questionnaire', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
+                            'Accept': 'application/json'
                         },
                         body: JSON.stringify(questionnaireData)
                     });
                     
                     if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
+                        const contentType = response.headers.get('content-type');
+                        if (contentType && contentType.includes('application/json')) {
+                            const errorData = await response.json();
+                            throw new Error(`API error (${response.status}): ${errorData.message || 'Unknown error'}`);
+                        } else {
+                            const errorText = await response.text().substring(0, 100);
+                            throw new Error(`API error (${response.status}): Non-JSON response: ${errorText}...`);
+                        }
                     }
                     
                     const result = await response.json();
@@ -743,17 +762,25 @@
                         valuationAmount: valuation.estimatedValue
                     });
                     
-                    // Send data to the server
-                    const response = await fetch('/api/business/save-questionnaire', {
+                    // Use the public endpoint that doesn't require authentication
+                    const response = await fetch('/api/public/valuation/save-questionnaire', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
+                            'Accept': 'application/json'
                         },
                         body: JSON.stringify(questionnaireData)
                     });
                     
                     if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
+                        const contentType = response.headers.get('content-type');
+                        if (contentType && contentType.includes('application/json')) {
+                            const errorData = await response.json();
+                            throw new Error(`API error (${response.status}): ${errorData.message || 'Unknown error'}`);
+                        } else {
+                            const errorText = await response.text().substring(0, 100);
+                            throw new Error(`API error (${response.status}): Non-JSON response: ${errorText}...`);
+                        }
                     }
                     
                     const result = await response.json();
@@ -769,7 +796,9 @@
                     }
                 } catch (error) {
                     console.error('Error saving valuation to database:', error);
-                    // Don't let this error affect the user experience
+                    // Fall back to storing in localStorage
+                    localStorage.setItem('sellerValuationData', JSON.stringify(valuation));
+                    console.log('Saved valuation to localStorage as fallback');
                     return false;
                 }
             }
@@ -780,12 +809,14 @@
                     // Show loading overlay
                     loadingOverlay.classList.remove('hidden');
                     
-                    // Create a safety timeout to ensure loading overlay is hidden after a maximum time
+                    // Create a safety timeout to ensure loading overlay is never stuck
                     const safetyTimeout = setTimeout(() => {
-                        console.warn('Safety timeout triggered after 30 seconds - forcing loading overlay to hide');
-                        if (loadingOverlay) loadingOverlay.classList.add('hidden');
+                        console.warn('Safety timeout triggered - forcing loading overlay to hide');
+                        document.querySelectorAll('.loading-overlay').forEach(overlay => {
+                            overlay.classList.add('hidden');
+                        });
                         displayError('The calculation is taking longer than expected. Please try again.');
-                    }, 30000); // 30 second maximum wait
+                    }, 15000); // Reduced to 15 seconds for better UX
                     
                     // Gather business data from localStorage
                     const businessData = {
@@ -819,56 +850,98 @@
                     }
                     
                     try {
-                        // Create an AbortController to timeout the fetch if it takes too long
+                        // Create an AbortController to timeout the fetch
                         const controller = new AbortController();
-                        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+                        const timeoutId = setTimeout(() => controller.abort(), 10000); // Reduced to 10 seconds
                         
                         // Send data to valuation API with timeout
-                        const response = await fetch('/api/valuation/calculate', {
+                        const response = await fetch('/api/public/valuation/calculate', {
                             method: 'POST',
-                            headers: {
+                            headers: { 
                                 'Content-Type': 'application/json',
+                                'Accept': 'application/json'
                             },
                             body: JSON.stringify(businessData),
                             signal: controller.signal
                         });
                         
-                        // Clear the fetch timeout since we got a response
                         clearTimeout(timeoutId);
                         
                         if (!response.ok) {
-                            const errorText = await response.text();
-                            console.error('API error response:', errorText);
-                            throw new Error(`Server error (${response.status}): ${errorText || 'Unknown error'}`);
+                            const contentType = response.headers.get('content-type');
+                            if (contentType && contentType.includes('application/json')) {
+                                const errorData = await response.json();
+                                throw new Error(`API error (${response.status}): ${errorData.message || 'Unknown error'}`);
+                            } else {
+                                const errorText = await response.text();
+                                if (errorText.includes('<!DOCTYPE html>')) {
+                                    throw new Error('Received HTML error page instead of JSON. Try the alternate endpoint.');
+                                } else {
+                                    throw new Error(`API error (${response.status}): ${errorText.substring(0, 100) || 'Unknown error'}`);
+                                }
+                            }
                         }
                         
                         const result = await response.json();
                         
                         if (result.success && result.valuation) {
-                            // Clear the safety timeout since we got success
                             clearTimeout(safetyTimeout);
                             
-                            // Store the result globally and display it
+                            // Store the result and display it
                             window.valuationData = result.valuation;
                             displayValuationResults(result.valuation);
                         } else {
                             throw new Error(result.message || 'Failed to calculate valuation');
                         }
                     } catch (apiError) {
-                        console.error('API error:', apiError);
-                        // Clear the safety timeout since we've handled the error
                         clearTimeout(safetyTimeout);
                         
-                        // Determine if this was a timeout
+                        // Handle abort errors specifically
                         if (apiError.name === 'AbortError') {
                             displayError('The valuation request timed out. Please try again.');
                         } else {
-                            displayError('Failed to connect to valuation service. Please try again later.');
+                            // Try the fallback endpoint if we got an HTML response
+                            if (apiError.message.includes('HTML error page') || apiError.message.includes('<!DOCTYPE html>')) {
+                                try {
+                                    // Try the business-specific public endpoint instead
+                                    console.log('Trying fallback valuation endpoint...');
+                                    const fallbackResponse = await fetch('/api/business/public/calculate-valuation', {
+                                        method: 'POST',
+                                        headers: { 
+                                            'Content-Type': 'application/json',
+                                            'Accept': 'application/json'
+                                        },
+                                        body: JSON.stringify(businessData)
+                                    });
+                                    
+                                    if (!fallbackResponse.ok) {
+                                        throw new Error(`Fallback API error: ${fallbackResponse.status}`);
+                                    }
+                                    
+                                    const fallbackResult = await fallbackResponse.json();
+                                    if (fallbackResult.success && fallbackResult.valuation) {
+                                        window.valuationData = fallbackResult.valuation;
+                                        displayValuationResults(fallbackResult.valuation);
+                                        return; // Exit early if successful
+                                    } else {
+                                        throw new Error(fallbackResult.message || 'Failed to calculate valuation with fallback endpoint');
+                                    }
+                                } catch (fallbackError) {
+                                    console.error('Fallback endpoint failed:', fallbackError);
+                                    displayError(`Both valuation endpoints failed. Please try again later.`);
+                                }
+                            } else {
+                                displayError(apiError.message || 'Failed to connect to valuation service.');
+                            }
                         }
                     }
                 } catch (error) {
-                    console.error('Valuation error:', error);
-                    displayError(error.message || 'Failed to calculate valuation. Please try again.');
+                    // Ensure overlay is hidden
+                    document.querySelectorAll('.loading-overlay').forEach(overlay => {
+                        overlay.classList.add('hidden');
+                    });
+                    
+                    displayError(error.message || 'An unexpected error occurred.');
                 }
             }
             

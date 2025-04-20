@@ -3,6 +3,28 @@
  * Handles the valuation calculation process on the client side
  */
 
+/**
+ * Format a number as currency with the proper symbol and formatting
+ * @param {number} value - The value to format
+ * @param {string} [currencySymbol='£'] - The currency symbol to use
+ * @returns {string} - The formatted currency string
+ */
+function formatCurrency(value, currencySymbol = '£') {
+  // Handle invalid inputs
+  if (value === null || value === undefined || isNaN(value)) {
+    return currencySymbol + '0';
+  }
+  
+  // Convert to number to ensure consistent formatting
+  const numValue = typeof value === 'string' ? parseFloat(value) : value;
+  
+  // Use the browser's Intl.NumberFormat for locale-aware formatting
+  return currencySymbol + new Intl.NumberFormat('en-GB', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(numValue);
+}
+
 // Function to calculate business valuation
 async function calculateBusinessValuation(businessData) {
     try {
@@ -350,6 +372,224 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+/**
+ * Slider Functionality
+ * Implements the interactive valuation slider
+ */
+document.addEventListener('DOMContentLoaded', function() {
+    // Get all the slider-related elements
+    const sliderThumb = document.getElementById('sliderThumb');
+    const sliderBar = document.querySelector('.slider-bar');
+    const valueTooltip = document.getElementById('valueTooltip');
+    const adjustedValueDisplay = document.getElementById('adjustedValue');
+    const likelihoodLabel = document.getElementById('likelihoodLabel');
+    const likelihoodText = document.getElementById('likelihoodText');
+    
+    // Make sure the slider elements exist
+    if (!sliderThumb || !sliderBar) {
+        console.error('Slider elements not found in DOM');
+        return;
+    }
+    
+    // Variables to store slider values
+    let minValue = 0;
+    let maxValue = 100000;
+    let currentValue = 50000;
+    let isDragging = false;
+    let sliderRect = sliderBar.getBoundingClientRect();
+    
+    // Initialize the slider with any existing valuation data
+    function initSlider() {
+        console.log('Initializing valuation slider');
+        if (window.valuationData && window.valuationData.valuationRange) {
+            minValue = window.valuationData.valuationRange.min;
+            maxValue = window.valuationData.valuationRange.max;
+            currentValue = window.valuationData.estimatedValue;
+        }
+        updateSliderPosition();
+    }
+    
+    // Update the slider position and related displays
+    function updateSliderPosition() {
+        // Calculate percentage position
+        const range = maxValue - minValue;
+        const percentage = ((currentValue - minValue) / range) * 100;
+        
+        // Update thumb position
+        sliderThumb.style.left = `${percentage}%`;
+        
+        // Update tooltip
+        if (valueTooltip) {
+            valueTooltip.textContent = formatCurrency(currentValue);
+            valueTooltip.style.left = `${percentage}%`;
+            valueTooltip.style.opacity = '1';
+        }
+        
+        // Update the main value display
+        if (adjustedValueDisplay) {
+            adjustedValueDisplay.textContent = formatCurrency(currentValue);
+        }
+        
+        // Update the likelihood indicators based on position
+        updateLikelihoodIndicators(percentage);
+    }
+    
+    // Update the likelihood indicators based on slider position
+    function updateLikelihoodIndicators(percentage) {
+        if (!likelihoodLabel || !likelihoodText) return;
+        
+        let labelClass, labelText, descriptionText;
+        
+        // Define ranges and corresponding statuses
+        if (percentage < 30) {
+            // Low end of range
+            labelClass = 'likelihood-high';
+            labelText = 'High Buyer Interest';
+            descriptionText = 'This price is below market average, which will likely attract more buyers but at a lower return for you.';
+        } else if (percentage > 70) {
+            // High end of range
+            labelClass = 'likelihood-low';
+            labelText = 'Low Buyer Interest';
+            descriptionText = 'This price is above market average, which may significantly reduce buyer incentives. Consider if the premium is justified.';
+        } else {
+            // Middle of range - optimal
+            labelClass = 'likelihood-moderate';
+            labelText = 'Balanced Market Position';
+            descriptionText = 'Your price is aligned with market expectations, offering a balance between buyer interest and seller return.';
+        }
+        
+        // Apply the classes and text content
+        likelihoodLabel.className = `likelihood-label ${labelClass}`;
+        likelihoodLabel.textContent = labelText;
+        likelihoodText.textContent = descriptionText;
+    }
+    
+    // Function to handle slider movement
+    function moveSlider(clientX) {
+        // Ensure we have the latest dimensions
+        sliderRect = sliderBar.getBoundingClientRect();
+        
+        // Calculate position within the slider
+        let position = (clientX - sliderRect.left) / sliderRect.width;
+        position = Math.max(0, Math.min(position, 1)); // Clamp between 0 and 1
+        
+        // Calculate the new value
+        currentValue = Math.round(minValue + position * (maxValue - minValue));
+        
+        // Update the UI
+        updateSliderPosition();
+    }
+    
+    // Event listener for mouse down on slider thumb
+    sliderThumb.addEventListener('mousedown', function(e) {
+        e.preventDefault(); // Prevent text selection
+        isDragging = true;
+        
+        // Add the active class for visual feedback
+        sliderThumb.classList.add('active');
+        
+        // Show tooltip
+        if (valueTooltip) {
+            valueTooltip.style.opacity = '1';
+        }
+        
+        // Get initial position
+        moveSlider(e.clientX);
+    });
+    
+    // Event listeners for document to handle mouse movement and release
+    document.addEventListener('mousemove', function(e) {
+        if (isDragging) {
+            moveSlider(e.clientX);
+        }
+    });
+    
+    document.addEventListener('mouseup', function() {
+        if (isDragging) {
+            isDragging = false;
+            sliderThumb.classList.remove('active');
+            
+            // Keep tooltip visible for a moment then fade
+            if (valueTooltip) {
+                setTimeout(() => {
+                    valueTooltip.style.opacity = '0.7';
+                }, 1500);
+            }
+        }
+    });
+    
+    // Touch event listeners for mobile devices
+    sliderThumb.addEventListener('touchstart', function(e) {
+        e.preventDefault();
+        isDragging = true;
+        sliderThumb.classList.add('active');
+        
+        // Show tooltip
+        if (valueTooltip) {
+            valueTooltip.style.opacity = '1';
+        }
+        
+        // Get initial position
+        moveSlider(e.touches[0].clientX);
+    });
+    
+    document.addEventListener('touchmove', function(e) {
+        if (isDragging) {
+            moveSlider(e.touches[0].clientX);
+        }
+    });
+    
+    document.addEventListener('touchend', function() {
+        if (isDragging) {
+            isDragging = false;
+            sliderThumb.classList.remove('active');
+            
+            // Keep tooltip visible for a moment then fade
+            if (valueTooltip) {
+                setTimeout(() => {
+                    valueTooltip.style.opacity = '0.7';
+                }, 1500);
+            }
+        }
+    });
+    
+    // Allow clicking directly on the slider bar to move the thumb
+    sliderBar.addEventListener('click', function(e) {
+        moveSlider(e.clientX);
+    });
+    
+    // Update slider when window is resized
+    window.addEventListener('resize', function() {
+        sliderRect = sliderBar.getBoundingClientRect();
+        updateSliderPosition();
+    });
+    
+    // Listen for valuation calculation events to update slider range
+    document.addEventListener('valuationCalculated', function(e) {
+        if (e.detail) {
+            if (e.detail.minValuation) minValue = e.detail.minValuation;
+            if (e.detail.maxValuation) maxValue = e.detail.maxValuation;
+            if (e.detail.estimatedValue) currentValue = e.detail.estimatedValue;
+            updateSliderPosition();
+        }
+    });
+    
+    // Initialize the slider
+    initSlider();
+    
+    // If valuation data already exists when loading page, initialize with it
+    if (window.valuationData) {
+        console.log('Found existing valuation data, initializing slider');
+        document.dispatchEvent(new CustomEvent('valuationCalculated', { 
+            detail: {
+                minValuation: window.valuationData.valuationRange?.min,
+                maxValuation: window.valuationData.valuationRange?.max,
+                estimatedValue: window.valuationData.estimatedValue
+            }
+        }));
+    }
+});
+
 // Function to calculate the business valuation
 async function calculateValuation() {
     try {
@@ -428,676 +668,113 @@ async function calculateValuation() {
 }
 
 /**
- * Enhanced fallback valuation calculation incorporating all available business metrics
- * @param {Object} businessData - Comprehensive business data from questionnaire
- * @returns {Object} Complete valuation result
+ * Function to save the valuation data to the database
  */
-function calculateEnhancedFallbackValuation(businessData) {
-  console.log('Using enhanced fallback valuation calculation with all available metrics');
-  
-  // Use industry-specific multipliers based on the industry_multipliers table values
-  const industryMultipliers = {
-    'Financial Services': {min: 0.8, max: 2.2, ebitda: 4.5, profitMargin: 25},
-    'Health Care & Fitness': {min: 0.7, max: 1.8, ebitda: 4.0, profitMargin: 18},
-    'Manufacturing': {min: 0.6, max: 1.5, ebitda: 3.5, profitMargin: 15},
-    'Online & Technology': {min: 1.0, max: 3.0, ebitda: 5.0, profitMargin: 22},
-    'Pet Services': {min: 0.6, max: 1.6, ebitda: 3.0, profitMargin: 15},
-    'Restaurants & Food': {min: 0.4, max: 1.2, ebitda: 2.5, profitMargin: 12},
-    'Retail': {min: 0.3, max: 1.0, ebitda: 3.0, profitMargin: 12},
-    'Service Businesses': {min: 0.5, max: 1.5, ebitda: 3.5, profitMargin: 20},
-    'Transportation & Storage': {min: 0.4, max: 1.3, ebitda: 3.0, profitMargin: 14},
-    'Travel': {min: 0.4, max: 1.3, ebitda: 3.0, profitMargin: 14},
-    'Wholesale & Distributors': {min: 0.4, max: 1.0, ebitda: 2.5, profitMargin: 12},
-    'Other': {min: 0.5, max: 1.5, ebitda: 3.0, profitMargin: 15}
-  };
-  
-  // Get multipliers for this industry or default to 'Other'
-  const multiplier = industryMultipliers[businessData.industry] || industryMultipliers['Other'];
-  
-  // Calculate valuation based on available financial data
-  let estimatedValue, minValue, maxValue, multipleUsed, multipleType;
-  const factors = [];
-  
-  // STEP 1: Calculate base valuation using either EBITDA or revenue
-  if (businessData.ebitda > 0) {
-    // EBITDA-based valuation (preferred)
-    multipleUsed = multiplier.ebitda;
-    multipleType = 'ebitda';
-    estimatedValue = Math.round(businessData.ebitda * multipleUsed);
+async function saveValuationToDatabase(valuation) {
+  try {
+    console.log('Saving valuation to database...');
     
-    // Derive revenue from EBITDA if not available
-    const calculatedRevenue = businessData.revenue || (businessData.ebitda / (multiplier.profitMargin / 100));
+    // Get current business data from localStorage
+    const businessData = collectFormData();
     
-    // Use revenue multipliers for the range
-    minValue = Math.round(calculatedRevenue * multiplier.min);
-    maxValue = Math.round(calculatedRevenue * multiplier.max);
+    // Add the anonymousId if we have it
+    const anonymousId = localStorage.getItem('anonymousId') || 
+                        'anon_' + Date.now() + '_' + Math.random().toString(36).substring(2, 10);
     
-    // Add EBITDA as a positive factor
-    factors.push({
-      name: 'EBITDA',
-      impact: 10,
-      analysis: `Your EBITDA of £${businessData.ebitda.toLocaleString()} with a ${multipleUsed.toFixed(1)}x multiple forms the core of this valuation.`
+    // Store it for future use
+    if (!localStorage.getItem('anonymousId')) {
+      localStorage.setItem('anonymousId', anonymousId);
+    }
+    
+    // Create the payload for the API
+    const payload = {
+      ...businessData,
+      valuationData: valuation,
+      valuationMin: valuation.valuationRange?.min,
+      valuationMax: valuation.valuationRange?.max,
+      estimatedValue: valuation.estimatedValue, 
+      adjustedValuation: valuation.estimatedValue,
+      anonymousId: anonymousId
+    };
+    
+    console.log('Sending valuation data to API with payload keys:', Object.keys(payload));
+    
+    // Use the new public endpoint that doesn't redirect to login
+    const response = await fetch('/api/public/valuation/save-questionnaire', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(payload)
     });
-  } else {
-    // Revenue-based valuation (fallback)
-    const avgRevenueMultiplier = (multiplier.min + multiplier.max) / 2;
-    multipleUsed = avgRevenueMultiplier;
-    multipleType = 'revenue';
-    estimatedValue = Math.round(businessData.revenue * avgRevenueMultiplier);
     
-    // Direct revenue multiplier range
-    minValue = Math.round(businessData.revenue * multiplier.min);
-    maxValue = Math.round(businessData.revenue * multiplier.max);
-    
-    // Add revenue as a neutral factor
-    factors.push({
-      name: 'Revenue',
-      impact: 5,
-      analysis: `Your annual revenue of £${businessData.revenue.toLocaleString()} with a ${multipleUsed.toFixed(2)}x multiple forms the core of this valuation.`
-    });
-  }
-  
-  // STEP 2: Apply industry-specific adjustments
-  factors.push({
-    name: 'Industry',
-    impact: 5,
-    analysis: `${businessData.industry || 'Your industry'} businesses typically sell for ${multiplier.min}x-${multiplier.max}x revenue or ${multiplier.ebitda}x EBITDA.`
-  });
-  
-  // STEP 3: Adjust for growth rate with more accurate scaling
-  if (businessData.growthRate && businessData.growthRate > 0) {
-    // More refined growth adjustment with diminishing returns for very high growth
-    let growthFactor;
-    if (businessData.growthRate <= 10) {
-      // Linear growth impact for modest growth rates (up to 10%)
-      growthFactor = 1 + (businessData.growthRate / 100);
-    } else if (businessData.growthRate <= 30) {
-      // Decreasing marginal returns for growth between 10-30%
-      growthFactor = 1.1 + ((businessData.growthRate - 10) / 200);
-    } else {
-      // Strongly diminishing returns for growth above 30%
-      growthFactor = 1.2 + ((businessData.growthRate - 30) / 400);
-    }
-    
-    estimatedValue = Math.round(estimatedValue * growthFactor);
-    maxValue = Math.round(maxValue * growthFactor);
-    
-    // Add growth as a factor (positive impact for positive growth)
-    const growthImpact = Math.min(businessData.growthRate / 5, 10);
-    factors.push({
-      name: 'Growth Rate',
-      impact: growthImpact,
-      analysis: `Your ${businessData.growthRate}% growth rate increases the valuation by approximately ${((growthFactor-1)*100).toFixed(1)}%.`
-    });
-  } else if (businessData.growthRate < 0) {
-    // Negative growth rate adjustment with floor protection
-    const growthFactor = Math.max(0.7, 1 + (businessData.growthRate / 100));
-    estimatedValue = Math.round(estimatedValue * growthFactor);
-    minValue = Math.round(minValue * growthFactor);
-    
-    // Add negative growth as a factor
-    factors.push({
-      name: 'Negative Growth',
-      impact: -5,
-      analysis: `Your ${businessData.growthRate}% negative growth rate reduces valuation by approximately ${((1-growthFactor)*100).toFixed(1)}%.`
-    });
-  }
-  
-  // STEP 4: Adjust for historical performance if available - with trend analysis
-  if (businessData.ebitdaPrevYear > 0 && businessData.ebitda > 0) {
-    const ebitdaGrowth = ((businessData.ebitda - businessData.ebitdaPrevYear) / businessData.ebitdaPrevYear) * 100;
-    const ebitdaTrend = businessData.ebitda2YearsAgo > 0 
-      ? ((businessData.ebitdaPrevYear - businessData.ebitda2YearsAgo) / businessData.ebitda2YearsAgo) * 100
-      : null;
-    
-    // Assess if trend is consistent or accelerating/decelerating
-    let trendMultiplier = 1.0;
-    let trendDescription = "";
-    
-    if (ebitdaTrend !== null) {
-      if (ebitdaGrowth > 0 && ebitdaTrend > 0) {
-        // Consistent positive growth is valuable
-        if (ebitdaGrowth > ebitdaTrend * 1.2) {
-          // Accelerating growth
-          trendMultiplier = 1.1;
-          trendDescription = "accelerating";
-        } else if (ebitdaGrowth < ebitdaTrend * 0.8) {
-          // Decelerating but still positive growth
-          trendMultiplier = 1.05;
-          trendDescription = "decelerating but positive";
-        } else {
-          // Consistent growth
-          trendMultiplier = 1.08;
-          trendDescription = "consistent";
-        }
-      } else if (ebitdaGrowth < 0 && ebitdaTrend < 0) {
-        // Consistent negative growth is concerning
-        trendMultiplier = 0.9;
-        trendDescription = "consistently negative";
-      } else if (ebitdaGrowth > 0 && ebitdaTrend < 0) {
-        // Turnaround - from negative to positive
-        trendMultiplier = 1.15;
-        trendDescription = "showing a turnaround";
-      }
-    }
-    
-    if (ebitdaGrowth > 10) {
-      // Strong EBITDA growth is positive
-      const ebitdaFactor = (1 + (Math.min(ebitdaGrowth, 50) / 200)) * trendMultiplier;
-      estimatedValue = Math.round(estimatedValue * ebitdaFactor);
-      maxValue = Math.round(maxValue * ebitdaFactor);
-      
-      const trendText = trendDescription ? ` with a ${trendDescription} trend` : "";
-      factors.push({
-        name: 'EBITDA Growth',
-        impact: 7,
-        analysis: `Your year-over-year EBITDA growth of ${ebitdaGrowth.toFixed(1)}%${trendText} positively impacts valuation.`
-      });
-    } else if (ebitdaGrowth < -10) {
-      // Declining EBITDA is negative
-      const ebitdaFactor = (1 + (Math.max(ebitdaGrowth, -30) / 150)) * trendMultiplier;
-      estimatedValue = Math.round(estimatedValue * ebitdaFactor);
-      minValue = Math.round(minValue * ebitdaFactor);
-      
-      const trendText = trendDescription ? ` with a ${trendDescription} trend` : "";
-      factors.push({
-        name: 'EBITDA Decline',
-        impact: -5,
-        analysis: `Your year-over-year EBITDA decline of ${Math.abs(ebitdaGrowth).toFixed(1)}%${trendText} negatively impacts valuation.`
-      });
-    }
-  } else if (businessData.revenuePrevYear > 0 && businessData.revenue > 0) {
-    // If we have revenue trends but not EBITDA trends, use revenue
-    const revenueGrowth = ((businessData.revenue - businessData.revenuePrevYear) / businessData.revenuePrevYear) * 100;
-    
-    if (revenueGrowth > 10) {
-      // Strong revenue growth
-      const revenueFactor = 1 + (Math.min(revenueGrowth, 50) / 250); // Less impact than EBITDA growth
-      estimatedValue = Math.round(estimatedValue * revenueFactor);
-      maxValue = Math.round(maxValue * revenueFactor);
-      
-      factors.push({
-        name: 'Revenue Growth',
-        impact: 5, // Lower impact than EBITDA
-        analysis: `Your year-over-year revenue growth of ${revenueGrowth.toFixed(1)}% positively impacts valuation.`
-      });
-    } else if (revenueGrowth < -10) {
-      // Declining revenue
-      const revenueFactor = 1 + (Math.max(revenueGrowth, -30) / 200);
-      estimatedValue = Math.round(estimatedValue * revenueFactor);
-      minValue = Math.round(minValue * revenueFactor);
-      
-      factors.push({
-        name: 'Revenue Decline',
-        impact: -4,
-        analysis: `Your year-over-year revenue decline of ${Math.abs(revenueGrowth).toFixed(1)}% negatively impacts valuation.`
-      });
-    }
-  }
-  
-  // STEP 5: Adjust for business age/stability with refined scaling
-  if (businessData.yearsInOperation) {
-    // More granular age-based adjustment
-    let ageFactor, ageImpact, ageDescription;
-    
-    if (businessData.yearsInOperation > 20) {
-      // Well-established businesses (20+ years)
-      ageFactor = 1.25;
-      ageImpact = 8;
-      ageDescription = "well-established with strong market presence";
-    } else if (businessData.yearsInOperation > 10) {
-      // Established businesses (10-20 years)
-      ageFactor = 1.15;
-      ageImpact = 6;
-      ageDescription = "established with proven longevity";
-    } else if (businessData.yearsInOperation > 5) {
-      // Mature businesses (5-10 years)
-      ageFactor = 1.08;
-      ageImpact = 4;
-      ageDescription = "mature with demonstrated stability";
-    } else if (businessData.yearsInOperation > 2) {
-      // Young but established businesses (2-5 years)
-      ageFactor = 1.0;
-      ageImpact = 0;
-      ageDescription = "relatively young but established";
-    } else {
-      // Very new businesses (0-2 years)
-      ageFactor = 0.85;
-      ageImpact = -5;
-      ageDescription = "very new with limited operating history";
-    }
-    
-    estimatedValue = Math.round(estimatedValue * ageFactor);
-    
-    // Adjust min/max values proportionally
-    if (ageFactor > 1) {
-      minValue = Math.round(minValue * Math.sqrt(ageFactor));
-      maxValue = Math.round(maxValue * ageFactor);
-    } else {
-      minValue = Math.round(minValue * ageFactor);
-      maxValue = Math.round(maxValue * Math.sqrt(ageFactor));
-    }
-    
-    factors.push({
-      name: 'Business Age',
-      impact: ageImpact,
-      analysis: `Your business's ${businessData.yearsInOperation} years of operation makes it ${ageDescription}, ${ageImpact >= 0 ? 'adding value' : 'introducing risk'}.`
-    });
-  }
-  
-  // STEP 6: Adjust for scalability with more detailed assessment
-  const scalabilityMap = {
-    'High': { 
-      factor: 1.20, 
-      impact: 7, 
-      text: 'highly scalable with significant growth potential',
-      detail: 'can expand with minimal marginal costs'
-    },
-    'Medium': { 
-      factor: 1.0, 
-      impact: 0, 
-      text: 'moderately scalable',
-      detail: 'can grow but may require proportional resource increases'
-    },
-    'Low': { 
-      factor: 0.85, 
-      impact: -5, 
-      text: 'limited scalability',
-      detail: 'faces significant constraints to growth'
-    }
-  };
-  
-  const scalabilityInfo = scalabilityMap[businessData.scalability] || scalabilityMap['Medium'];
-  estimatedValue = Math.round(estimatedValue * scalabilityInfo.factor);
-  
-  // Adjust min/max values based on scalability
-  if (scalabilityInfo.factor > 1) {
-    maxValue = Math.round(maxValue * scalabilityInfo.factor);
-  } else if (scalabilityInfo.factor < 1) {
-    minValue = Math.round(minValue * scalabilityInfo.factor);
-  }
-  
-  if (businessData.scalability !== 'Medium') {
-    factors.push({
-      name: 'Scalability',
-      impact: scalabilityInfo.impact,
-      analysis: `Your business is ${scalabilityInfo.text}, which ${scalabilityInfo.impact >= 0 ? 'enhances' : 'limits'} its valuation because it ${scalabilityInfo.detail}.`
-    });
-  }
-  
-  // STEP 7: Consider FFE (assets) value with more nuanced approach
-  if (businessData.ffeValue > 0) {
-    // More sophisticated FFE value assessment
-    let ffeImpact, ffeDescription, ffeFactor;
-    
-    const ffeToRevenueRatio = businessData.ffeValue / (businessData.revenue || 1);
-    
-    if (ffeToRevenueRatio > 0.5) {
-      // Asset-heavy business - significant FF&E relative to revenue
-      ffeImpact = Math.min(businessData.ffeValue * 0.2, businessData.revenue * 0.2);
-      ffeFactor = 1.15;
-      ffeDescription = "represents a significant portion of business value";
-    } else if (ffeToRevenueRatio > 0.2) {
-      // Moderate assets
-      ffeImpact = Math.min(businessData.ffeValue * 0.1, businessData.revenue * 0.1);
-      ffeFactor = 1.08;
-      ffeDescription = "adds substantial tangible value";
-    } else {
-      // Limited assets relative to revenue
-      ffeImpact = Math.min(businessData.ffeValue * 0.05, businessData.revenue * 0.05);
-      ffeFactor = 1.03;
-      ffeDescription = "provides some tangible asset value";
-    }
-    
-    // Add the FFE value to the estimated value
-    estimatedValue += Math.round(ffeImpact);
-    minValue += Math.round(ffeImpact * 0.7);
-    maxValue += Math.round(ffeImpact * 1.3);
-    
-    factors.push({
-      name: 'Tangible Assets',
-      impact: Math.round(ffeFactor * 5 - 5),
-      analysis: `Your FF&E valued at £${businessData.ffeValue.toLocaleString()} ${ffeDescription}.`
-    });
-  }
-  
-  // STEP 8: Adjust for debt if transferable with more precise impact
-  if (businessData.totalDebtAmount > 0) {
-    let debtImpact, debtFactor, debtDescription;
-    
-    const debtToRevenueRatio = businessData.totalDebtAmount / (businessData.revenue || 1);
-    
-    if (businessData.debtTransferable === 'yes') {
-      // Full debt transfer
-      if (debtToRevenueRatio > 0.5) {
-        // Significant debt relative to revenue
-        debtImpact = businessData.totalDebtAmount;
-        debtFactor = 0.80;
-        debtDescription = "significantly reduces the business value";
+    // Check if the response is OK and handle it appropriately
+    if (!response.ok) {
+      // Check content type before trying to parse as JSON (handle HTML error pages)
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const errorData = await response.json();
+        throw new Error(`API returned error: ${errorData.message || 'Unknown error'}`);
       } else {
-        // Moderate debt relative to revenue
-        debtImpact = businessData.totalDebtAmount;
-        debtFactor = 0.90;
-        debtDescription = "reduces the business value";
+        const errorText = await response.text();
+        if (errorText.includes('<!DOCTYPE html>')) {
+          throw new Error('Received HTML error page instead of JSON. Authentication may be required.');
+        } else {
+          throw new Error(`API returned status ${response.status}: ${errorText.substring(0, 100)}`);
+        }
       }
+    }
+    
+    // Parse JSON response
+    const result = await response.json();
+    
+    console.log('Valuation saved successfully:', result);
+    return result;
+  } catch (error) {
+    console.error('Error saving valuation to database:', error);
+    
+    // Try a fallback to local storage if all else fails
+    try {
+      const storageKey = 'savedValuation_' + Date.now();
+      const storageData = {
+        timestamp: new Date().toISOString(),
+        valuation: valuation,
+        businessData: collectFormData()
+      };
       
-      estimatedValue = Math.round(estimatedValue * debtFactor);
-      minValue = Math.round(minValue * debtFactor);
-      maxValue = Math.round(maxValue * debtFactor);
+      localStorage.setItem(storageKey, JSON.stringify(storageData));
+      console.log('Valuation saved to localStorage as fallback:', storageKey);
       
-      factors.push({
-        name: 'Transferable Debt',
-        impact: -Math.round((1 - debtFactor) * 10),
-        analysis: `The £${businessData.totalDebtAmount.toLocaleString()} of transferable debt ${debtDescription}.`
-      });
-    } else if (businessData.debtTransferable === 'some') {
-      // Partial debt transfer (assume 50%)
-      debtImpact = businessData.totalDebtAmount * 0.5;
-      debtFactor = 0.95;
-      
-      estimatedValue = Math.round(estimatedValue * debtFactor);
-      minValue = Math.round(minValue * debtFactor);
-      maxValue = Math.round(maxValue * debtFactor);
-      
-      factors.push({
-        name: 'Partial Debt Transfer',
-        impact: -3,
-        analysis: `Approximately £${debtImpact.toLocaleString()} of partially transferable debt moderately reduces the business value.`
-      });
+      return {
+        success: true,
+        localOnly: true,
+        message: 'Saved to browser storage only. Login to save permanently.'
+      };
+    } catch (localError) {
+      console.error('Failed to save to localStorage:', localError);
+      throw error; // Re-throw the original error
     }
   }
-  
-  // STEP 9: Final range adjustments and validation
-  if (minValue > maxValue) {
-    minValue = Math.round(maxValue * 0.75);
-  }
-  
-  if (estimatedValue < minValue) {
-    estimatedValue = minValue;
-  } else if (estimatedValue > maxValue) {
-    estimatedValue = maxValue;
-  }
-  
-  // Generate industry-specific market comparables
-  const marketComparables = {
-    intro: `Here's how your ${businessData.industry || 'business'} compares to similar businesses in the market:`,
-    metrics: [
-      {
-        name: 'Revenue Multiple',
-        yourValue: (estimatedValue / businessData.revenue).toFixed(2) + 'x',
-        industryAverage: ((multiplier.min + multiplier.max) / 2).toFixed(2) + 'x'
-      },
-      {
-        name: 'EBITDA Multiple',
-        yourValue: businessData.ebitda ? (estimatedValue / businessData.ebitda).toFixed(2) + 'x' : 'N/A',
-        industryAverage: multiplier.ebitda.toFixed(2) + 'x'
-      },
-      {
-        name: 'Profit Margin',
-        yourValue: businessData.ebitda && businessData.revenue ? 
-          ((businessData.ebitda / businessData.revenue) * 100).toFixed(1) + '%' : 'N/A',
-        industryAverage: multiplier.profitMargin.toFixed(1) + '%'
-      }
-    ]
-  };
-  
-  // Generate intelligent recommendations based on the data and factors
-  const recommendations = {
-    items: [
-      "Document your business processes to increase transferability and value.",
-      "Focus on strategies that improve your EBITDA margin to enhance valuation."
-    ]
-  };
-  
-  // Add growth-related recommendation if growth is low
-  if (businessData.growthRate < 5) {
-    recommendations.items.push("Implement growth strategies to increase your growth rate, which could significantly enhance your valuation.");
-  }
-  
-  // Add debt-related recommendation if debt is transferable
-  if (businessData.totalDebtAmount > 0 && businessData.debtTransferable !== 'none') {
-    recommendations.items.push("Consider reducing transferable debt to improve your overall business valuation.");
-  }
-  
-  // Add scalability recommendation if scalability is low
-  if (businessData.scalability === 'Low') {
-    recommendations.items.push("Invest in systems and processes that make your business more scalable to increase its value to potential buyers.");
-  }
-  
-  // Calculate confidence score
-  const confidence = calculateConfidenceScore(businessData);
-  
-  // Return complete valuation object
-  return {
-    estimatedValue: estimatedValue,
-    valuationRange: {
-      min: minValue,
-      max: maxValue
-    },
-    confidence: confidence,
-    multiple: multipleUsed,
-    multipleType: multipleType,
-    summary: `Based on ${businessData.industry || 'standard industry'} multipliers with detailed adjustments for ${factors.length} business-specific factors.`,
-    factors: factors.reduce((obj, factor) => {
-      obj[factor.name.toLowerCase().replace(/\s+/g, '_')] = factor;
-      return obj;
-    }, {}),
-    industryData: {
-      industry: businessData.industry || 'Other',
-      revenueMultiplierMin: multiplier.min,
-      revenueMultiplierMax: multiplier.max,
-      ebitdaMultiplier: multiplier.ebitda
-    },
-    marketComparables: marketComparables,
-    recommendations: recommendations,
-    businessMetrics: {
-      revenue: businessData.revenue,
-      ebitda: businessData.ebitda,
-      revenuePrevYear: businessData.revenuePrevYear,
-      ebitdaPrevYear: businessData.ebitdaPrevYear,
-      growthRate: businessData.growthRate,
-      yearsInOperation: businessData.yearsInOperation,
-      ffeValue: businessData.ffeValue,
-      totalDebtAmount: businessData.totalDebtAmount,
-      debtTransferable: businessData.debtTransferable,
-      scalability: businessData.scalability
-    }
-  };
 }
 
-/**
- * Calculate confidence score based on data quality and completeness
- * @param {Object} businessData - Business data
- * @returns {number} Confidence score (0-100)
- */
-function calculateConfidenceScore(businessData) {
-  // Critical financial fields
-  const criticalFields = [
-    'revenue', 
-    'ebitda'
-  ];
+// Function to display an error when saving valuation
+function displaySaveError(error) {
+  const errorMessage = error?.message || 'An error occurred while saving the valuation.';
+  console.error('Save error:', errorMessage);
   
-  // Important fields that add confidence
-  const importantFields = [
-    'revenuePrevYear',
-    'ebitdaPrevYear',
-    'growthRate',
-    'yearsInOperation',
-    'industry',
-    'ffeValue',
-    'scalability'
-  ];
-  
-  // Supplemental fields that add some confidence
-  const supplementalFields = [
-    'revenue2YearsAgo',
-    'ebitda2YearsAgo',
-    'growthAreas',
-    'growthChallenges',
-    'ffeItems',
-    'debtItems',
-    'totalDebtAmount',
-    'debtTransferable',
-    'debtNotes'
-  ];
-  
-  // Calculate completeness for each category
-  let criticalScore = 0;
-  criticalFields.forEach(field => {
-    if (businessData[field] && businessData[field] > 0) criticalScore++;
-  });
-  criticalScore = criticalScore / criticalFields.length;
-  
-  let importantScore = 0;
-  importantFields.forEach(field => {
-    if (businessData[field] && (
-      typeof businessData[field] === 'number' ? businessData[field] > 0 : businessData[field].length > 0
-    )) importantScore++;
-  });
-  importantScore = importantScore / importantFields.length;
-  
-  let supplementalScore = 0;
-  supplementalFields.forEach(field => {
-    if (businessData[field] && (
-      typeof businessData[field] === 'number' ? businessData[field] > 0 : businessData[field].length > 0
-    )) supplementalScore++;
-  });
-  supplementalScore = supplementalScore / supplementalFields.length;
-  
-  // Weight the scores
-  const weightedScore = 
-    (criticalScore * 0.5) + 
-    (importantScore * 0.35) + 
-    (supplementalScore * 0.15);
-  
-  // Convert to percentage (0-100)
-  return Math.round(weightedScore * 100);
-}
-
-// Add a fallback valuation calculation function in case the API fails
-function calculateFallbackValuation(businessData) {
-  console.log('Using fallback valuation calculation');
-  
-  // Use industry-specific multipliers based on the industry_multipliers table values
-  const industryMultipliers = {
-    'Financial Services': {min: 0.8, max: 2.2, ebitda: 4.5},
-    'Health Care & Fitness': {min: 0.7, max: 1.8, ebitda: 4.0},
-    'Manufacturing': {min: 0.6, max: 1.5, ebitda: 3.5},
-    'Online & Technology': {min: 1.0, max: 3.0, ebitda: 5.0},
-    'Pet Services': {min: 0.6, max: 1.6, ebitda: 3.0},
-    'Restaurants & Food': {min: 0.4, max: 1.2, ebitda: 2.5},
-    'Retail': {min: 0.3, max: 1.0, ebitda: 3.0},
-    'Service Businesses': {min: 0.5, max: 1.5, ebitda: 3.5},
-    'Transportation & Storage': {min: 0.4, max: 1.3, ebitda: 3.0},
-    'Travel': {min: 0.4, max: 1.3, ebitda: 3.0},
-    'Wholesale & Distributors': {min: 0.4, max: 1.0, ebitda: 2.5},
-    'Other': {min: 0.5, max: 1.5, ebitda: 3.0}
-  };
-  
-  // Get multipliers for this industry or default to 'Other'
-  const multiplier = industryMultipliers[businessData.industry] || industryMultipliers['Other'];
-  
-  // Calculate valuation based on available financial data
-  let estimatedValue, minValue, maxValue, multipleUsed, multipleType;
-  
-  if (businessData.ebitda > 0) {
-    // EBITDA-based valuation (preferred)
-    multipleUsed = multiplier.ebitda;
-    multipleType = 'ebitda';
-    estimatedValue = Math.round(businessData.ebitda * multipleUsed);
-    
-    // Use revenue multipliers for the range
-    minValue = Math.round(businessData.revenue * multiplier.min);
-    maxValue = Math.round(businessData.revenue * multiplier.max);
-    
-    // Ensure estimated value is within range (or adjust range)
-    if (estimatedValue < minValue) minValue = Math.round(estimatedValue * 0.8);
-    if (estimatedValue > maxValue) maxValue = Math.round(estimatedValue * 1.2);
+  // Display error in UI if possible
+  const errorElement = document.getElementById('save-error-message');
+  if (errorElement) {
+    errorElement.textContent = errorMessage;
+    errorElement.classList.remove('hidden');
   } else {
-    // Revenue-based valuation (fallback)
-    const avgRevenueMultiplier = (multiplier.min + multiplier.max) / 2;
-    multipleUsed = avgRevenueMultiplier;
-    multipleType = 'revenue';
-    estimatedValue = Math.round(businessData.revenue * avgRevenueMultiplier);
-    
-    // Direct revenue multiplier range
-    minValue = Math.round(businessData.revenue * multiplier.min);
-    maxValue = Math.round(businessData.revenue * multiplier.max);
-  }
-  
-  // Add growth adjustment if growth rate is provided
-  if (businessData.growthRate && businessData.growthRate > 0) {
-    const growthFactor = 1 + (Math.min(businessData.growthRate, 50) / 100);
-    estimatedValue = Math.round(estimatedValue * growthFactor);
-    maxValue = Math.round(maxValue * growthFactor);
-  }
-  
-  return {
-    estimatedValue: estimatedValue,
-    valuationRange: {
-      min: minValue,
-      max: maxValue
-    },
-    confidence: 75,
-    multiple: multipleUsed,
-    multipleType: multipleType,
-    summary: `Based on ${businessData.industry || 'standard industry'} multipliers: ${multipleUsed.toFixed(2)}x ${multipleType.toUpperCase()}.`,
-    factors: {
-      growth: {
-        impact: businessData.growthRate > 10 ? 10 : (businessData.growthRate || 0),
-        analysis: `Business growth rate of ${businessData.growthRate || 0}% was considered in this valuation.`
-      },
-      industry: {
-        impact: 5,
-        analysis: `${businessData.industry || 'Your industry'} businesses typically sell for ${multiplier.min}x-${multiplier.max}x revenue or ${multiplier.ebitda}x EBITDA.`
-      }
-    },
-    industryData: {
-      industry: businessData.industry || 'Other',
-      revenueMultiplierMin: multiplier.min,
-      revenueMultiplierMax: multiplier.max,
-      ebitdaMultiplier: multiplier.ebitda
-    }
-  };
-}
-
-// Add this utility function to help with error handling and missing elements
-function safelyUpdateElement(id, updateFn) {
-  const element = document.getElementById(id);
-  if (element) {
-    updateFn(element);
-  } else {
-    console.warn(`Element with ID '${id}' not found`);
+    // Fallback to alert if no error element exists
+    alert('Error saving valuation: ' + errorMessage);
   }
 }
 
-// Format currency values for display
-function formatCurrency(value) {
-  return '£' + parseInt(value).toLocaleString();
-}
-
-// Helper function to set the correct class for factor impact badges
-function setFactorBadgeClass(elementId, impact) {
-  const element = document.getElementById(elementId);
-  if (!element) {
-    console.warn(`Element with ID '${elementId}' not found`);
-    return;
-  }
-  
-  // Remove all existing factor classes
-  element.classList.remove('factor-positive', 'factor-negative', 'factor-neutral');
-  
-  // Add the appropriate class based on impact
-  if (impact > 5) {
-    element.classList.add('factor-positive');
-  } else if (impact < 0) {
-    element.classList.add('factor-negative');
-  } else {
-    element.classList.add('factor-neutral');
-  }
-}
-
-// Updated displayValuationResults function to safely update UI elements
+// Updated displayValuationResults function to automatically save
 function displayValuationResults(valuation) {
     try {
         // Store the valuation data globally
@@ -1128,6 +805,23 @@ function displayValuationResults(valuation) {
         calculationPrompt.classList.add('hidden');
         valuationResults.classList.remove('hidden');
         
+        // Automatically save the valuation to database
+        saveValuationToDatabase(valuation)
+            .then(result => {
+                console.log('Valuation saved successfully', result);
+                // Update UI to show saved status if needed
+                const savedIndicator = document.getElementById('valuation-saved-indicator');
+                if (savedIndicator) {
+                    savedIndicator.textContent = result.localOnly ? 
+                        'Valuation saved locally' : 
+                        'Valuation saved to database';
+                    savedIndicator.classList.remove('hidden');
+                }
+            })
+            .catch(error => {
+                displaySaveError(error);
+            });
+        
         // Scroll to results
         valuationResults.scrollIntoView({ behavior: 'smooth' });
         
@@ -1143,131 +837,189 @@ function displayValuationResults(valuation) {
     }
 }
 
-// Function to save the questionnaire and valuation data to database
-async function saveValuationDataToDatabase(businessData, valuation) {
-  try {
-    console.log('Attempting to save valuation data to database...');
-    
-    // Get the email from localStorage and validate it
-    const email = localStorage.getItem('sellerEmail');
-    
-    // Enhanced email validation check with detailed logging
-    if (!email || email.indexOf('@') === -1) {
-      console.error('Cannot save valuation - email is missing or invalid:', email);
-      
-      // Return a rejected promise so caller knows it failed
-      return Promise.reject(new Error('Email is required to save valuation data'));
+/**
+ * Updates the UI with valuation results
+ * @param {Object} valuation - The valuation data object
+ */
+function updateValuationUI(valuation) {
+  console.log('Updating valuation UI with data:', valuation);
+  
+  // Helper function to safely update DOM elements that might not exist
+  const safelyUpdateElement = (id, updateFn) => {
+    const element = document.getElementById(id);
+    if (element) {
+      updateFn(element);
+    } else {
+      console.warn(`Element with ID '${id}' not found`);
     }
-    
-    console.log('Using email for valuation data:', email);
-    
-    // Collect comprehensive form data
-    const formData = collectFormData();
-    
-    // Ensure email is included in the form data
-    formData.email = email;
-    
-    // Add business metrics from the calculation input if not in form data
-    for (const key of Object.keys(businessData)) {
-      if (formData[key] === undefined) {
-        formData[key] = businessData[key];
-      }
+  };
+  
+  // Update estimated/adjusted value display (using ID in HTML: adjustedValue)
+  safelyUpdateElement('adjustedValue', (el) => {
+    el.textContent = formatCurrency(valuation.estimatedValue);
+  });
+  
+  // Update valuation range (using ID in HTML: valuationRange)
+  safelyUpdateElement('valuationRange', (el) => {
+    if (valuation.valuationRange) {
+      el.textContent = `Range: ${formatCurrency(valuation.valuationRange.min)} - ${formatCurrency(valuation.valuationRange.max)}`;
     }
-    
-    // Add valuation results
-    formData.valuationData = valuation;
-    formData.valuationMin = valuation.valuationRange?.min;
-    formData.valuationMax = valuation.valuationRange?.max;
-    formData.adjustedValuation = valuation.estimatedValue;
-    
-    console.log('Sending comprehensive data to server with fields:', {
-      email: formData.email,
-      fieldCount: Object.keys(formData).length
-    });
-    
-    // Try to save via the public endpoint
-    try {
-      console.log('Attempting save via /api/public/save-questionnaire');
-      const response = await fetch('/api/public/save-questionnaire', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json' // Crucial header
-        },
-        body: JSON.stringify(formData)
-      });
-      
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success) {
-          console.log('Successfully saved data via public endpoint with submission ID:', result.submissionId);
-          localStorage.setItem('questionnaireSubmissionId', result.submissionId);
-          return result;
-        } else {
-          console.warn('Public endpoint returned success=false:', result.message);
-          throw new Error(result.message || 'Unknown server error from public endpoint');
-        }
-      } else {
-        // Handle non-OK response from public endpoint
-        const errorText = await response.text();
-        console.warn(`Public endpoint returned error status: ${response.status}. Response body (first 500 chars):`, errorText.substring(0, 500));
-        // Check if it's HTML
-        if (errorText.trim().toLowerCase().startsWith('<!doctype') || errorText.trim().toLowerCase().startsWith('<html')) {
-             throw new Error(`Server error ${response.status}: Received HTML instead of JSON from public endpoint.`);
-        } else {
-             throw new Error(`Server error ${response.status}: ${errorText}`);
-        }
-      }
-    } catch (publicError) {
-      console.error('Error saving to public endpoint:', publicError.message);
-      console.log('Falling back to /api/business/save-questionnaire');
-      
-      // Fallback to business API endpoint
-      try {
-        const fallbackResponse = await fetch('/api/business/save-questionnaire', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json', // Crucial header
-            'X-Request-Source': 'valuation-calculator',
-            'X-Skip-Auth': 'true' // Ensure this is handled by your auth middleware
-          },
-          body: JSON.stringify(formData)
-        });
-        
-        if (fallbackResponse.ok) {
-          const fallbackResult = await fallbackResponse.json();
-          if (fallbackResult.success) {
-            console.log('Successfully saved data via fallback endpoint, submission ID:', fallbackResult.submissionId);
-            localStorage.setItem('questionnaireSubmissionId', fallbackResult.submissionId);
-            return fallbackResult;
-          } else {
-             console.warn('Fallback endpoint returned success=false:', fallbackResult.message);
-             throw new Error(fallbackResult.message || 'Unknown server error from fallback endpoint');
-          }
-        } else {
-           // Handle non-OK response from fallback endpoint
-           const fallbackErrorText = await fallbackResponse.text();
-           console.warn(`Fallback endpoint returned error status: ${fallbackResponse.status}. Response body (first 500 chars):`, fallbackErrorText.substring(0, 500));
-            if (fallbackErrorText.trim().toLowerCase().startsWith('<!doctype') || fallbackErrorText.trim().toLowerCase().startsWith('<html')) {
-                 throw new Error(`Server error ${fallbackResponse.status}: Received HTML instead of JSON from fallback endpoint.`);
-            } else {
-                 throw new Error(`Server error ${fallbackResponse.status}: ${fallbackErrorText}`);
-            }
-        }
-      } catch (fallbackError) {
-        console.error('Fallback endpoint also failed:', fallbackError.message);
-        // Save to localStorage as last resort
-        // ... (existing localStorage fallback logic) ...
-        return { /* ... existing localOnly response ... */ };
-      }
+  });
+  
+  // Update confidence score (using ID in HTML: actualConfidenceScore)
+  safelyUpdateElement('actualConfidenceScore', (el) => {
+    el.textContent = valuation.confidence + '%';
+  });
+  
+  // Update valuation summary (using ID in HTML: valuationSummary)
+  safelyUpdateElement('valuationSummary', (el) => {
+    el.textContent = valuation.summary || 'Valuation completed successfully.';
+  });
+  
+  // Update multiple used (using ID in HTML: multipleUsed)
+  safelyUpdateElement('multipleUsed', (el) => {
+    if (valuation.multiple) {
+      el.textContent = valuation.multiple.toFixed(2) + 'x ' + 
+        (valuation.multipleType === 'revenue' ? 'Revenue' : 'EBITDA');
     }
-  } catch (error) {
-    console.error('Critical error in saveValuationDataToDatabase:', error.message);
-    // Save to localStorage as last resort
-    // ... (existing localStorage fallback logic) ...
-    return { /* ... existing localOnly response ... */ };
+  });
+  
+  // Update slider position if available
+  const sliderThumb = document.getElementById('sliderThumb');
+  const sliderBar = document.querySelector('.slider-bar');
+  const tooltip = document.getElementById('valueTooltip');
+  
+  if (sliderThumb && sliderBar && valuation.valuationRange) {
+    const min = valuation.valuationRange.min;
+    const max = valuation.valuationRange.max;
+    const value = valuation.estimatedValue;
+    const percentage = ((value - min) / (max - min)) * 100;
+    
+    // Position the slider thumb
+    sliderThumb.style.left = `${percentage}%`;
+    
+    // Show value in tooltip
+    if (tooltip) {
+      tooltip.textContent = formatCurrency(value);
+      tooltip.style.opacity = 1;
+    }
   }
+  
+  // Update growth factor
+  safelyUpdateElement('growthFactorBadge', (el) => {
+    const growth = valuation.factors?.growth || valuation.factors?.growth_rate;
+    if (growth) {
+      const impact = growth.impact || 0;
+      el.textContent = `${impact > 0 ? '+' : ''}${impact}%`;
+      el.className = `factor-badge ${impact > 0 ? 'factor-positive' : impact < 0 ? 'factor-negative' : 'factor-neutral'}`;
+    }
+  });
+  
+  safelyUpdateElement('growthFactorAnalysis', (el) => {
+    const growth = valuation.factors?.growth || valuation.factors?.growth_rate;
+    if (growth) {
+      el.textContent = growth.analysis || 'Growth rate considered in valuation.';
+    }
+  });
+  
+  // Update industry factor
+  safelyUpdateElement('industryFactorBadge', (el) => {
+    const industry = valuation.factors?.industry || valuation.factors?.industry_context;
+    if (industry) {
+      const impact = industry.impact || 0;
+      el.textContent = `${impact > 0 ? '+' : ''}${impact}%`;
+      el.className = `factor-badge ${impact > 0 ? 'factor-positive' : impact < 0 ? 'factor-negative' : 'factor-neutral'}`;
+    }
+  });
+  
+  safelyUpdateElement('industryFactorAnalysis', (el) => {
+    const industry = valuation.factors?.industry || valuation.factors?.industry_context;
+    if (industry) {
+      el.textContent = industry.analysis || 'Industry standards considered in valuation.';
+    }
+  });
+  
+  // Update market comparables
+  safelyUpdateElement('marketComparablesIntro', (el) => {
+    if (valuation.marketComparables) {
+      el.textContent = valuation.marketComparables.intro || 'Market comparison with similar businesses:';
+    }
+  });
+  
+  // Update market comparables table
+  const comparablesTable = document.getElementById('comparableMetricsTable');
+  if (comparablesTable && valuation.marketComparables && valuation.marketComparables.metrics) {
+    const tbody = comparablesTable.querySelector('tbody');
+    if (tbody) {
+      tbody.innerHTML = ''; // Clear existing rows
+      
+      valuation.marketComparables.metrics.forEach(metric => {
+        const row = document.createElement('tr');
+        row.className = 'border-t border-gray-200';
+        row.innerHTML = `
+          <td class="py-2 px-3 text-[#5f5770]">${metric.name}</td>
+          <td class="py-2 px-3 text-right text-[#25224a] font-medium">${metric.yourValue || 'N/A'}</td>
+          <td class="py-2 px-3 text-right text-[#5f5770]">${metric.industryAverage || 'N/A'}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+  }
+  
+  // Update recommendations list
+  safelyUpdateElement('recommendationsList', (el) => {
+    if (valuation.recommendations && valuation.recommendations.items) {
+      el.innerHTML = ''; // Clear existing items
+      
+      valuation.recommendations.items.forEach(item => {
+        const li = document.createElement('li');
+        li.textContent = item;
+        el.appendChild(li);
+      });
+    } else {
+      el.innerHTML = '<li>No specific recommendations available at this time.</li>';
+    }
+  });
+  
+  // Update likelihood indicator based on valuation
+  safelyUpdateElement('likelihoodLabel', (el) => {
+    const confidence = valuation.confidence || 0;
+    let likelihoodClass = 'likelihood-moderate';
+    let likelihoodText = 'Moderately Likely to Sell';
+    
+    if (confidence >= 75) {
+      likelihoodClass = 'likelihood-high';
+      likelihoodText = 'Highly Likely to Sell';
+    } else if (confidence < 50) {
+      likelihoodClass = 'likelihood-low';
+      likelihoodText = 'Less Likely to Sell';
+    }
+    
+    el.className = `likelihood-label ${likelihoodClass}`;
+    el.textContent = likelihoodText;
+  });
+  
+  safelyUpdateElement('likelihoodText', (el) => {
+    const confidence = valuation.confidence || 0;
+    let text = 'Your business valuation is within market expectations.';
+    
+    if (confidence >= 75) {
+      text = 'Your business valuation is strong and well-positioned in the market.';
+    } else if (confidence < 50) {
+      text = 'Improving key metrics could increase your likelihood of selling successfully.';
+    }
+    
+    el.textContent = text;
+  });
+  
+  // Trigger an event to notify other components that valuation is done
+  document.dispatchEvent(new CustomEvent('valuationCalculated', { 
+    detail: {
+      minValuation: valuation.valuationRange?.min,
+      maxValuation: valuation.valuationRange?.max,
+      estimatedValue: valuation.estimatedValue
+    }
+  }));
 }
 
 // Export functions for use in other scripts

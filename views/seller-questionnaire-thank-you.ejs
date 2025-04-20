@@ -123,48 +123,69 @@
     <!-- Add script to handle pending questionnaire data -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Check if we got here after a login redirect
-            const justLoggedIn = localStorage.getItem('loginRedirectWithData') === 'true';
-            const loginTime = localStorage.getItem('loginRedirectTime');
+            console.log('Thank-you page loaded');
             
-            // Check if we have pending questionnaire data in localStorage
+            // Add status div for visual feedback
+            const mainContent = document.querySelector('main .max-w-2xl');
+            if (mainContent) {
+                const statusDiv = document.createElement('div');
+                statusDiv.id = 'statusMessage';
+                statusDiv.className = 'mb-4 p-4 rounded-lg text-center hidden';
+                mainContent.prepend(statusDiv);
+            }
+            
+            // Function to show status message
+            function showStatus(message, type = 'info') {
+                const statusDiv = document.getElementById('statusMessage');
+                if (!statusDiv) return;
+                
+                let bgColor = 'bg-blue-50';
+                let textColor = 'text-blue-700';
+                
+                if (type === 'success') {
+                    bgColor = 'bg-green-50';
+                    textColor = 'text-green-700';
+                } else if (type === 'warning') {
+                    bgColor = 'bg-yellow-50';
+                    textColor = 'text-yellow-700';
+                } else if (type === 'error') {
+                    bgColor = 'bg-red-50';
+                    textColor = 'text-red-700';
+                }
+                
+                statusDiv.className = `mb-4 p-4 rounded-lg text-center ${bgColor}`;
+                statusDiv.innerHTML = `<p class="${textColor}">${message}</p>`;
+                statusDiv.classList.remove('hidden');
+            }
+            
+            // Check for questionnaire flags
+            const completedQuestionnaire = localStorage.getItem('questionnaireCompleted') === 'true';
+            const hasAnonymousId = Boolean(localStorage.getItem('questionnaireAnonymousId'));
+            const hasValuationData = Boolean(localStorage.getItem('sellerValuationData'));
             const pendingData = localStorage.getItem('pendingQuestionnaireData');
-            const pendingSaveTime = localStorage.getItem('pendingQuestionnaireSaveTime');
             
-            // Log status for debugging
-            console.log('Thank you page loaded');
-            console.log('Just logged in:', justLoggedIn);
-            console.log('Has pending data:', !!pendingData);
+            console.log('Questionnaire completed:', completedQuestionnaire);
+            console.log('Has anonymous ID:', hasAnonymousId);
+            console.log('Has valuation data:', hasValuationData);
+            console.log('Has pending data:', Boolean(pendingData));
             
+            if (!completedQuestionnaire && !hasValuationData) {
+                showStatus('It looks like you haven\'t completed the questionnaire yet.', 'warning');
+            } else if (hasValuationData) {
+                showStatus('Your valuation has been calculated successfully!', 'success');
+            }
+            
+            // Try to submit pending data if available
             if (pendingData) {
                 try {
-                    // Check if the data was saved recently (within the last hour)
-                    // or if we just logged in (which takes priority)
+                    const pendingSaveTime = localStorage.getItem('pendingQuestionnaireSaveTime');
                     const saveTime = new Date(pendingSaveTime || Date.now());
                     const hourAgo = new Date(Date.now() - (60 * 60 * 1000));
                     
-                    if (justLoggedIn || saveTime > hourAgo) {
-                        console.log('Found pending questionnaire data to submit');
+                    if (saveTime > hourAgo) {
+                        showStatus('Saving your questionnaire data...', 'info');
                         
-                        // Mark as success now that the user has reached the thank-you page
-                        localStorage.setItem('questionnaireDataSubmitted', 'true');
-                        
-                        // Clear login redirect flags
-                        localStorage.removeItem('loginRedirectWithData');
-                        localStorage.removeItem('loginRedirectTime');
-                        
-                        // Create a status indicator for the user
-                        const mainContent = document.querySelector('main');
-                        if (mainContent) {
-                            const statusDiv = document.createElement('div');
-                            statusDiv.className = 'mb-4 w-full bg-blue-50 p-4 rounded-lg text-center';
-                            statusDiv.id = 'dataSubmissionStatus';
-                            statusDiv.innerHTML = '<p class="text-blue-700">Saving your questionnaire data...</p>';
-                            mainContent.querySelector('.max-w-2xl').prepend(statusDiv);
-                        }
-                        
-                        // Try to submit data again in the background
-                        // This will likely succeed now that the user is logged in
+                        // Attempt to save the data
                         fetch('/api/business/save-questionnaire', {
                             method: 'POST',
                             headers: {
@@ -174,38 +195,27 @@
                             credentials: 'include' // Include cookies for auth
                         })
                         .then(response => {
-                            if (response.ok) return response.json();
-                            throw new Error('Failed to save data: ' + response.status);
+                            if (!response.ok) {
+                                if (response.status === 401 || response.status === 403) {
+                                    return { success: false, message: 'Authentication required' };
+                                }
+                                throw new Error(`HTTP error: ${response.status}`);
+                            }
+                            return response.json();
                         })
                         .then(result => {
                             if (result.success) {
-                                console.log('Successfully submitted pending questionnaire data with ID:', result.submissionId);
+                                showStatus('Your data has been saved successfully!', 'success');
                                 localStorage.setItem('questionnaireSubmissionId', result.submissionId);
-                                
-                                // Update the status indicator
-                                const statusDiv = document.getElementById('dataSubmissionStatus');
-                                if (statusDiv) {
-                                    statusDiv.className = 'mb-4 w-full bg-green-50 p-4 rounded-lg text-center';
-                                    statusDiv.innerHTML = '<p class="text-green-700">Your questionnaire data has been saved successfully!</p>';
-                                }
-                                
-                                // Clear pending data
                                 localStorage.removeItem('pendingQuestionnaireData');
                                 localStorage.removeItem('pendingQuestionnaireSaveTime');
+                            } else {
+                                showStatus('Your data is saved locally and will be linked to your account when you sign up.', 'info');
                             }
                         })
                         .catch(error => {
-                            console.warn('Background submission of pending data failed:', error);
-                            // Update the status indicator
-                            const statusDiv = document.getElementById('dataSubmissionStatus');
-                            if (statusDiv) {
-                                statusDiv.className = 'mb-4 w-full bg-yellow-50 p-4 rounded-lg text-center';
-                                statusDiv.innerHTML = `
-                                    <p class="text-yellow-700">We couldn't save your data right now.</p>
-                                    <p class="text-sm text-yellow-700">Don't worry, you can still create an account to access your valuation.</p>
-                                `;
-                            }
-                            // Keep the pending data in case the user logs in later
+                            console.warn('Background submission failed:', error);
+                            showStatus('Your data is saved locally and will be linked to your account when you sign up.', 'info');
                         });
                     } else {
                         // Data is too old, clear it
@@ -213,8 +223,15 @@
                         localStorage.removeItem('pendingQuestionnaireSaveTime');
                     }
                 } catch (error) {
-                    console.error('Error processing pending questionnaire data:', error);
+                    console.error('Error processing pending data:', error);
                 }
+            }
+            
+            // Pre-fill email on signup link
+            const signupLink = document.querySelector('a[href="/signup"]');
+            const email = localStorage.getItem('sellerEmail');
+            if (signupLink && email) {
+                signupLink.href = `/signup?email=${encodeURIComponent(email)}`;
             }
         });
     </script>

@@ -241,3 +241,69 @@ function checkUserLoggedIn() {
 
 // Make available globally
 window.checkUserLoggedIn = checkUserLoggedIn;
+
+/**
+ * Lightweight utility to check authentication status and handle questionnaire data
+ */
+(function() {
+    // Check if user appears to be logged in based on cookies
+    function isLoggedIn() {
+        return document.cookie.includes('authToken=') || 
+               document.cookie.includes('connect.sid=') ||
+               localStorage.getItem('isLoggedIn') === 'true';
+    }
+    
+    // Check if user has questionnaire data
+    function hasQuestionnaireData() {
+        return Boolean(
+            localStorage.getItem('pendingQuestionnaireData') ||
+            localStorage.getItem('questionnaireSubmissionId') ||
+            localStorage.getItem('sellerValuationData')
+        );
+    }
+    
+    // Process questionnaire data after login
+    function processQuestionnaireAfterLogin() {
+        const pendingData = localStorage.getItem('pendingQuestionnaireData');
+        
+        if (pendingData && isLoggedIn()) {
+            console.log('Processing questionnaire data after login');
+            
+            // Send data to server
+            fetch('/api/business/save-questionnaire', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: pendingData,
+                credentials: 'include'
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    console.log('Questionnaire data linked successfully');
+                    localStorage.removeItem('pendingQuestionnaireData');
+                    localStorage.removeItem('pendingQuestionnaireSaveTime');
+                    localStorage.setItem('questionnaireSubmissionId', result.submissionId);
+                }
+            })
+            .catch(error => {
+                console.warn('Error processing questionnaire after login:', error);
+            });
+        }
+    }
+    
+    // Expose to global scope
+    window.authCheck = {
+        isLoggedIn,
+        hasQuestionnaireData,
+        processQuestionnaireAfterLogin
+    };
+    
+    // Auto-process after login if needed
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', processQuestionnaireAfterLogin);
+    } else {
+        processQuestionnaireAfterLogin();
+    }
+})();

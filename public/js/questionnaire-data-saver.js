@@ -72,69 +72,68 @@ document.addEventListener('DOMContentLoaded', function() {
             'anon_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         questionnaireData.anonymousId = anonymousId;
         
-        // Store this data now in localStorage for redirect recovery
+        // Always store in localStorage as backup
         try {
             localStorage.setItem('pendingQuestionnaireData', JSON.stringify(questionnaireData));
             localStorage.setItem('pendingQuestionnaireSaveTime', new Date().toISOString());
-            localStorage.setItem('questionnaireRedirectCount', 
-                (parseInt(localStorage.getItem('questionnaireRedirectCount') || '0') + 1).toString());
+            localStorage.setItem('questionnaireCompletedAnonymously', 'true');
         } catch (storageErr) {
-            console.warn('Failed to store pending data in localStorage:', storageErr);
+            console.warn('Failed to store data in localStorage:', storageErr);
         }
         
-        // Use XMLHttpRequest instead of fetch to better handle redirects
-        const xhr = new XMLHttpRequest();
-        
-        // Create timeout handler
-        const xhrTimeout = setTimeout(() => {
-            if (xhr.readyState < 4) {
-                xhr.abort();
-                console.warn('Non-blocking save request timed out');
+        // Use fetch with proper redirect handling
+        fetch('/api/business/save-questionnaire', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(questionnaireData),
+            // Don't follow redirects - we want to handle them ourselves
+            redirect: 'manual',
+            // Set a reasonable timeout
+            signal: AbortSignal.timeout(10000)
+        })
+        .then(response => {
+            // If redirected to login (302/303), consider this "success" for anonymous users
+            if (response.type === 'opaqueredirect' || response.status === 302 || response.status === 303) {
+                console.log('Redirect detected (likely to login) - continuing navigation');
+                return { success: false, pendingData: true, message: 'Authentication required' };
             }
-        }, 10000); // 10 second timeout
-        
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState === 4) {
-                clearTimeout(xhrTimeout);
-                
-                // Check if we got redirected to login page
-                if (xhr.responseURL && xhr.responseURL.includes('/login')) {
-                    console.log('Detected redirect to login page. Data is saved for later submission.');
-                    // Data is already stored in localStorage above
-                    return;
-                }
-                
-                if (xhr.status >= 200 && xhr.status < 300) {
-                    try {
-                        const result = JSON.parse(xhr.responseText);
-                        console.log('Non-blocking save succeeded:', result.submissionId);
-                        
-                        if (result.success) {
-                            localStorage.setItem('questionnaireSubmissionId', result.submissionId);
-                            
-                            // Clear pending data since save was successful
-                            localStorage.removeItem('pendingQuestionnaireData');
-                            localStorage.removeItem('pendingQuestionnaireSaveTime');
-                        }
-                    } catch (e) {
-                        console.warn('Error parsing response:', e);
+            
+            if (!response.ok) {
+                return response.text().then(text => {
+                    // Check if HTML response (login page)
+                    if (text.includes('<!DOCTYPE') || text.includes('<html')) {
+                        console.log('HTML response detected - continuing navigation');
+                        return { success: false, pendingData: true, message: 'Authentication required' };
                     }
-                } else {
-                    console.warn('Non-blocking save failed with status:', xhr.status);
-                }
+                    
+                    try {
+                        return JSON.parse(text); // Try to parse as JSON
+                    } catch (e) {
+                        throw new Error(`Server error ${response.status}: ${text.substring(0, 100)}`);
+                    }
+                });
             }
-        };
+            
+            return response.json();
+        })
+        .then(result => {
+            if (result.success) {
+                console.log('Non-blocking save succeeded:', result.submissionId);
+                localStorage.setItem('questionnaireSubmissionId', result.submissionId);
+            } else if (result.pendingData) {
+                console.log('Data saved locally for future submission');
+            } else {
+                console.warn('Non-blocking save returned error:', result.message);
+            }
+        })
+        .catch(error => {
+            console.warn('Error in non-blocking save (safely caught):', error.message);
+            // Data is already in localStorage, navigation can continue
+        });
         
-        xhr.open('POST', '/api/business/save-questionnaire', true);
-        xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.withCredentials = true; // Include cookies
-        
-        try {
-            xhr.send(JSON.stringify(questionnaireData));
-        } catch (e) {
-            console.warn('Error sending XHR request:', e);
-        }
-        
+        // Return immediately to unblock navigation
         console.log('Non-blocking save initiated, continuing navigation');
         return true;
     }

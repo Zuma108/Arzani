@@ -55,6 +55,7 @@ const verificationRoutes = require('./routes/verificationRoutes');
 import businessRoutes from './routes/businessRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import publicValuationRouter from './api/public-valuation.js';
+import valuationRouter from './api/valuation.js';
 
 // Import the image routes - use ES module syntax
 import imageRoutes from './routes/imageRoutes.js';
@@ -148,6 +149,22 @@ app.use('/api/business', (req, res, next) => {
   next();
 }, businessApiRoutes);
 
+// Add valuation routes with explicit auth bypass
+app.use('/api/valuation', (req, res, next) => {
+  // Check for the special header or if it's a public endpoint
+  if (
+    req.headers['x-request-source'] === 'valuation-calculator' || 
+    req.headers['x-skip-auth'] === 'true' ||
+    req.path === '/calculate' || 
+    req.path === '/save-data'
+  ) {
+    console.log('No auth header, continuing without auth for path:', req.path);
+    req.isPublicRequest = true;
+    return next();
+  }
+  next();
+}, valuationRouter);
+
 // Use the direct business listings API for more reliable results
 app.use('/api/business', businessListingsRoutes);
 
@@ -156,12 +173,12 @@ app.use('/api/debug', debugApiRoutes);
 // Register verification routes
 app.use('/api/verification', verificationRoutes);
 
-
-
 // Define public paths that should never require authentication
 const publicPaths = [
   '/api/public',
   '/api/public-valuation',
+  '/api/valuation/calculate',
+  '/api/valuation/save-data',
   '/api/business/calculate-valuation',
   '/api/business/save-questionnaire',
   '/api/verification/business',  // Make verification endpoints public

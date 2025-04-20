@@ -16,6 +16,37 @@ import paymentRoutes from './routes/payment.routes.js';
 
 import Stripe from 'stripe';
 
+// Add a simple RateLimiter class implementation
+class RateLimiter {
+  constructor(options = {}) {
+    this.requests = new Map();
+    this.windowMs = options.windowMs || 60000; // Default: 1 minute
+    this.maxRequests = options.maxRequests || 100; // Default: 100 requests per window
+    this.message = options.message || 'Too many requests, please try again later.';
+    this.statusCode = options.statusCode || 429; // 429 Too Many Requests
+  }
+  
+  check(key) {
+    const now = Date.now();
+    const requestLog = this.requests.get(key) || [];
+    
+    // Remove old requests outside the current window
+    const validRequests = requestLog.filter(timestamp => 
+      now - timestamp < this.windowMs
+    );
+    
+    // Check if max requests is reached
+    if (validRequests.length >= this.maxRequests) {
+      return false;
+    }
+    
+    // Add current request to the log
+    validRequests.push(now);
+    this.requests.set(key, validRequests);
+    
+    return true;
+  }
+}
 
 import { 
   createUserTable, 
@@ -345,6 +376,17 @@ app.get('/homepage', (req, res) => {
 
 // IMPORTANT: Register public API endpoints BEFORE authentication middleware
 app.use('/api/public', publicValuationRouter);
+
+// This must come BEFORE any authentication middleware or route protection
+app.use('/api/public/valuation', (req, res, next) => {
+  console.log('Public valuation API accessed:', req.path);
+  // Mark this explicitly as a public request
+  req.isPublicRequest = true;
+  // Set proper content type for the response
+  res.setHeader('Content-Type', 'application/json');
+  next();
+}, publicValuationRouter);
+
 app.use((req, res, next) => {
   const path = req.path;
   
@@ -562,6 +604,21 @@ app.use('/api/drive', googleDriveRoutes);
 app.use('/api/test', testRoutes); // Add the new test routes
 app.use('/api/post-business', postBusinessValuationRoutes);
 
+// Mount the API routes - ensure these come BEFORE the authenticated routes
+// Use explicit bypass for the public business API routes
+app.use('/api/business', (req, res, next) => {
+  // Mark these specific routes as public to bypass authentication
+  if (
+    (req.path === '/calculate-valuation' || 
+     req.path === '/save-questionnaire' || 
+     req.path === '/save-valuation') &&
+    req.method === 'POST'
+  ) {
+    console.log('Marking business API route as public:', req.path);
+    req.isPublicRequest = true;
+  }
+  next();
+});
 
 // Register role management routes
 app.use('/api/users/roles', roleRoutes);
@@ -590,6 +647,20 @@ app.use('/api/assistant', aiAssistantRoutes);
 // Use the new auth middleware where needed
 app.use('/api/protected', authMiddleware);
 // API endpoints
+app.use('/api/valuation', (req, res, next) => {
+  // Check for the special header or if it's a public endpoint
+  if (
+    req.headers['x-request-source'] === 'valuation-calculator' || 
+    req.headers['x-skip-auth'] === 'true' ||
+    req.path === '/calculate' || 
+    req.path === '/save-data'
+  ) {
+    console.log('No auth header, continuing without auth for valuation path:', req.path);
+    req.isPublicRequest = true;
+    return next();
+  }
+  next();
+}, valuationApi);
 app.use('/api/valuation', valuationApi);
 // Register the valuation routes WITHOUT authentication middleware
 // IMPORTANT: Move these routes BEFORE any other business routes to avoid conflicts
@@ -3607,21 +3678,10 @@ app.post('/api/business/public/calculate-valuation', express.json(), async (req,
 });
 
 // Add this BEFORE any middleware registration, at the very top of the server.js file
-// after creating the app, but before using any middleware
 app.post('/api/business/direct-valuation', express.json(), async (req, res) => {
-  // Force Content-Type to application/json
-  res.setHeader('Content-Type', 'application/json');
-  
-  console.log('==== DIRECT VALUATION ENDPOINT REQUEST ====');
-  console.log('Request headers:', req.headers);
-  console.log('Request body:', JSON.stringify(req.body, null, 2));
-  console.log('=============================================');
-  
   try {
-    // Extract business data from request body
-    const { _debug, ...businessData } = req.body;
+    const { businessData, _debug } = req.body;
     
-    // Basic validation
     if (!businessData || Object.keys(businessData).length === 0) {
       return res.status(400).json({
         success: false,
