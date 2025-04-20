@@ -821,6 +821,45 @@ router.post('/save-questionnaire', async (req, res) => {
     const email = data.email || null;
     const anonymousId = data.anonymousId || `anon_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
     
+    // First check if the anonymous_id already exists to avoid unique constraint violation
+    if (anonymousId && data.anonymousId) {  // Only check if client provided an anonymousId
+      const checkQuery = 'SELECT submission_id FROM questionnaire_submissions WHERE anonymous_id = $1';
+      const checkResult = await client.query(checkQuery, [anonymousId]);
+      
+      if (checkResult.rows.length > 0) {
+        // If anonymousId exists, use its submission_id for the update
+        const existingSubmissionId = checkResult.rows[0].submission_id;
+        console.log(`Found existing submission with anonymous_id ${anonymousId}: ${existingSubmissionId}`);
+        
+        // Update the existing record
+        const updateQuery = `
+          UPDATE questionnaire_submissions 
+          SET 
+            email = COALESCE($1, email),
+            data = $2,
+            updated_at = NOW()
+          WHERE anonymous_id = $3
+          RETURNING id, submission_id
+        `;
+
+        const updateResult = await client.query(updateQuery, [
+          email,
+          JSON.stringify(data),
+          anonymousId
+        ]);
+        
+        await client.query('COMMIT');
+        
+        // Return the existing submission ID
+        return res.status(200).json({
+          success: true,
+          message: 'Questionnaire data updated successfully',
+          submissionId: updateResult.rows[0].submission_id
+        });
+      }
+    }
+    
+    // If no existing anonymousId or we didn't provide one, proceed with insert
     // Store complete data as JSON to avoid column mismatch issues
     const insertQuery = `
       INSERT INTO questionnaire_submissions (
