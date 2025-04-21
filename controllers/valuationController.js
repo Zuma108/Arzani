@@ -2,12 +2,25 @@ import pool from '../db.js'; // Fixed import to match db.js export style
 import valuationService from '../services/valuationService.js';
 import { v4 as uuidv4 } from 'uuid';
 
+// Cache for industry multipliers to prevent repeated database lookups
+const industryMultipliersCache = new Map();
+const CACHE_TTL = 3600000; // 1 hour in milliseconds
+
 /**
  * Get industry-specific multipliers from the database
  * This function queries the industry_metrics table to get accurate multipliers
+ * Now with caching to improve performance
  */
 async function getIndustryMultipliers(industry) {
   try {
+    // Check if we have a recent cache entry
+    const cacheKey = (industry || 'unknown').toLowerCase();
+    const cachedData = industryMultipliersCache.get(cacheKey);
+    if (cachedData && (Date.now() - cachedData.timestamp) < CACHE_TTL) {
+      console.log(`Using cached multipliers for industry: ${industry}`);
+      return cachedData.data;
+    }
+    
     console.log(`Looking up multipliers for industry: ${industry}`);
     
     // Query the industry_metrics table for the specified industry
@@ -30,7 +43,7 @@ async function getIndustryMultipliers(industry) {
       const metrics = result.rows[0];
       console.log(`Found industry metrics for ${industry}:`, metrics);
       
-      return {
+      const data = {
         minRevenueMultiplier: parseFloat(metrics.avg_sales_multiple) * 0.8 || 0.5,
         maxRevenueMultiplier: parseFloat(metrics.avg_sales_multiple) * 1.2 || 2.5,
         avgRevenueMultiple: parseFloat(metrics.avg_sales_multiple) || 1.5,
@@ -39,6 +52,14 @@ async function getIndustryMultipliers(industry) {
         businessCount: parseInt(metrics.business_count) || 0,
         medianPrice: parseFloat(metrics.median_price) || 0
       };
+      
+      // Cache the result
+      industryMultipliersCache.set(cacheKey, { 
+        data: data,
+        timestamp: Date.now()
+      });
+      
+      return data;
     }
     
     // If not found by exact name, try partial match
@@ -61,7 +82,7 @@ async function getIndustryMultipliers(industry) {
       const metrics = fuzzyResult.rows[0];
       console.log(`Found partial match industry metrics for ${industry}:`, metrics);
       
-      return {
+      const data = {
         minRevenueMultiplier: parseFloat(metrics.avg_sales_multiple) * 0.8 || 0.5,
         maxRevenueMultiplier: parseFloat(metrics.avg_sales_multiple) * 1.2 || 2.5,
         avgRevenueMultiple: parseFloat(metrics.avg_sales_multiple) || 1.5,
@@ -70,11 +91,19 @@ async function getIndustryMultipliers(industry) {
         businessCount: parseInt(metrics.business_count) || 0,
         medianPrice: parseFloat(metrics.median_price) || 0
       };
+      
+      // Cache the partial match result
+      industryMultipliersCache.set(cacheKey, { 
+        data: data,
+        timestamp: Date.now()
+      });
+      
+      return data;
     }
     
     // If we couldn't find any metrics, log a warning and return defaults
     console.warn(`No industry metrics found for '${industry}'. Using default multipliers.`);
-    return {
+    const defaultData = {
       minRevenueMultiplier: 0.5,
       maxRevenueMultiplier: 2.5,
       avgRevenueMultiple: 1.5,
@@ -83,6 +112,14 @@ async function getIndustryMultipliers(industry) {
       businessCount: 0,
       medianPrice: 0
     };
+    
+    // Cache the default result
+    industryMultipliersCache.set(cacheKey, { 
+      data: defaultData,
+      timestamp: Date.now() 
+    });
+    
+    return defaultData;
   } catch (error) {
     console.error('Error getting industry multipliers:', error);
     
@@ -101,39 +138,88 @@ async function getIndustryMultipliers(industry) {
 
 /**
  * Calculate business valuation based on provided data
+ * Improved with better timeout handling and error logging
  */
 async function calculateValuation(req, res) {
+  // Create calculation ID for tracking this specific request
+  const calculationId = `val_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+  console.log(`[${calculationId}] Starting valuation calculation`);
+  
+  // Track if response has been sent to prevent multiple responses
+  let responseSent = false;
+  
   try {
     const businessData = req.body;
-    console.log('Received valuation request with data:', 
-      JSON.stringify({...businessData, _summary: 'Data details omitted from log'}));
+    console.log(`[${calculationId}] Received valuation request with data:`, 
+      JSON.stringify({
+        industry: businessData.industry,
+        revenue: businessData.revenue,
+        ebitda: businessData.ebitda,
+        yearsInOperation: businessData.yearsInOperation
+      }));
     
-    console.log('Database connected');
+    console.log(`[${calculationId}] Database connected`);
     
     // Add a timeout to ensure the request doesn't hang
+    // INCREASED TIMEOUT from 20s to 30s for more reliable calculation
     const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Valuation calculation timed out')), 20000);
+      setTimeout(() => {
+        console.warn(`[${calculationId}] Valuation calculation timed out after 30 seconds`);
+        reject(new Error('Valuation calculation timed out (30s)'));
+      }, 30000);
     });
     
+    // Create an AbortController to allow cancelling the calculation if it times out
+    const abortController = new AbortController();
+    const signal = abortController.signal;
+    
+    // We'll pass this signal to the valuation service so it can check if it's been aborted
+    businessData._calculationSignal = signal;
+    businessData._calculationId = calculationId;
+    
     // Race the calculation against the timeout
-    const result = await Promise.race([
+    const resultPromise = Promise.race([
       valuationService.calculateBusinessValuation(businessData),
       timeoutPromise
     ]);
     
-    console.log('Valuation calculation completed successfully');
-    
-    // Return the valuation result
-    return res.status(200).json({
-      success: true,
-      valuation: result
+    resultPromise.then(result => {
+      console.log(`[${calculationId}] Valuation calculation completed successfully`);
+      
+      if (!responseSent) {
+        responseSent = true;
+        // Return the valuation result
+        return res.status(200).json({
+          success: true,
+          valuation: result
+        });
+      }
+    }).catch(error => {
+      console.error(`[${calculationId}] Valuation calculation error:`, error);
+      
+      if (error.message.includes('timed out')) {
+        // Cancel the ongoing calculation if it timed out
+        abortController.abort();
+      }
+      
+      if (!responseSent && !res.headersSent) {
+        responseSent = true;
+        return res.status(500).json({
+          success: false,
+          calculationId: calculationId,
+          message: 'Failed to calculate valuation: ' + (error.message || 'Unknown error'),
+          error: error.message
+        });
+      }
     });
     
   } catch (error) {
-    console.error('Valuation calculation error:', error);
-    if (!res.headersSent) {
+    console.error(`[${calculationId}] Error in valuation calculation:`, error);
+    if (!responseSent && !res.headersSent) {
+      responseSent = true;
       return res.status(500).json({
         success: false,
+        calculationId: calculationId,
         message: 'Failed to calculate valuation: ' + (error.message || 'Unknown error'),
         error: error.message
       });

@@ -540,6 +540,9 @@
             let activeController = null;
             let safetyTimeoutId = null;
             
+            // Track if we're currently waiting for a valuation calculation
+            let calculationInProgress = false;
+            
             // Add event listener for the cancel button
             if (cancelValuationBtn) {
                 cancelValuationBtn.addEventListener('click', function() {
@@ -554,6 +557,9 @@
                         clearTimeout(safetyTimeoutId);
                         safetyTimeoutId = null;
                     }
+                    
+                    // Reset calculation flag
+                    calculationInProgress = false;
                     
                     // Hide the loading overlay
                     hideLoadingOverlay();
@@ -626,6 +632,9 @@
                 // Hide loading overlay
                 hideLoadingOverlay();
                 
+                // Reset calculation flag
+                calculationInProgress = false;
+                
                 // Show error modal with message
                 showErrorModal(message);
                 
@@ -643,6 +652,12 @@
             // Modify validateBeforeNext to never show loading overlay automatically
             window.validateBeforeNext = function() {
                 try {
+                    // Check if a valuation calculation is already in progress
+                    if (calculationInProgress) {
+                        console.log('Calculation in progress, allowing navigation to continue');
+                        return true; // Allow navigation if calculation is happening
+                    }
+                    
                     // Check if a submission is already in progress or was recently completed
                     const lastSubmitTime = parseInt(localStorage.getItem('lastQuestionnaireSubmitTime') || '0');
                     const currentTime = Date.now();
@@ -655,9 +670,6 @@
                     
                     // Set the submission time to prevent multiple rapid submissions
                     localStorage.setItem('lastQuestionnaireSubmitTime', currentTime.toString());
-                    
-                    // Check if valuation has been calculated - IMPORTANT: Don't require valuation now
-                    // Allow navigation regardless of valuation status - user can calculate when ready
                     
                     // Check if we have a valid email - if not, still allow proceeding but show modal
                     const email = localStorage.getItem('sellerEmail');
@@ -712,21 +724,179 @@
             
             // Function to calculate the business valuation
             async function calculateValuation() {
+                // Prevent multiple calculations at once
+                if (calculationInProgress) {
+                    console.log('Valuation calculation already in progress, ignoring request');
+                    return;
+                }
+                
                 try {
+                    // Set calculation flag
+                    calculationInProgress = true;
+                    
                     // Show loading overlay - ONLY when manually triggered by Calculate button
                     showLoadingOverlay();
                     
                     // Create a safety timeout to ensure loading overlay is never stuck
+                    // INCREASED TIMEOUT from 15s to 30s to match server timeout
                     if (safetyTimeoutId) clearTimeout(safetyTimeoutId);
                     safetyTimeoutId = setTimeout(() => {
                         console.warn('Safety timeout triggered - forcing loading overlay to hide');
                         hideLoadingOverlay();
+                        calculationInProgress = false;
                         displayError('The calculation is taking longer than expected. Please try again.');
                         safetyTimeoutId = null;
-                    }, 15000); // 15 seconds safety timeout
+                    }, 30000); // 30 seconds safety timeout
                     
-                    // Rest of calculation function remains the same
-                    // ... existing calculation code ...
+                    // Gather business data from localStorage
+                    const businessData = {
+                        businessName: localStorage.getItem('sellerBusinessName'),
+                        industry: localStorage.getItem('sellerIndustry'),
+                        yearsInOperation: localStorage.getItem('sellerYearsInOperation') || 
+                            (new Date().getFullYear() - parseInt(localStorage.getItem('sellerYearEstablished') || new Date().getFullYear())),
+                        location: localStorage.getItem('sellerLocation'),
+                        revenue: parseFloat(localStorage.getItem('sellerRevenueExact')) || 0,
+                        revenuePrevYear: parseFloat(localStorage.getItem('sellerRevenuePrevYear')) || 0,
+                        revenue2YearsAgo: parseFloat(localStorage.getItem('sellerRevenue2YearsAgo')) || 0,
+                        revenue3YearsAgo: parseFloat(localStorage.getItem('sellerRevenue3YearsAgo')) || 0,
+                        ebitda: parseFloat(localStorage.getItem('sellerEbitda')) || 0,
+                        ebitdaPrevYear: parseFloat(localStorage.getItem('sellerEbitdaPrevYear')) || 0,
+                        ebitda2YearsAgo: parseFloat(localStorage.getItem('sellerEbitda2YearsAgo')) || 0,
+                        cashOnCash: parseFloat(localStorage.getItem('sellerCashOnCash')) || 0,
+                        ffeValue: parseFloat(localStorage.getItem('sellerFfeValue')) || 0,
+                        growthRate: parseFloat(localStorage.getItem('sellerGrowthRate')) || 0,
+                        scalability: localStorage.getItem('sellerScalability') || 'Medium',
+                        totalDebtAmount: parseFloat(localStorage.getItem('sellerTotalDebtAmount')) || 0,
+                        debtTransferable: localStorage.getItem('sellerDebtTransferable') || 'none',
+                        anonymousId: localStorage.getItem('questionnaireAnonymousId') || '',
+                        email: localStorage.getItem('sellerEmail') || '',
+                        timestamp: Date.now(), // Add timestamp to prevent caching issues
+                        requestId: 'req_' + Date.now() + '_' + Math.random().toString(36).substring(2, 10) // Generate unique request ID
+                    };
+                    
+                    console.log('Calculating valuation with data:', businessData);
+                    
+                    // Validate minimum required data
+                    if (!businessData.revenue && !businessData.ebitda) {
+                        throw new Error('Missing required financial data (revenue or EBITDA)');
+                    }
+                    
+                    try {
+                        // Create a new AbortController for this request
+                        activeController = new AbortController();
+                        
+                        // Send data to valuation API with anti-cache measures
+                        const apiUrl = '/api/public/valuation/calculate?nocache=' + Date.now();
+                        console.log(`Sending valuation request to ${apiUrl}`);
+                        
+                        const response = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: { 
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                                'Pragma': 'no-cache',
+                                'Expires': '0'
+                            },
+                            body: JSON.stringify(businessData),
+                            signal: activeController.signal
+                        });
+                        
+                        // Reset controller reference
+                        activeController = null;
+                        
+                        // Check for successful response
+                        if (!response.ok) {
+                            const contentType = response.headers.get('content-type');
+                            if (contentType && contentType.includes('application/json')) {
+                                const errorData = await response.json();
+                                throw new Error(`API error (${response.status}): ${errorData.message || 'Unknown error'}`);
+                            } else {
+                                const errorText = await response.text();
+                                if (errorText.includes('<!DOCTYPE html>')) {
+                                    throw new Error('Received HTML error page instead of JSON. Try the alternate endpoint.');
+                                } else {
+                                    throw new Error(`API error (${response.status}): ${errorText.substring(0, 100) || 'Unknown error'}`);
+                                }
+                            }
+                        }
+                        
+                        // Parse the successful response
+                        const result = await response.json();
+                        
+                        if (result.success && result.valuation) {
+                            // Clear safety timeout since we have a successful response
+                            if (safetyTimeoutId) {
+                                clearTimeout(safetyTimeoutId);
+                                safetyTimeoutId = null;
+                            }
+                            
+                            // Reset calculation flag
+                            calculationInProgress = false;
+                            
+                            // Store the result and display it
+                            window.valuationData = result.valuation;
+                            displayValuationResults(result.valuation);
+                        } else {
+                            throw new Error(result.message || 'Failed to calculate valuation');
+                        }
+                    } catch (apiError) {
+                        // Clear safety timeout
+                        if (safetyTimeoutId) {
+                            clearTimeout(safetyTimeoutId);
+                            safetyTimeoutId = null;
+                        }
+                        
+                        // Handle abort errors specifically
+                        if (apiError.name === 'AbortError') {
+                            displayError('The valuation request was cancelled.');
+                        } else {
+                            // Try the fallback endpoint if we got an HTML response
+                            if (apiError.message.includes('HTML error page') || apiError.message.includes('<!DOCTYPE html>')) {
+                                try {
+                                    console.log('Trying fallback valuation endpoint...');
+                                    
+                                    // Create a new controller for fallback request
+                                    activeController = new AbortController();
+                                    
+                                    const fallbackResponse = await fetch('/api/business/public/calculate-valuation?nocache=' + Date.now(), {
+                                        method: 'POST',
+                                        headers: { 
+                                            'Content-Type': 'application/json',
+                                            'Accept': 'application/json',
+                                            'Cache-Control': 'no-cache'
+                                        },
+                                        body: JSON.stringify(businessData),
+                                        signal: activeController.signal
+                                    });
+                                    
+                                    // Reset controller after request completes
+                                    activeController = null;
+                                    
+                                    if (!fallbackResponse.ok) {
+                                        throw new Error(`Fallback API error: ${fallbackResponse.status}`);
+                                    }
+                                    
+                                    const fallbackResult = await fallbackResponse.json();
+                                    if (fallbackResult.success && fallbackResult.valuation) {
+                                        // Reset calculation flag
+                                        calculationInProgress = false;
+                                        
+                                        window.valuationData = fallbackResult.valuation;
+                                        displayValuationResults(fallbackResult.valuation);
+                                        return; // Exit early if successful
+                                    } else {
+                                        throw new Error(fallbackResult.message || 'Failed to calculate valuation with fallback endpoint');
+                                    }
+                                } catch (fallbackError) {
+                                    console.error('Fallback endpoint failed:', fallbackError);
+                                    displayError(`Both valuation endpoints failed. Please try again later.`);
+                                }
+                            } else {
+                                displayError(apiError.message || 'Failed to connect to valuation service.');
+                            }
+                        }
+                    }
                 } catch (error) {
                     // Ensure overlay is hidden and clear safety timeout
                     if (safetyTimeoutId) {
@@ -735,25 +905,59 @@
                     }
                     
                     hideLoadingOverlay();
+                    calculationInProgress = false;
                     displayError(error.message || 'An unexpected error occurred.');
                 }
             }
             
-            // Check if there's saved valuation data and display it
-            const savedValuation = localStorage.getItem('sellerValuationData');
-            if (savedValuation) {
+            // Function to display the valuation results
+            function displayValuationResults(valuation) {
                 try {
-                    const valuationData = JSON.parse(savedValuation);
-                    window.valuationData = valuationData;
-                    updateValuationUI(valuationData);
+                    // Store the valuation data globally
+                    window.valuationData = valuation;
+                    
+                    // Update the UI with valuation data
+                    updateValuationUI(valuation);
+                    
+                    // Save valuation results to database
+                    saveValuationToDatabase(valuation).catch(err => {
+                        // Just log the error but don't block UI update
+                        console.warn('Error in database save, but continuing with UI update:', err);
+                    });
+                    
+                    // Get element references
+                    const calculationPrompt = document.getElementById('calculationPrompt');
+                    const valuationResults = document.getElementById('valuationResults');
+                    
+                    // Check if all needed elements exist
+                    if (!calculationPrompt || !valuationResults) {
+                        console.error('Missing required DOM elements for displaying results');
+                        displayError('Error displaying valuation results. Please try again.');
+                        return;
+                    }
+                    
+                    // Hide loading overlay
+                    hideLoadingOverlay();
+                    
+                    // Hide calculation prompt and show results
                     calculationPrompt.classList.add('hidden');
                     valuationResults.classList.remove('hidden');
+                    
+                    // Scroll to results
+                    valuationResults.scrollIntoView({ behavior: 'smooth' });
+                    
+                    console.log('Valuation displayed successfully');
                 } catch (error) {
-                    console.error('Error loading saved valuation:', error);
+                    console.error('Error displaying valuation results:', error);
+                    
+                    // Fallback error handling
+                    hideLoadingOverlay();
+                    calculationInProgress = false;
+                    displayError('Error displaying valuation results: ' + error.message);
                 }
             }
-
-            // ... rest of the script code remains the same ...
+            
+            // ... rest of the script remains the same ...
         });
     </script>
 </body>
