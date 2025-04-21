@@ -98,3 +98,4 @@ This project aims to automate the creation and publication of blog posts on Azan
 - Improved organic search rankings and site traffic.
 - Reduction in manual content management workload.
 
+1
