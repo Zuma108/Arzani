@@ -518,6 +518,19 @@
             // Set up validation function for navigation
             window.validateBeforeNext = function() {
                 try {
+                    // NEW: Check if a submission is already in progress or was recently completed
+                    const lastSubmitTime = parseInt(localStorage.getItem('lastQuestionnaireSubmitTime') || '0');
+                    const currentTime = Date.now();
+                    const submissionThrottle = 5000; // 5 seconds between submissions
+                    
+                    if (currentTime - lastSubmitTime < submissionThrottle) {
+                        console.log('Submission throttled. Last submit was', (currentTime - lastSubmitTime), 'ms ago.');
+                        return true; // Allow navigation without triggering another save
+                    }
+                    
+                    // Set the submission time to prevent multiple rapid submissions
+                    localStorage.setItem('lastQuestionnaireSubmitTime', currentTime.toString());
+                    
                     // Check if valuation has been calculated
                     if (!window.valuationData && document.getElementById('valuationResults').classList.contains('hidden')) {
                         alert('Please calculate your business valuation before continuing.');
@@ -528,9 +541,13 @@
                     // Check if we have a valid email - if not, still allow proceeding but show modal
                     const email = localStorage.getItem('sellerEmail');
                     if (!email || !isValidEmail(email)) {
-                        // Save data first as anonymous
-                        if (typeof window.saveQuestionnaireDataToServerNonBlocking === 'function') {
-                            window.saveQuestionnaireDataToServerNonBlocking();
+                        // Save data first as anonymous - but only do this once
+                        if (typeof window.saveQuestionnaireDataToServerNonBlocking === 'function' && 
+                            !localStorage.getItem('saveInProgress')) {
+                            localStorage.setItem('saveInProgress', 'true');
+                            window.saveQuestionnaireDataToServerNonBlocking().finally(() => {
+                                localStorage.removeItem('saveInProgress');
+                            });
                         }
                         
                         // Save valuation data to localStorage
@@ -551,11 +568,16 @@
                     // Set a flag indicating we've completed the questionnaire flow
                     localStorage.setItem('questionnaireCompleted', 'true');
 
-                    // Trigger the non-blocking save function
-                    if (typeof window.saveQuestionnaireDataToServerNonBlocking === 'function') {
-                        window.saveQuestionnaireDataToServerNonBlocking();
+                    // Trigger the non-blocking save function - but only do this once
+                    if (typeof window.saveQuestionnaireDataToServerNonBlocking === 'function' && 
+                        !localStorage.getItem('saveInProgress')) {
+                        // Set a flag to prevent multiple concurrent saves
+                        localStorage.setItem('saveInProgress', 'true');
+                        window.saveQuestionnaireDataToServerNonBlocking().finally(() => {
+                            localStorage.removeItem('saveInProgress');
+                        });
                     } else {
-                        console.warn('Non-blocking save function not found, continuing navigation without saving');
+                        console.warn('Non-blocking save function not found or save already in progress');
                     }
 
                     console.log('Validation passed, proceeding to thank-you page');

@@ -15,6 +15,70 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('Generated anonymous ID:', anonymousId);
     }
     
+    // Add a submission tracker object to prevent submission loops
+    const submissionTracker = {
+        lastSubmitTime: 0,
+        lastSubmissionHash: '',
+        minSubmitInterval: 5000, // 5 seconds between submissions
+        isSubmitting: false,
+        pendingSubmissions: 0,
+        
+        canSubmit: function(dataHash) {
+            const now = Date.now();
+            // Don't allow submissions if one is in progress
+            if (this.isSubmitting) {
+                console.log('Submission already in progress, skipping');
+                return false;
+            }
+            
+            // Don't allow submissions too close together
+            if (now - this.lastSubmitTime < this.minSubmitInterval) {
+                console.log('Too soon since last submission, skipping');
+                return false;
+            }
+            
+            // Don't submit the same data twice in a row
+            if (dataHash && dataHash === this.lastSubmissionHash) {
+                console.log('Same data as last submission, skipping');
+                return false;
+            }
+            
+            return true;
+        },
+        
+        startSubmission: function(dataHash) {
+            this.isSubmitting = true;
+            this.pendingSubmissions++;
+            this.lastSubmitTime = Date.now();
+            if (dataHash) {
+                this.lastSubmissionHash = dataHash;
+            }
+        },
+        
+        finishSubmission: function() {
+            this.isSubmitting = false;
+            this.pendingSubmissions = Math.max(0, this.pendingSubmissions - 1);
+        }
+    };
+    
+    // Function to generate a simple hash of submission data for comparison
+    function generateSubmissionHash(data) {
+        try {
+            // Only include key fields that would make a submission different
+            const keyFields = {
+                email: data.email,
+                businessName: data.businessName,
+                industry: data.industry,
+                anonymousId: data.anonymousId,
+                revenue: data.revenueExact,
+                ebitda: data.ebitda
+            };
+            return JSON.stringify(keyFields);
+        } catch (e) {
+            return Date.now().toString(); // Fallback
+        }
+    }
+    
     // Function to collect all questionnaire data from localStorage
     function prepareQuestionnaireData() {
         return {
@@ -72,6 +136,30 @@ document.addEventListener('DOMContentLoaded', function() {
             'anon_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         questionnaireData.anonymousId = anonymousId;
         
+        // Add request ID and timestamp to ensure uniqueness
+        const requestId = 'req_' + Date.now() + '_' + Math.random().toString(36).substring(2, 10);
+        questionnaireData._requestId = requestId;
+        questionnaireData._clientTimestamp = Date.now();
+        
+        // Generate a hash of the submission for comparison
+        const submissionHash = generateSubmissionHash(questionnaireData);
+        
+        // Check if we can submit this data
+        if (!submissionTracker.canSubmit(submissionHash)) {
+            console.log('Submission prevented by tracker - returning cached result');
+            
+            // Return a promise that resolves immediately with cached data
+            return Promise.resolve({
+                success: true,
+                message: 'Using cached submission result',
+                submissionId: localStorage.getItem('questionnaireSubmissionId'),
+                cached: true
+            });
+        }
+        
+        // Mark that we're starting a submission
+        submissionTracker.startSubmission(submissionHash);
+        
         // Always store in localStorage as backup
         try {
             localStorage.setItem('pendingQuestionnaireData', JSON.stringify(questionnaireData));
@@ -81,78 +169,120 @@ document.addEventListener('DOMContentLoaded', function() {
             console.warn('Failed to store data in localStorage:', storageErr);
         }
         
-        // Use fetch with proper redirect handling
-        fetch('/api/business/save-questionnaire', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(questionnaireData),
-            // Don't follow redirects - we want to handle them ourselves
-            redirect: 'manual',
-            // Set a reasonable timeout
-            signal: AbortSignal.timeout(10000)
-        })
-        .then(response => {
-            // If redirected to login (302/303), consider this "success" for anonymous users
-            if (response.type === 'opaqueredirect' || response.status === 302 || response.status === 303) {
-                console.log('Redirect detected (likely to login) - continuing navigation');
-                return { success: false, pendingData: true, message: 'Authentication required' };
-            }
-            
-            if (!response.ok) {
-                return response.text().then(text => {
-                    // Check if HTML response (login page)
-                    if (text.includes('<!DOCTYPE') || text.includes('<html')) {
-                        console.log('HTML response detected - continuing navigation');
-                        return { success: false, pendingData: true, message: 'Authentication required' };
-                    }
-                    
-                    try {
-                        return JSON.parse(text); // Try to parse as JSON
-                    } catch (e) {
-                        throw new Error(`Server error ${response.status}: ${text.substring(0, 100)}`);
-                    }
+        // Convert to a proper Promise for better handling
+        return new Promise((resolve) => {
+            // Use fetch with proper redirect handling
+            fetch(`/api/business/save-questionnaire?nocache=${Date.now()}&clientId=${anonymousId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                },
+                body: JSON.stringify(questionnaireData),
+                // Don't follow redirects - we want to handle them ourselves
+                redirect: 'manual',
+                // Set a reasonable timeout
+                signal: AbortSignal.timeout(10000)
+            })
+            .then(response => {
+                // If redirected to login (302/303), consider this "success" for anonymous users
+                if (response.type === 'opaqueredirect' || response.status === 302 || response.status === 303) {
+                    console.log('Redirect detected (likely to login) - continuing navigation');
+                    return { success: false, pendingData: true, message: 'Authentication required' };
+                }
+                
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        // Check if HTML response (login page)
+                        if (text.includes('<!DOCTYPE') || text.includes('<html')) {
+                            console.log('HTML response detected - continuing navigation');
+                            return { success: false, pendingData: true, message: 'Authentication required' };
+                        }
+                        
+                        try {
+                            return JSON.parse(text); // Try to parse as JSON
+                        } catch (e) {
+                            throw new Error(`Server error ${response.status}: ${text.substring(0, 100)}`);
+                        }
+                    });
+                }
+                
+                return response.json();
+            })
+            .then(result => {
+                if (result.success) {
+                    console.log('Non-blocking save succeeded:', result.submissionId);
+                    localStorage.setItem('questionnaireSubmissionId', result.submissionId);
+                } else if (result.pendingData) {
+                    console.log('Data saved locally for future submission');
+                } else {
+                    console.warn('Non-blocking save returned error:', result.message);
+                }
+                
+                // Always resolve with the result, never reject
+                resolve(result);
+            })
+            .catch(error => {
+                console.warn('Error in non-blocking save (safely caught):', error.message);
+                // Data is already in localStorage, navigation can continue
+                resolve({
+                    success: false,
+                    error: error.message,
+                    pendingData: true
                 });
-            }
+            })
+            .finally(() => {
+                // Mark that we're done with this submission
+                submissionTracker.finishSubmission();
+            });
             
-            return response.json();
-        })
-        .then(result => {
-            if (result.success) {
-                console.log('Non-blocking save succeeded:', result.submissionId);
-                localStorage.setItem('questionnaireSubmissionId', result.submissionId);
-            } else if (result.pendingData) {
-                console.log('Data saved locally for future submission');
-            } else {
-                console.warn('Non-blocking save returned error:', result.message);
-            }
-        })
-        .catch(error => {
-            console.warn('Error in non-blocking save (safely caught):', error.message);
-            // Data is already in localStorage, navigation can continue
+            // Return immediately to unblock navigation
+            console.log('Non-blocking save initiated, continuing navigation');
         });
-        
-        // Return immediately to unblock navigation
-        console.log('Non-blocking save initiated, continuing navigation');
-        return true;
     }
     
-    // Detect when the user is about to leave a page and save data
+    // Use a managed beforeunload handler to prevent duplicate submissions
+    let beforeUnloadSaveTriggered = false;
     window.addEventListener('beforeunload', (event) => {
-        console.log('beforeunload triggered, attempting non-blocking save.');
-        saveQuestionnaireDataToServerNonBlocking();
+        if (!beforeUnloadSaveTriggered && !submissionTracker.isSubmitting) {
+            console.log('beforeunload triggered, attempting non-blocking save.');
+            beforeUnloadSaveTriggered = true;
+            saveQuestionnaireDataToServerNonBlocking();
+            
+            // Reset after a delay to allow future saves
+            setTimeout(() => {
+                beforeUnloadSaveTriggered = false;
+            }, 10000);
+        } else {
+            console.log('Skipping duplicate beforeunload save');
+        }
     });
     
     // Make the non-blocking save function globally available for validateBeforeNext
     window.saveQuestionnaireDataToServerNonBlocking = saveQuestionnaireDataToServerNonBlocking;
     
-    // Also save periodically (every 30 seconds) to minimize data loss
-    setInterval(saveQuestionnaireDataToServerNonBlocking, 30000);
+    // Use a more resilient interval save with proper tracking
+    let intervalSaveId = null;
+    function startIntervalSave() {
+        if (intervalSaveId !== null) return;
+        
+        intervalSaveId = setInterval(() => {
+            // Only save if we're not already submitting and it's been at least 30 seconds
+            if (!submissionTracker.isSubmitting && 
+                Date.now() - submissionTracker.lastSubmitTime >= 30000) {
+                console.log('Interval save triggered');
+                saveQuestionnaireDataToServerNonBlocking();
+            } else {
+                console.log('Skipped interval save - recent submission or in progress');
+            }
+        }, 30000);
+    }
+    
+    // Start interval saving after a delay to avoid collision with initial save
+    setTimeout(startIntervalSave, 5000);
     
     // Make save function available globally
     window.saveQuestionnaireDataToServer = saveQuestionnaireDataToServerNonBlocking;
-    
-    // Initial save attempt when script loads (non-blocking)
-    setTimeout(saveQuestionnaireDataToServerNonBlocking, 2000);
 });

@@ -3,6 +3,17 @@
  * This script handles consistent page transitions and progress bar animations
  */
 
+// Global request lock to prevent multiple simultaneous API calls
+window.requestLocks = {
+  saveQuestionnaire: {
+    inProgress: false,
+    lastRequestTime: 0,
+    minInterval: 5000, // 5 seconds between identical requests
+    navigationPending: false,
+    pendingDestination: null
+  }
+};
+
 // Add this debug function to help troubleshoot navigation issues
 function debugNavigation() {
     // Get all navigation buttons
@@ -50,6 +61,79 @@ function debugNavigation() {
     }
 }
 
+// Network request protection helper
+function preventDuplicateRequests(requestType, action) {
+  // Get the lock for this request type
+  const lock = window.requestLocks[requestType];
+  if (!lock) {
+    console.error(`No request lock defined for ${requestType}`);
+    return false;
+  }
+  
+  // Check if a request is in progress
+  if (lock.inProgress) {
+    console.log(`${requestType} request already in progress, preventing duplicate`);
+    return false;
+  }
+  
+  // Check if enough time has passed since last request
+  const now = Date.now();
+  if (now - lock.lastRequestTime < lock.minInterval) {
+    console.log(`${requestType} request too soon (${now - lock.lastRequestTime}ms), throttling`);
+    return false;
+  }
+  
+  // Update lock status
+  lock.inProgress = true;
+  lock.lastRequestTime = now;
+  
+  try {
+    // Execute the action
+    const result = action();
+    
+    // If action returns Promise, handle it properly
+    if (result instanceof Promise) {
+      return result.finally(() => {
+        lock.inProgress = false;
+      });
+    }
+    
+    // Action completed synchronously
+    lock.inProgress = false;
+    return result;
+  } catch (error) {
+    // Ensure lock is released even if action throws
+    lock.inProgress = false;
+    throw error;
+  }
+}
+
+// Delay navigation until in-progress requests complete
+function safeNavigate(url) {
+  const saveQuestionnaireLock = window.requestLocks.saveQuestionnaire;
+  
+  // If no request in progress, navigate immediately
+  if (!saveQuestionnaireLock.inProgress) {
+    window.location.href = url;
+    return;
+  }
+  
+  // Otherwise, store pending navigation and let request completion handle it
+  console.log(`Request in progress, delaying navigation to ${url}`);
+  saveQuestionnaireLock.navigationPending = true;
+  saveQuestionnaireLock.pendingDestination = url;
+  
+  // Safety timeout to prevent stuck navigation
+  setTimeout(() => {
+    if (saveQuestionnaireLock.navigationPending && 
+        saveQuestionnaireLock.pendingDestination === url) {
+      console.warn(`Navigation safety timeout reached, forcing navigation to ${url}`);
+      saveQuestionnaireLock.navigationPending = false;
+      window.location.href = url;
+    }
+  }, 2000); // 2 second safety timeout
+}
+
 // Call the debug function after DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     debugNavigation();
@@ -82,7 +166,34 @@ class QuestionnaireNavigation {
         // Update progress indicators
         this.updateProgress();
         
+        // Monitor and fix any in-progress request locks
+        this.setupRequestLockMonitoring();
+        
         console.log(`Questionnaire navigation initialized: current page is ${this.currentPage} (index ${this.currentIndex})`);
+    }
+    
+    // Monitor request locks and handle stuck locks
+    setupRequestLockMonitoring() {
+        // Check every 5 seconds for stuck locks
+        setInterval(() => {
+            const now = Date.now();
+            const lock = window.requestLocks.saveQuestionnaire;
+            
+            // If lock has been active for more than 10 seconds, it's likely stuck
+            if (lock.inProgress && (now - lock.lastRequestTime > 10000)) {
+                console.warn('Found stuck request lock, resetting');
+                lock.inProgress = false;
+                
+                // If navigation was pending, perform it now
+                if (lock.navigationPending && lock.pendingDestination) {
+                    console.log(`Performing delayed navigation to ${lock.pendingDestination}`);
+                    const destination = lock.pendingDestination;
+                    lock.navigationPending = false;
+                    lock.pendingDestination = null;
+                    window.location.href = destination;
+                }
+            }
+        }, 5000);
     }
     
     // Get current page slug from URL
@@ -98,16 +209,44 @@ class QuestionnaireNavigation {
         const backBtn = document.getElementById('backBtn');
         
         if (nextBtn) {
+            // Use more robust click handler with debounce
+            let nextClickProcessing = false;
             nextBtn.addEventListener('click', (e) => {
                 e.preventDefault();
-                this.nextPage();
+                
+                // Prevent multiple rapid clicks
+                if (nextClickProcessing) {
+                    console.log('Next click already processing, ignoring');
+                    return;
+                }
+                
+                nextClickProcessing = true;
+                this.nextPage().finally(() => {
+                    // Allow another click after a delay
+                    setTimeout(() => {
+                        nextClickProcessing = false;
+                    }, 1000);
+                });
             });
         }
         
         if (backBtn) {
+            // Similar debounce for back button
+            let backClickProcessing = false;
             backBtn.addEventListener('click', (e) => {
                 e.preventDefault();
-                this.prevPage();
+                
+                if (backClickProcessing) {
+                    console.log('Back click already processing, ignoring');
+                    return;
+                }
+                
+                backClickProcessing = true;
+                this.prevPage().finally(() => {
+                    setTimeout(() => {
+                        backClickProcessing = false;
+                    }, 1000);
+                });
             });
         }
     }
@@ -124,34 +263,45 @@ class QuestionnaireNavigation {
     
     // Navigate to the next page
     async nextPage() {
-        console.log('nextPage called'); // Add log
+        console.log('nextPage called');
         
         try {
-            // Run page validation if available
+            // Run page validation if available, but with duplicate prevention
             if (typeof window.validateBeforeNext === 'function') {
-                console.log('Calling validateBeforeNext...'); // Add log
-                const isValid = window.validateBeforeNext();
-                console.log(`validateBeforeNext returned: ${isValid}`); // Add log
+                console.log('Calling validateBeforeNext...');
+                
+                let isValid = false;
+                
+                // Use the safe request wrapper
+                if (typeof window.saveQuestionnaireDataToServerNonBlocking === 'function') {
+                    isValid = preventDuplicateRequests('saveQuestionnaire', () => {
+                        return window.validateBeforeNext();
+                    });
+                } else {
+                    isValid = window.validateBeforeNext();
+                }
+                
+                console.log(`validateBeforeNext returned: ${isValid}`);
                 if (!isValid) {
                     console.log('Validation failed, staying on current page');
                     return; // Stop navigation if validation fails
                 }
                 // If validation passes, the non-blocking save has been initiated. Proceed with navigation.
             } else {
-                console.log('No validateBeforeNext function found.'); // Add log
+                console.log('No validateBeforeNext function found.');
             }
             
             this.currentIndex = this.pageOrder.indexOf(this.getCurrentPageSlug());
-            console.log(`Current index: ${this.currentIndex}, Total pages: ${this.pageOrder.length}`); // Add log
+            console.log(`Current index: ${this.currentIndex}, Total pages: ${this.pageOrder.length}`);
             
             // Check if we're on the last page
             if (this.currentIndex >= this.pageOrder.length - 1) {
                 console.log('On last page or beyond, redirecting to thank-you');
                 await this.addExitAnimation();
                 
-                // Force navigation to thank you page directly
+                // Force navigation to thank you page directly using safe navigation
                 console.log('Final navigation: redirecting to thank-you page');
-                window.location.href = '/seller-questionnaire/thank-you';
+                safeNavigate('/seller-questionnaire/thank-you');
                 return;
             }
             
@@ -165,23 +315,23 @@ class QuestionnaireNavigation {
             // Add exit animation then navigate
             await this.addExitAnimation();
             
-            // Force navigation instead of relying on function calls
+            // Force navigation with safe navigation
             console.log('Final navigation: redirecting to next page');
-            window.location.href = `/seller-questionnaire/${nextPageSlug}`;
+            safeNavigate(`/seller-questionnaire/${nextPageSlug}`);
         } catch (error) {
             console.error('Error during navigation:', error);
             
             // Emergency fallback - if we're on the final page, force redirect
             if (this.currentIndex >= this.pageOrder.length - 2) { // Within 2 of final page
                 console.warn('Error in navigation near final page, forcing thank-you redirect');
-                window.location.href = '/seller-questionnaire/thank-you';
+                safeNavigate('/seller-questionnaire/thank-you');
             } else {
                 // Otherwise attempt to go to next page
                 const nextPageIndex = this.currentIndex + 1;
                 if (nextPageIndex < this.pageOrder.length) {
                     const recoveryPage = this.pageOrder[nextPageIndex];
                     console.warn(`Navigation recovery: redirecting to ${recoveryPage}`);
-                    window.location.href = `/seller-questionnaire/${recoveryPage}`;
+                    safeNavigate(`/seller-questionnaire/${recoveryPage}`);
                 }
             }
         }
@@ -189,11 +339,14 @@ class QuestionnaireNavigation {
     
     // Navigate to the previous page
     async prevPage() {
-        console.log('prevPage called'); // Add log
+        console.log('prevPage called');
         // Optionally trigger non-blocking save on back navigation too?
         if (typeof window.saveQuestionnaireDataToServerNonBlocking === 'function') {
              console.log('Calling non-blocking save on prevPage');
-             window.saveQuestionnaireDataToServerNonBlocking();
+             // Use preventDuplicateRequests to avoid repeated API calls
+             preventDuplicateRequests('saveQuestionnaire', () => {
+                return window.saveQuestionnaireDataToServerNonBlocking();
+             });
         }
 
         this.currentIndex = this.pageOrder.indexOf(this.getCurrentPageSlug());
@@ -201,7 +354,7 @@ class QuestionnaireNavigation {
         // If we're on the first page, confirm exit
         if (this.currentIndex === 0) {
             if (confirm('Are you sure you want to exit? Your progress will be saved.')) {
-                window.location.href = '/';
+                safeNavigate('/');
             }
             return;
         }
@@ -215,8 +368,8 @@ class QuestionnaireNavigation {
         // Add exit animation then navigate
         await this.addExitAnimation();
         
-        // Navigate to the previous page
-        window.location.href = `/seller-questionnaire/${prevPage}`;
+        // Navigate to the previous page with safe navigation
+        safeNavigate(`/seller-questionnaire/${prevPage}`);
     }
     
     // Animate progress bar forward
