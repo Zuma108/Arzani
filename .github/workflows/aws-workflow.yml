@@ -69,16 +69,40 @@ jobs:
         TEST_DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
         JWT_SECRET: ${{ secrets.JWT_SECRET }}
 
-    # Separate test step with explicit path to Jest binary
+    # Improved test step with better error handling and configuration
     - name: Run tests
       run: |
-        # Ensure Jest binary is executable
-        chmod +x node_modules/.bin/jest
-        node_modules/.bin/jest --passWithNoTests
+        echo "Verifying Jest binary..."
+        if [ -f "node_modules/.bin/jest" ]; then
+          chmod +x node_modules/.bin/jest
+          echo "Jest binary found and permissions set"
+        else
+          echo "Jest binary not found in expected location, installing Jest CLI..."
+          npm install --no-save jest jest-cli
+        fi
+        
+        # Show Jest version for debugging
+        echo "Jest version:"
+        npx jest --version
+        
+        # Verify Jest config exists
+        if [ -f "jest.config.js" ]; then
+          echo "Jest config found at jest.config.js"
+        elif grep -q '"jest":' package.json; then
+          echo "Jest config found in package.json"
+        else
+          echo "Warning: No Jest configuration found, using defaults"
+        fi
+        
+        # Run tests with more debugging options
+        echo "Running tests..."
+        npx jest --passWithNoTests --runInBand --ci --verbose
       env:
         NODE_ENV: test
         TEST_DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
         JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        # Set NODE_OPTIONS to increase memory limit if needed
+        NODE_OPTIONS: "--max_old_space_size=4096"
         
     # Create deployment package
     - name: Create deployment package
