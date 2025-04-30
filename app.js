@@ -7,6 +7,9 @@ import { setupWebSocketServer } from './websocket-server.js';
 import http from 'http';
 import { authMiddleware } from './utils/auth-unified.js';
 import authDebug from './middleware/authDebug.js';
+import bodyParser from 'body-parser';
+import dotenv from 'dotenv';
+dotenv.config();
 
 const app = express();
 
@@ -23,6 +26,10 @@ app.use(express.static('public', {
         }
     }
 }));
+
+// Middleware
+app.use(express.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 // Global security headers middleware
 app.use((req, res, next) => {
@@ -62,6 +69,9 @@ import imageRoutes from './routes/imageRoutes.js';
 
 // Import direct business listings API
 import businessListingsRoutes from './routes/api/businessListings.js';
+
+// Import contact routes
+const contactRoutes = require('./routes/contact');
 
 // Debug middleware for all requests - helps trace authentication issues
 app.use((req, res, next) => {
@@ -210,6 +220,7 @@ app.use((req, res, next) => {
 // Mount routes
 app.use('/', businessRoutes);
 app.use('/users', userRoutes);
+app.use('/', contactRoutes);
 
 // Add admin routes with admin-specific middleware
 app.use('/admin', authMiddleware({ required: true, adminRequired: true }), (req, res, next) => {

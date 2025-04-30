@@ -204,41 +204,80 @@ const authenticateToken = (req, res, next) => {
   // For all other routes, continue with token validation
   console.log(`Auth check for ${req.method} ${req.path}`);
   
-  // Get token from request
-  const token = extractTokenFromRequest(req);
+  // Get token from multiple sources in order of preference
+  const authHeader = req.headers['authorization'];
+  const headerToken = authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
+  const cookieToken = req.cookies?.token;
+  const sessionToken = req.session?.token;
+  
+  // Use first valid token, checking validity in order
+  let validToken = null;
+  let userId = null;
+  
+  // Try each potential token source
+  const tokenSources = [
+    { name: 'header', token: headerToken },
+    { name: 'cookie', token: cookieToken },
+    { name: 'session', token: sessionToken }
+  ];
+  
+  // Find first valid token
+  for (const source of tokenSources) {
+    if (source.token) {
+      try {
+        const decoded = jwt.verify(source.token, JWT_SECRET);
+        validToken = source.token;
+        userId = decoded.userId;
+        console.log(`Valid token found in ${source.name}`);
+        break;
+      } catch (err) {
+        console.log(`Invalid token in ${source.name}:`, err.message);
+      }
+    }
+  }
   
   // Store token in request for later use
-  req.token = token;
-
-  // If no token found, proceed to next middleware (but req.user will be undefined)
-  if (!token) {
-    console.log(`No token found for ${req.path}, continuing without auth`);
-    return next();
-  }
-
-  try {
-    // Verify the token
-    const decoded = jwt.verify(token, JWT_SECRET);
+  if (validToken) {
+    req.token = validToken;
     
-    // If valid, set user property and proceed
-    req.user = { userId: decoded.userId };
+    // Set user property
+    req.user = { userId };
     
-    // If session is available, update it with the user ID
+    // Ensure token consistency across all storage mechanisms
+    // This fixes the issue where a token exists in one place but not another
+    
+    // 1. Always ensure token is in session
     if (req.session) {
-      req.session.userId = decoded.userId;
+      req.session.userId = userId;
+      req.session.token = validToken;
       
-      // Also store the token in session for consistent auth
-      req.session.token = token;
-      
-      // Don't wait for session save to complete - fire and forget
+      // Save session asynchronously
       req.session.save(err => {
         if (err) console.error('Error saving session:', err);
       });
     }
     
+    // 2. Set/refresh the cookie if token not in cookie or different
+    if (!cookieToken || cookieToken !== validToken) {
+      res.cookie('token', validToken, {
+        httpOnly: false, // Allow JS access for client-side auth
+        maxAge: 4 * 60 * 60 * 1000, // 4 hours
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax'
+      });
+    }
+    
     next();
-  } catch (error) {
-    console.error('Token verification failed:', error.message);
+  } else {
+    // No valid token found
+    console.log(`No valid token found for ${req.path}`);
+    
+    // Clear any invalid tokens
+    if (cookieToken) {
+      res.clearCookie('token');
+    }
+    
+    // Continue without auth - requireAuth or other middleware will handle redirection if needed
     next();
   }
 };

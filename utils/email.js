@@ -279,6 +279,113 @@ export async function sendWelcomeEmail(email, username) {
   }
 }
 
+export async function sendContactEmail(email, name, subject, message) {
+  if (!email || !message) {
+    throw new Error('Email and message are required');
+  }
+  
+  console.log('Sending contact form submission notification:', email);
+
+  // Email content for notification to admin
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background-color: #041b76; color: white; padding: 20px; text-align: center;">
+        <h2>New Contact Form Submission</h2>
+      </div>
+      <div style="padding: 20px; border: 1px solid #ddd; border-top: none;">
+        <p><strong>From:</strong> ${name} (${email})</p>
+        <p><strong>Subject:</strong> ${subject}</p>
+        <p><strong>Message:</strong></p>
+        <div style="background-color: #f9f9f9; padding: 15px; margin: 20px 0; border-left: 4px solid #041b76;">
+          ${message.replace(/\n/g, '<br>')}
+        </div>
+        <p>Please respond to this inquiry at your earliest convenience.</p>
+      </div>
+    </div>
+  `;
+
+  // Email content for confirmation to the sender
+  const confirmationHtml = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background-color: #041b76; color: white; padding: 20px; text-align: center;">
+        <h2>We've Received Your Message</h2>
+      </div>
+      <div style="padding: 20px; border: 1px solid #ddd; border-top: none;">
+        <p>Hello ${name},</p>
+        <p>Thank you for contacting Arzani Marketplace. We've received your message and will get back to you shortly.</p>
+        
+        <div style="background-color: #f9f9f9; padding: 15px; margin: 20px 0; border-left: 4px solid #041b76;">
+          <p><strong>Your message details:</strong></p>
+          <p><strong>Subject:</strong> ${subject}</p>
+          <p><strong>Message:</strong><br>${message.replace(/\n/g, '<br>')}</p>
+        </div>
+        
+        <p>If you have any additional information to share, please feel free to reply to this email.</p>
+        <p>Best regards,<br>The Arzani Marketplace Team</p>
+      </div>
+    </div>
+  `;
+
+  try {
+    if (useSendGrid) {
+      // Send notification to admin
+      const adminMsg = {
+        to: process.env.ADMIN_EMAIL || 'hello@arzani.co.uk',
+        from: {
+          email: 'hello@arzani.co.uk',
+          name: 'Arzani Marketplace Contact Form'
+        },
+        subject: `New Contact: ${subject}`,
+        html: htmlContent
+      };
+
+      // Send confirmation to user
+      const userMsg = {
+        to: email,
+        from: {
+          email: 'hello@arzani.co.uk',
+          name: 'Arzani Marketplace'
+        },
+        subject: 'We\'ve received your message - Arzani Marketplace',
+        html: confirmationHtml
+      };
+
+      await sgMail.send(adminMsg);
+      await sgMail.send(userMsg);
+      
+      console.log('Contact form emails sent successfully via SendGrid');
+      return true;
+    } else {
+      const transporter = getTransporter();
+      
+      // Send notification to admin
+      await transporter.sendMail({
+        from: '"Arzani Marketplace" <hello@arzani.co.uk>',
+        to: process.env.ADMIN_EMAIL || 'hello@arzani.co.uk',
+        subject: `New Contact: ${subject}`,
+        html: htmlContent
+      });
+      
+      // Send confirmation to user
+      await transporter.sendMail({
+        from: '"Arzani Marketplace" <hello@arzani.co.uk>',
+        to: email,
+        subject: 'We\'ve received your message - Arzani Marketplace',
+        html: confirmationHtml
+      });
+      
+      console.log('Contact form emails sent successfully via Nodemailer');
+      return true;
+    }
+  } catch (error) {
+    console.error('Failed to send contact form emails:', error);
+    if (error.response) {
+      console.error(error.response.body);
+    }
+    throw new Error(`Failed to send contact form emails: ${error.message}`);
+  }
+}
+
 export async function sendVerificationStatusEmail(email, username, status, professionalType, notes) {
   if (!email || !status) {
     throw new Error('Email and status are required');
@@ -395,4 +502,4 @@ export async function sendVerificationStatusEmail(email, username, status, profe
   }
 }
 
-export default { sendVerificationEmail, sendPasswordResetEmail, sendWelcomeEmail, sendVerificationStatusEmail };
+export default { sendVerificationEmail, sendPasswordResetEmail, sendWelcomeEmail, sendContactEmail, sendVerificationStatusEmail };

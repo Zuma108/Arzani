@@ -1,5 +1,7 @@
 // Scroll Animations - Handles animations triggered by scrolling
-document.addEventListener('DOMContentLoaded', function() {
+
+// Function to initialize scroll animations that can be called from other files
+function initializeScrollAnimations() {
     // Improved scroll animation handler with IntersectionObserver
     const handleScrollAnimations = () => {
         const observer = new IntersectionObserver((entries) => {
@@ -17,7 +19,7 @@ document.addEventListener('DOMContentLoaded', function() {
             observer.observe(element);
         });
     };
-
+    
     // Enhanced mobile section reordering
     const handleMobileLayout = () => {
         const arzaniSection = document.querySelector('.talk-to-arzani-ai-section');
@@ -152,4 +154,12 @@ document.addEventListener('DOMContentLoaded', function() {
             handleMobileLayout();
         }, 250);
     });
+}
+
+// Run animations on page load
+document.addEventListener('DOMContentLoaded', function() {
+    initializeScrollAnimations();
 });
+
+// Make the function available globally
+window.initializeScrollAnimations = initializeScrollAnimations;

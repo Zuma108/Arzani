@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Arzani - Revolutionizing Business Transactions</title>
+    <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">
+    <link rel="stylesheet" href="/css/modern.css">
+    <link rel="stylesheet" href="/css/testimonial-carousel.css"> <!-- Reusing testimonial styles if needed -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#316FD4',
+                        dark: '#141414',
+                        'dark-light': '#1E1E1E'
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-W50GKB6F3M"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-W50GKB6F3M');
+    </script>
+    <style>
+        /* Page-specific styles if needed, or reuse from modern.css */
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -31px; /* Adjust based on icon size and desired spacing */
+            top: 0;
+            width: 2px;
+            height: 100%;
+            background-color: #374151; /* gray-700 */
+        }
+        .timeline-item:first-child::before {
+            top: 10px; /* Start line below the first icon */
+            height: calc(100% - 10px);
+        }
+        .timeline-item:last-child::before {
+            height: 10px; /* End line at the last icon */
+        }
+        .timeline-icon {
+            position: absolute;
+            left: -40px; /* Adjust to center icon on the line */
+            top: 0;
+            transform: translateX(-50%);
+            z-index: 1;
+        }
+    </style>
+</head>
+<body class="bg-dark text-white font-sans">
+    <div class="page-wrapper">
+
+        <!-- Include Navbar -->
+        <%- include('partials/navbar', { linkToBrainAI: '/brain-ai-feature' }) %>
+
+        <!-- The Problem & Our Solution Section (MOVED TO TOP & UPDATED PADDING & LAYOUT) -->
+        <section id="what-we-are-not" class="pt-32 md:pt-40 pb-20 bg-dark"> <!-- Added pt-32 md:pt-40 -->
+            <div class="container mx-auto px-4 md:px-6">
+                <!-- Removed grid layout -->
+                <div class="max-w-4xl mx-auto"> <!-- Added max-w-4xl and mx-auto -->
+                    <!-- Removed order-1 class -->
+                    <div> 
+                        <h2 class="text-3xl md:text-4xl font-bold mb-6 text-center">What We're <span class="text-red-500">NOT</span> (And Why It Matters)</h2>
+                        <p class="text-lg text-gray-300 mb-4 leading-relaxed text-center">
+                            We're <span class="font-semibold">not</span> just another passive listing site where businesses sit for months with no serious inquiries. We're <span class="font-semibold">not</span> traditional brokers charging hefty commissions for slow, opaque processes. We're <span class="font-semibold">not</span> relying on guesswork and outdated methods for valuations.
+                        </p>
+                        <p class="text-lg text-gray-300 mb-10 leading-relaxed text-center">
+                            The old way is broken: unresponsive buyers, tire-kickers wasting your time, valuations detached from reality, endless delays, and a frustrating lack of transparency. <span class="font-semibold">Over 90% of businesses listed traditionally fail to sell</span> – a statistic we're determined to change.
+                        </p>
+
+                        <h2 class="text-3xl md:text-4xl font-bold mb-6 text-center">Our AI-Powered Solution: Addressing the Pain Points</h2>
+                        <p class="text-lg text-gray-300 mb-6 leading-relaxed text-center">
+                            Arzani tackles these frustrations head-on. Our AI doesn't just list; it <span class="font-semibold">analyzes, matches, and facilitates</span>. We provide accurate, data-driven valuations instantly. Our intelligent matching connects sellers with genuinely interested, pre-vetted buyers, minimizing wasted effort.
+                        </p>
+                        <p class="text-lg text-gray-300 leading-relaxed text-center">
+                            We bring transparency to the process with clear insights and automated workflows, empowering you with the information and tools needed for a faster, smoother, and more successful transaction.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Mission & Vision Section -->
+        <section id="our-mission" class="py-20 bg-dark-light relative overflow-hidden">
+            <div class="absolute -top-40 -right-40 w-80 h-80 bg-blue-500/5 rounded-full blur-3xl"></div>
+            <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/5 rounded-full blur-3xl"></div>
+            <div class="container mx-auto px-4 md:px-6 relative z-10">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                    <div>
+                        <h2 class="text-3xl md:text-4xl font-bold mb-6">Our Mission: Fixing a Broken System</h2>
+                        <p class="text-lg text-gray-300 mb-6 leading-relaxed">
+                            To eliminate the frustration, inefficiency, and guesswork inherent in traditional business sales. We leverage AI to create a transparent, data-driven marketplace where entrepreneurs achieve fair value and connect with serious, qualified parties – without the usual runaround.
+                        </p>
+                        <h2 class="text-3xl md:text-4xl font-bold mb-6 mt-10">Our Vision: The Future of Transactions</h2>
+                        <p class="text-lg text-gray-300 leading-relaxed">
+                            To be the definitive global platform where buying and selling businesses is defined by speed, accuracy, and confidence. We envision a future free from opaque processes and unreliable connections, powered by intelligent automation that fosters entrepreneurial success.
+                        </p>
+                    </div>
+                    <div class="flex justify-center">
+                        <img src="/figma design exports/images/pose 3 magnifying glass no background 1.png" alt="Mission and Vision Illustration" class="max-w-sm md:max-w-md rounded-lg">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Core Values Section -->
+        <section class="py-20 bg-dark relative overflow-hidden">
+            <div class="absolute -top-40 -left-40 w-80 h-80 bg-green-500/5 rounded-full blur-3xl"></div>
+            <div class="container mx-auto px-4 md:px-6 relative z-10">
+                <h2 class="text-3xl md:text-4xl font-bold mb-12 text-center">Our Core Values</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <!-- Value 1: Innovation -->
+                    <div class="bg-dark-light/40 backdrop-blur-md rounded-xl p-6 border border-gray-800/60 text-center transition-all hover:border-primary/30">
+                        <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4 mx-auto">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L4.2 15.3m15.6 0c.29.738.38 1.504.38 2.274v.191a3 3 0 01-3 3h-12a3 3 0 01-3-3v-.191c0-.77.09-1.536.38-2.274M15 14.5a3 3 0 01-6 0m6 0v3.75m-6-3.75v3.75m0-3.75h.008v.008H9v-.008zm6 0h.008v.008h-.008v-.008z" /></svg>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-3">Innovation</h3>
+                        <p class="text-gray-400">We continuously push technological boundaries, leveraging cutting-edge AI to solve complex business challenges with elegant, effective solutions.</p>
+                    </div>
+                    <!-- Value 2: Transparency -->
+                    <div class="bg-dark-light/40 backdrop-blur-md rounded-xl p-6 border border-gray-800/60 text-center transition-all hover:border-primary/30">
+                        <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4 mx-auto">
+                           <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-3">Transparency</h3>
+                        <p class="text-gray-400">No black boxes. We provide clear insights into valuations, market data, and the transaction process, eliminating the opacity common elsewhere.</p>
+                    </div>
+                    <!-- Value 3: Empowerment -->
+                    <div class="bg-dark-light/40 backdrop-blur-md rounded-xl p-6 border border-gray-800/60 text-center transition-all hover:border-primary/30">
+                        <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4 mx-auto">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" /></svg>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-3">Empowerment</h3>
+                        <p class="text-gray-400">We democratize access to sophisticated tools and insights, giving all entrepreneurs-regardless of size or experience-the power to make informed decisions.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Our Platform Capabilities (NEW) -->
+        <section class="py-20 bg-dark-light">
+            <div class="container mx-auto px-4 md:px-6">
+                <h2 class="text-3xl md:text-4xl font-bold mb-10 text-center">Our Platform Capabilities</h2>
+                <p class="text-xl text-gray-300 max-w-3xl mx-auto text-center mb-16">
+                    Arzani integrates multiple AI technologies to deliver a comprehensive business transaction ecosystem:
+                </p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <!-- Capability 1 -->
+                    <div class="bg-dark-light/40 backdrop-blur-md rounded-xl p-8 border border-gray-800/60 hover:border-primary/30 transition-all">
+                        <div class="w-14 h-14 rounded-lg bg-blue-900/20 flex items-center justify-center mb-6">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold mb-3">Accurate AI Valuations</h3>
+                        <p class="text-gray-400">
+                            Stop guessing. Get instant, data-driven valuations based on real market comparables and financial analysis, ensuring you know your true worth.
+                        </p>
+                    </div>
+                    
+                    <!-- Capability 2 -->
+                    <div class="bg-dark-light/40 backdrop-blur-md rounded-xl p-8 border border-gray-800/60 hover:border-primary/30 transition-all">
+                        <div class="w-14 h-14 rounded-lg bg-purple-900/20 flex items-center justify-center mb-6">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold mb-3">Market Intelligence</h3>
+                        <p class="text-gray-400">
+                            Real-time analysis of market trends, sector performance, and growth indicators to provide contextual insights for informed decision-making and optimal timing for transactions.
+                        </p>
+                    </div>
+                    
+                    <!-- Capability 3 -->
+                    <div class="bg-dark-light/40 backdrop-blur-md rounded-xl p-8 border border-gray-800/60 hover:border-primary/30 transition-all">
+                        <div class="w-14 h-14 rounded-lg bg-green-900/20 flex items-center justify-center mb-6">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold mb-3">Intelligent Buyer Matching</h3>
+                        <p class="text-gray-400">
+                            Connect with serious, pre-qualified buyers actively seeking businesses like yours. Our AI filters out the noise and identifies genuine prospects.
+                        </p>
+                    </div>
+                    
+                    <!-- Capability 4 -->
+                    <div class="bg-dark-light/40 backdrop-blur-md rounded-xl p-8 border border-gray-800/60 hover:border-primary/30 transition-all">
+                        <div class="w-14 h-14 rounded-lg bg-red-900/20 flex items-center justify-center mb-6">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold mb-3">Due Diligence Automation</h3>
+                        <p class="text-gray-400">
+                            AI-assisted document processing, financial analysis, and risk assessment tools that streamline the due diligence process while providing deeper insights than traditional methods.
+                        </p>
+                    </div>
+                    
+                    <!-- Capability 5 -->
+                    <div class="bg-dark-light/40 backdrop-blur-md rounded-xl p-8 border border-gray-800/60 hover:border-primary/30 transition-all">
+                        <div class="w-14 h-14 rounded-lg bg-yellow-900/20 flex items-center justify-center mb-6">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold mb-3">Transaction Management</h3>
+                        <p class="text-gray-400">
+                            End-to-end platform for managing the entire sale process, from initial listing to final closing, with AI-assisted document generation, milestone tracking, and automated workflows.
+                        </p>
+                    </div>
+                    
+                    <!-- Capability 6 -->
+                    <div class="bg-dark-light/40 backdrop-blur-md rounded-xl p-8 border border-gray-800/60 hover:border-primary/30 transition-all">
+                        <div class="w-14 h-14 rounded-lg bg-cyan-900/20 flex items-center justify-center mb-6">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 13v-1m4 1v-3m4 3V8M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold mb-3">Growth Analytics</h3>
+                        <p class="text-gray-400">
+                            Predictive modeling and scenario analysis tools that help buyers identify growth opportunities and potential challenges in target businesses before acquisition.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Our Story / Timeline Section (UPDATED) -->
+        <section class="py-20 bg-dark relative overflow-hidden">
+             <div class="absolute inset-0 z-0 opacity-10">
+                <div class="grid-pattern"></div>
+            </div>
+            <div class="container mx-auto px-4 md:px-6 relative z-10">
+                <h2 class="text-3xl md:text-4xl font-bold mb-16 text-center">Our Journey</h2>
+                <div class="max-w-3xl mx-auto">
+                    <div class="relative pl-8">
+                        <!-- Timeline Item 1 -->
+                        <div class="timeline-item relative pb-12">
+                            <div class="timeline-icon w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+                                <span class="text-white font-bold text-sm">1</span>
+                            </div>
+                            <div class="ml-4">
+                                <h4 class="text-xl font-semibold mb-2">The Idea (Early 2024)</h4>
+                                <p class="text-gray-400">After experiencing the frustrations of traditional business sales firsthand, our founders envisioned a platform where AI could eliminate inefficiencies, provide accurate valuations, and create a transparent marketplace for business transactions.</p>
+                            </div>
+                        </div>
+                        <!-- Timeline Item 2 -->
+                        <div class="timeline-item relative pb-12">
+                            <div class="timeline-icon w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+                                <span class="text-white font-bold text-sm">2</span>
+                            </div>
+                            <div class="ml-4">
+                                <h4 class="text-xl font-semibold mb-2">Building the Foundation (Mid 2024)</h4>
+                                <p class="text-gray-400">We assembled a cross-functional team of AI researchers, financial analysts, and marketplace experts to design our core valuation algorithms and platform architecture, focusing on accuracy, scalability, and user experience.</p>
+                            </div>
+                        </div>
+                        <!-- Timeline Item 3 -->
+                        <div class="timeline-item relative pb-12">
+                            <div class="timeline-icon w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+                                <span class="text-white font-bold text-sm">3</span>
+                            </div>
+                            <div class="ml-4">
+                                <h4 class="text-xl font-semibold mb-2">Beta Launch (Late 2024)</h4>
+                                <p class="text-gray-400">After extensive testing and refinement, we launched our beta platform to a select group of business owners and investors. Their real-world feedback was instrumental in optimizing our algorithms and improving our user interface.</p>
+                            </div>
+                        </div>
+                         <!-- Timeline Item 4 -->
+                        <div class="timeline-item relative pb-12">
+                            <div class="timeline-icon w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+                                <span class="text-white font-bold text-sm">4</span>
+                            </div>
+                            <div class="ml-4">
+                                <h4 class="text-xl font-semibold mb-2">Public Launch & Growth (Early 2025)</h4>
+                                <p class="text-gray-400">We officially introduced Arzani to the public, rapidly gaining traction among business owners and investors seeking a more efficient, data-driven approach to transactions. Our first quarter saw hundreds of businesses successfully valued and dozens of transactions initiated.</p>
+                            </div>
+                        </div>
+                        <!-- Timeline Item 5 -->
+                        <div class="timeline-item relative">
+                            <div class="timeline-icon w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                            </div>
+                            <div class="ml-4">
+                                <h4 class="text-xl font-semibold mb-2">The Road Ahead</h4>
+                                <p class="text-gray-400">We're continuously expanding our AI capabilities, enhancing our marketplace features, and growing our verified buyer network. Our roadmap includes international expansion, additional industry-specific valuation models, and even more sophisticated matching algorithms to further accelerate successful transactions.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="py-20 bg-gradient-to-r from-blue-900/20 to-purple-900/20">
+            <div class="container mx-auto px-4 md:px-6 text-center">
+                <h2 class="text-3xl md:text-4xl font-bold mb-6">Ready to Experience the Future of Business Transactions?</h2>
+                <p class="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
+                    Join Arzani today and leverage the power of AI to achieve your business goals, whether you're buying, selling, or analyzing.
+                </p>
+                <div class="flex flex-col sm:flex-row justify-center gap-4">
+                    <a href="/seller-questionnaire" class="btn-primary text-lg py-3 px-8">
+                        Get Started Now
+                    </a>
+                    <a href="/contact" class="btn-secondary text-lg py-3 px-8">
+                        Contact Us
+                    </a>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Include Standard JS -->
+    <script src="/js/navigation1.js"></script>
+    <script src="/js/animations.js"></script>
+    <!-- Add other scripts as needed -->
+     <script src="/js/cookie-banner.js"></script>
+
+</body>
+</html>

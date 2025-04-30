@@ -32,8 +32,21 @@ async function getUserIdFromToken(token) {
 // Token validation endpoint
 router.get('/verify-token', async (req, res) => {
   try {
+    // Get token from multiple possible sources
     const authHeader = req.headers['authorization'];
-    const token = authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
+    const headerToken = authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
+    const cookieToken = req.cookies?.token;
+    const sessionToken = req.session?.token;
+    
+    // Try all available tokens in order of preference
+    const token = headerToken || cookieToken || sessionToken;
+    
+    if (!token) {
+      return res.status(401).json({ 
+        valid: false, 
+        error: 'No authentication token found'
+      });
+    }
     
     // Get userId from token
     const userId = await getUserIdFromToken(token);
@@ -42,6 +55,24 @@ router.get('/verify-token', async (req, res) => {
       return res.status(401).json({ 
         valid: false, 
         error: 'Invalid token'
+      });
+    }
+    
+    // Ensure token is stored in all places for consistency
+    // This helps ensure token is available for subsequent requests
+    if (req.session) {
+      req.session.userId = userId;
+      req.session.token = token;
+      await new Promise(resolve => req.session.save(resolve));
+    }
+    
+    // Set token cookie if it's not already set
+    if (!cookieToken) {
+      res.cookie('token', token, {
+        httpOnly: false, // Allow JS access
+        maxAge: 4 * 60 * 60 * 1000, // 4 hours
+        path: '/',
+        sameSite: 'lax'
       });
     }
     
@@ -56,6 +87,65 @@ router.get('/verify-token', async (req, res) => {
     res.status(500).json({ 
       valid: false, 
       error: 'Token verification failed'
+    });
+  }
+});
+
+// Enhanced token validation endpoint with improved security
+router.get('/secure-verify-token', async (req, res) => {
+  try {
+    // Get token from Authorization header or secure cookie only
+    const authHeader = req.headers['authorization'];
+    const headerToken = authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
+    const cookieToken = req.cookies?.token;
+    
+    // Only use header token or secure cookie - not session token
+    const token = headerToken || cookieToken;
+    
+    if (!token) {
+      return res.status(401).json({ 
+        valid: false, 
+        message: 'Authentication required' 
+      });
+    }
+    
+    // Get userId from token
+    const userId = await getUserIdFromToken(token);
+    
+    if (!userId) {
+      return res.status(401).json({ 
+        valid: false, 
+        message: 'Invalid or expired token' 
+      });
+    }
+    
+    // Store in session (server-side only)
+    if (req.session) {
+      req.session.userId = userId;
+      await new Promise(resolve => req.session.save(resolve));
+    }
+    
+    // Set secure token cookie if not present
+    if (!cookieToken) {
+      res.cookie('token', token, {
+        httpOnly: true, // Make cookie inaccessible to JavaScript
+        secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+        maxAge: 4 * 60 * 60 * 1000, // 4 hours
+        path: '/',
+        sameSite: 'lax'
+      });
+    }
+    
+    // Return minimal response without exposing token details
+    res.json({ 
+      authenticated: true, 
+      userId
+    });
+  } catch (error) {
+    console.error('Token verification error:', error);
+    res.status(401).json({ 
+      authenticated: false, 
+      message: 'Authentication failed'
     });
   }
 });

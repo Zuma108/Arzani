@@ -1,4 +1,5 @@
 import { AudioService } from '/js/audioService.js';
+import RateLimiter from '/utils/rateLimit.js';
 
 export class VoiceChat {
     constructor() {
@@ -36,10 +37,11 @@ export class VoiceChat {
         this.sentenceRegex = /[^.!?]+[.!?]+/g;
         this.partialBuffer = '';
         
-        // Rate limiting
+        // Rate limiting - enhanced with RateLimiter class
         this.requestCount = 0;
         this.requestReset = setInterval(() => this.requestCount = 0, 60000);
         this.maxRequestsPerMinute = 60;
+        this.rateLimiter = new RateLimiter(60000, this.maxRequestsPerMinute);
         
         // Configure voice settings
         this.settings = {
@@ -1197,13 +1199,66 @@ export class VoiceChat {
         }
     }
 
-    // Check rate limit for requests
+    // Check rate limit for requests - enhanced version
     checkRateLimit() {
         this.requestCount++;
         
+        // Basic rate limiting for backward compatibility
         if (this.requestCount > this.maxRequestsPerMinute) {
-            throw new Error('Rate limit exceeded. Please try again later.');
+            const errorMessage = 'Rate limit exceeded. Please try again later.';
+            this.logRateLimitViolation('global');
+            throw new Error(errorMessage);
         }
+        
+        // Enhanced per-client rate limiting
+        const clientId = this.getClientIdentifier();
+        if (!this.rateLimiter.isAllowed(clientId)) {
+            const errorMessage = 'Rate limit exceeded. Please try again later.';
+            this.logRateLimitViolation(clientId);
+            throw new Error(errorMessage);
+        }
+    }
+    
+    // Get client identifier for rate limiting
+    getClientIdentifier() {
+        // Use user ID if available
+        if (window.userProfile && window.userProfile.id) {
+            return `user_${window.userProfile.id}`;
+        }
+        
+        // Fall back to session ID or create one if it doesn't exist
+        let sessionId = sessionStorage.getItem('voice_session_id');
+        if (!sessionId) {
+            sessionId = 'session_' + Math.random().toString(36).substring(2, 15);
+            sessionStorage.setItem('voice_session_id', sessionId);
+        }
+        
+        return sessionId;
+    }
+    
+    // Log rate limit violations
+    logRateLimitViolation(clientId) {
+        console.warn(`Rate limit exceeded for client: ${clientId}`);
+        
+        // Send to server for monitoring if available
+        try {
+            fetch('/api/log/rate-limit-violation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    clientId,
+                    timestamp: new Date().toISOString(),
+                    requestCount: this.requestCount
+                })
+            }).catch(err => console.error('Failed to log rate limit violation:', err));
+        } catch (error) {
+            // Ignore errors in reporting
+        }
+        
+        // Show toast notification to inform the user
+        this.showToast('Too many requests. Please wait a moment before trying again.', 'warning');
     }
 
     // Sanitize user input

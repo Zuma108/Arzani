@@ -10,8 +10,37 @@
   width: 100%;
 }
 
+/* Blog Navbar Styles */
+.blog-header {
+    background-color: rgba(20, 20, 20, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(75, 85, 99, 0.3);
+}
+
+/* Fix the navbar dropdown text color in blog pages */
+.blog-header .navbar__drawer_dropdown .text-base,
+.blog-header .navbar__drawer_dropdown .navbar__link div,
+.blog-header .navbar__drawer_dropdown .navbar__link .text-base {
+    color: white !important;
+}
+
+.blog-header .navbar__drawer_dropdown p.text-xs,
+.blog-header .navbar__drawer_dropdown .navbar__link p {
+    color: rgba(156, 163, 175, 1) !important;
+}
+
+.blog-header .navbar__drawer_trigger span,
+.blog-header .navbar__link span {
+    color: white;
+}
+
+.blog-header .navbar__drawer_card {
+    background-color: rgba(30, 30, 30, 0.95);
+}
+
 /* Blog post content styling for light theme */
 .blog-content {
+  max-width: 100%;
   color: #333;
   line-height: 1.7;
 }
@@ -28,32 +57,44 @@
 }
 
 .blog-content h2 {
-  font-size: 1.5rem;
+  font-size: 1.875rem;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  font-weight: 700;
+  color: #111;
   border-bottom: 1px solid #e2e8f0;
   padding-bottom: 0.5rem;
 }
 
 .blog-content h3 {
-  font-size: 1.25rem;
+  font-size: 1.5rem;
+  margin-top: 1.75rem;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+  color: #111;
 }
 
 .blog-content p {
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
+  line-height: 1.7;
   color: #4a5568;
 }
 
 .blog-content a {
   color: #316FD4;
   text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s;
 }
 
 .blog-content a:hover {
+  border-bottom-color: #316FD4;
   text-decoration: underline;
 }
 
 .blog-content ul, .blog-content ol {
   margin-left: 1.5rem;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
   color: #4a5568;
 }
 
@@ -70,29 +111,28 @@
 }
 
 .blog-content blockquote {
-  border-left: 4px solid #316FD4;
-  padding-left: 1rem;
-  font-style: italic;
   margin: 1.5rem 0;
+  padding: 1rem 1.5rem;
+  border-left: 4px solid #316FD4;
+  background-color: rgba(49, 111, 212, 0.05);
+  font-style: italic;
   color: #4a5568;
-  background-color: #f7fafc;
-  padding: 1rem;
   border-radius: 0.25rem;
 }
 
 .blog-content code {
-  background-color: #f7fafc;
-  padding: 0.2rem 0.4rem;
-  border-radius: 0.25rem;
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
   font-family: monospace;
   font-size: 0.9em;
   color: #1a202c;
 }
 
 .blog-content pre {
-  background-color: #f7fafc;
+  background-color: #f8f8f8;
   padding: 1rem;
-  border-radius: 0.25rem;
+  border-radius: 8px;
   overflow-x: auto;
   margin: 1.5rem 0;
 }
@@ -100,14 +140,21 @@
 .blog-content pre code {
   background-color: transparent;
   padding: 0;
+  font-size: 0.9em;
   color: #1a202c;
 }
 
 .blog-content img {
   max-width: 100%;
-  height: auto;
-  border-radius: 0.25rem;
-  margin: 1.5rem 0;
+  margin: 1.5rem auto;
+  display: block;
+  border-radius: 8px;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.blog-content img.loaded {
+  opacity: 1;
 }
 
 .blog-content figure {
@@ -207,6 +254,24 @@
   max-height: 400px;
   margin: 1.5rem auto;
   display: block;
+}
+
+/* Table of contents styles */
+#tableOfContents a {
+    display: block;
+    padding: 0.25rem 0;
+    color: #333;
+    transition: color 0.2s;
+    text-decoration: none;
+}
+
+#tableOfContents a:hover {
+    color: #316FD4;
+}
+
+/* Fix mobile burger menu */
+.burger-line {
+    background-color: white;
 }
 
 /* Responsive image sizes */

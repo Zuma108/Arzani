@@ -8,13 +8,15 @@ import { dirname } from 'path';
 import path from 'path';
 import dotenv from 'dotenv';
 import pool from './db.js';
-import bodyParser from 'body-parser'; // To parse JSON bodies       
 import bcrypt from 'bcrypt';
 import { sendVerificationEmail } from './utils/email.js';
 import authRoutes from './routes/auth.js';
 import paymentRoutes from './routes/payment.routes.js';
-
+import morgan from 'morgan';
+import helmet from 'helmet';
+import compression from 'compression';
 import Stripe from 'stripe';
+import bodyParser from 'body-parser';
 
 // Add a simple RateLimiter class implementation
 class RateLimiter {
@@ -57,7 +59,6 @@ import {
   authenticateUser,
   addProviderColumns // Add this import
 } from './database.js';
-import chatRouter from './routes/chat.js';
 import sgMail from '@sendgrid/mail';
 import cors from 'cors';
 import { OAuth2Client } from 'google-auth-library';
@@ -128,8 +129,6 @@ import WebSocketService from './services/websocket.js';
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 
-// Import chat routes
-import chatRoutes from './routes/chat.js';
 
 // Import the chat socket initialization function
 import { initializeChatSocket } from './socket/chatSocket.js';
@@ -165,6 +164,7 @@ import verificationUploadRoutes from './routes/verificationUploadRoutes.js';
 
 // Import professional routes
 import professionalRoutes from './routes/professionalRoutes.js';
+
 
 const businessAuth = async (req, res, next) => {
   try {
@@ -576,6 +576,13 @@ app.use('/api', (req, res, next) => {
 
 // Middleware
 app.use(express.json());
+app.use(helmet({ contentSecurityPolicy: false }));
+app.use(compression());
+app.use(bodyParser.json({ limit: '10mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
+app.use(morgan('dev'));
+app.use(express.static(path.join(__dirname, '../frontend/public')));
+
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors(corsOptions));
 app.use(bodyParser.json());
@@ -766,6 +773,51 @@ app.get('/privacy', (req, res) => {
     console.error('Error rendering privacy page:', error);
     res.status(500).send('Error loading privacy page');
   }
+});
+
+// Add business valuation page route
+app.get('/business-valuation', (req, res) => {
+  res.render('business-valuation', {
+    title: 'Business Valuation | Arzani'
+  });
+});
+
+// Add AI Market Insights page route
+app.get('/ai-insights', (req, res) => {
+  res.render('market-insights', {
+    title: 'AI Market Insights | Arzani'
+  });
+});
+
+// NEW Route for Contact Us page
+app.get('/contact', (req, res) => {
+  res.render('contact-us');
+});
+
+// NEW Route for FAQ page
+app.get('/faq', (req, res) => {
+  res.render('faq');
+});
+
+// Add routes for static pages like About Us, FAQ, etc.
+app.get('/about-us', (req, res) => {
+  res.render('about-us', { user: req.user }); // Pass user if needed for navbar logic
+});
+
+// Add route for Brain AI feature page
+app.get('/features/brain-ai', (req, res) => {
+  res.render('brain-ai', {
+    title: 'Brain AI - The Intelligence Behind Arzani | Arzani',
+    user: req.user // Pass user if needed for navbar logic
+  });
+});
+
+// NEW Route for Power-ups page
+app.get('/features/power-ups', (req, res) => {
+  res.render('power-ups', {
+    title: 'Power-ups | Enhance Your Arzani Experience | Arzani',
+    user: req.user // Pass user if needed for navbar logic
+  });
 });
 
 // For serving static files
@@ -996,6 +1048,7 @@ app.get('/pricing', (req, res) => {
     user: req.user || null
   });
 });
+
 
   app.get('/auth/verifyemail', async (req, res) => {
     try {
@@ -1298,8 +1351,7 @@ app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) =
   
   createUserTable();
 
-  app.set('view engine', 'ejs');
-  app.set('views', [path.join(__dirname, 'views'), path.join(__dirname, 'public')]);
+
 
   // Add template debugging
   app.use((err, req, res, next) => {
@@ -1629,6 +1681,7 @@ Provide a helpful answer based on the website data.
         res.status(500).json({ error: 'An error occurred' });
     }
 });
+app.use('/api/voice', voiceRoutes);
 
 const metricsService = new BusinessMetricsService(pool);
 const rateLimiter = new RateLimiter();
@@ -2047,6 +2100,7 @@ app.use('/api/market', authenticateToken, marketTrendsRoutes);
 app.get('*', (req, res, next) => {
   // Don't redirect specific server-rendered pages or API calls to index.html
   if (req.path.startsWith('/chat') || 
+      req.path.startsWith('/arzani-ai') || // Add arzani-ai to excluded paths
       req.path === '/market-trends' || 
       req.path === '/saved-searches' || 
       req.path === '/history' || 
@@ -2604,6 +2658,75 @@ if (!fs.existsSync(defaultImagePath)) {
   fs.writeFileSync(defaultImagePath, defaultSvg);
   console.log('Created default image at:', defaultImagePath);
 }
+
+// Special handling for routes that were causing redirect issues
+app.use(['/history', '/talk-to-arzani', '/profile'], async (req, res, next) => {
+  try {
+    // Always try all possible token sources
+    const authHeader = req.headers['authorization'];
+    const headerToken = authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
+    const cookieToken = req.cookies?.token;
+    const sessionToken = req.session?.token;
+    
+    // Find the first valid token
+    let userId = null;
+    let validToken = null;
+    
+    // 1. Try all tokens in order of preference
+    const tokenSources = [
+      { name: 'header', token: headerToken },
+      { name: 'cookie', token: cookieToken },
+      { name: 'session', token: sessionToken }
+    ];
+    
+    // Find first valid token
+    for (const source of tokenSources) {
+      if (source.token) {
+        try {
+          const decoded = jwt.verify(source.token, process.env.JWT_SECRET);
+          validToken = source.token;
+          userId = decoded.userId;
+          console.log(`Valid token found in ${source.name} for protected route ${req.path}`);
+          break;
+        } catch (err) {
+          console.log(`Invalid token in ${source.name} for ${req.path}:`, err.message);
+        }
+      }
+    }
+
+    // If we found a valid token, set it in all places for consistency
+    if (validToken && userId) {
+      // Set req.user for this request
+      req.user = { userId };
+      
+      // Ensure token is in session
+      if (req.session) {
+        req.session.userId = userId;
+        req.session.token = validToken;
+        await new Promise(resolve => req.session.save(resolve));
+      }
+      
+      // Ensure token is in cookies
+      if (!cookieToken || cookieToken !== validToken) {
+        res.cookie('token', validToken, {
+          httpOnly: false, // Allow JS access
+          maxAge: 4 * 60 * 60 * 1000, // 4 hours
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax'
+        });
+      }
+      
+      next();
+    } else {
+      // No valid token found, redirect to login
+      console.log(`No valid token found for protected route ${req.path}, redirecting to login`);
+      return res.redirect(`/login2?returnTo=${encodeURIComponent(req.originalUrl)}`);
+    }
+  } catch (error) {
+    console.error(`Error in protected route handler for ${req.path}:`, error);
+    next(error);
+  }
+});
 
 // After all routes are registered, print them
 console.log("All registered routes:");
@@ -4047,4 +4170,48 @@ app.get('/subscribe', (req, res) => {
   });
 });
 
+// Add Talk to Arzani routes - new route path and backward compatibility paths
+app.get('/arzani-ai', (req, res) => {
+  try {
+    res.render('arzani-ai', {  // Changed from 'views/arzani-ai' to just 'arzani-ai'
+      title: 'Talk to Arzani',
+      user: req.user || {}
+    });
+  } catch (error) {
+    console.error('Error rendering arzani-ai page:', error);
+    res.status(500).send('Error loading arzani-ai page');
+  }
+});
+
+
+app.get('/dashboard', (req, res) => {
+  res.render('dashboard', {
+    title: 'Arzani Dashboard',
+    user: req.user || {}
+  });
+});
+
+// Catch 404 and forward to error handler
+app.use((req, res, next) => {
+  const error = new Error('Not Found');
+  error.status = 404;
+  next(error);
+});
+
+// Error handler
+app.use((err, req, res, next) => {
+  const status = err.status || 500;
+  const message = err.message || 'Internal Server Error';
+  
+  console.error(`[${status}] ${message}:`, err.stack);
+  
+  res.status(status).json({
+    error: {
+      status,
+      message: process.env.NODE_ENV === 'production' && status === 500 
+        ? 'Internal Server Error' 
+        : message
+    }
+  });
+});
 export { app, server, chatSocketService };

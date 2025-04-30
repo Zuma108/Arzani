@@ -752,6 +752,128 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
+// Add token synchronization on page load
+document.addEventListener('DOMContentLoaded', function() {
+  // Check if we have a token in localStorage, cookie or URL
+  const localToken = localStorage.getItem('token');
+  const cookieToken = document.cookie.split('; ').find(row => row.startsWith('token='))?.split('=')[1];
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlToken = urlParams.get('token');
+  
+  // Find the first valid token
+  let validToken = null;
+
+  // Try each token source in order of preference
+  if (urlToken) {
+    try {
+      // Validate token if possible (basic structure check)
+      if (urlToken.split('.').length === 3) {
+        validToken = urlToken;
+        console.log('Found valid token in URL');
+      }
+    } catch (e) {
+      console.warn('Invalid token in URL');
+    }
+  }
+  
+  if (!validToken && localToken) {
+    try {
+      if (localToken.split('.').length === 3) {
+        validToken = localToken;
+        console.log('Found valid token in localStorage');
+      }
+    } catch (e) {
+      console.warn('Invalid token in localStorage');
+    }
+  }
+  
+  if (!validToken && cookieToken) {
+    try {
+      if (cookieToken.split('.').length === 3) {
+        validToken = cookieToken;
+        console.log('Found valid token in cookie');
+      }
+    } catch (e) {
+      console.warn('Invalid token in cookie');
+    }
+  }
+  
+  // If we found a valid token, synchronize it across all storage mechanisms
+  if (validToken) {
+    // Store in localStorage
+    localStorage.setItem('token', validToken);
+    
+    // Set cookie with proper expiry
+    const fourHoursMs = 4 * 60 * 60 * 1000;
+    const expiryDate = new Date(Date.now() + fourHoursMs);
+    const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+    document.cookie = `token=${validToken}; expires=${expiryDate.toUTCString()}; path=/; SameSite=Lax${secure}`;
+    
+    // Store expiry time in localStorage for client-side checks
+    localStorage.setItem('tokenExpiry', Date.now() + fourHoursMs);
+    
+    console.log('Token synchronized across storage mechanisms');
+    
+    // Remove token from URL if present to avoid security issues
+    if (urlToken) {
+      urlParams.delete('token');
+      const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '') + window.location.hash;
+      history.replaceState({}, document.title, newUrl);
+    }
+    
+    // If we're on a login page but already authenticated, redirect to marketplace
+    if (window.location.pathname.includes('/login') || window.location.pathname.includes('/signup')) {
+      console.log('Already authenticated while on login page, redirecting to marketplace');
+      window.location.href = '/marketplace2';
+      return;
+    }
+
+    // Verify the token with the server
+    fetch('/api/verify-token', {
+      headers: {
+        'Authorization': `Bearer ${validToken}`
+      }
+    })
+    .then(response => {
+      if (!response.ok) {
+        // If token is not valid, clear it
+        localStorage.removeItem('token');
+        document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+      } else {
+        // If we're on a protected page, make sure we're not redirected
+        console.log('Token verified successfully');
+      }
+    })
+    .catch(error => {
+      console.error('Error verifying token:', error);
+    });
+  } else if (isProtectedRoute() && !window.location.pathname.includes('/login')) {
+    // If we're on a protected route with no valid token, redirect to login
+    console.log('No valid token found on protected route, redirecting to login');
+    window.location.href = `/login2?returnTo=${encodeURIComponent(window.location.pathname)}`;
+  }
+});
+
+/**
+ * Check if the current route is a protected route
+ * @returns {boolean} True if the current route is protected
+ */
+function isProtectedRoute() {
+  // Define protected routes that require authentication
+  const protectedRoutes = [
+    '/profile',
+    '/history',
+    '/talk-to-arzani',
+    '/arzani-ai',
+    '/post-business',
+    '/saved-searches',
+    '/dashboard'
+  ];
+  
+  // Check if current path starts with any protected route
+  return protectedRoutes.some(route => window.location.pathname.startsWith(route));
+}
+
 // Export the auth object
 window.auth = auth;
 export default auth;

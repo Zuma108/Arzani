@@ -96,6 +96,33 @@
   }
 
   /**
+   * Ensure token consistency across storage mechanisms
+   * This function synchronizes tokens between localStorage, cookies and helps
+   * prevent the issue where a user is logged in but gets redirected to login
+   * @param {string} token - The token to synchronize
+   */
+  function synchronizeToken(token) {
+    if (!token) return;
+    
+    // Store in localStorage
+    localStorage.setItem('token', token);
+    
+    // Set as cookie with same expiration as server
+    const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+    const fourHoursMs = 4 * 60 * 60 * 1000;
+    const expiryDate = new Date(Date.now() + fourHoursMs);
+    document.cookie = `token=${token}; expires=${expiryDate.toUTCString()}; path=/; SameSite=Lax${secure}`;
+    
+    // Store expiry time for client-side checks
+    localStorage.setItem('tokenExpiry', Date.now() + fourHoursMs);
+    
+    // Set up fetch interceptor to include token in all requests
+    setupFetchInterceptor(token);
+    
+    console.log('Token synchronized across storage mechanisms');
+  }
+
+  /**
    * Parse JWT token to extract payload
    * @param {string} token - JWT token
    * @returns {Object|null} Token payload or null if invalid
@@ -168,6 +195,59 @@
     
     // Dispatch auth state change event
     dispatchAuthEvent(false, null);
+  }
+
+  /**
+   * Check all storage locations for a valid token
+   * @returns {string|null} The first valid token found or null
+   */
+  function findValidToken() {
+    // Check all possible storage locations
+    const localToken = localStorage.getItem('token');
+    
+    // Extract cookie token if present
+    let cookieToken = null;
+    const tokenCookie = document.cookie.split('; ').find(row => row.startsWith('token='));
+    if (tokenCookie) {
+      cookieToken = tokenCookie.split('=')[1];
+    }
+    
+    // Also check if there's a token in a meta tag (server-rendered pages)
+    const metaToken = document.querySelector('meta[name="auth-token"]')?.content;
+    
+    // Return first available token
+    return localToken || cookieToken || metaToken;
+  }
+
+  /**
+   * Initialize auth state by checking all storage locations for a token
+   * and synchronizing it if found
+   */
+  function initAuthState() {
+    const token = findValidToken();
+    
+    if (token) {
+      // If we found a token, synchronize it across all storage mechanisms
+      synchronizeToken(token);
+      
+      // Verify the token is still valid with the server
+      fetch('/api/verify-token', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (!data.valid) {
+          // If token is invalid, clear it
+          clearAuthData();
+        }
+      })
+      .catch(error => {
+        console.error('Error verifying token:', error);
+      });
+    }
   }
 
   //=======================================
@@ -638,6 +718,9 @@
         clearAuthData();
       });
     }
+    
+    // Initialize auth state
+    initAuthState();
     
     // Set up periodic session check
     setInterval(keepSessionAlive, 10 * 60 * 1000); // Every 10 minutes
