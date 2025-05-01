@@ -578,8 +578,8 @@ app.use('/api', (req, res, next) => {
 app.use(express.json());
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(compression());
-app.use(bodyParser.json({ limit: '10mb' }));
-app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
 app.use(morgan('dev'));
 app.use(express.static(path.join(__dirname, '../frontend/public')));
 
