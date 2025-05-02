@@ -18,6 +18,10 @@ import compression from 'compression';
 import Stripe from 'stripe';
 import bodyParser from 'body-parser';
 
+// Import S3 routes
+import s3TestRoutes from './routes/api/s3-test.js';
+import s3UploadRoutes from './routes/api/s3-upload.js';
+
 // Add a simple RateLimiter class implementation
 class RateLimiter {
   constructor(options = {}) {
@@ -142,7 +146,6 @@ import chatDebugRouter from './routes/chat-debug.js';
 import testRoutes from './routes/api/test-routes.js'; // Add this import
 
 import postBusinessUploadRoutes from './routes/api/post-business-upload.js';
-import s3TestRoutes from './routes/api/s3-test.js';
 import submitBusinessRoutes from './routes/api/submit-business.js';
 import businessRoutes from './routes/businessRoutes.js';
 import userRoutes from './routes/userRoutes.js';
@@ -623,7 +626,8 @@ app.use('/api/market', marketTrendsRoutes);
 app.use('/api/drive', googleDriveRoutes);
 app.use('/api/test', testRoutes); // Add the new test routes
 app.use('/api/post-business', postBusinessValuationRoutes);
-
+app.use('/api/s3-test', s3TestRoutes);
+app.use('/api/s3-upload', s3UploadRoutes);
 // Mount the API routes - ensure these come BEFORE the authenticated routes
 // Use explicit bypass for the public business API routes
 app.use('/api/business', (req, res, next) => {
@@ -720,7 +724,6 @@ app.use('/api/market-trends', marketTrendsApiRoutes);
 // app.use('/chat', chatRoutes); // Remove authenticateToken middleware
 app.use('/api/token-debug', tokenDebugRoutes); // ADD THIS LINE
 app.use('/api/post-business-upload', postBusinessUploadRoutes);
-app.use('/api/s3-test', s3TestRoutes);
 
 app.use('/dashboard', authMiddleware);
 app.use('/marketplace/edit', authMiddleware);
