@@ -52,11 +52,15 @@ router.post('/', authenticateToken, upload.array('images', 5), async (req, res) 
 
     for (const file of req.files) {
       try {
+        // Create a timestamp to avoid filename conflicts
+        const timestamp = Date.now();
+        
         // Create a sanitized filename with timestamp
         const sanitizedName = sanitizeFilename(file.originalname);
+        const filenameWithTimestamp = `${timestamp}-${sanitizedName}_${timestamp}`;
         
         // Create an S3 key with user ID for better organization
-        const s3Key = `businesses/${req.user.userId}/${sanitizedName}`;
+        const s3Key = `businesses/${req.user.userId}/${filenameWithTimestamp}`;
         
         // Get region and bucket from environment variables
         const region = process.env.AWS_REGION || 'eu-west-2';

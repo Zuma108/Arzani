@@ -699,15 +699,18 @@ async function handleFormSubmission(event) {
 
         // Check if we have enough images - consider both upload and stock images
         const isGalleryMode = document.getElementById('gallery-tab').classList.contains('active');
+        let imageUrls = [];
         
         if (isGalleryMode) {
             // Check if we have enough stock images
             if (selectedStockImages.length < 3) {
                 throw new Error('Please select at least 3 images from the gallery');
             }
+            // Use stock images
+            imageUrls = selectedStockImages.map(img => img.url);
         } else {
             // Check if we have enough uploaded images
-            if (imageDropzone && imageDropzone.files.length < 3) {
+            if (!imageDropzone || imageDropzone.files.length < 3) {
                 throw new Error('Please upload at least 3 images of your business');
             }
             
@@ -715,86 +718,76 @@ async function handleFormSubmission(event) {
             if (imageDropzone && imageDropzone.getUploadingFiles().length > 0) {
                 throw new Error('Please wait for all images to finish uploading before submitting');
             }
+            
+            // Collect S3 URLs from completed uploads
+            imageDropzone.files.forEach(file => {
+                if (file.status === "success" && file.s3Url) {
+                    imageUrls.push(file.s3Url);
+                }
+            });
+            
+            // If we don't have enough S3 URLs, it means some uploads failed
+            if (imageUrls.length < 3) {
+                // Try to upload any remaining files directly
+                submitButton.innerHTML = 'Uploading remaining images...';
+                
+                const uploadPromises = [];
+                for (const file of imageDropzone.files) {
+                    if (!file.s3Url) {
+                        uploadPromises.push(uploadImageDirectly(file, token));
+                    }
+                }
+                
+                if (uploadPromises.length > 0) {
+                    const results = await Promise.allSettled(uploadPromises);
+                    results.forEach(result => {
+                        if (result.status === 'fulfilled' && result.value) {
+                            imageUrls.push(result.value);
+                        }
+                    });
+                }
+                
+                // Check if we have enough images now
+                if (imageUrls.length < 3) {
+                    throw new Error('Failed to upload at least 3 images. Please try again.');
+                }
+            }
         }
 
-        // Get the form data
+        // Now get the form data without images
         const form = document.getElementById('postBusinessForm');
         const formData = new FormData(form);
         
-        // Create an object to hold the data
+        // Create a JSON object from the form data
         const submissionData = {};
-        
-        // Process form fields (excluding images)
         for (const [key, value] of formData.entries()) {
-            if (key !== 'images') {
+            // Skip any file inputs
+            if (key !== 'images' && !key.includes('[]')) {
                 submissionData[key] = value;
             }
         }
         
-        // Process images based on the selected mode
-        if (isGalleryMode) {
-            // Use stock images
-            submissionData.images = selectedStockImages.map(img => img.url);
-            submissionData.useStockImages = true;
-        } else {
-            // Process uploaded images
-            // ...existing code for handling uploaded images...
-            if (imageDropzone && imageDropzone.files.length > 0) {
-                submissionData.images = [];
-            
-                // Get local file objects for submission
-                const imageFiles = [];
-                for (let i = 0; i < imageDropzone.files.length; i++) {
-                    const file = imageDropzone.files[i];
-                    imageFiles.push(file);
-                }
-                
-                console.log(`Preparing ${imageFiles.length} files for submission`);
-                
-                // Create a FormData object just for the file uploads
-                const imageFormData = new FormData();
-                for (let i = 0; i < imageFiles.length; i++) {
-                    imageFormData.append('images', imageFiles[i]);
-                }
-                
-                // Upload the images as part of the form submission directly
-                submissionData.hasImages = true;
-                
-                // Add files directly to the form data we'll send
-                for (let i = 0; i < imageFiles.length; i++) {
-                    formData.append('images', imageFiles[i]);
-                }
-            }
-        }
+        // Add the image URLs
+        submissionData.images = imageUrls;
         
-        // Add S3 region information
-        submissionData.awsRegion = window.AWS_REGION || 'eu-west-2';
-        submissionData.awsBucket = window.AWS_BUCKET_NAME || 'arzani-images1';
+        console.log('Submitting business data:', {
+            ...submissionData,
+            images: `${imageUrls.length} image URLs collected`
+        });
         
-        console.log('Submitting business data:', submissionData);
-        
-        // Submit the form data to the server with the token
-        // If using stock images, use JSON submission, otherwise use FormData for file uploads
+        // Submit the business data as JSON
+        submitButton.innerHTML = 'Creating listing...';
         const response = await fetch('/api/submit-business', {
             method: 'POST',
             headers: {
-                ...(isGalleryMode ? {'Content-Type': 'application/json'} : {}),
+                'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-            body: isGalleryMode ? JSON.stringify(submissionData) : formData
+            body: JSON.stringify(submissionData)
         });
 
         // Parse the response
-        const responseText = await response.text();
-        console.log('Server response:', responseText);
-        
-        // Try to parse response as JSON
-        let data;
-        try {
-            data = JSON.parse(responseText);
-        } catch (e) {
-            throw new Error(`Server returned non-JSON response: ${responseText}`);
-        }
+        const data = await response.json();
         
         // Check for errors
         if (!response.ok) {
@@ -841,6 +834,40 @@ async function handleFormSubmission(event) {
         submitButton.innerHTML = originalButtonText;
         submitButton.disabled = false;
         isSubmitting = false;
+    }
+}
+
+// Add new function to upload individual images directly
+async function uploadImageDirectly(file, token) {
+    try {
+        const formData = new FormData();
+        formData.append('images', file);
+        
+        // Use the dedicated endpoint for image uploads only
+        const response = await fetch('/api/post-business-upload', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            body: formData
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Upload failed with status ${response.status}`);
+        }
+        
+        const data = await response.json();
+        if (data.success && data.files && data.files.length > 0) {
+            console.log(`Successfully uploaded ${file.name} directly:`, data.files[0].s3Url);
+            // Store the S3 URL in the file object
+            file.s3Url = data.files[0].s3Url;
+            return data.files[0].s3Url;
+        } else {
+            throw new Error('No valid URL returned from upload');
+        }
+    } catch (error) {
+        console.error(`Failed to upload ${file.name} directly:`, error);
+        return null;
     }
 }
 
