@@ -250,7 +250,6 @@ function initializeForm(token) {
         dictDefaultMessage: "<span>Drop 3-5 images here or click to upload</span>",
         dictMaxFilesExceeded: "You can only upload up to 5 images",
         dictMinFilesExceeded: "You must upload at least 3 images",
-        dictFileTooBig: "Image is too large ({{filesize}}MB). Max size: {{maxFilesize}}MB.",
         headers: {
             'Authorization': `Bearer ${token}`,
             'X-AWS-Region': window.AWS_REGION || 'eu-west-2',
@@ -316,85 +315,52 @@ function initializeForm(token) {
             this.on("addedfile", file => {
                 console.log(`File added: ${file.name}, size: ${file.size} bytes, type: ${file.type}`);
                 
-                // Pre-validate file type and size before upload attempt
+                // Use a more user-friendly way to handle validation errors instead of alerts
                 let errorMessage = null;
                 
                 // Validate file type more strictly
                 if (!file.type.match(/^image\/(jpeg|jpg|png)$/i)) {
-                    errorMessage = 'Only JPG and PNG images are allowed.';
-                }
+                    errorMessage = 'Only JPG and PNG images are allowed';
+                } 
                 // Validate file size
                 else if (file.size > 5 * 1024 * 1024) { // 5MB
-                    const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
-                    errorMessage = `File too large (${fileSizeMB}MB). Maximum size is 5MB.`;
+                    errorMessage = 'File too large (max 5MB)';
                 }
                 // Check for empty files
                 else if (file.size === 0) {
-                    errorMessage = 'Empty file detected. Please select a valid image.';
+                    errorMessage = 'Empty file detected';
                 }
                 
-                // Handle validation errors
+                // If we found an error, handle it gracefully
                 if (errorMessage) {
-                    // Create a friendly error message on the preview
-                    file.previewElement.classList.add('dz-error');
+                    // Mark the file as rejected
+                    file.rejected = true;
                     
-                    // Find error message element
-                    const errorElement = file.previewElement.querySelector('.dz-error-message span');
-                    if (errorElement) {
-                        errorElement.textContent = errorMessage;
-                    }
+                    // Add custom error UI
+                    dz.emit("error", file, errorMessage);
                     
-                    // Add a custom error UI with easy-to-click remove button
-                    const removeBtn = document.createElement('div');
-                    removeBtn.className = 'custom-remove-button';
-                    removeBtn.innerHTML = '×';
-                    removeBtn.title = 'Remove file';
-                    removeBtn.style.position = 'absolute';
-                    removeBtn.style.top = '5px';
-                    removeBtn.style.right = '5px';
-                    removeBtn.style.backgroundColor = '#f44336';
-                    removeBtn.style.color = 'white';
-                    removeBtn.style.borderRadius = '50%';
-                    removeBtn.style.width = '20px';
-                    removeBtn.style.height = '20px';
-                    removeBtn.style.textAlign = 'center';
-                    removeBtn.style.lineHeight = '20px';
-                    removeBtn.style.cursor = 'pointer';
-                    removeBtn.style.zIndex = '999';
-                    
-                    // Add click event to remove the file
-                    removeBtn.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        dz.removeFile(file);
-                    });
-                    
-                    // Add the button to preview
-                    file.previewElement.appendChild(removeBtn);
-                    
-                    // Let the file get created in the UI, then remove it after a short delay
+                    // Add a small delay before updating the UI to ensure the preview is created
                     setTimeout(() => {
-                        // Don't remove automatically - let user click on the button instead
-                        // But tell them what's wrong
-                        const errorBoxElement = document.createElement('div');
-                        errorBoxElement.className = 'custom-error-message';
-                        errorBoxElement.innerHTML = errorMessage;
-                        errorBoxElement.style.backgroundColor = '#ffebee';
-                        errorBoxElement.style.color = '#d32f2f';
-                        errorBoxElement.style.padding = '6px';
-                        errorBoxElement.style.margin = '6px';
-                        errorBoxElement.style.borderRadius = '4px';
-                        errorBoxElement.style.fontSize = '12px';
-                        errorBoxElement.style.textAlign = 'center';
-                        
-                        // Insert after the thumbnail
-                        const thumbnailElement = file.previewElement.querySelector('.dz-image');
-                        if (thumbnailElement && thumbnailElement.parentNode) {
-                            thumbnailElement.parentNode.insertBefore(errorBoxElement, thumbnailElement.nextSibling);
-                        } else {
-                            file.previewElement.appendChild(errorBoxElement);
+                        // Find the preview element for this file
+                        const preview = file.previewElement;
+                        if (preview) {
+                            // Add a special class for rejected files
+                            preview.classList.add('dz-rejected');
+                            
+                            // Update error message display
+                            const errorDisplay = preview.querySelector('.dz-error-message span');
+                            if (errorDisplay) {
+                                errorDisplay.textContent = errorMessage;
+                            }
+                            
+                            // Make the remove button more prominent
+                            const removeLink = preview.querySelector('.dz-remove');
+                            if (removeLink) {
+                                removeLink.classList.add('dz-remove-rejected');
+                                removeLink.textContent = 'Remove rejected file';
+                            }
                         }
-                    }, 10);
+                    }, 100);
                     
                     return;
                 }
@@ -456,36 +422,6 @@ function initializeForm(token) {
                 const errorDisplay = file.previewElement.querySelector('.dz-error-message span');
                 if (errorDisplay) {
                     errorDisplay.textContent = errorMessage;
-                }
-                
-                // Add a custom error UI with easy-to-click remove button
-                const removeBtn = document.createElement('div');
-                removeBtn.className = 'custom-remove-button';
-                removeBtn.innerHTML = '×';
-                removeBtn.title = 'Remove file';
-                removeBtn.style.position = 'absolute';
-                removeBtn.style.top = '5px';
-                removeBtn.style.right = '5px';
-                removeBtn.style.backgroundColor = '#f44336';
-                removeBtn.style.color = 'white';
-                removeBtn.style.borderRadius = '50%';
-                removeBtn.style.width = '20px';
-                removeBtn.style.height = '20px';
-                removeBtn.style.textAlign = 'center';
-                removeBtn.style.lineHeight = '20px';
-                removeBtn.style.cursor = 'pointer';
-                removeBtn.style.zIndex = '999';
-                
-                // Add click event to remove the file
-                removeBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    dz.removeFile(file);
-                });
-                
-                // Add the button to preview
-                if (file.previewElement && !file.previewElement.querySelector('.custom-remove-button')) {
-                    file.previewElement.appendChild(removeBtn);
                 }
                 
                 // Force a status update
@@ -792,18 +728,15 @@ async function handleFormSubmission(event) {
 
         // Check if we have enough images - consider both upload and stock images
         const isGalleryMode = document.getElementById('gallery-tab').classList.contains('active');
-        let imageUrls = [];
         
         if (isGalleryMode) {
             // Check if we have enough stock images
             if (selectedStockImages.length < 3) {
                 throw new Error('Please select at least 3 images from the gallery');
             }
-            // Use stock images
-            imageUrls = selectedStockImages.map(img => img.url);
         } else {
             // Check if we have enough uploaded images
-            if (!imageDropzone || imageDropzone.files.length < 3) {
+            if (imageDropzone && imageDropzone.files.length < 3) {
                 throw new Error('Please upload at least 3 images of your business');
             }
             
@@ -811,119 +744,109 @@ async function handleFormSubmission(event) {
             if (imageDropzone && imageDropzone.getUploadingFiles().length > 0) {
                 throw new Error('Please wait for all images to finish uploading before submitting');
             }
-            
-            // Collect S3 URLs from completed uploads
-            const successfulUploads = imageDropzone.files.filter(file => 
-                file.status === "success" && file.s3Url);
-                
-            imageUrls = successfulUploads.map(file => file.s3Url);
-            
-            // If we don't have enough S3 URLs, try uploading any remaining files directly
-            if (imageUrls.length < 3) {
-                submitButton.innerHTML = 'Uploading remaining images...';
-                
-                // Try to upload each file that doesn't already have an S3 URL
-                for (const file of imageDropzone.files) {
-                    if (!file.s3Url && imageUrls.length < 5) {
-                        submitButton.innerHTML = `Uploading ${file.name}...`;
-                        const result = await uploadImageDirectly(file, token);
-                        
-                        if (result.success && result.url) {
-                            imageUrls.push(result.url);
-                            file.s3Url = result.url;
-                            
-                            // Update UI to show success
-                            file.previewElement.classList.add('dz-success');
-                        } else {
-                            // Show error on the file element
-                            file.previewElement.classList.add('dz-error');
-                            const errorDisplay = file.previewElement.querySelector('.dz-error-message span');
-                            if (errorDisplay) {
-                                errorDisplay.textContent = result.error || 'Upload failed';
-                            }
-                        }
-                    }
-                }
-                
-                // Check if we have enough images now
-                if (imageUrls.length < 3) {
-                    throw new Error(`Failed to upload at least 3 images (${imageUrls.length} uploaded). Please try again with smaller image files.`);
-                }
-            }
         }
 
-        // Now submit the business data as JSON with only the image URLs
-        submitButton.innerHTML = 'Creating listing...';
-        
-        // Create a simple JSON object for submission (no FormData with files)
+        // Get the form data
         const form = document.getElementById('postBusinessForm');
         const formData = new FormData(form);
         
-        // Build a clean submission object
+        // Create an object to hold the data
         const submissionData = {};
+        
+        // Process form fields (excluding images)
         for (const [key, value] of formData.entries()) {
-            // Skip any file inputs or arrays from DOM
-            if (key !== 'images' && !key.includes('[]')) {
+            if (key !== 'images') {
                 submissionData[key] = value;
             }
         }
         
-        // Add the image URLs
-        submissionData.images = imageUrls;
+        // Process images based on the selected mode
+        if (isGalleryMode) {
+            // Use stock images
+            submissionData.images = selectedStockImages.map(img => img.url);
+            submissionData.useStockImages = true;
+        } else {
+            // Process uploaded images
+            // ...existing code for handling uploaded images...
+            if (imageDropzone && imageDropzone.files.length > 0) {
+                submissionData.images = [];
+            
+                // Get local file objects for submission
+                const imageFiles = [];
+                for (let i = 0; i < imageDropzone.files.length; i++) {
+                    const file = imageDropzone.files[i];
+                    imageFiles.push(file);
+                }
+                
+                console.log(`Preparing ${imageFiles.length} files for submission`);
+                
+                // Create a FormData object just for the file uploads
+                const imageFormData = new FormData();
+                for (let i = 0; i < imageFiles.length; i++) {
+                    imageFormData.append('images', imageFiles[i]);
+                }
+                
+                // Upload the images as part of the form submission directly
+                submissionData.hasImages = true;
+                
+                // Add files directly to the form data we'll send
+                for (let i = 0; i < imageFiles.length; i++) {
+                    formData.append('images', imageFiles[i]);
+                }
+            }
+        }
         
-        console.log('Submitting business data:', {
-            ...submissionData,
-            images: `${imageUrls.length} image URLs collected`
-        });
+        // Add S3 region information
+        submissionData.awsRegion = window.AWS_REGION || 'eu-west-2';
+        submissionData.awsBucket = window.AWS_BUCKET_NAME || 'arzani-images1';
         
-        // Submit the business data as JSON (not multipart/form-data)
+        console.log('Submitting business data:', submissionData);
+        
+        // Submit the form data to the server with the token
+        // If using stock images, use JSON submission, otherwise use FormData for file uploads
         const response = await fetch('/api/submit-business', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+                ...(isGalleryMode ? {'Content-Type': 'application/json'} : {}),
                 'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify(submissionData)
+            body: isGalleryMode ? JSON.stringify(submissionData) : formData
         });
-        
-        // Handle responses and errors
-        if (!response.ok) {
-            // Try to get more detailed error message
-            const responseText = await response.text();
-            let errorMessage = `Server error (${response.status})`;
-            
-            try {
-                // Try to parse as JSON
-                const errorData = JSON.parse(responseText);
-                errorMessage = errorData.message || errorData.error || errorMessage;
-            } catch (e) {
-                // Not JSON, just use as text if it's shorter than 100 chars
-                if (responseText.length < 100) {
-                    errorMessage = responseText;
-                }
-            }
-            
-            throw new Error(errorMessage);
-        }
 
-        // Get the response data
+        // Parse the response
         const responseText = await response.text();
-        let data;
+        console.log('Server response:', responseText);
         
+        // Try to parse response as JSON
+        let data;
         try {
             data = JSON.parse(responseText);
         } catch (e) {
-            throw new Error('Server returned invalid response format');
+            throw new Error(`Server returned non-JSON response: ${responseText}`);
         }
         
-        console.log('Business submission successful:', data);
+        // Check for errors
+        if (!response.ok) {
+            throw new Error(data.error || data.message || 'Failed to submit business');
+        }
 
-        // Show success message
-        alert('Your business listing has been created successfully!');
+        // Log success information
+        console.log('Business submission successful:', {
+            id: data.business?.id,
+            name: data.business?.business_name,
+            userId: data.business?.user_id,
+            images: data.business?.images
+        });
         
+        // Modified check - also verify the id is a number
+        if (!data.business?.id || typeof data.business.id !== 'number') {
+            console.error('Invalid business object in response:', data.business);
+            throw new Error('No valid business ID returned from server. Please try again.');
+        }
+
         // Redirect to marketplace
         window.location.href = '/marketplace2';
-        
+
     } catch (error) {
         console.error('Error submitting business:', error);
         
@@ -948,201 +871,6 @@ async function handleFormSubmission(event) {
         submitButton.disabled = false;
         isSubmitting = false;
     }
-}
-
-// Modify the uploadImageDirectly function to handle larger files and provide better error feedback
-async function uploadImageDirectly(file, token) {
-    console.log(`Attempting direct upload for ${file.name} (${file.size} bytes)`);
-    
-    // First check if file is too large for direct upload
-    if (file.size > 8 * 1024 * 1024) { // Increased to 8MB limit for direct uploads
-        console.error(`File ${file.name} is too large (${file.size} bytes) for direct upload`);
-        // Try compressing the image first
-        try {
-            const compressedFile = await compressImage(file);
-            console.log(`Compressed ${file.name} from ${file.size} to ${compressedFile.size} bytes`);
-            
-            // If still too large, reject
-            if (compressedFile.size > 8 * 1024 * 1024) {
-                return {
-                    success: false,
-                    error: `File ${file.name} is too large even after compression. Please use an image under 8MB.`
-                };
-            }
-            
-            // Use the compressed file instead
-            file = compressedFile;
-        } catch (error) {
-            console.error('Image compression failed:', error);
-            // Continue with original file if compression fails
-        }
-    }
-    
-    // Update status to show upload in progress
-    const statusElement = document.getElementById('uploadStatus');
-    if (statusElement) {
-        statusElement.innerHTML += `<div class="uploading-file" id="uploading-${file.name.replace(/[^a-zA-Z0-9]/g, '-')}">
-            <div class="spinner-border spinner-border-sm text-primary" role="status">
-                <span class="visually-hidden">Uploading...</span>
-            </div>
-            Uploading ${file.name}...
-        </div>`;
-    }
-    
-    try {
-        const formData = new FormData();
-        formData.append('images', file);
-        
-        // Use the dedicated endpoint for image uploads only
-        const response = await fetch('/api/post-business-upload', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            },
-            body: formData
-        });
-        
-        if (!response.ok) {
-            const statusText = response.statusText;
-            console.error(`Upload failed with status ${response.status} (${statusText})`);
-            
-            // Show more detailed error for 413 specifically
-            if (response.status === 413) {
-                throw new Error(`File ${file.name} is too large for the server. Please resize the image to be smaller than 5MB.`);
-            }
-            
-            // Try to get more detailed error from response
-            try {
-                const errorData = await response.json();
-                throw new Error(`Upload failed: ${errorData.message || errorData.error || statusText}`);
-            } catch (e) {
-                // If can't parse JSON, use the status text
-                throw new Error(`Upload failed with status ${response.status} (${statusText})`);
-            }
-        }
-        
-        // Parse the response carefully
-        let data;
-        try {
-            data = await response.json();
-            console.log('Upload response data:', data);
-        } catch (e) {
-            console.error('Failed to parse response JSON:', e);
-            throw new Error('Invalid response format from server');
-        }
-        
-        // Check for success response with improved fallback handling
-        if (data.success) {
-            // First try standard structure
-            if (data.files && data.files.length > 0) {
-                console.log(`Successfully uploaded ${file.name} directly:`, data.files[0].s3Url);
-                
-                // Remove the uploading indicator
-                document.getElementById(`uploading-${file.name.replace(/[^a-zA-Z0-9]/g, '-')}`)?.remove();
-                
-                return {
-                    success: true,
-                    url: data.files[0].s3Url
-                };
-            }
-            // Then try direct URL property (backward compatibility)
-            else if (data.url) {
-                console.log(`Successfully uploaded ${file.name} directly:`, data.url);
-                
-                // Remove the uploading indicator
-                document.getElementById(`uploading-${file.name.replace(/[^a-zA-Z0-9]/g, '-')}`)?.remove();
-                
-                return {
-                    success: true,
-                    url: data.url
-                };
-            }
-            else {
-                console.warn('Response indicates success but no URL found:', data);
-                throw new Error('No valid URL returned in successful response');
-            }
-        } else {
-            console.error('Upload failed:', data.message || 'Unknown error');
-            throw new Error(data.message || 'Upload failed');
-        }
-    } catch (error) {
-        console.error(`Failed to upload ${file.name} directly:`, error);
-        
-        // Update error in status area
-        const uploadingIndicator = document.getElementById(`uploading-${file.name.replace(/[^a-zA-Z0-9]/g, '-')}`);
-        if (uploadingIndicator) {
-            uploadingIndicator.innerHTML = `<div class="alert alert-danger">
-                <strong>Error uploading ${file.name}:</strong> ${error.message || 'Unknown error'}
-            </div>`;
-        }
-        
-        return {
-            success: false,
-            error: error.message || `Failed to upload ${file.name}`
-        };
-    }
-}
-
-// Add this helper function for image compression
-async function compressImage(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = event => {
-            const img = new Image();
-            img.src = event.target.result;
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                
-                // Calculate target dimensions while maintaining aspect ratio
-                let width = img.width;
-                let height = img.height;
-                const MAX_SIZE = 1200; // Max dimension
-                
-                if (width > height && width > MAX_SIZE) {
-                    height *= MAX_SIZE / width;
-                    width = MAX_SIZE;
-                } else if (height > MAX_SIZE) {
-                    width *= MAX_SIZE / height;
-                    height = MAX_SIZE;
-                }
-                
-                // Set canvas dimensions
-                canvas.width = width;
-                canvas.height = height;
-                
-                // Draw and compress the image
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-                
-                // Convert to blob with lower quality
-                canvas.toBlob(
-                    blob => {
-                        if (!blob) {
-                            reject(new Error('Canvas to Blob conversion failed'));
-                            return;
-                        }
-                        
-                        // Create new file from blob
-                        const compressedFile = new File([blob], file.name, {
-                            type: 'image/jpeg',
-                            lastModified: Date.now()
-                        });
-                        
-                        resolve(compressedFile);
-                    },
-                    'image/jpeg',
-                    0.7 // quality: 0.7 = 70% quality, good balance between size and quality
-                );
-            };
-            img.onerror = error => {
-                reject(error);
-            };
-        };
-        reader.onerror = error => {
-            reject(error);
-        };
-    });
 }
 
 // Update Dropzone configuration

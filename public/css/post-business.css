@@ -139,6 +139,59 @@ select.form-control {
     text-decoration: none;
 }
 
+/* Enhanced Dropzone error styling */
+.dropzone .dz-preview.dz-error {
+    position: relative;
+}
+
+.dropzone .dz-preview.dz-error .dz-error-message {
+    pointer-events: none;
+    z-index: 1000;
+    position: absolute;
+    display: block;
+    left: 0;
+    top: -10px;
+    transform: translateY(-100%);
+    background: rgba(222, 14, 14, 0.8);
+    color: white;
+    width: 120px;
+    padding: 0.5rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    text-align: center;
+}
+
+/* Special styling for rejected files */
+.dropzone .dz-preview.dz-rejected {
+    opacity: 0.7;
+    border: 2px solid var(--error-color);
+    border-radius: var(--radius-sm);
+    background-color: rgba(239, 68, 68, 0.05);
+}
+
+.dropzone .dz-preview.dz-rejected img {
+    opacity: 0.7;
+}
+
+/* Make remove button more prominent for rejected files */
+.dropzone .dz-remove.dz-remove-rejected {
+    color: white;
+    background-color: var(--error-color);
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.75rem;
+    display: block;
+    margin-top: 0.5rem;
+    text-align: center;
+}
+
+.dropzone .dz-remove.dz-remove-rejected:hover {
+    background-color: #d32f2f;
+    text-decoration: none;
+}
+
 /* Submit button */
 .btn-primary {
     background: var(--accent-color);
@@ -230,6 +283,12 @@ select.form-control {
 
     h1 {
         font-size: 1.5rem;
+    }
+
+    .dropzone .dz-preview.dz-error .dz-error-message {
+        width: 100px;
+        font-size: 0.7rem;
+        padding: 0.3rem;
     }
 }
 
