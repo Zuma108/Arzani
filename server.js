@@ -723,6 +723,20 @@ app.use('/api/subscription', subscriptionApiRoutes);
 app.use('/api/market-trends', marketTrendsApiRoutes);
 // app.use('/chat', chatRoutes); // Remove authenticateToken middleware
 app.use('/api/token-debug', tokenDebugRoutes); // ADD THIS LINE
+
+// Add specific configuration for the post-business-upload endpoint to handle larger files
+app.use('/api/post-business-upload', express.json({ limit: '10mb' }));
+app.use('/api/post-business-upload', express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Business image upload - use specific middleware for this route before registering the route
+const postBusinessUploadLimits = {
+  fileSize: 10 * 1024 * 1024, // 10MB for uploads
+  files: 5
+};
+
+// Register post-business-upload route with higher limits
+app.use('/api/post-business-upload', postBusinessUploadRoutes);
+
 app.use('/api/post-business-upload', postBusinessUploadRoutes);
 
 app.use('/dashboard', authMiddleware);

@@ -52,19 +52,41 @@ router.post('/', authenticateToken, async (req, res) => {
             console.log('Processing JSON business submission');
             
             // Check if images array is provided
-            if (!businessData.images || !Array.isArray(businessData.images) || businessData.images.length < 3) {
-                console.error('Not enough image URLs provided:', businessData.images);
-                return res.status(400).json({ error: 'At least 3 image URLs are required' });
+            if (!businessData.images || !Array.isArray(businessData.images)) {
+                console.error('No images array provided in JSON data');
+                return res.status(400).json({ 
+                    error: 'Images are required',
+                    message: 'Please upload at least 3 images for your business listing'
+                });
+            }
+            
+            // Check for minimum required images (3)
+            if (businessData.images.length < 3) {
+                console.error(`Only ${businessData.images.length} images provided, minimum 3 required`);
+                return res.status(400).json({ 
+                    error: 'Insufficient images',
+                    message: `At least 3 images are required, you provided ${businessData.images.length}`
+                });
             }
             
             s3Urls = businessData.images;
             console.log(`Using ${s3Urls.length} pre-uploaded images`);
         } else {
             // Handle multipart request with direct file uploads
-            // Use the existing file processing logic
-            if (!req.files || req.files.length < 3) {
-                console.error('Not enough files uploaded:', req.files?.length || 0);
-                return res.status(400).json({ error: 'At least 3 images are required' });
+            if (!req.files) {
+                console.error('No files received in multipart request');
+                return res.status(400).json({ 
+                    error: 'No images uploaded',
+                    message: 'Please upload at least 3 images for your business listing'
+                });
+            }
+            
+            if (req.files.length < 3) {
+                console.error(`Only ${req.files.length} files uploaded, minimum 3 required`);
+                return res.status(400).json({ 
+                    error: 'Insufficient images',
+                    message: `At least 3 images are required, you uploaded ${req.files.length}`
+                });
             }
             
             // Process uploaded files as before

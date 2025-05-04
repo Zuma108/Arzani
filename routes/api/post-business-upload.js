@@ -27,7 +27,8 @@ router.post('/', authenticateToken, upload.array('images', 5), async (req, res) 
   try {
     console.log('Post business upload request received:', {
       userId: req.user?.userId,
-      fileCount: req.files?.length || 0
+      fileCount: req.files?.length || 0,
+      fileNames: req.files?.map(f => f.originalname).join(', ') || 'none'
     });
 
     // Check authentication
@@ -49,54 +50,54 @@ router.post('/', authenticateToken, upload.array('images', 5), async (req, res) 
     // Upload each file to S3
     const uploadedFiles = [];
     const uploadErrors = [];
+    const userId = req.user.userId;
 
-    for (const file of req.files) {
-      try {
-        // Create a timestamp to avoid filename conflicts
-        const timestamp = Date.now();
-        
-        // Create a sanitized filename with timestamp
-        const sanitizedName = sanitizeFilename(file.originalname);
-        const filenameWithTimestamp = `${timestamp}-${sanitizedName}_${timestamp}`;
-        
-        // Create an S3 key with user ID for better organization
-        const s3Key = `businesses/${req.user.userId}/${filenameWithTimestamp}`;
-        
-        // Get region and bucket from environment variables
-        const region = process.env.AWS_REGION || 'eu-west-2';
-        const bucket = process.env.AWS_BUCKET_NAME || 'arzani-images1';
-        
-        console.log(`Attempting to upload ${file.originalname} to ${region}/${bucket}/${s3Key}`);
+    // Process just the first file if multiple were sent
+    const file = req.files[0];
+    try {
+      // Create a timestamp to avoid filename conflicts
+      const timestamp = Date.now();
+      
+      // Create a sanitized filename with timestamp
+      const originalName = file.originalname;
+      const sanitizedName = originalName.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const filenameWithTimestamp = `${timestamp}-${sanitizedName}`;
+      
+      // Create an S3 key with user ID for better organization
+      const s3Key = `businesses/${userId}/${filenameWithTimestamp}`;
+      
+      // Get region and bucket from environment variables
+      const region = process.env.AWS_REGION || 'eu-west-2';
+      const bucket = process.env.AWS_BUCKET_NAME || 'arzani-images1';
+      
+      console.log(`Attempting to upload ${originalName} to ${region}/${bucket}/${s3Key}`);
 
-        // Upload to S3
-        const s3Url = await uploadToS3(file, s3Key, region, bucket);
-        
-        // Add to uploaded files
-        uploadedFiles.push({
-          originalName: file.originalname,
-          s3Url,
-          s3Key,
-          contentType: file.mimetype,
-          size: file.size
-        });
-      } catch (error) {
-        console.error('Error uploading file to S3:', error);
-        uploadErrors.push({
-          filename: file.originalname,
-          error: error.message
-        });
-      }
+      // Upload to S3
+      const s3Url = await uploadToS3(file, s3Key, region, bucket);
+      console.log(`Successfully uploaded ${originalName} to S3: ${s3Url}`);
+      
+      // Add to uploaded files with the structure the client expects
+      uploadedFiles.push({
+        originalName: originalName,
+        s3Url,
+        s3Key
+      });
+      
+      // Return success response immediately with the format client expects
+      return res.json({
+        success: true,
+        files: uploadedFiles,
+        url: s3Url // Important: Add this for backward compatibility
+      });
+      
+    } catch (error) {
+      console.error('Error uploading file to S3:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to upload file to S3',
+        error: error.message
+      });
     }
-
-    // Return the results
-    res.json({
-      success: uploadedFiles.length > 0,
-      files: uploadedFiles,
-      errors: uploadErrors.length > 0 ? uploadErrors : undefined,
-      message: uploadedFiles.length > 0 
-        ? `Successfully uploaded ${uploadedFiles.length} files` 
-        : 'No files were uploaded successfully'
-    });
   } catch (error) {
     console.error('Post business upload error:', error);
     res.status(500).json({

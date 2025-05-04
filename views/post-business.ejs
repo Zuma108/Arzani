@@ -315,7 +315,10 @@
                 <div class="invalid-feedback">Please provide a description.</div>
             </div>  
             <div class="mb-3">
-                <label for="images" class="form-label">Business Images</label>
+                <label for="images" class="form-label">
+                    Business Images <span class="text-danger">*</span>
+                    <span class="ms-1 small text-danger">(Minimum 3 required)</span>
+                </label>
                 
                 <!-- Add tabs for upload options -->
                 <ul class="nav nav-tabs mb-3" id="imageSourceTabs" role="tablist">
@@ -330,12 +333,13 @@
                 <div class="tab-content" id="imageSourceTabContent">
                     <!-- Upload pane -->
                     <div class="tab-pane fade show active" id="upload-pane" role="tabpanel" aria-labelledby="upload-tab">
-                        <div class="dropzone" id="imageDropzone"></div>
-                        <div class="image-requirement-notice">
-                            * You must upload between 3-5 images of your business
+                        <div class="image-requirement-banner alert alert-info mb-2">
+                            <strong>Required:</strong> Upload 3-5 high-quality images of your business
                         </div>
-                        <!-- Upload status area -->
-                        <div class="upload-status mt-2" id="uploadStatus"></div>
+                        <div class="dropzone" id="imageDropzone"></div>
+                        
+                        <!-- Upload status area - enhanced for better feedback -->
+                        <div class="upload-status mt-3" id="uploadStatus"></div>
                         <div id="imageUploadConfirmation" class="alert alert-success mt-2" style="display:none;">
                             <strong>Success!</strong> <span id="uploadSuccessMessage">Images uploaded successfully.</span>
                             <div id="uploadedImages" class="mt-2">
@@ -347,6 +351,10 @@
                     
                     <!-- Gallery pane -->
                     <div class="tab-pane fade" id="gallery-pane" role="tabpanel" aria-labelledby="gallery-tab">
+                        <div class="image-requirement-banner alert alert-info mb-2">
+                            <strong>Required:</strong> Select 3-5 images from the gallery
+                        </div>
+                        
                         <div class="row image-gallery">
                             <!-- Gallery will be populated from JavaScript -->
                             <div class="col-12">
@@ -356,9 +364,10 @@
                             </div>
                         </div>
                         
-                        <!-- Selected images section -->
+                        <!-- Selected images section - enhanced to show requirement -->
                         <div class="mt-3">
-                            <h5>Selected Images: <span id="selectedImageCount">0</span>/5</h5>
+                            <h5>Selected Images: <span id="selectedImageCount" class="badge bg-primary">0</span>
+                            <small class="text-danger ms-2">Minimum 3 required</small></h5>
                             <div id="selectedImagesContainer" class="selected-images-container">
                                 <p class="text-muted" id="noSelectedImagesMsg">No images selected yet. Click on gallery images above to select them.</p>
                             </div>
@@ -465,6 +474,43 @@
                     padding: 20px;
                     color: #666;
                 }
+                
+                /* Add this CSS for the image requirement banner */
+                .image-requirement-banner {
+                    font-size: 0.9rem;
+                    padding: 6px 12px;
+                    margin-bottom: 12px;
+                    background-color: #e9f5fd;
+                    border-left: 4px solid #0d6efd;
+                }
+                
+                /* Style for the upload status area */
+                .upload-status {
+                    margin-top: 15px;
+                }
+                
+                /* Style for minimum count highlight */
+                #selectedImageCount.below-minimum {
+                    background-color: #dc3545;
+                }
+                
+                #selectedImageCount.meets-minimum {
+                    background-color: #198754;
+                }
+                
+                /* Visual indicator for upload progress */
+                .uploading-file {
+                    padding: 8px;
+                    margin: 5px 0;
+                    background-color: #f8f9fa;
+                    border-radius: 4px;
+                    display: flex;
+                    align-items: center;
+                }
+                
+                .uploading-file .spinner-border {
+                    margin-right: 10px;
+                }
             </style>
             
             <!-- Redesigned valuation container with automatic valuation -->
@@ -541,6 +587,39 @@
             if (!window.authToken && !localStorage.getItem('token')) {
                 console.error('No authentication token available, redirecting to login');
                 window.location.href = '/login2?returnTo=' + encodeURIComponent('/post-business');
+            }
+        });
+        
+        // Execute after the main post-business.js is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check for the selectedImageCount element
+            const countElement = document.getElementById('selectedImageCount');
+            if (countElement) {
+                // Function to update the badge style based on count
+                function updateCountStyle() {
+                    const count = parseInt(countElement.textContent || '0');
+                    
+                    // Remove existing classes
+                    countElement.classList.remove('below-minimum', 'meets-minimum');
+                    
+                    // Add appropriate class based on count
+                    if (count < 3) {
+                        countElement.classList.add('below-minimum');
+                    } else {
+                        countElement.classList.add('meets-minimum');
+                    }
+                }
+                
+                // Create a MutationObserver to watch for content changes
+                const observer = new MutationObserver(updateCountStyle);
+                observer.observe(countElement, { 
+                    childList: true,
+                    characterData: true,
+                    subtree: true
+                });
+                
+                // Initial update
+                updateCountStyle();
             }
         });
     </script>
