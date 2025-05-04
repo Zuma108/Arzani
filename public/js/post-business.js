@@ -312,7 +312,7 @@ function initializeForm(token) {
             });
 
             // Enhanced file validation
-            this.on("addedfile", file => {
+            this.on("addedfile", function(file) {
                 console.log(`File added: ${file.name}, size: ${file.size} bytes, type: ${file.type}`);
                 
                 // Use a more user-friendly way to handle validation errors instead of alerts
@@ -369,11 +369,11 @@ function initializeForm(token) {
                 updateDropzoneMessage(dz);
             });
 
-            this.on("removedfile", file => {
+            this.on("removedfile", function(file) {
                 updateDropzoneMessage(dz);
             });
 
-            this.on("maxfilesexceeded", file => {
+            this.on("maxfilesexceeded", function(file) {
                 dz.removeFile(file);
                 alert('Maximum 5 files allowed');
             });
@@ -448,6 +448,126 @@ function initializeForm(token) {
                         console.log(`Auto-processing file ${file.name}`);
                         dz.processFile(file);
                     }, 100);
+                }
+            });
+
+            // Add this function to resize images before upload
+            function resizeImageBeforeUpload(file) {
+                return new Promise((resolve, reject) => {
+                    // Target size in MB (adjust as needed, but keep under your limit)
+                    const targetMaxSize = 0.95; // 0.95MB
+                    
+                    // If file is already smaller than target size, no need to resize
+                    if (file.size <= targetMaxSize * 1024 * 1024) {
+                        return resolve(file);
+                    }
+                    
+                    // Create FileReader to read the file
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            // Calculate new dimensions while maintaining aspect ratio
+                            let width = img.width;
+                            let height = img.height;
+                            let quality = 0.7; // Starting quality
+                            
+                            // If image is very large, reduce dimensions first
+                            const MAX_WIDTH = 1800;
+                            const MAX_HEIGHT = 1800;
+                            
+                            if (width > MAX_WIDTH) {
+                                const ratio = MAX_WIDTH / width;
+                                width = MAX_WIDTH;
+                                height = height * ratio;
+                            }
+                            
+                            if (height > MAX_HEIGHT) {
+                                const ratio = MAX_HEIGHT / height;
+                                height = MAX_HEIGHT;
+                                width = width * ratio;
+                            }
+                            
+                            // Create canvas and resize
+                            const canvas = document.createElement('canvas');
+                            canvas.width = width;
+                            canvas.height = height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, width, height);
+                            
+                            // Convert to blob with quality adjustment
+                            tryConvertWithQuality(canvas, file.type, quality);
+                        };
+                        
+                        function tryConvertWithQuality(canvas, fileType, currentQuality) {
+                            canvas.toBlob((blob) => {
+                                // If still too large and quality can be reduced further
+                                if (blob.size > targetMaxSize * 1024 * 1024 && currentQuality > 0.1) {
+                                    // Reduce quality and try again
+                                    tryConvertWithQuality(canvas, fileType, currentQuality - 0.1);
+                                } else {
+                                    // Create new file from blob
+                                    const resizedFile = new File([blob], file.name, {
+                                        type: file.type,
+                                        lastModified: new Date().getTime()
+                                    });
+                                    console.log(`Resized image from ${formatFileSize(file.size)} to ${formatFileSize(resizedFile.size)}`);
+                                    resolve(resizedFile);
+                                }
+                            }, fileType, currentQuality);
+                        }
+                        
+                        img.src = event.target.result;
+                    };
+                    
+                    reader.onerror = (error) => reject(error);
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            // Modify the existing Dropzone configuration to use the resize function
+            this.on("addedfile", function(file) {
+                // Auto-resize image if it's too large (over 1MB)
+                if (file.size > 1 * 1024 * 1024 && !file.rejected && file.type.match(/^image\//)) {
+                    console.log(`File ${file.name} is large (${formatFileSize(file.size)}), resizing...`);
+                    
+                    // Show resizing indicator
+                    const previewElement = file.previewElement;
+                    if (previewElement) {
+                        const statusElement = document.createElement('div');
+                        statusElement.className = 'dz-resize-status';
+                        statusElement.textContent = 'Resizing...';
+                        previewElement.appendChild(statusElement);
+                    }
+                    
+                    // Replace the file with a resized version
+                    resizeImageBeforeUpload(file)
+                        .then(resizedFile => {
+                            // Update the file object with the resized version
+                            Object.assign(file, {
+                                resized: true,
+                                width: resizedFile.width,
+                                height: resizedFile.height,
+                                size: resizedFile.size,
+                                dataURL: resizedFile.dataURL
+                            });
+                            
+                            // Update the preview if available
+                            if (previewElement) {
+                                const statusElement = previewElement.querySelector('.dz-resize-status');
+                                if (statusElement) {
+                                    statusElement.textContent = `Resized to ${formatFileSize(file.size)}`;
+                                    setTimeout(() => {
+                                        statusElement.style.opacity = '0';
+                                    }, 2000);
+                                }
+                            }
+                            
+                            console.log(`File ${file.name} resized successfully to ${formatFileSize(file.size)}`);
+                        })
+                        .catch(error => {
+                            console.error('Image resize failed:', error);
+                        });
                 }
             });
         }

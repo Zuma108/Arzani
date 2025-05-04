@@ -8,7 +8,6 @@ import http from 'http';
 import { authMiddleware } from './utils/auth-unified.js';
 import authDebug from './middleware/authDebug.js';
 import bodyParser from 'body-parser';
-import dotenv from 'dotenv';
 dotenv.config();
 
 const app = express();
@@ -27,9 +26,21 @@ app.use(express.static('public', {
     }
 }));
 
-// Middleware
-app.use(express.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+// Increase request body size limit - this is crucial for handling larger uploads
+app.use(express.json({ limit: '15mb' }));
+app.use(express.urlencoded({ extended: true, limit: '15mb' }));
+
+// If you're using body-parser explicitly, update those limits too
+app.use(bodyParser.json({ limit: '15mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '15mb' }));
+
+// For multer, if you're using it for file uploads
+const multer = require('multer');
+const upload = multer({
+  limits: {
+    fileSize: 15 * 1024 * 1024, // 15 MB in bytes
+  }
+});
 
 // Global security headers middleware
 app.use((req, res, next) => {
