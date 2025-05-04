@@ -80,12 +80,13 @@ select.form-control {
 
 /* Dropzone styling */
 .dropzone {
-    border: 2px dashed #0087F7;
-    border-radius: 5px;
-    background: #F8F9FA;
-    min-height: 200px;
+    border: 2px dashed #ccc;
+    border-radius: 4px;
     padding: 20px;
-    position: relative;
+    text-align: center;
+    background: #f9f9f9;
+    min-height: 150px;
+    margin-bottom: 20px;
 }
 
 .dropzone:hover {
@@ -94,10 +95,10 @@ select.form-control {
 }
 
 .dropzone .dz-message {
-    text-align: center;
     margin: 2em 0;
-    font-size: 1.2rem;
-    color: #6c757d;
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    text-align: center;
 }
 
 .dropzone .dz-message span {
@@ -108,102 +109,7 @@ select.form-control {
 }
 
 .dropzone .dz-error-message {
-    display: none;
-    position: absolute;
-    top: -5px;
-    left: -5px;
-    right: -5px;
-    background: rgba(223, 93, 93, 0.85);
-    color: white;
-    padding: 5px;
-    border-radius: 5px 5px 0 0;
-    font-size: 12px;
-    text-align: center;
-    pointer-events: none;
-    z-index: 2;
-    max-height: 30px;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    transition: max-height 0.3s;
-}
-
-.dropzone .dz-preview {
-    margin: 10px;
-    position: relative;
-    display: inline-block;
-    vertical-align: top;
-    width: 120px;
-    height: 120px;
-    border-radius: 5px;
-    overflow: hidden;
-}
-
-.dropzone .dz-preview .dz-remove {
-    display: block;
-    margin-top: 5px;
-    color: #dc3545;
-    text-decoration: none;
-}
-
-.dropzone .dz-preview.dz-error:hover .dz-error-message {
-    display: block;
-    max-height: 60px;
-    white-space: normal;
-}
-
-.dropzone .dz-preview.dz-error {
-    border: 2px solid #dc3545;
-}
-
-.dropzone .dz-preview.dz-size-error {
-    background-color: #ffebee;
-}
-
-.dropzone .dz-preview .dz-action-buttons {
-    position: absolute;
-    bottom: 5px;
-    left: 5px;
-    right: 5px;
-    text-align: center;
-    display: none;
-}
-
-.dropzone .dz-preview:hover .dz-action-buttons {
-    display: block;
-}
-
-.dropzone .dz-preview.dz-error .dz-action-buttons {
-    display: block;
-}
-
-.dropzone .dz-preview.dz-error .btn-block {
-    display: block;
-    width: 100%;
-    padding: 2px;
-    font-size: 10px;
-}
-
-.dropzone .dz-preview.dz-error .dz-image {
-    opacity: 0.6;
-}
-
-.alert-dismissible .btn-close {
-    padding: 0.5rem 0.5rem;
-    position: absolute;
-    right: 0;
-    top: 0;
-}
-
-#uploadStatus {
-    margin-top: 15px;
-}
-
-#uploadStatus .alert {
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    color: var(--error-color);
 }
 
 .image-requirement-notice {
@@ -211,6 +117,26 @@ select.form-control {
     font-size: 0.875rem;
     margin-top: 0.5rem;
     font-style: italic;
+}
+
+.dropzone .dz-preview {
+    margin: 10px;
+    display: inline-block;
+}
+
+.dropzone .dz-preview .dz-image {
+    border-radius: 4px;
+    overflow: hidden;
+    width: 120px;
+    height: 120px;
+    position: relative;
+}
+
+.dropzone .dz-preview .dz-remove {
+    display: block;
+    margin-top: 5px;
+    color: #dc3545;
+    text-decoration: none;
 }
 
 /* Submit button */
