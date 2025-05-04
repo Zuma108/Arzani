@@ -6,11 +6,11 @@ import path from 'path';
 
 const router = express.Router();
 
-// Configure multer for memory storage
+// Configure multer for memory storage with increased limits
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
+    fileSize: 10 * 1024 * 1024, // Increased to 10MB limit
     files: 5 // Max 5 files
   },
   fileFilter: (req, file, cb) => {
@@ -28,7 +28,8 @@ router.post('/', authenticateToken, upload.array('images', 5), async (req, res) 
     console.log('Post business upload request received:', {
       userId: req.user?.userId,
       fileCount: req.files?.length || 0,
-      fileNames: req.files?.map(f => f.originalname).join(', ') || 'none'
+      fileNames: req.files?.map(f => f.originalname).join(', ') || 'none',
+      fileSizes: req.files?.map(f => f.size).join(', ') || 'none'
     });
 
     // Check authentication
@@ -55,6 +56,17 @@ router.post('/', authenticateToken, upload.array('images', 5), async (req, res) 
     // Process just the first file if multiple were sent
     const file = req.files[0];
     try {
+      // Check file size
+      if (file.size > 10 * 1024 * 1024) {
+        return res.status(413).json({
+          success: false,
+          message: `File ${file.originalname} exceeds the maximum size limit of 10MB`
+        });
+      }
+      
+      // Log file information
+      console.log(`Processing file: ${file.originalname}, size: ${file.size} bytes, type: ${file.mimetype}`);
+      
       // Create a timestamp to avoid filename conflicts
       const timestamp = Date.now();
       
