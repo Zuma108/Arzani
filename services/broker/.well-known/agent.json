@@ -1,0 +1,82 @@
+{
+  "name": "Arzani Broker Agent",
+  "description": "A specialist agent that provides expertise in business brokerage, valuations, and deal structuring for the Arzani Marketplace",
+  "version": "1.0.0",
+  "contact": {
+    "url": "https://arzani-marketplace.com/broker",
+    "email": "broker-agent@arzani-marketplace.com"
+  },
+  "capabilities": {
+    "tasks/send": {
+      "description": "Provides expert business brokerage information including valuations, deal structuring, and market comparables",
+      "examples": [
+        {
+          "description": "Generate a business valuation report",
+          "params": {
+            "task": {
+              "id": "1b2c3d4e-5f6a-7b8c-9d0e-1f2a3b4c5d6e"
+            },
+            "message": {
+              "parts": [
+                {
+                  "type": "text",
+                  "text": "I need a detailed valuation report for my SaaS business with $750K ARR and 25% growth rate."
+                },
+                {
+                  "type": "data",
+                  "data": {
+                    "revenue": 750000,
+                    "growth_rate": 0.25,
+                    "profit_margin": 0.35,
+                    "industry": "SaaS",
+                    "customer_retention": 0.92
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "description": "Find comparable business listings",
+          "params": {
+            "task": {
+              "id": "2c3d4e5f-6a7b-8c9d-0e1f-2a3b4c5d6e7f"
+            },
+            "message": {
+              "parts": [
+                {
+                  "type": "text",
+                  "text": "Find me comparable listings for my eCommerce business in the pet supplies niche with $350K revenue."
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  },
+  "human_support": {
+    "available": true,
+    "email": "expert-brokers@arzani-marketplace.com",
+    "escalation_description": "For complex valuations or deal structuring, a human broker can be contacted at expert-brokers@arzani-marketplace.com"
+  },
+  "domain_specialties": [
+    "business valuation",
+    "market comparables",
+    "deal structuring",
+    "business listings",
+    "buyer matching"
+  ],
+  "artifacts": [
+    {
+      "type": "valuation_report",
+      "mimetype": "application/pdf",
+      "description": "Detailed business valuation report with market comparables"
+    },
+    {
+      "type": "comps_analysis",
+      "mimetype": "application/json",
+      "description": "Comparable business analysis with pricing multiples"
+    }
+  ]
+}

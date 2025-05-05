@@ -578,12 +578,11 @@ app.use('/api', (req, res, next) => {
 });
 
 // Middleware
-app.use(express.json({ limit: '20mb' }));
-app.use(express.urlencoded({ extended: true, limit: '20mb' }));
-app.use(bodyParser.json({ limit: '20mb' }));
-app.use(bodyParser.urlencoded({ extended: true, limit: '20mb' }));
+app.use(express.json());
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(compression());
+app.use(bodyParser.json({ limit: '25mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '25  mb' }));
 app.use(morgan('dev'));
 app.use(express.static(path.join(__dirname, '../frontend/public')));
 
@@ -726,8 +725,8 @@ app.use('/api/market-trends', marketTrendsApiRoutes);
 app.use('/api/token-debug', tokenDebugRoutes); // ADD THIS LINE
 
 // Add specific configuration for the post-business-upload endpoint to handle larger files
-app.use('/api/post-business-upload', express.json({ limit: '20mb' }));
-app.use('/api/post-business-upload', express.urlencoded({ extended: true, limit: '20mb' }));
+app.use('/api/post-business-upload', express.json({ limit: '10mb' }));
+app.use('/api/post-business-upload', express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Business image upload - use specific middleware for this route before registering the route
 const postBusinessUploadLimits = {
@@ -935,12 +934,11 @@ app.use((req, res, next) => {
   next();
 });
 
-// Update multer configuration for larger uploads
+// Update multer configuration to use memory storage only
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit
-    files: 5 // Max 5 files
+    fileSize: 5 * 1024 * 1024 // 5MB limit
   }
 });
 app.use('/', businessRoutes); // <-- Ensure this line is present

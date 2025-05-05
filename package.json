@@ -23,7 +23,9 @@
     "init-ai": "node scripts/init-ai-assistant.js",
     "fix-ai-tables": "node scripts/fix-ai-tables.js",
     "watch:css": "tailwindcss -i ./src/tailwind.css -o ./public/css/tailwind.min.css --watch",
-    "install-blog-deps": "node scripts/install-blog-deps.js"
+    "install-blog-deps": "node scripts/install-blog-deps.js",
+    "dev:multiprocess": "concurrently \"npm run dev\" \"node services/orchestrator/index.js\" \"node services/broker/index.js\" \"node services/legal/index.js\" \"node services/finance/index.js\"",
+    "setup:a2a": "node scripts/a2a-setup.js"
   },
   "engines": {
     "node": ">=18.0.0"
@@ -35,6 +37,7 @@
     "@mapbox/node-pre-gyp": "^1.0.11",
     "@pinecone-database/pinecone": "^5.1.2",
     "@sendgrid/mail": "^8.1.4",
+    "ajv": "^8.17.1",
     "apple-signin-auth": "^1.7.6",
     "axios": "^1.8.2",
     "bcrypt": "^5.x",
