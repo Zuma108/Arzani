@@ -3,10 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">   
-    <title>Arzani</title>
-    <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">
-    <link rel="stylesheet" href="/css/modern.css">
+    <title>Arzani</title>    <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">    <link rel="stylesheet" href="/css/modern.css">
+    <link rel="stylesheet" href="/css/talk.css">
     <link rel="stylesheet" href="/css/testimonial-carousel.css">
+    <link rel="stylesheet" href="/css/feature-animations.css">
+    <link rel="stylesheet" href="/css/journey-section.css">
+    <link rel="stylesheet" href="/css/section-separators.css">
+    <link rel="stylesheet" href="/css/enhanced-scroll-animations.css">
+    <link rel="stylesheet" href="/css/white-section-glows.css">
+    <link rel="stylesheet" href="/css/business-preview-slider.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -207,38 +212,37 @@
             </nav>
         </header>
 
-        <!-- Hero Section with Video Background -->
-         <!-- Hero Section - Enhanced headline, clear value proposition & stronger CTA -->
-         <section class="hero-section pt-32 md:pt-40 pb-20 md:pb-28 relative overflow-hidden bg-primary-dark">
+        <!-- Hero Section with Video Background -->         <!-- Hero Section - Enhanced headline, clear value proposition & stronger CTA -->
+         <section class="hero-section pt-32 md:pt-40 pb-20 md:pb-28 relative overflow-hidden bg-primary-dark" id="hero-section">
             <!-- Background elements -->
-            <div class="absolute inset-0 grid-pattern opacity-30"></div>
+            <div class="absolute inset-0 grid-pattern opacity-30" data-hero-animation="heroBackground" data-animation-delay="0"></div>
             <div class="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
-                <div class="gradient-box-bg absolute top-1/4 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full"></div>
+                <div class="gradient-box-bg absolute top-1/4 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full parallax-effect" data-speed="0.1"></div>
             </div>
             
             <div class="container mx-auto px-4 md:px-6 relative z-10">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                     <div class="text-center lg:text-left">
-                        <h1 class="text-4xl md:text-6xl font-bold leading-tight mb-6 animate-fade-in-up">
+                        <h1 class="text-4xl md:text-6xl font-bold leading-tight mb-6" data-hero-animation="heroTitle" data-animation-delay="200">
                             Know Your Business's <span class="text-gradient-animated">True Value</span> in 5 Minutes
                         </h1>
-                        <p class="text-xl md:text-2xl text-gray-300 mb-8 animate-fade-in-up" style="animation-delay: 100ms;">
+                        <p class="text-xl md:text-2xl text-g1ray-300 mb-8" data-hero-animation="heroSubtitle" data-animation-delay="400">
                             Then sell your UK business 37% faster with our AI-matched, verified buyers. No brokers. No commissions. Just transparent, data-driven results.
                         </p>
                         <!-- Primary CTA - Simplified to a single, clear action -->
-                        <div class="flex flex-col sm:flex-row justify-center lg:justify-start gap-4 mb-8 animate-fade-in-up" style="animation-delay: 200ms;">
-                            <a href="/seller-questionnaire" class="btn-primary text-center text-lg py-4 px-8">
-                                Get My Free Business Valuation
+                        <div class="flex flex-col sm:flex-row justify-center lg:justify-start gap-4 mb-8" data-hero-animation="heroButton" data-animation-delay="600">
+                            <a href="/seller-questionnaire" class="btn-primary text-center text-lg py-4 px-8 magnetic-effect">
+                                Get My Business Valuated
                             </a>
                         </div>
                         
                         <!-- Social proof added directly below CTA -->
-                        <p class="text-sm text-gray-300 mb-6 animate-fade-in-up" style="animation-delay: 250ms;">
+                        <p class="text-sm text-gray-300 mb-6" data-hero-animation="fadeInUp" data-animation-delay="800">
                             <span class="font-bold">Join UK business owners</span> who found their perfect buyers with Arzani
                         </p>
                         
                         <!-- Trust indicators -->
-                        <div class="mx-auto lg:mx-0 max-w-lg animate-fade-in-up" style="animation-delay: 300ms;">
+                        <div class="mx-auto lg:mx-0 max-w-lg" data-hero-animation="fadeInUp" data-animation-delay="1000" data-stagger="150">
                             <div class="grid grid-cols-3 gap-4 usp-section">
                                 <div class="usp-item flex flex-col items-center lg:items-start">
                                     <div class="flex items-center justify-center w-10 h-10 rounded-full bg-blue-900/20 mb-2">
@@ -275,635 +279,1201 @@
                     </div>
                     
                                        
-                    <div style="position: relative; box-sizing: content-box; max-height: 80vh; max-height: 80svh; width: 100%; aspect-ratio: 2.1068032187271397; padding: 40px 0 40px 0;"><iframe src="https://app.supademo.com/embed/cm9ihwub02li4ljv5x9uy5g5k?embed_v=2" loading="lazy" title="Co Demo" allow="clipboard-write" frameborder="0" webkitallowfullscreen="true" mozallowfullscreen="true" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe></div>
+                    <div style="position: relative; box-sizing: content-box; max-height: 80vh; max-height: 80svh; width: 100%; aspect-ratio: 2.0310296191819464; padding: 40px 0 40px 0;"><iframe src="https://app.supademo.com/embed/cmb13re9t1i3appkpit9238wo?embed_v=2" loading="lazy" title="Supademo Demo" allow="clipboard-write" frameborder="0" webkitallowfullscreen="true" mozallowfullscreen="true" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe></div>
         </section>
-        
-        <!-- Problem/Agitation Section - NEW -->
-        <section id="business-challenges" class="py-20 bg-dark-light relative overflow-hidden">
-            <!-- Background elements -->
-            <div class="absolute -top-40 -right-40 w-80 h-80 bg-red-500/5 rounded-full blur-3xl"></div>
-            <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-orange-500/5 rounded-full blur-3xl"></div>
+          <!-- Problem/Agitation Section - Redesigned with Magnifying Glass -->
+        <section id="business-challenges" class="py-20 bg-dark-light relative overflow-hidden">            <!-- Enhanced Background elements -->
+            <div class="absolute -top-40 -right-40 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl animate-pulse"></div>
+            <div class="absolute -bottom-40 -left-40 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl animate-pulse"></div>
+            <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-indigo-500/3 rounded-full blur-3xl"></div>
             
-            <!-- Background grid pattern -->
-            <div class="absolute inset-0 z-0 opacity-10">
+            <!-- Enhanced Background grid pattern -->
+            <div class="absolute inset-0 z-0 opacity-15">
                 <div class="grid-pattern"></div>
             </div>
             
             <div class="container mx-auto px-4 md:px-6 relative z-10">
-                <div class="max-w-3xl mx-auto">
-                    <h2 class="text-3xl md:text-4xl font-bold mb-6 text-center">The Challenge of Selling Your Business</h2>
-                    <p class="text-xl text-gray-300 mb-12 text-center">You've worked for years building your business, but when it comes time to sell, the traditional process is stacked against you.</p>
+                <!-- Two Column Layout -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
                     
-                    <!-- Pain Points Cards -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-                        <!-- Pain Point 1 -->
-                        <div class="bg-dark/60 backdrop-blur-md rounded-xl p-6 border border-gray-800/60 transition-all hover:border-red-800/30">
-                            <div class="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mb-4">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </div>
-                            <h3 class="text-xl font-semibold mb-3">Valuation Guesswork</h3>
-                            <p class="text-gray-400">Without accurate data, you risk undervaluing your business by tens of thousands—or overpricing and scaring away serious buyers.</p>
-                        </div>
-                        
-                        <!-- Pain Point 2 -->
-                        <div class="bg-dark/60 backdrop-blur-md rounded-xl p-6 border border-gray-800/60 transition-all hover:border-orange-800/30">
-                            <div class="w-12 h-12 rounded-full bg-orange-500/10 flex items-center justify-center mb-4">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </div>
-                            <h3 class="text-xl font-semibold mb-3">Endless Waiting</h3>
-                            <p class="text-gray-400">Traditional listings can remain unsold for 6-12+ months while you field endless inquiries from unmotivated tire-kickers, not serious buyers.</p>
-                        </div>
-                        
-                        <!-- Pain Point 3 -->
-                        <div class="bg-dark/60 backdrop-blur-md rounded-xl p-6 border border-gray-800/60 transition-all hover:border-yellow-800/30">
-                            <div class="w-12 h-12 rounded-full bg-yellow-500/10 flex items-center justify-center mb-4">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z" />
-                                </svg>
-                            </div>
-                            <h3 class="text-xl font-semibold mb-3">Hefty Commissions</h3>
-                            <p class="text-gray-400">Traditional brokers charge 8-10% commission, potentially costing you tens of thousands on your sale, with no guarantee of results.</p>
-                        </div>
-                    </div>
-                    
-                    <!-- Agitation Section -->
-                    <div class="bg-gradient-to-r from-red-900/20 to-orange-900/20 rounded-2xl p-8 border border-red-900/20">
-                        <h3 class="text-2xl font-semibold mb-4">The Consequences Are Real</h3>
-                        <p class="text-gray-300 mb-6">If you guess your valuation wrong, you could leave tens of thousands on the table or spend months with no qualified inquiries. Meanwhile, your focus is divided between running your business and managing a frustrating, opaque sales process.</p>
-                        <div class="flex flex-col md:flex-row gap-4 items-center">
-                            <div class="flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
-                                </svg>
-                                <span class="text-gray-300">92% of businesses listed traditionally fail to sell</span>
-                            </div>
-                            <div class="hidden md:block w-px h-6 bg-gray-700"></div>
-                            <div class="flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                <span class="text-gray-300">Average time to sell: 6-12 months</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
- 
-        <!-- Talk to Arzani AI Section - Business Intelligence + Chatbot -->
-        <section class="py-20 md:py-32 bg-dark relative overflow-hidden">
-            <!-- Animated background elements -->
-            <div class="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
-                <div class="particles-js" id="particles-js"></div>
-                <div class="absolute -top-40 -left-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl"></div>
-                <div class="absolute -bottom-60 -right-40 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
-            </div>
-            
-            <!-- Background grid pattern -->
-            <div class="absolute inset-0 z-0 opacity-10">
-                <div class="grid-pattern"></div>
-            </div>
-            
-            <div class="container mx-auto px-4 md:px-6 relative z-10">
-                <div class="text-center mb-16" data-animation="fade-in-up">
-                    <h2 class="text-3xl md:text-5xl font-bold mb-6">Talk to <span class="text-gradient-animated">Arzani</span></h2>
-                    <p class="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
-                        Uncover insights you won't find anywhere else with AI-powered analysis to discover opportunities, 
-                        evaluate businesses, and make confident decisions
-                    </p>
-                </div>
-                
-                <div class="flex flex-col gap-12 mb-20">
-                    <!-- Business Intelligence Visualizations -->
-                    <div class="w-full" data-animation="fade-in-left" data-delay="300">
-                        <div class="mb-6">
-                            <h3 class="text-3xl font-bold mb-4">AI-powered business intelligence</h3>
-                            <p class="text-gray-300 text-lg mb-6">
-                                Leverage our cutting-edge AI to uncover critical insights, track market trends, and make data-driven decisions that maximize your business potential.
+                    <!-- Left Column - Content -->
+                    <div class="space-y-8">
+                        <div>
+                            <h2 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
+                                The Challenge of 
+                                <span class="text-gradient-animated block mt-2">Selling Your Business</span>
+                            </h2>
+                            <p class="text-xl md:text-2xl text-gray-300 leading-relaxed">
+                                You've worked for years building your business, but when it comes time to sell, 
+                                the traditional process is stacked against you.
                             </p>
                         </div>
-                        
-                        <!-- Main visualization panel -->
-                        <div class="bg-dark-light/40 backdrop-blur-md border border-gray-800/50 rounded-2xl p-6 overflow-hidden relative mb-8" data-animation="fade-in-up" data-delay="400">
-                            <!-- Chart visualization SVG -->
-                            <div class="h-72 relative">
-                                <div class="absolute inset-0 flex items-center justify-center">
-                                    <svg width="100%" height="100%" viewBox="0 0 800 200" class="chart-animation">
-                                        <path class="chart-line" d="M0,150 C100,120 200,180 300,80 C400,20 500,100 600,60 C700,90 800,40" fill="none" stroke="url(#gradient)" stroke-width="3"/>
-                                        <path d="M0,150 C100,120 200,180 300,80 C400,20 500,100 600,60 C700,90 800,40 L800,200 L0,200 Z" fill="url(#areaGradient)" opacity="0.2"/>
-                                        
-                                        <!-- Gradient definitions -->
-                                        <defs>
-                                            <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                                <stop offset="0%" stop-color="#3B82F6"/>
-                                                <stop offset="100%" stop-color="#8B5CF6"/>
-                                            </linearGradient>
-                                            <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                                                <stop offset="0%" stop-color="#3B82F6" stop-opacity="0.5"/>
-                                                <stop offset="100%" stop-color="#3B82F6" stop-opacity="0"/>
-                                            </linearGradient>
-                                        </defs>
-                                        
-                                        <!-- Data points -->
-                                        <circle cx="0" cy="150" r="5" fill="#3B82F6"/>
-                                        <circle cx="100" cy="120" r="5" fill="#3B82F6"/>
-                                        <circle cx="200" cy="180" r="5" fill="#3B82F6"/>
-                                        <circle cx="300" cy="80" r="5" fill="#3B82F6"/>
-                                        <circle cx="400" cy="20" r="5" fill="#3B82F6"/>
-                                        <circle cx="500" cy="100" r="5" fill="#3B82F6"/>
-                                        <circle cx="600" cy="60" r="5" fill="#3B82F6"/>
-                                        <circle cx="700" cy="90" r="5" fill="#3B82F6"/>
-                                        <circle cx="800" cy="40" r="5" fill="#3B82F6"/>
-                                        
-                                        <!-- Animated search cursor -->
-                                        <circle class="search-cursor" cx="0" cy="0" r="6" fill="rgba(49,111,212,0.7)"/>
-                                    </svg>
-                                </div>
-                                
-                                <!-- Chart overlay elements -->
-                                <div class="absolute bottom-0 left-0 right-0 flex justify-between text-xs text-gray-400 px-4">
-                                    <span>Jan</span>
-                                    <span>Feb</span>
-                                    <span>Mar</span>
-                                    <span>Apr</span>
-                                    <span>May</span>
-                                    <span>Jun</span>
-                                    <span>Jul</span>
-                                    <span>Aug</span>
-                                </div>
-                                
-                                <!-- AI Insight overlay -->
-                                <div class="absolute top-10 right-10 max-w-xs bg-gray-900/80 backdrop-blur-md p-4 rounded-lg border border-gray-700 shadow-lg opacity-0" style="transition: opacity 1s ease; animation: fadeIn 1s forwards 3s;">
-                                    <div class="flex items-center mb-2">
-                                        <div class="w-6 h-6 rounded-full overflow-hidden flex items-center justify-center mr-2">
-                                            <img src="/figma design exports/images.webp/arzani-icon-nobackground.png" alt="Arzani AI" class="w-6 h-6 object-contain">
-                                        </div>
-                                        <p class="font-semibold text-sm">AI Insight:</p>
-                                    </div>
-                                    <div class="text-xs text-gray-300 ai-insight-box">
-                                        <span class="typing-text"></span><span class="typing-cursor"></span>
-                                    </div>
-                                </div>
+                          <!-- Impact Statistics Grid -->
+                        <div class="grid grid-cols-2 gap-6">
+                            <div class="bg-dark/60 backdrop-blur-md rounded-xl p-6 border border-purple-800/30 hover:border-purple-600/50 transition-all">
+                                <div class="text-3xl md:text-4xl font-bold text-purple-400 mb-2">92%</div>
+                                <div class="text-sm text-gray-400">Traditional listings fail to sell</div>
                             </div>
-                            
-                            <!-- Interactive metrics dashboard -->
-                            <div class="grid grid-cols-3 gap-4 mt-4">
-                                <div class="bg-dark-light/60 rounded-lg p-3 border border-gray-800/50">
-                                    <div class="flex items-center justify-between">
-                                        <span class="text-xs text-gray-400">Revenue Growth</span>
-                                        <span class="text-green-400 text-xs font-medium">+24.5%</span>
-                                    </div>
-                                    <div class="mt-2 h-2 bg-gray-800 rounded-full overflow-hidden">
-                                        <div class="h-full bg-green-500/50 rounded-full" style="width:75%; transition: width 1.5s ease-out;"></div>
-                                    </div>
-                                </div>
-                                <div class="bg-dark-light/60 rounded-lg p-3 border border-gray-800/50">
-                                    <div class="flex items-center justify-between">
-                                        <span class="text-xs text-gray-400">Market Share</span>
-                                        <span class="text-blue-400 text-xs font-medium">12.8%</span>
-                                    </div>
-                                    <div class="mt-2 h-2 bg-gray-800 rounded-full overflow-hidden">
-                                        <div class="h-full bg-blue-500/50 rounded-full" style="width:45%; transition: width 1.5s ease-out;"></div>
-                                    </div>
-                                </div>
-                                <div class="bg-dark-light/60 rounded-lg p-3 border border-gray-800/50">
-                                    <div class="flex items-center justify-between">
-                                        <span class="text-xs text-gray-400">Customer Retention</span>
-                                        <span class="text-purple-400 text-xs font-medium">68%</span>
-                                    </div>
-                                    <div class="mt-2 h-2 bg-gray-800 rounded-full overflow-hidden">
-                                        <div class="h-full bg-purple-500/50 rounded-full" style="width:68%; transition: width 1.5s ease-out;"></div>
-                                    </div>
-                                </div>
+                            <div class="bg-dark/60 backdrop-blur-md rounded-xl p-6 border border-blue-800/30 hover:border-blue-600/50 transition-all">
+                                <div class="text-3xl md:text-4xl font-bold text-blue-400 mb-2">6-12</div>
+                                <div class="text-sm text-gray-400">Months average time to sell</div>
+                            </div>
+                            <div class="bg-dark/60 backdrop-blur-md rounded-xl p-6 border border-indigo-800/30 hover:border-indigo-600/50 transition-all">
+                                <div class="text-3xl md:text-4xl font-bold text-indigo-400 mb-2">8-10%</div>
+                                <div class="text-sm text-gray-400">Commission fees</div>
+                            </div>
+                            <div class="bg-dark/60 backdrop-blur-md rounded-xl p-6 border border-violet-800/30 hover:border-violet-600/50 transition-all">
+                                <div class="text-3xl md:text-4xl font-bold text-violet-400 mb-2">£50K+</div>
+                                <div class="text-sm text-gray-400">Potential losses</div>
                             </div>
                         </div>
                         
-                        <!-- Business analysis features -->
+                        <!-- Enhanced Pain Points -->
                         <div class="space-y-4">
-                            <!-- Feature item 1 - Real-time Valuation -->
-                            <div class="feature-card flex rounded-xl overflow-hidden transform transition-all hover:translate-y-[-5px]" data-animation="fade-in-left" data-delay="500">
-                                <div class="w-16 h-auto bg-gradient-to-b from-blue-500/20 to-purple-500/20 flex items-center justify-center px-3">
-                                    <img src="/figma design exports/icons/3dicons-clock-dynamic-color.png" alt="Real-time Valuation" class="w-12 h-12 object-contain">
-                                </div>
-                                <div class="flex-1 p-4 bg-dark-light/40 backdrop-blur-sm border-t border-r border-b border-gray-800/50">
-                                    <h4 class="text-lg font-semibold mb-2">Real-time Valuation</h4>
-                                    <p class="text-gray-400">Get instant business valuations based on current market data and industry-specific metrics.</p>
+                            <h3 class="text-2xl font-semibold text-gray-200 mb-4">The Problems You Face</h3>
+                              <!-- Pain Point 1 -->
+                            <div class="group bg-dark/60 backdrop-blur-md rounded-xl p-6 border border-gray-800/60 hover:border-purple-600/40 hover:bg-purple-500/5 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl hover:shadow-purple-500/10">
+                                <div class="flex items-start space-x-4">
+                                    <div class="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center group-hover:bg-purple-500/30 transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-xl font-semibold mb-2 text-purple-400">Valuation Guesswork</h4>
+                                        <p class="text-gray-300">Without accurate data, you risk undervaluing by tens of thousands-or overpricing and scaring away serious buyers.</p>
+                                    </div>
                                 </div>
                             </div>
                             
-                            <!-- Feature item 2 - Growth Analysis -->
-                            <div class="feature-card flex rounded-xl overflow-hidden transform transition-all hover:translate-y-[-5px]" data-animation="fade-in-left" data-delay="600">
-                                <div class="w-16 h-auto bg-gradient-to-b from-blue-500/20 to-purple-500/20 flex items-center justify-center px-3">
-                                    <img src="/figma design exports/icons/3dicons-chart-dynamic-color.png" alt="Growth Analysis" class="w-12 h-12 object-contain">
-                                </div>
-                                <div class="flex-1 p-4 bg-dark-light/40 backdrop-blur-sm border-t border-r border-b border-gray-800/50">
-                                    <h4 class="text-lg font-semibold mb-2">Growth Predictors</h4>
-                                    <p class="text-gray-400">Identify trends and growth opportunities based on analyzed data from thousands of similar businesses.</p>
-                                </div>
-                            </div>
-
-                            <!-- Feature item 3 - Security Analysis -->
-                            <div class="feature-card flex rounded-xl overflow-hidden transform transition-all hover:translate-y-[-5px]" data-animation="fade-in-left" data-delay="700">
-                                <div class="w-16 h-auto bg-gradient-to-b from-blue-500/20 to-purple-500/20 flex items-center justify-center px-3">
-                                    <img src="/figma design exports/icons/3dicons-shield-dynamic-color.png" alt="Security Analysis" class="w-12 h-12 object-contain">
-                                </div>
-                                <div class="flex-1 p-4 bg-dark-light/40 backdrop-blur-sm border-t border-r border-b border-gray-800/50">
-                                    <h4 class="text-lg font-semibold mb-2">Secure Analysis</h4>
-                                    <p class="text-gray-400">Enterprise-grade security ensuring your business data is protected while providing comprehensive market analysis.</p>
+                            <!-- Pain Point 2 -->
+                            <div class="group bg-dark/60 backdrop-blur-md rounded-xl p-6 border border-gray-800/60 hover:border-blue-600/40 hover:bg-blue-500/5 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-500/10">
+                                <div class="flex items-start space-x-4">
+                                    <div class="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-xl font-semibold mb-2 text-blue-400">Endless Waiting</h4>
+                                        <p class="text-gray-300">Traditional listings remain unsold for 6-12+ months while you field endless inquiries from tire-kickers, not serious buyers.</p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        
-                        <div class="mt-6">
-                            <a href="/features/ai-assistant" class="btn-primary inline-flex items-center">
-                                Explore Business Insights
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                                </svg>
-                            </a>
+                            
+                            <!-- Pain Point 3 -->
+                            <div class="group bg-dark/60 backdrop-blur-md rounded-xl p-6 border border-gray-800/60 hover:border-indigo-600/40 hover:bg-indigo-500/5 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl hover:shadow-indigo-500/10">
+                                <div class="flex items-start space-x-4">
+                                    <div class="w-12 h-12 rounded-full bg-indigo-500/20 flex items-center justify-center group-hover:bg-indigo-500/30 transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-xl font-semibold mb-2 text-indigo-400">Hefty Commissions</h4>
+                                        <p class="text-gray-300">Traditional brokers charge 8-10% commission, potentially costing you tens of thousands with no guarantee of results.</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
-                    <!-- AI Chatbot Interface -->
-                    <div class="w-full" data-animation="fade-in-right" data-delay="300">
-                        <div class="relative bg-dark-light/40 backdrop-blur-md border border-gray-800 rounded-2xl shadow-xl overflow-hidden">
-                            <!-- Chat interface header -->
-                            <div class="flex items-center justify-between border-b border-gray-800 p-4">
-                                <div class="flex items-center">
-                                    <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 to-purple-600 flex items-center justify-center overflow-hidden">
-                                        <img src="/figma design exports/images.webp/arzani-icon-nobackground.png" alt="Arzani AI" class="w-10 h-10 object-contain">
-                                    </div>
-                                    <div class="ml-3">
-                                        <p class="font-bold">Arzani Demo</p>
-                                        <div class="flex items-center">
-                                            <span class="text-xs text-gray-400">Preview Only</span>
-                                        </div>
-                                    </div>
-                                </div>
+                    <!-- Right Column - Large Magnifying Glass Image with Effects -->
+                    <div class="relative">
+                        <!-- Magnifying Glass Image with Enhanced Effects -->
+                        <div class="relative group">                            <!-- Glow effect behind image -->
+                            <div class="absolute inset-0 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-indigo-500/20 rounded-full blur-3xl group-hover:blur-2xl transition-all duration-500 animate-pulse"></div>
+                            
+                            <!-- Main image container -->
+                            <div class="relative z-10 transform group-hover:scale-105 transition-all duration-500">
+                                <img 
+                                    src="/figma design exports/images/pose 3 magnifying glass no background 1.png" 
+                                    alt="Magnifying glass analyzing business data" 
+                                    class="w-full h-auto max-w-lg mx-auto drop-shadow-2xl filter group-hover:drop-shadow-3xl transition-all duration-500"
+                                    loading="lazy"
+                                />
+                            </div>
+                              <!-- Floating Problem Callouts -->
+                            <div class="absolute top-8 -left-4 bg-purple-500/10 backdrop-blur-sm border border-purple-500/30 rounded-lg px-3 py-2 text-sm text-purple-300 animate-bounce">
+                                <span class="font-medium">Undervalued!</span>
                             </div>
                             
-                            <!-- Chat messages container -->
-                            <div class="p-4 h-96 overflow-y-auto chat-container">
-                                <!-- Static AI message -->
-                                <div class="chat-message flex gap-4 justify-end mb-4 opacity-0" style="animation-delay: 0.3s">
-                                    <div class="bg-primary/20 rounded-lg rounded-tr-none p-3 max-w-[80%]">
-                                        <p class="text-gray-200 mb-2">Welcome to Arzani. This is a demo of our AI interface.</p>
-                                        <p class="text-gray-200 mb-2">Our AI assistant can analyze business data and market trends.</p>
-                                        <p class="text-gray-200 mb-2">It provides valuable insights to help with business decisions.</p>
-                                        <p class="text-gray-200">Please sign up for a full interactive experience.</p>
-                                    </div>
-                                    <div class="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center">
-                                        <img src="/figma design exports/images.webp/arzani-icon-nobackground.png" alt="Arzani AI" class="w-8 h-8 object-contain">
-                                    </div>
-                                </div>
+                            <div class="absolute top-1/3 -right-8 bg-blue-500/10 backdrop-blur-sm border border-blue-500/30 rounded-lg px-3 py-2 text-sm text-blue-300 animate-pulse">
+                                <span class="font-medium">Months Waiting</span>
                             </div>
                             
-                            <!-- Input area (disabled/preview state) -->
-                            <div class="border-t border-gray-800 p-4">
-                                <div class="relative">
-                                    <input type="text" placeholder="Sign up to interact with Arzani AI..." class="w-full bg-gray-800/50 border border-gray-700 rounded-full py-3 px-5 pr-12 text-gray-300 focus:outline-none cursor-not-allowed opacity-50" disabled>
-                                    <button class="absolute right-2 top-1/2 transform -translate-y-1/2 w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center cursor-not-allowed opacity-50" disabled>
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14m-4-4l4 4-4 4" />
-                                        </svg>
-                                    </button>
-                                </div>
+                            <div class="absolute bottom-1/4 -left-8 bg-indigo-500/10 backdrop-blur-sm border border-indigo-500/30 rounded-lg px-3 py-2 text-sm text-indigo-300 animate-bounce delay-1000">
+                                <span class="font-medium">High Fees</span>
+                            </div>
+                            
+                            <div class="absolute bottom-8 right-4 bg-violet-500/10 backdrop-blur-sm border border-violet-500/30 rounded-lg px-3 py-2 text-sm text-violet-300 animate-pulse delay-500">
+                                <span class="font-medium">Lost Value</span>
                             </div>
                         </div>
-                        
-                        <!-- AI Assistant capabilities -->
-                        <div class="mt-6 grid grid-cols-2 gap-4">
-                            <div class="bg-dark-light/40 backdrop-blur-md border border-gray-800/50 rounded-lg p-4">
-                                <div class="flex items-center mb-2">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                                    </svg>
-                                    <h4 class="font-medium">Market Intelligence</h4>
-                                </div>
-                                <p class="text-sm text-gray-400">Access real-time market data and sector-specific analysis</p>
-                            </div>
-                            <div class="bg-dark-light/40 backdrop-blur-md border border-gray-800/50 rounded-lg p-4">
-                                <div class="flex items-center mb-2"></div>
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-purple-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                    </svg>
-                                    <h4 class="font-medium">Growth Forecasting</h4>
-                                </div>
-                                <p class="text-sm text-gray-400">Predict potential business performance based on historical data</p>
-                            </div>
-                        </div>
+                          <!-- Additional atmospheric effects -->
+                        <div class="absolute top-1/4 right-1/4 w-4 h-4 bg-blue-400/30 rounded-full animate-ping"></div>
+                        <div class="absolute bottom-1/3 left-1/4 w-3 h-3 bg-purple-400/30 rounded-full animate-ping delay-700"></div>
+                        <div class="absolute top-1/2 left-1/3 w-2 h-2 bg-indigo-400/30 rounded-full animate-ping delay-1000"></div>
                     </div>
+                </div>                <!-- Bottom Impact Statement -->
+                <div class="mt-16 text-center">
+                    <div class="bg-gradient-to-r from-purple-900/30 to-blue-900/30 rounded-2xl p-8 backdrop-blur-sm">
+                        <h3 class="text-3xl font-bold mb-4 text-gray-100">The Consequences Are Real</h3>
+                        <p class="text-xl text-gray-300 max-w-4xl mx-auto leading-relaxed mb-8">
+                            If you guess your valuation wrong, you could leave tens of thousands on the table or spend months with no qualified inquiries. 
+                            Meanwhile, your focus is divided between running your business and managing a frustrating, opaque sales process.
+                        </p>
+                          <!-- Apple-Style CTA Button -->                        <div class="mt-8">
+                            <a href="/seller-questionnaire" class="group inline-flex items-center justify-center px-10 py-4 bg-white text-gray-900 text-xl font-semibold rounded-full transition-all duration-200 ease-out hover:shadow-lg hover:bg-gray-50 active:scale-[0.98] shadow-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3 text-blue-700 group-hover:text-blue-800 transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                </svg>
+                                Get Your 5-Minute Valuation
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-3 text-blue-600 group-hover:text-blue-700 group-hover:translate-x-1 transition-all duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                </svg>
+                            </a>
+                            <p class="text-gray-400 mt-6 text-base font-medium tracking-wide">No guesswork • No wasted time • No money left on the table</p>
+                        </div>
+                    </div>                </div>
+            </div>
+        </section>        <!-- Business Preview Slider Section -->
+        <section class="business-preview-section py-8 md:py-12 bg-dark relative overflow-hidden">
+            <!-- Background elements with the dark theme style -->
+            <div class="absolute top-0 left-0 w-full h-full overflow-hidden z-0" aria-hidden="true">
+                <div class="absolute -top-40 -left-40 w-80 h-80 bg-blue-700/10 rounded-full blur-3xl animate-pulse-slow"></div>
+                <div class="absolute -bottom-60 -right-40 w-96 h-96 bg-indigo-700/10 rounded-full blur-3xl animate-pulse-slow animation-delay-2000"></div>
+                <div class="absolute top-1/4 right-1/4 w-64 h-64 bg-purple-700/10 rounded-full blur-3xl animate-pulse-slow animation-delay-1000"></div>
+            </div>
+            
+            <!-- Light background pattern with enhanced visibility -->
+            <div class="absolute inset-0 z-0 opacity-5" aria-hidden="true">
+                <div class="light-grid-pattern"></div>
+            </div>
+            
+            <div class="container mx-auto px-4 md:px-6 relative z-10">                <!-- Section Header -->
+                <div class="text-center mb-1" data-animation="fade-in-up">
+                    <h2 class="text-lg md:text-xl font-bold mb-0"><span class="text-gradient-animated">Featured</span> Businesses</h2>
+                    <p class="text-xs text-gray-300 max-w-lg mx-auto">
+                        Discover our handpicked businesses
+                    </p>
+                </div><!-- Business Preview Slider Container -->
+                <div class="business-slider-container relative overflow-hidden mx-auto my-1 max-w-7xl">                    <!-- Loading State -->
+                    <div class="loading-state flex items-center justify-center py-6">
+                        <div class="loader-circle"></div>
+                        <p class="ml-3 text-gray-400">Loading featured businesses...</p>
+                    </div>
+                      <!-- Slider Track -->
+                    <div id="businessSliderTrack" class="business-slider-track flex transition-transform duration-500 ease-out opacity-0">
+                        <!-- Business cards will be dynamically inserted here -->
+                    </div>
+                      <!-- Slider Navigation -->
+                    <button class="slider-nav-button absolute top-1/2 transform -translate-y-1/2 left-0 bg-gray-800/80 hover:bg-primary text-white rounded-full w-10 h-10 flex items-center justify-center backdrop-blur z-30 focus:outline-none transition-all duration-200 hover:scale-110" id="slideLeft" aria-label="Previous slide">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+                    
+                    <button class="slider-nav-button absolute top-1/2 transform -translate-y-1/2 right-0 bg-gray-800/80 hover:bg-primary text-white rounded-full w-10 h-10 flex items-center justify-center backdrop-blur z-30 focus:outline-none transition-all duration-200 hover:scale-110" id="slideRight" aria-label="Next slide">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button></div>                  <!-- Navigation Dots -->
+                <div class="slider-dots flex justify-center mt-1 space-x-2" id="sliderDots">
+                    <!-- Dots will be populated by JavaScript -->
+                </div>
+                <!-- View All Listings Button -->
+                <div class="text-center mt-2">
+                    <a href="/marketplace2" class="view-all-btn">
+                        View All Listings
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
+                    </a>
+                </div>
                 </div>
             </div>
         </section>
 
-        <!-- Features Grid with updated images -->
-        <section class="py-24 bg-black relative overflow-hidden">
+        <!-- Talk to Arzani AI Section - Enhanced Business Intelligence + Interactive Chatbot -->
+<section class="ai-hero-section py-20 md:py-32 bg-gradient-to-br from-slate-50 to-blue-50 relative overflow-hidden" aria-label="AI-powered business intelligence">
+    <!-- Enhanced background elements with subtle animation -->
+    <div class="absolute top-0 left-0 w-full h-full overflow-hidden z-0" aria-hidden="true">
+        <div class="absolute -top-40 -left-40 w-80 h-80 bg-blue-100/40 rounded-full blur-3xl animate-pulse-slow"></div>
+        <div class="absolute -bottom-60 -right-40 w-96 h-96 bg-indigo-100/40 rounded-full blur-3xl animate-pulse-slow animation-delay-2000"></div>
+        <div class="absolute top-1/4 right-1/4 w-64 h-64 bg-purple-100/30 rounded-full blur-3xl animate-pulse-slow animation-delay-1000"></div>
+    </div>
+    
+    <!-- New background glow accent element -->
+    <div class="glow-accent" aria-hidden="true"></div>
+    
+    <!-- Light background pattern with enhanced visibility -->
+    <div class="absolute inset-0 z-0 opacity-10" aria-hidden="true">
+        <div class="light-grid-pattern"></div>
+    </div>
+    <div class="container mx-auto px-4 md:px-6 relative z-10">
+        <!-- Enhanced semantic HTML5 structure with more impactful copy -->
+        <header class="hero-header text-center mb-16" data-animation="fade-in-up">
+            <h1 class="hero-title mb-6 text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 leading-tight">
+                Transform Data Into <span class="text-gradient-animated">Business Decisions</span>
+            </h1>
+            <p class="hero-subtitle max-w-3xl mx-auto text-lg md:text-xl text-slate-600 leading-relaxed">
+                Stop guessing and start growing with AI-powered insights that reveal hidden opportunities, 
+                provide actionable strategies, and help you make confident decisions backed by real-time data
+            </p>
+        </header>
+        
+        <!-- Main content grid - centered for all screen sizes -->
+        <div class="hero-grid flex flex-col items-center justify-center mx-auto max-w-7xl">
+            <!-- Centered content column -->
+            <article class="w-full md:w-4/5 lg:w-3/4 xl:w-2/3 space-y-6 text-center" data-animation="fade-in-up" data-delay="300">
+                <header class="content-header">
+                    <h2 class="text-2xl md:text-3xl font-bold text-slate-900 mb-4"><span class="text-gradient-animated">Know Your Company's True Value-in Seconds</span></h2>
+                    <p class="text-slate-600 text-lg mb-6">
+                        Instant valuations, growth forecasts & secure market analysis-all powered by AI.
+                    </p>                </header>
+                      <!-- Main visualization panel - centered and responsive -->
+                    <div class="bg-white/60 backdrop-blur-md border border-slate-200/50 rounded-2xl p-4 sm:p-6 overflow-hidden relative mb-8 shadow-lg mx-auto max-w-4xl" data-animation="fade-in-up" data-delay="400">
+                        <!-- Chart visualization image - improved responsiveness -->
+                        <div class="h-60 sm:h-72 relative mb-4 sm:mb-6">
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <img src="/figma design exports/images/Arzanigraphimage.webp" alt="Arzani Graph Analysis" class="w-full h-full object-contain rounded-lg" />
+                            </div>
+                        </div>
+                        
+                        <!-- AI Insight overlay - centered and responsive -->
+                        <div class="ai-insight-overlay bg-white backdrop-blur-md border-2 border-blue-300/70 rounded-2xl p-4 sm:p-5 shadow-lg mb-4 sm:mb-6 relative transform transition-all duration-500 hover:scale-[1.02] mx-auto max-w-3xl" data-animation="fade-in-up" data-delay="600">
+                            <!-- Enhanced speech bubble arrow with gradient - centered for mobile -->
+                            <div class="absolute -top-5 left-1/2 sm:left-1/4 transform -translate-x-1/2 w-8 sm:w-10 h-8 sm:h-10 rotate-45 bg-gradient-to-br from-white to-white border-l-2 border-t-2 border-blue-300/70 shadow-sm"></div>
+                            
+                            <div class="ai-insight-header flex items-center mb-3 justify-center sm:justify-start text-left">
+                                <div class="w-9 h-9 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 overflow-hidden flex items-center justify-center mr-3 shadow-md">
+                                    <img src="/figma design exports/images.webp/arzani-icon-nobackground.png" alt="Arzani AI" class="w-6 h-6 object-contain">
+                                </div>
+                                <div>
+                                    <p class="font-bold text-base ai-insight-title text-slate-800">AI Insight</p>
+                                    <p class="text-xs text-slate-500">Updated just now</p>
+                                </div>
+                            </div>
+                              <div class="ai-insight-text ai-insight-content text-slate-700 space-y-3 text-left">
+                                <p class="font-medium text-sm sm:text-base"><span class="text-green-600 font-bold">+28% growth</span> in Q2 compared to industry average - consider <span class="underline decoration-green-400 decoration-2 cursor-pointer">scaling digital channels</span> based on performance data.</p>
+                                
+                                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-slate-50 p-2 sm:p-3 rounded-lg border border-slate-100">
+                                    <div>
+                                        <span class="text-xs sm:text-sm text-slate-500">Business Valuation</span>
+                                        <div class="flex items-baseline flex-wrap">
+                                            <span class="text-base sm:text-lg font-bold text-slate-900">£1,245,000</span>
+                                            <span class="ml-2 text-green-600 text-xs sm:text-sm">+£45K this quarter</span>
+                                        </div>
+                                    </div>
+                                    <div class="ml-auto mt-2 sm:mt-0 text-green-500">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 sm:h-8 sm:w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                        </svg>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 mt-2">
+                                    <div class="flex-1 bg-slate-50 p-2 sm:p-3 rounded-lg border border-slate-100">
+                                        <p class="text-xs sm:text-sm text-slate-500">Digital ROI</p>
+                                        <p class="font-bold text-indigo-600">3.2x</p>
+                                    </div>
+                                    <div class="flex-1 bg-slate-50 p-2 sm:p-3 rounded-lg border border-slate-100">
+                                        <p class="text-sm text-slate-500">Growth Potential</p>
+                                        <p class="font-bold text-purple-600">High</p>
+                                    </div>
+                                </div>
+                            </div>                        </div>
+                        
+                        <!-- Interactive metrics dashboard with improved mobile responsiveness -->
+                        <!-- Enhanced interactive time filter with improved responsive design -->
+                        <div class="mb-4 sm:mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-3 sm:space-y-0">
+                            <div class="flex items-center">
+                                <h4 class="font-semibold text-slate-800 text-sm sm:text-base">Performance Metrics</h4>
+                                <div class="relative ml-2 group">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5 text-slate-400 cursor-pointer" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                                    </svg>
+                                    <div class="absolute left-0 bottom-full mb-2 w-48 bg-white rounded-lg shadow-lg p-3 text-xs text-slate-600 hidden group-hover:block z-10">
+                                        These metrics are calculated based on your business data and industry benchmarks.
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Mobile-friendly time filter -->
+                            <div class="time-filter flex flex-wrap items-center bg-white rounded-full overflow-hidden border border-slate-200 text-xs sm:text-sm shadow-sm w-full sm:w-auto">
+                                <button class="flex-1 sm:flex-initial px-3 sm:px-4 py-1.5 sm:py-2 text-slate-600 hover:bg-blue-50 transition-all active-filter font-medium relative text-center" data-filter="jan-aug">
+                                    Jan–Aug
+                                    <span class="absolute bottom-0 left-0 w-full h-0.5 bg-blue-500 transform scale-x-0 transition-transform origin-left group-active:scale-x-100"></span>
+                                </button>
+                                <button class="flex-1 sm:flex-initial px-3 sm:px-4 py-1.5 sm:py-2 text-slate-600 hover:bg-blue-50 transition-all font-medium relative text-center" data-filter="last-12">
+                                    Last 12 Months
+                                    <span class="absolute bottom-0 left-0 w-full h-0.5 bg-blue-500 transform scale-x-0 transition-transform origin-left group-active:scale-x-100"></span>
+                                </button>
+                                <button class="flex-1 sm:flex-initial px-3 sm:px-4 py-1.5 sm:py-2 text-slate-600 hover:bg-blue-50 transition-all font-medium relative text-center" data-filter="quarter">
+                                    Last Quarter
+                                    <span class="absolute bottom-0 left-0 w-full h-0.5 bg-blue-500 transform scale-x-0 transition-transform origin-left group-active:scale-x-100"></span>
+                                </button>
+                            </div>                        </div>
+                          <!-- Enhanced interactive metrics dashboard with better responsive layout -->
+                        <div class="metrics-dashboard grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4" data-animation="fade-in-up" data-delay="700">
+                            <div class="bg-white rounded-xl p-3 sm:p-5 border border-slate-200 revenue-metric shadow-md transform transition-all duration-300 hover:scale-105 hover:shadow-lg relative" data-animation="slide-in-left" data-delay="800">
+                                <!-- Annotation badge -->
+                                <div class="absolute -top-2 -right-2 w-5 h-5 sm:w-6 sm:h-6 bg-green-500 rounded-full flex items-center justify-center shadow-md z-10 cursor-pointer metric-tooltip-trigger" data-tooltip="This outperforms 92% of similar businesses in your sector">
+                                    <span class="text-white font-bold text-xs">i</span>
+                                </div>
+                                <div class="metric-tooltip hidden absolute top-0 right-0 w-36 sm:w-48 bg-slate-800 text-white p-2 sm:p-3 rounded-lg text-xs transform translate-y-[-100%] z-20">
+                                    This outperforms 92% of similar businesses in your sector
+                                </div>
+                                
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="data-labels text-slate-700 font-semibold text-xs sm:text-sm">Revenue Growth</span>
+                                    <span class="text-green-600 data-value font-bold text-xl sm:text-2xl" data-count-value="24.5" data-count-suffix="%">0%</span>
+                                </div>
+                                
+                                <div class="mt-2 sm:mt-3 h-3 sm:h-4 bg-slate-100 rounded-full overflow-hidden">
+                                    <div class="metric-progress-bar h-full bg-gradient-to-r from-green-400 to-green-600 rounded-full transition-all duration-2000 ease-out relative" style="width: 0%" data-target-width="75%">
+                                        <div class="absolute inset-0 bg-white/20 shine-effect"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-2 sm:mt-3 flex items-center justify-between text-xs sm:text-sm">                                <div class="flex flex-col">
+                                        <span class="text-slate-500">Industry avg</span>
+                                        <span class="font-medium">16.2%</span>
+                                    </div>
+                                    <div class="flex items-center text-green-600 font-medium bg-green-50 px-2 py-1 rounded-full">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd" />
+                                        </svg>
+                                        +8.3%
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-white rounded-xl p-3 sm:p-5 border border-slate-200 market-metric shadow-md transform transition-all duration-300 hover:scale-105 hover:shadow-lg" data-animation="slide-in-up" data-delay="900">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="data-labels text-slate-700 font-semibold text-xs sm:text-sm">Market Share</span>
+                                    <span class="text-blue-600 data-value font-bold text-xl sm:text-2xl" data-count-value="12.8" data-count-suffix="%">0%</span>
+                                </div>
+                                
+                                <div class="mt-2 sm:mt-3 h-3 sm:h-4 bg-slate-100 rounded-full overflow-hidden">
+                                    <div class="metric-progress-bar h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full transition-all duration-2000 ease-out relative" style="width: 0%" data-target-width="45%">
+                                        <div class="absolute inset-0 bg-white/20 shine-effect"></div>
+                                    </div>
+                                </div>
+                                  <div class="mt-2 sm:mt-3 flex items-center justify-between text-xs sm:text-sm">
+                                    <div class="flex flex-col">
+                                        <span class="text-slate-500">Started at</span>
+                                        <span class="font-medium">8.5%</span>
+                                    </div>
+                                    <div class="flex items-center text-blue-600 font-medium bg-blue-50 px-2 py-1 rounded-full">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd" />
+                                        </svg>
+                                        +4.3%
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-white rounded-xl p-3 sm:p-5 border border-slate-200 retention-metric shadow-md transform transition-all duration-300 hover:scale-105 hover:shadow-lg relative" data-animation="slide-in-right" data-delay="1000">
+                                <!-- Annotation flag -->
+                                <div class="absolute -top-2 -right-2 w-auto h-5 sm:h-6 bg-purple-600 text-white text-xs font-medium px-2 rounded-full flex items-center shadow-md z-10">
+                                    <span>Top 5%</span>
+                                </div>
+                                
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="data-labels text-slate-700 font-semibold text-xs sm:text-sm">Customer Retention</span>
+                                    <span class="text-purple-600 data-value font-bold text-xl sm:text-2xl" data-count-value="68" data-count-suffix="%">0%</span>
+                                </div>
+                                
+                                <div class="mt-2 sm:mt-3 h-3 sm:h-4 bg-slate-100 rounded-full overflow-hidden">
+                                    <div class="metric-progress-bar h-full bg-gradient-to-r from-purple-400 to-purple-600 rounded-full transition-all duration-2000 ease-out relative" style="width: 0%" data-target-width="68%">
+                                        <div class="absolute inset-0 bg-white/20 shine-effect"></div>
+                                    </div>
+                                </div>
+                                  <div class="mt-2 sm:mt-3 flex items-center justify-between text-xs sm:text-sm">
+                                    <div class="flex flex-col">
+                                        <span class="text-slate-500">Previous</span>
+                                        <span class="font-medium">62%</span>
+                                    </div>
+                                    <div class="flex items-center text-purple-600 font-medium bg-purple-50 px-2 py-1 rounded-full">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd" />
+                                        </svg>
+                                        +6%
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                          <!-- Add JavaScript for enhanced counters, tooltips, and improved filter functionality -->
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                // Enhanced animated counters with easing function
+                                const countElements = document.querySelectorAll('.data-value');
+                                
+                                function animateCounters() {
+                                    countElements.forEach(element => {
+                                        const targetValue = parseFloat(element.getAttribute('data-count-value'));
+                                        const suffix = element.getAttribute('data-count-suffix') || '';
+                                        let startValue = 0;
+                                        let currentValue = 0;
+                                        const duration = 2500; // 2.5 seconds
+                                        const framesPerSecond = 60;
+                                        const totalFrames = duration / (1000 / framesPerSecond);
+                                        let frame = 0;
+                                        
+                                        // Easing function for more natural animation
+                                        function easeOutQuad(t) {
+                                            return t * (2 - t);
+                                        }
+                                        
+                                        const counter = setInterval(() => {
+                                            frame++;
+                                            // Apply easing for smoother animation
+                                            const progress = easeOutQuad(frame / totalFrames);
+                                            currentValue = startValue + (targetValue - startValue) * progress;
+                                            
+                                            if (frame >= totalFrames) {
+                                                currentValue = targetValue;
+                                                clearInterval(counter);
+                                                
+                                                // Add a pulse effect when counter completes
+                                                element.classList.add('pulse-once');
+                                                setTimeout(() => {
+                                                    element.classList.remove('pulse-once');
+                                                }, 1000);
+                                            }
+                                            
+                                            // Format with appropriate decimal places
+                                            const formattedValue = targetValue >= 10 
+                                                ? currentValue.toFixed(1) 
+                                                : currentValue.toFixed(2);
+                                                
+                                            element.textContent = formattedValue + suffix;
+                                        }, 1000 / framesPerSecond);
+                                    });
+                                }
+                                
+                                // Initialize tooltips for metric annotations
+                                const tooltipTriggers = document.querySelectorAll('.metric-tooltip-trigger');
+                                
+                                tooltipTriggers.forEach(trigger => {
+                                    const tooltip = trigger.nextElementSibling;
+                                    
+                                    trigger.addEventListener('mouseenter', () => {
+                                        tooltip.classList.remove('hidden');
+                                    });
+                                    
+                                    trigger.addEventListener('mouseleave', () => {
+                                        tooltip.classList.add('hidden');
+                                    });
+                                });
+                                
+                                // Animate when in viewport with improved IntersectionObserver
+                                const observerOptions = {
+                                    root: null,
+                                    rootMargin: '0px',
+                                    threshold: 0.1 // Trigger when at least 10% of the element is visible
+                                };
+                                
+                                const observer = new IntersectionObserver((entries) => {
+                                    entries.forEach(entry => {
+                                        if (entry.isIntersecting) {
+                                            // Start animations when visible
+                                            animateCounters();
+                                            
+                                            // Also animate progress bars
+                                            const progressBars = document.querySelectorAll('.metric-progress-bar');
+                                            progressBars.forEach(bar => {
+                                                const targetWidth = bar.getAttribute('data-target-width');
+                                                bar.style.width = '0%';
+                                                setTimeout(() => {
+                                                    bar.style.width = targetWidth;
+                                                }, 100);
+                                            });
+                                            
+                                            // Disconnect after animating to prevent re-triggering
+                                            observer.disconnect();
+                                        }
+                                    });
+                                }, observerOptions);
+                                
+                                // Observe the metrics dashboard
+                                const metricsDashboard = document.querySelector('.metrics-dashboard');
+                                if (metricsDashboard) {
+                                    observer.observe(metricsDashboard);
+                                }
+                                
+                                // Enhanced time filter functionality with better user feedback
+                                const filterButtons = document.querySelectorAll('.time-filter button');
+                                filterButtons.forEach(button => {
+                                    button.addEventListener('click', function() {
+                                        // Show a loading state briefly
+                                        const metricCards = document.querySelectorAll('.metrics-dashboard > div');
+                                        metricCards.forEach(card => card.classList.add('opacity-50'));
+                                        
+                                        // Remove active class from all buttons
+                                        filterButtons.forEach(btn => btn.classList.remove('active-filter', 'bg-blue-50', 'text-blue-600'));
+                                        
+                                        // Add active class to clicked button
+                                        this.classList.add('active-filter', 'bg-blue-50', 'text-blue-600');
+                                        
+                                        // Brief delay to show loading state
+                                        setTimeout(() => {
+                                            // Update data based on filter
+                                            const filter = this.getAttribute('data-filter');
+                                            updateMetricsData(filter);
+                                            
+                                            // Remove loading state
+                                            metricCards.forEach(card => card.classList.remove('opacity-50'));
+                                        }, 300);
+                                    });
+                                });
+                                  function updateMetricsData(filter) {
+                                    // This would typically fetch data from an API
+                                    // For demo purposes, we'll use enhanced predefined values with more variation
+                                    let data = {
+                                        'jan-aug': {
+                                            revenue: { 
+                                                value: 24.5, 
+                                                targetWidth: '75%',
+                                                comparison: '+8.3%',
+                                                baseline: '16.2%',
+                                                baselineLabel: 'Industry avg'
+                                            },
+                                            market: { 
+                                                value: 12.8, 
+                                                targetWidth: '45%',
+                                                comparison: '+4.3%',
+                                                baseline: '8.5%',
+                                                baselineLabel: 'Started at'
+                                            },
+                                            retention: { 
+                                                value: 68, 
+                                                targetWidth: '68%',
+                                                comparison: '+6%',
+                                                baseline: '62%',
+                                                baselineLabel: 'Previous'
+                                            }
+                                        },
+                                        'last-12': {
+                                            revenue: { 
+                                                value: 31.2, 
+                                                targetWidth: '85%',
+                                                comparison: '+12.7%',
+                                                baseline: '18.5%',
+                                                baselineLabel: 'Industry avg'
+                                            },
+                                            market: { 
+                                                value: 14.3, 
+                                                targetWidth: '52%',
+                                                comparison: '+5.8%',
+                                                baseline: '8.5%',
+                                                baselineLabel: 'Started at'
+                                            },
+                                            retention: { 
+                                                value: 72, 
+                                                targetWidth: '72%',
+                                                comparison: '+10%',
+                                                baseline: '62%',
+                                                baselineLabel: 'Previous'
+                                            }
+                                        },
+                                        'quarter': {
+                                            revenue: { 
+                                                value: 18.7, 
+                                                targetWidth: '60%',
+                                                comparison: '+5.9%',
+                                                baseline: '12.8%',
+                                                baselineLabel: 'Industry avg'
+                                            },
+                                            market: { 
+                                                value: 11.5, 
+                                                targetWidth: '40%',
+                                                comparison: '+3.0%',
+                                                baseline: '8.5%',
+                                                baselineLabel: 'Started at'
+                                            },
+                                            retention: { 
+                                                value: 65, 
+                                                targetWidth: '65%',
+                                                comparison: '+3%',
+                                                baseline: '62%',
+                                                baselineLabel: 'Previous'
+                                            }
+                                        }
+                                    };
+                                    
+                                    // Get updated AI insight text based on filter
+                                    const insightTexts = {
+                                        'jan-aug': "Your Jan-Aug growth is <span class='text-green-600 font-bold'>24.5% above industry average</span> - consider <span class='underline decoration-green-400 decoration-2 cursor-pointer'>doubling down on digital channels</span>.",
+                                        'last-12': "Your 12-month growth rate is <span class='text-green-600 font-bold'>31.2% above average</span> - you're outpacing 94% of similar businesses.",
+                                        'quarter': "This quarter shows <span class='text-green-600 font-bold'>18.7% growth</span> - focus on customer retention to maintain momentum."
+                                    };
+                                    
+                                    // Update the insight text
+                                    const insightTextElement = document.querySelector('.ai-insight-content p:first-child');
+                                    if (insightTextElement) {
+                                        insightTextElement.innerHTML = insightTexts[filter];
+                                    }
+                                    
+                                    // Update the metrics dashboard with enhanced animation
+                                    const metrics = document.querySelectorAll('.metrics-dashboard > div');
+                                    if (metrics.length >= 3) {
+                                        // Revenue metrics
+                                        updateMetricCard(metrics[0], data[filter].revenue, 'green');
+                                        
+                                        // Market share metrics
+                                        updateMetricCard(metrics[1], data[filter].market, 'blue');
+                                        
+                                        // Retention metrics
+                                        updateMetricCard(metrics[2], data[filter].retention, 'purple');
+                                        
+                                        // Re-animate counters with a slight delay for visual feedback
+                                        setTimeout(() => {
+                                            animateCounters();
+                                        }, 200);
+                                    }
+                                }
+                                
+                                function updateMetricCard(card, data, color) {
+                                    // Update value
+                                    const valueElement = card.querySelector('.data-value');
+                                    valueElement.setAttribute('data-count-value', data.value);
+                                    valueElement.textContent = '0' + (valueElement.getAttribute('data-count-suffix') || '');
+                                    
+                                    // Update progress bar with animation
+                                    const progressBar = card.querySelector('.metric-progress-bar');
+                                    progressBar.style.width = '0%';
+                                    progressBar.setAttribute('data-target-width', data.targetWidth);
+                                    setTimeout(() => {
+                                        progressBar.style.width = data.targetWidth;
+                                    }, 300);
+                                    
+                                    // Update comparison text
+                                    const comparisonElement = card.querySelector('.flex-items-center');
+                                    if (comparisonElement) {
+                                        const comparisonTextElement = comparisonElement.querySelector('svg + span, span:last-child');
+                                        if (comparisonTextElement) {
+                                            comparisonTextElement.textContent = data.comparison;
+                                        }
+                                    }
+                                    
+                                    // Update baseline value and label
+                                    const baselineLabel = card.querySelector('.flex-col span:first-child');
+                                    const baselineValue = card.querySelector('.flex-col span:last-child');
+                                    
+                                    if (baselineLabel) baselineLabel.textContent = data.baselineLabel;
+                                    if (baselineValue) baselineValue.textContent = data.baseline;
+                                    
+                                    // Add a subtle highlight animation
+                                    card.classList.add('highlight-pulse');
+                                    setTimeout(() => {
+                                        card.classList.remove('highlight-pulse');
+                                    }, 1000);
+                                }
+                            });
+                        </script>
+                        
+                        <!-- CSS for new animations and effects -->
+                        <style>
+                            .pulse-once {
+                                animation: pulse-animation 1s ease-in-out;
+                            }
+                            
+                            @keyframes pulse-animation {
+                                0% { transform: scale(1); }
+                                50% { transform: scale(1.15); }
+                                100% { transform: scale(1); }
+                            }
+                            
+                            .highlight-pulse {
+                                animation: highlight-animation 1s ease-in-out;
+                            }
+                            
+                            @keyframes highlight-animation {
+                                0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.3); }
+                                70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+                                100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+                            }
+                              .shine-effect {
+                                position: absolute;
+                                top: 0;
+                                left: -100%;
+                                width: 100%;
+                                height: 100%;
+                                background: linear-gradient(
+                                    90deg,
+                                    rgba(255,255,255,0) 0%,
+                                    rgba(255,255,255,0.2) 50%,
+                                    rgba(255,255,255,0) 100%
+                                );
+                                animation: shine 2s infinite linear;
+                            }
+                            
+                            @keyframes shine {
+                                0% { left: -100%; }
+                                100% { left: 100%; }
+                            }
+                            
+                            .animate-pulse-slow {
+                                animation: pulse 6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+                            }
+                            
+                            .animation-delay-1000 {
+                                animation-delay: 1s;
+                            }
+                            
+                            .animation-delay-2000 {
+                                animation-delay: 2s;
+                            }
+                            
+                            @keyframes pulse {
+                                0%, 100% {
+                                    opacity: 0.7;
+                                    transform: scale(1);
+                                }
+                                50% {
+                                    opacity: 0.5;
+                                    transform: scale(1.05);
+                                }
+                            }                        </style>
+                        
+                        <!-- Animations for the sticky CTA button -->
+                        <style>
+                            .animate-pulse-gentle {
+                                animation: pulse-gentle 3s ease-in-out infinite;
+                            }
+                            
+                            @keyframes pulse-gentle {
+                                0%, 100% {
+                                    transform: scale(1);
+                                    box-shadow: 0 4px 6px rgba(6, 79, 163, 0.2);
+                                }
+                                50% {
+                                    transform: scale(1.03);
+                                    box-shadow: 0 8px 15px rgba(6, 79, 163, 0.35);
+                                }
+                            }
+                            
+                            /* Smooth transition for sticky behavior */
+                            .sticky-cta {
+                                transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                            }
+                            
+                            .sticky-cta.fixed {
+                                position: fixed;
+                                transform-origin: center;
+                            }
+                            
+                            /* Add shine effect to CTA button */
+                            .journey-cta-primary {
+                                position: relative;
+                                overflow: hidden;
+                            }
+                            
+                            .journey-cta-primary::after {
+                                content: '';
+                                position: absolute;
+                                top: 0;
+                                left: -100%;
+                                width: 100%;
+                                height: 100%;
+                                background: linear-gradient(
+                                    90deg,
+                                    rgba(255,255,255,0) 0%,
+                                    rgba(255,255,255,0.2) 50%,
+                                    rgba(255,255,255,0) 100%
+                                );
+                                transition: left 0.5s;
+                            }
+                            
+                            .journey-cta-primary:hover::after {
+                                left: 100%;
+                                transition: left 0.8s ease;
+                            }
+                        </style>
+                    </div>
+                </article>
+            
+                       
+            
+            
+            <!-- Enhanced sticky behavior script with improved tracking -->            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const stickyCTA = document.getElementById('stickyCTA');
+                    const ctaWrapper = document.getElementById('stickyCTAWrapper');
+                    const ctaCountdown = document.getElementById('ctaCountdown');
+                    const originalPosition = ctaWrapper.offsetTop;
+                    const aiSection = document.querySelector('.ai-hero-section');
+                    const featureSection = document.querySelector('#features-section');
+                    
+                    // Track when user has seen the CTA
+                    let hasInteractedWithCTA = false;
+                    
+                    // Add gentle pulse animation to make the button more noticeable
+                    if (stickyCTA) {
+                        setTimeout(() => {
+                            stickyCTA.classList.add('animate-pulse-gentle');
+                        }, 2000);
+                    }
+                    
+                    // Show countdown after a delay for better engagement
+                    if (ctaCountdown) {
+                        setTimeout(() => {
+                            ctaCountdown.classList.remove('opacity-0');
+                        }, 3000);
+                    }
+                    
+                    // Improved scroll tracking with smooth transitions and better boundaries
+                    window.addEventListener('scroll', function() {
+                        const scrollPosition = window.pageYOffset;
+                        const aiSectionBottom = aiSection.offsetTop + aiSection.offsetHeight;
+                        const viewportHeight = window.innerHeight;
+                        
+                        // Calculate if we're in the valid scroll range: after seeing enough of the AI section
+                        // but before reaching the features section
+                        const scrolledPastContent = scrollPosition > (originalPosition + 250);
+                        const notYetAtFeatures = featureSection ? scrollPosition < (featureSection.offsetTop - 100) : true;
+                        const inViewThreshold = scrollPosition > (aiSection.offsetTop + 300);
+                        
+                        if (scrolledPastContent && notYetAtFeatures && inViewThreshold) {
+                            // Enhanced sticky behavior with improved animation
+                            stickyCTA.classList.add('fixed', 'bottom-10', 'right-8', 'z-50');
+                            stickyCTA.classList.add('shadow-lg', 'scale-105');
+                            
+                            // Add subtle pulse effect for visibility
+                            if (!hasInteractedWithCTA) {
+                                stickyCTA.classList.add('shadow-[0_6px_16px_rgba(6,79,163,0.35)]');
+                                ctaCountdown.classList.remove('opacity-0');
+                            }
+                        } else {
+                            // Return to normal position with smooth transition
+                            stickyCTA.classList.remove('fixed', 'bottom-10', 'right-8', 'z-50');
+                            stickyCTA.classList.remove('shadow-lg', 'scale-105', 'shadow-[0_6px_16px_rgba(6,79,163,0.35)]');
+                            ctaCountdown.classList.add('opacity-0');
+                        }
+                    });
+                    
+                    // Track CTA interaction to stop animations once user has engaged
+                    stickyCTA.addEventListener('click', function() {
+                        hasInteractedWithCTA = true;
+                        stickyCTA.classList.remove('animate-pulse-gentle');
+                        localStorage.setItem('hasInteractedWithCTA', 'true');
+                    });
+                    
+                    // Check if user has previously interacted with CTA
+                    if (localStorage.getItem('hasInteractedWithCTA') === 'true') {
+                        hasInteractedWithCTA = true;
+                        stickyCTA.classList.remove('animate-pulse-gentle');
+                    }
+                    
+                    // Countdown timer for urgency with better formatting
+                    function startCountdown() {
+                        let hours = 23;
+                        let minutes = 59;
+                        let seconds = 59;
+                        
+                        const countdownTimer = setInterval(function() {
+                            seconds--;
+                            
+                            if (seconds < 0) {
+                                minutes--;
+                                seconds = 59;
+                            }
+                            
+                            if (minutes < 0) {
+                                hours--;
+                                minutes = 59;
+                            }
+                            
+                            if (hours < 0) {
+                                clearInterval(countdownTimer);
+                                return;
+                            }
+                            
+                            const formattedTime = 
+                                (hours < 10 ? '0' + hours : hours) + ':' + 
+                                (minutes < 10 ? '0' + minutes : minutes) + ':' + 
+                                (seconds < 10 ? '0' + seconds : seconds);
+                            
+                            const countdownValue = document.querySelector('.countdown-value');
+                            if (countdownValue) {
+                                countdownValue.textContent = formattedTime;
+                            }
+                        }, 1000);
+                    }
+                    
+                    // Start countdown when scrolled to section
+                    const observer = new IntersectionObserver((entries) => {
+                        entries.forEach(entry => {
+                            if (entry.isIntersecting) {
+                                startCountdown();
+                                observer.disconnect();
+                            }
+                        });
+                    });
+                      observer.observe(ctaWrapper);
+                });
+            </script>
+            
+            <!-- Mobile responsive CTA button below content on small screens -->
+            <div class="mt-8 text-center block sm:hidden">
+                <a href="/seller-questionnaire" class="inline-block bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-3 px-6 rounded-lg shadow-lg transform transition-all duration-300 hover:scale-105">
+                    Get Your Valuation
+                </a>
+            </div>
+            </aside>
+        </div>
+    </div>
+</section><!-- Features Section with interactive cards -->
+        <section class="py-24 bg-black relative overflow-hidden" id="features-section" data-section-animation="features">
             <div class="absolute top-0 left-0 w-full h-full opacity-10">
                 <div class="grid-pattern"></div>
             </div>
             
             <div class="container mx-auto px-6 relative z-10">
-                <div class="text-center mb-16">
-                    <h2 class="text-3xl md:text-5xl font-bold mb-6">Powerful features to streamline business transactions</h2>
-                    <p class="text-xl text-gray-300 max-w-3xl mx-auto">Discover the tools that set Arzani apart and help you make smarter decisions</p>
+                <div class="text-center mb-16" data-scroll-animation="fadeInUp" data-animation-delay="0">
+                    <h2 class="text-3xl md:text-5xl font-bold mb-6" data-scroll-animation="slideInUp" data-animation-delay="200"><span class="text-gradient-animated">Powerful Tools</span> for Business Success</h2>
+                    <p class="text-xl text-gray-300 max-w-3xl mx-auto" data-scroll-animation="fadeInUp" data-animation-delay="400">Our AI-powered platform delivers the insights and analytics you need to maximize your business value</p>
+                </div>
+                  <!-- Feature Cards Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8" data-scroll-animation="staggeredChildren" data-stagger="200">                    <!-- Feature Card 1 - Real-time Valuation -->
+                    <div class="feature-card bg-dark-light/30 backdrop-blur-sm rounded-xl overflow-hidden border border-gray-800/50 h-full flex flex-col transition-all duration-300" tabindex="0" data-knowledgegraphmemory="feature-valuation" data-scroll-animation="slideInLeft" data-animation-delay="0">
+                        <div class="relative p-1">
+                            <div class="glow-circle absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"></div>
+                            <img src="/figma design exports/images/pose1 no background.png" alt="Real-time Valuation" class="h-48 w-full object-contain z-10">
+                        </div>
+                        <div class="p-6 flex-grow">
+                            <h3 class="text-2xl font-bold mb-3">Smart Valuation</h3>
+                            <p class="text-gray-300">Get accurate, data-driven business valuations in minutes, not weeks. Our AI analyzes thousands of comparable sales to maximize your business's market value.</p>
+                            <div class="mt-4 flex items-center text-blue-400 text-sm font-medium">
+                                <span>Increase value by 22% on average</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Feature Card 2 - Growth Analysis -->
+                    <div class="feature-card bg-dark-light/30 backdrop-blur-sm rounded-xl overflow-hidden border border-gray-800/50 h-full flex flex-col transition-all duration-300" tabindex="0" data-knowledgegraphmemory="feature-growth" data-scroll-animation="slideInUp" data-animation-delay="200">
+                        <div class="relative p-1">
+                            <div class="glow-circle purple absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"></div>
+                            <img src="/figma design exports/images/pose2 no background.png" alt="Growth Analysis" class="h-48 w-full object-contain z-10">
+                        </div>
+                        <div class="p-6 flex-grow">
+                            <h3 class="text-2xl font-bold mb-3">Growth Intelligence</h3>
+                            <p class="text-gray-300">Uncover hidden growth opportunities with predictive analytics that identify trends before they emerge. Make data-driven decisions that boost your business value.</p>
+                            <div class="mt-4 flex items-center text-purple-400 text-sm font-medium">
+                                <span>Discover 3x more growth opportunities</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Feature Card 3 - Market Sentiment -->
+                    <div class="feature-card bg-dark-light/30 backdrop-blur-sm rounded-xl overflow-hidden border border-gray-800/50 h-full flex flex-col transition-all duration-300" tabindex="0" data-knowledgegraphmemory="feature-sentiment" data-scroll-animation="slideInRight" data-animation-delay="400">
+                        <div class="relative p-1">
+                            <div class="glow-circle green absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"></div>
+                            <img src="/figma design exports/images/pose 3 magnifying glass no background 1.png" alt="Market Sentiment" class="h-48 w-full object-contain z-10">
+                        </div>
+                        <div class="p-6 flex-grow">
+                            <h3 class="text-2xl font-bold mb-3">Market Pulse</h3>
+                            <p class="text-gray-300">Time your market entry perfectly with real-time sentiment analysis. Know exactly when buyer demand is highest for maximum leverage in negotiations.</p>
+                            <div class="mt-4 flex items-center text-green-400 text-sm font-medium">
+                                <span>Close deals 37% faster</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>        </section>            <section class="journey-section journey-section-solid-bg py-20 md:py-32" aria-label="Business Success Journey" data-section-animation="journey">
+                <!-- Background elements with improved layering -->
+                <div class="absolute inset-0 bg-white z-[-1]"></div>
+                <div class="journey-section-background"></div>
+                
+                <!-- Enhanced decorative elements -->
+                <div class="bg-decoration-circle purple"></div>
+                <div class="bg-decoration-circle blue"></div>
+                <div class="bg-decoration-circle teal"></div>
+                
+                <!-- New background glow accent element -->
+                <div class="glow-accent" aria-hidden="true"></div>
+                
+                <!-- Improved grid pattern with better opacity -->
+                <div class="absolute inset-0 z-0 opacity-3">
+                    <div class="grid-pattern-white"></div>
                 </div>
                 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <!-- Feature card 1 - Real-time Valuation -->
-                    <div class="feature-card bg-dark-light/40 rounded-2xl p-8 backdrop-blur-sm border border-gray-800 transition-all hover:border-primary/30 flex flex-col" data-animation="fade-in-up" data-delay="300">
-                        <div class="flex-grow flex items-center justify-center mb-8 relative h-56">
-                            <div class="absolute w-full h-full flex items-center justify-center">
-                                <div class="glow-circle"></div>
+                <div class="container mx-auto px-4 md:px-8 relative z-10">
+                    <!-- Enhanced section header with animation -->
+                    <header class="text-center mb-16 md:mb-20" data-scroll-animation="fadeInUp" data-animation-delay="0">
+                        <h2 class="text-4xl md:text-5xl font-bold mb-6 text-gray-900" data-scroll-animation="slideInUp" data-animation-delay="200">Your journey to <span class="text-gradient-animated">business success</span></h2>
+                        <p class="text-gray-700 text-xl leading-relaxed max-w-3xl mx-auto font-medium" data-scroll-animation="fadeInUp" data-animation-delay="400">
+                            Our platform streamlines your path to success with AI-powered tools and insights at every step.
+                        </p>
+                    </header>
+
+                    <!-- Modern journey card grid with improved accessibility -->
+                    <div class="journey-grid" aria-live="polite" data-scroll-animation="staggeredChildren" data-stagger="300">
+                        <!-- Step 1: Explore - Enhanced with better interactions -->
+                        <article class="journey-card" data-step="1" tabindex="0" data-scroll-animation="slideInLeft" data-animation-delay="0">
+                            <div class="journey-card-inner">
+                                <header class="journey-card-header">
+                                    <div class="journey-icon-container" aria-hidden="true">
+                                        <!-- Custom SVG with better styling -->
+                                        <svg class="journey-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M11 19C15.4183 19 19 15.4183 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11C3 15.4183 6.58172 19 11 19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                        <span class="journey-step-number" aria-label="Step 1">1</span>
+                                    </div>
+                                    <h3 class="journey-card-title">Explore</h3>
+                                </header>
+                                <div class="journey-card-content">
+                                    <p class="journey-card-description">
+                                        Discover businesses that match your investment criteria through our AI-powered marketplace. Filter by industry, location, price range, and performance metrics.
+                                    </p>
+                                    <div class="journey-card-visual">
+                                        <div class="journey-visual-header">
+                                            <div class="flex items-center gap-3">
+                                                <div class="journey-visual-icon" aria-hidden="true">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                                        <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                                                    </svg>
+                                                </div>
+                                                <h4>Matching Businesses</h4>
+                                            </div>
+                                            <div class="journey-badge">Top Match</div>
+                                        </div>
+                                        <div class="journey-visual-grid">
+                                            <div class="journey-result-card" tabindex="0">
+                                                <div class="journey-result-header">
+                                                    <h5>AI-Marketing Platform</h5>
+                                                    <span class="journey-match-rate">98%</span>
+                                                </div>
+                                                <div class="journey-result-details">
+                                                    <p>MRR: £15,200</p>
+                                                    <p>Growth: +24% YoY</p>
+                                                </div>
+                                            </div>
+                                            <div class="journey-result-card" tabindex="0">
+                                                <div class="journey-result-header">
+                                                    <h5>Analytics Dashboard</h5>
+                                                    <span class="journey-match-rate">92%</span>
+                                                </div>
+                                                <div class="journey-result-details">
+                                                    <p>MRR: £12,800</p>
+                                                    <p>Growth: +18% YoY</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="journey-card-footer">
+                                    <div class="journey-card-progress">
+                                        <div class="journey-step-indicator"></div>
+                                        <div class="journey-step-indicator"></div>
+                                        <div class="journey-step-indicator"></div>
+                                    </div>
+                                </div>
                             </div>
-                            <img src="/figma design exports/images/pose1 no background.png" alt="Real-time Valuation" class="max-h-full object-contain z-10 transform hover:scale-105 transition-transform">
-                        </div>
-                        <div class="text-center">
-                            <h3 class="text-xl font-bold mb-3">Real-time Valuation</h3>
-                            <p class="text-gray-400">Get instant business valuations based on current market data, comparable sales, and industry-specific metrics.</p>
-                            <a href="/features/insights" class="inline-flex items-center text-primary mt-4 hover:text-primary/80">
-                                Learn more
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                                </svg>
-                            </a>
-                        </div>
+                        </article>
+                          <!-- Step 2: Create - Enhanced with better interactions -->
+                        <article class="journey-card" data-step="2" tabindex="0" data-scroll-animation="slideInUp" data-animation-delay="300">
+                            <div class="journey-card-inner">
+                                <header class="journey-card-header">
+                                    <div class="journey-icon-container" aria-hidden="true">
+                                        <svg class="journey-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M12 5V19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                        <span class="journey-step-number" aria-label="Step 2">2</span>
+                                    </div>
+                                    <h3 class="journey-card-title">Create</h3>
+                                </header>
+                                <div class="journey-card-content">
+                                    <p class="journey-card-description">
+                                        List your business with comprehensive details or create offer proposals with our intelligent templates. Our AI suggests the perfect positioning and valuation for maximum market appeal.
+                                    </p>
+                                    <div class="journey-card-visual">
+                                        <div style="position: relative; width: 100%; aspect-ratio: 16/9;">
+                                            <iframe src="https://app.supademo.com/embed/cm9ihwub02li4ljv5x9uy5g5k?embed_v=2" loading="lazy" title="Create Demo" allow="clipboard-write" frameborder="0" webkitallowfullscreen="true" mozallowfullscreen="true" allowfullscreen class="journey-iframe"></iframe>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="journey-card-footer">
+                                    <div class="journey-card-progress">
+                                        <div class="journey-step-indicator"></div>
+                                        <div class="journey-step-indicator"></div>
+                                        <div class="journey-step-indicator"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
+                          <!-- Step 3: Evaluate - Enhanced with better interactions -->
+                        <article class="journey-card" data-step="3" tabindex="0" data-scroll-animation="slideInRight" data-animation-delay="600">
+                            <div class="journey-card-inner">
+                                <header class="journey-card-header">
+                                    <div class="journey-icon-container" aria-hidden="true">
+                                        <svg class="journey-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M20.24 12.24C21.3658 11.1142 21.9983 9.58722 21.9983 7.99504C21.9983 6.40285 21.3658 4.87588 20.24 3.75004C19.1142 2.62419 17.5872 1.9917 15.995 1.9917C14.4028 1.9917 12.8758 2.62419 11.75 3.75004L5 10.5V19H13.5L20.24 12.24Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M16 8L2 22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M17.5 15H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                        <span class="journey-step-number" aria-label="Step 3">3</span>
+                                    </div>
+                                    <h3 class="journey-card-title">Evaluate</h3>
+                                </header>
+                                <div class="journey-card-content">
+                                    <p class="journey-card-description">
+                                        Perform comprehensive due diligence with our AI analysis tools. Get deep insights into business performance, market position, growth potential, and risk factors.
+                                    </p>
+                                    <div class="journey-card-visual">
+                                        <img src="/figma design exports/images/Arzani-seller-visualiser.webp" alt="Arzani Data and Analysis Visualizer" class="journey-image" loading="lazy" />
+                                        <div class="journey-analysis-metrics">
+                                            <div class="journey-metric-row">
+                                                <div class="journey-metric-label">Retention Analysis</div>
+                                                <div class="journey-metric-value">68%</div>
+                                            </div>
+                                            <div class="journey-progress-bar">
+                                                <div class="journey-progress-fill" style="width: 68%"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="journey-card-footer">
+                                    <div class="journey-card-progress">
+                                        <div class="journey-step-indicator"></div>
+                                        <div class="journey-step-indicator"></div>
+                                        <div class="journey-step-indicator"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
                     </div>
                     
-                    <!-- Feature card 2 - Growth Analysis -->
-                    <div class="feature-card bg-dark-light/40 rounded-2xl p-8 backdrop-blur-sm border border-gray-800 transition-all hover:border-primary/30 flex flex-col" data-animation="fade-in-up" data-delay="400">
-                        <div class="flex-grow flex items-center justify-center mb-8 relative h-56">
-                            <div class="absolute w-full h-full flex items-center justify-center">
-                                <div class="glow-circle purple"></div>
-                            </div>
-                            <img src="/figma design exports/images/pose2 no background.png" alt="Growth Analysis" class="max-h-full object-contain z-10 transform hover:scale-105 transition-transform">
-                        </div>
-                        <div class="text-center">
-                            <h3 class="text-xl font-bold mb-3">Growth Analysis</h3>
-                            <p class="text-gray-400">Identify trends and growth opportunities based on analyzed data from thousands of similar businesses.</p>
-                            <a href="/features/analytics" class="inline-flex items-center text-primary mt-4 hover:text-primary/80">
-                                Learn more
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                                </svg>
+                    <!-- Enhanced Bottom CTA area with better accessibility -->
+                    <footer class="journey-footer" data-animation="fade-in-up">
+                        <h3 class="text-2xl font-bold mb-6 text-gray-900">Ready to transform your business journey?</h3>
+                        <div class="journey-cta-buttons">
+                            <a href="/signup" class="journey-cta-primary" aria-label="Get started with your business valuation">
+                                Get started today
+                            </a>
+                            <a href="/demo" class="journey-cta-secondary" aria-label="See how our platform works">
+                                See how it works
                             </a>
                         </div>
-                    </div>
-                    
-                    <!-- Feature card 3 - Market Sentiment -->
-                    <div class="feature-card bg-dark-light/40 rounded-2xl p-8 backdrop-blur-sm border border-gray-800 transition-all hover:border-primary/30 flex flex-col" data-animation="fade-in-up" data-delay="500">
-                        <div class="flex-grow flex items-center justify-center mb-8 relative h-56">
-                            <div class="absolute w-full h-full flex items-center justify-center">
-                                <div class="glow-circle green"></div>
-                            </div>
-                            <img src="/figma design exports/images/pose 3 magnifying glass no background 1.png" alt="Market Sentiment" class="max-h-full object-contain z-10 transform hover:scale-105 transition-transform">
-                        </div>
-                        <div class="text-center">
-                            <h3 class="text-xl font-bold mb-3">Market Sentiment</h3>
-                            <p class="text-gray-400">Stay on pulse with real-time market sentiment analysis and industry-specific insights to time your transactions perfectly.</p>
-                            <a href="/features/analytics" class="inline-flex items-center text-primary mt-4 hover:text-primary/80">
-                                Learn more
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                                </svg>
-                            </a>
-                        </div>
-                    </div>
+                    </footer>
                 </div>
-            </div>
         </section>
 
-        <!-- How It Works Section - Restructured with Innovative Layout -->
-        <section class="py-16 md:py-32 bg-dark relative overflow-hidden">
-            <!-- Animated background elements -->
-            <div class="absolute -top-80 -right-80 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl"></div>
-            <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/5 rounded-full blur-3xl"></div>
-            
-            <!-- Background grid pattern -->
-            <div class="absolute inset-0 z-0 opacity-10">
-                <div class="grid-pattern"></div>
-            </div>
-            
-            <div class="container mx-auto px-4 md:px-6 relative z-10">
-                <!-- Main heading centered at top -->
-                <div class="text-center mb-20" data-animation="fade-in-up">
-                    <h2 class="text-3xl md:text-5xl font-bold mb-6">Your journey to <span class="text-gradient-animated">business success</span></h2>
-                    <p class="text-gray-400 text-lg leading-relaxed max-w-3xl mx-auto">
-                        Our platform streamlines your path to success with AI-powered tools and insights at every step of your journey.
-                    </p>
-                    <div class="journey-path mt-10">
-                        <div class="journey-line"></div>
-                    </div>
-                </div>
-                
-                <!-- Steps in horizontal cards layout -->
-                <div class="steps-container">
-                    <!-- Step 1: Explore -->
-                    <div class="journey-step" data-scroll-animation>
-                        <div class="journey-step-number">
-                            <span class="step-circle">1</span>
-                            <h3 class="step-title">Explore</h3>
-                        </div>
-                        <div class="journey-step-content">
-                            <p class="text-gray-400 mb-6">
-                                Discover businesses that match your investment criteria through our AI-powered marketplace. Filter by industry, location, price range, and performance metrics to find your perfect match.
-                            </p>
-                            <div class="journey-step-visual bg-dark-light/40 backdrop-blur-md border border-gray-800 rounded-xl overflow-hidden shadow-lg">
-                                <div class="relative p-6">
-                                    <div class="flex justify-between items-center border-b border-gray-700 pb-4 mb-4">
-                                        <div class="flex items-center gap-3">
-                                            <div class="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                                                    <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
-                                                </svg>
-                                            </div>
-                                            <h4 class="text-white font-medium">Exploring Small Businesses</h4>
-                                        </div>
-                                        <div class="flex gap-2">
-                                            <span class="px-2 py-1 rounded-full bg-blue-500/10 text-blue-400 text-xs">Top Match</span>
-                                        </div>
-                                    </div>
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <div class="rounded-lg border border-gray-800 p-3">
-                                            <div class="flex justify-between items-center mb-2">
-                                                <h5 class="font-medium">AI-Marketing Platform</h5>
-                                                <span class="text-green-400">98% match</span>
-                                            </div>
-                                            <div class="text-sm text-gray-400">
-                                                <p>MRR: £15,200</p>
-                                                <p>Growth: +24% YoY</p>
-                                            </div>
-                                        </div>
-                                        <div class="rounded-lg border border-gray-800 p-3">
-                                            <div class="flex justify-between items-center mb-2">
-                                                <h5 class="font-medium">Analytics Dashboard</h5>
-                                                <span class="text-green-400">92% match</span>
-                                            </div>
-                                            <div class="text-sm text-gray-400">
-                                                <p>MRR: £12,800</p>
-                                                <p>Growth: +18% YoY</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Connection element -->
-                    <div class="journey-connection" data-scroll-animation>
-                        <div class="connection-line"></div>
-                        <div class="connection-arrow">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                            </svg>
-                        </div>
-                    </div>
-                    
-                    <!-- Step 2: Create -->
-                    <div class="journey-step" data-scroll-animation>
-                        <div class="journey-step-number">
-                            <span class="step-circle">2</span>
-                            <h3 class="step-title">Create</h3>
-                        </div>
-                        <div class="journey-step-content">
-                            <p class="text-gray-400 mb-6">
-                                List your business with comprehensive details or create offer proposals with our intelligent templates. Our AI suggests the perfect positioning and valuation for maximum market appeal.
-                            </p>
-                            <div class="journey-step-visual bg-dark-light/40 backdrop-blur-md border border-gray-800 rounded-xl overflow-hidden shadow-lg">
-                                <div class="relative p-6">
-                                    <div class="flex justify-between items-center border-b border-gray-700 pb-4 mb-4">
-                                        <div class="flex items-center gap-3">
-                                            <div class="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-purple-400" viewBox="0 0 20 20" fill="currentColor">
-                                                    <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
-                                                    <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" />
-                                                </svg>
-                                            </div>
-                                            <h4 class="text-white font-medium">Business Proposal Draft</h4>
-                                        </div>
-                                        <div class="flex gap-2">
-                                            <span class="px-2 py-1 rounded-full bg-purple-500/10 text-purple-400 text-xs">AI Assisted</span>
-                                        </div>
-                                    </div>
-                                    <div class="flex flex-col gap-3">
-                                        <div class="progress-bar-container w-full bg-gray-700 h-2 rounded-full">
-                                            <div class="progress-bar bg-gradient-to-r from-blue-500 to-purple-500 h-full rounded-full" style="width: 85%"></div>
-                                        </div>
-                                        <div class="flex justify-between text-sm">
-                                            <span class="text-gray-400">Proposal completion</span>
-                                            <span class="text-white">85%</span>
-                                        </div>
-                                        <div class="mt-3 flex gap-2">
-                                            <span class="bg-green-500/10 text-green-400 px-2 py-1 rounded text-xs">Financials</span>
-                                            <span class="bg-green-500/10 text-green-400 px-2 py-1 rounded text-xs">Market Analysis</span>
-                                            <span class="bg-gray-700 text-gray-400 px-2 py-1 rounded text-xs">Legal Review</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Connection element -->
-                    <div class="journey-connection" data-scroll-animation>
-                        <div class="connection-line"></div>
-                        <div class="connection-arrow">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                            </svg>
-                        </div>
-                    </div>
-                    
-                    <!-- Step 3: Evaluate -->
-                    <div class="journey-step" data-scroll-animation>
-                        <div class="journey-step-number">
-                            <span class="step-circle">3</span>
-                            <h3 class="step-title">Evaluate</h3>
-                        </div>
-                        <div class="journey-step-content">
-                            <p class="text-gray-400 mb-6">
-                                Perform comprehensive due diligence with our AI analysis tools. Get deep insights into business performance, market position, growth potential, and risk factors to make informed decisions.
-                            </p>
-                            <div class="journey-step-visual bg-dark-light/40 backdrop-blur-md border border-gray-800 rounded-xl overflow-hidden shadow-lg">
-                                <div class="relative p-6">
-                                    <div class="flex justify-between items-center border-b border-gray-700 pb-4 mb-4">
-                                        <div class="flex items-center gap-3">
-                                            <div class="w-8 h-8 rounded-lg bg-green-500/20 flex items-center justify-center">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                                                    <path fill-rule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 0l-2 2a1 1 0 101.414 1.414L8 10.414l1.293 1.293a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                                                </svg>
-                                            </div>
-                                            <h4 class="text-white font-medium">Business Performance Analysis</h4>
-                                        </div>
-                                        <div class="flex gap-2">
-                                            <span class="px-2 py-1 rounded-full bg-green-500/10 text-green-400 text-xs">Insights Ready</span>
-                                        </div>
-                                    </div>
-                                    <div class="grid grid-cols-2 gap-4">
-                                        <div class="flex flex-col">
-                                            <div class="chart-mini h-24 bg-gradient-to-t from-green-500/10 to-transparent relative">
-                                                <div class="absolute inset-0 flex items-end">
-                                                    <div class="chart-bar bg-green-500/40 w-1/6 h-3/5"></div>
-                                                    <div class="chart-bar bg-green-500/40 w-1/6 h-2/5"></div>
-                                                    <div class="chart-bar bg-green-500/40 w-1/6 h-4/5"></div>
-                                                    <div class="chart-bar bg-green-500/40 w-1/6 h-3/5"></div>
-                                                    <div class="chart-bar bg-green-500/40 w-1/6 h-full"></div>
-                                                    <div class="chart-bar bg-green-500/40 w-1/6 h-4/5"></div>
-                                                </div>
-                                            </div>
-                                            <div class="mt-2">
-                                                <div class="flex justify-between">
-                                                    <span class="text-xs text-gray-400">Revenue Growth</span>
-                                                    <span class="text-xs text-green-400">+24.5%</</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="0flex flex-col">
-                                            <div class="chart-mini h-24 bg-gradient-to-t from-blue-500/10 to-transparent relative">
-                                                <div class="absolute inset-0 flex items-center justify-center">
-                                                    <div class="donut-chart">
-                                                        <div class="donut-segment bg-blue-500/40"></div>
-                                                        <div class="donut-label text-center">
-                                                            <div class="text-xl font-bold">68%</div>
-                                                            <div class="text-xs text-gray-400">Retention</div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="mt-2">
-                                                <div class="flex justify-between">
-                                                    <span class="text-xs text-gray-400">Customer Retention</span>
-                                                    <span class="text-xs text-blue-400">Industry Avg: 52%</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Bottom CTA area -->
-                <div class="mt-16 text-center" data-animation="fade-in-up" data-delay="300">
-                    <h3 class="text-2xl font-bold mb-6">Ready to transform your business journey?</h3>
-                    <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                        <a href="/seller-questionnaire" class="btn-primary">
-                            Get started today
-                        </a>
-                        <a href="/demo" class="btn-secondary">
-                            See how it works
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </section>
+        
 
         <!-- Enhanced Customer Testimonials Section -->
         <section class="testimonials-section py-20 md:py-32 bg-dark relative overflow-hidden">
@@ -1081,28 +1651,27 @@
                         <div class="testimonial-dot"></div>
                     </div>
                 </div>
-                
-                <!-- Testimonial Stats -->
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-6 testimonial-stats">
-                    <div class="stat-item text-center">
+                  <!-- Testimonial Stats -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-6 testimonial-stats" data-scroll-animation="staggeredChildren" data-stagger="150">
+                    <div class="stat-item text-center" data-scroll-animation="fadeInUp" data-animation-delay="0">
                         <p class="text-3xl md:text-4xl font-bold mb-2">
                             <span data-count-up="95" data-duration="2000">0</span>%
                         </p>
                         <p class="text-gray-400 text-sm">Customer satisfaction</p>
                     </div>
-                    <div class="stat-item text-center">
+                    <div class="stat-item text-center" data-scroll-animation="fadeInUp" data-animation-delay="150">
                         <p class="text-3xl md:text-4xl font-bold mb-2">
                             <span data-count-up="2500" data-duration="2500">0</span>+
                         </p>
                         <p class="text-gray-400 text-sm">Businesses analyzed</p>
                     </div>
-                    <div class="stat-item text-center">
+                    <div class="stat-item text-center" data-scroll-animation="fadeInUp" data-animation-delay="300">
                         <p class="text-3xl md:text-4xl font-bold mb-2">
                             <span data-count-up="28" data-duration="1800">0</span>%
                         </p>
                         <p class="text-gray-400 text-sm">Avg. valuation increase</p>
                     </div>
-                    <div class="stat-item text-center">
+                    <div class="stat-item text-center" data-scroll-animation="fadeInUp" data-animation-delay="450">
                         <p class="text-3xl md:text-4xl font-bold mb-2">
                             <span data-count-up="5" data-duration="2200">0</span>M+
                         </p>
@@ -1110,13 +1679,11 @@
                     </div>
                 </div>
             </div>
-        </section>
-
-        <div class="container mx-auto px-4 md:px-6 relative z-10">
-            <div class="text-center mb-12 md:mb-16" data-animation="fade-in-up">
-                <h2 class="text-3xl md:text-5xl font-bold mb-6">What Our <span class="text-gradient-animated">Buyers</span> Say</h2>
-                <p class="text-xl text-gray-300 max-w-3xl mx-auto">
-                    Don't just take our word for it—hear from buyers and investors who have discovered 
+        </section>        <div class="container mx-auto px-4 md:px-6 relative z-10">
+            <div class="text-center mb-12 md:mb-16" data-scroll-animation="fadeInUp" data-animation-delay="0">
+                <h2 class="text-3xl md:text-5xl font-bold mb-6" data-scroll-animation="slideInUp" data-animation-delay="200">What Our <span class="text-gradient-animated">Buyers</span> Say</h2>
+                <p class="text-xl text-gray-300 max-w-3xl mx-auto" data-scroll-animation="fadeInUp" data-animation-delay="400">
+                    Don't just take our word for it-hear from buyers and investors who have discovered 
                     valuable opportunities and made successful deals through Azani Marketplace.
                 </p>
             </div>
@@ -1125,7 +1692,7 @@
                 <div class="testimonial-bg-element-2"></div>
                 
                 <!-- Horizontal scrollable testimonials container -->
-                <div class="testimonials-scroll-container relative">
+                <div class="testimonials-scroll-container relative" data-scroll-animation="fadeInUp" data-animation-delay="600">
                     <!-- Arrow navigation - updated IDs for the buyers section -->
                     <button class="testimonial-nav-button left-0 -ml-4" id="scroll-left-buyers">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1137,11 +1704,10 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                         </svg>
                     </button>
-                    
-                    <!-- Scrollable testimonials wrapper -->
-                    <div class="testimonials-wrapper">
+                      <!-- Scrollable testimonials wrapper -->
+                    <div class="testimonials-wrapper" data-scroll-animation="staggeredChildren" data-stagger="200">
                         <!-- Testimonial 1 -->
-                        <div class="testimonial-card" data-scroll-animation>
+                        <div class="testimonial-card" data-scroll-animation="slideInLeft" data-animation-delay="0">
                             <div class="flex items-center mb-4">
                                 <img src="/figma design exports/copydesigns/image.webp" alt="User" class="w-12 h-12 rounded-full border-2 border-gray-200 object-cover">
                                 <div class="ml-4">
@@ -1165,9 +1731,8 @@
                                 </div>
                             </div>
                         </div>
-                        
-                        <!-- Testimonial 2 -->
-                        <div class="testimonial-card" data-scroll-animation>
+                          <!-- Testimonial 2 -->
+                        <div class="testimonial-card" data-scroll-animation="slideInUp" data-animation-delay="200">
                             <div class="flex items-center mb-4">
                                 <img src="/figma design exports/copydesigns/image-2.webp" alt="User" class="w-12 h-12 rounded-full border-2 border-gray-200 object-cover">
                                 <div class="ml-4">
@@ -1191,9 +1756,8 @@
                                 </div>
                             </div>
                         </div>
-                        
-                        <!-- Testimonial 3 -->
-                        <div class="testimonial-card" data-scroll-animation>
+                          <!-- Testimonial 3 -->
+                        <div class="testimonial-card" data-scroll-animation="slideInRight" data-animation-delay="400">
                             <div class="flex items-center mb-4">
                                 <img src="/figma design exports/copydesigns/image-4.webp" alt="User" class="w-12 h-12 rounded-full border-2 border-gray-200 object-cover">
                                 <div class="ml-4">
@@ -1217,9 +1781,8 @@
                                 </div>
                             </div>
                         </div>
-                        
-                        <!-- Testimonial 4 -->
-                        <div class="testimonial-card" data-scroll-animation>
+                          <!-- Testimonial 4 -->
+                        <div class="testimonial-card" data-scroll-animation="slideInLeft" data-animation-delay="600">
                             <div class="flex items-center mb-4">
                                 <img src="/figma design exports/copydesigns/image-3.webp" alt="User" class="w-12 h-12 rounded-full border-2 border-gray-200 object-cover">
                                 <div class="ml-4">
@@ -1243,9 +1806,8 @@
                                 </div>
                             </div>
                         </div>
-                        
-                        <!-- Testimonial 5 -->
-                        <div class="testimonial-card" data-scroll-animation>
+                          <!-- Testimonial 5 -->
+                        <div class="testimonial-card" data-scroll-animation="slideInUp" data-animation-delay="800">
                             <div class="flex items-center mb-4">
                                 <img src="/figma design exports/copydesigns/image-5.webp" alt="User" class="w-12 h-12 rounded-full border-2 border-gray-200 object-cover">
                                 <div class="ml-4">
@@ -1278,56 +1840,25 @@
                         <span class="testimonial-dot" data-index="2"></span>
                         <span class="testimonial-dot" data-index="3"></span>
                         <span class="testimonial-dot" data-index="4"></span>
-                    </div>
-                </div>
-                
-                <!-- Testimonial summary section -->
-                <div class="mt-20 text-center">
-                    <div class="flex flex-wrap justify-center gap-x-16 gap-y-8 mb-10">
-                        <div class="text-center">
-                            <p class="text-4xl font-bold text-gradient-animated" data-count-up="0" data-duration="2000">0</p>
-                            <p class="text-gray-400 mt-2">Businesses Sold</p>
-                        </div>
-                        <div class="text-center">
-                            <p class="text-4xl font-bold text-gradient-animated" data-count-up="0" data-duration="1500">0</p>
-                            <p class="text-gray-400 mt-2">NPS Score</p>
-                        </div>
-                        <div class="text-center">
-                            <p class="text-4xl font-bold text-gradient-animated" data-count-up="0" data-duration="1800">0</p>
-                            <p class="text-gray-400 mt-2">Days to Close (Avg)</p>
-                        </div>
-                        <div class="text-center">
-                            <p class="text-4xl font-bold text-gradient-animated" data-count-up="0" data-duration="1200" data-decimal="1">0</p>
-                            <p class="text-gray-400 mt-2">User Rating</p>
-                        </div>
-                    </div>
-                    <a href="/testimonials" class="btn-outline-primary">
-                        Coming Soon
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                        </svg>
-                    </a>
-                </div>
+                    </div>                </div>
             </div>
-        </section>
-
-        <!-- FAQ Section -->
-        <section id="faq" class="py-16 md:py-24 bg-dark"></section>
+        </section><!-- FAQ Section -->
+        <section id="faq" class="py-16 md:py-24 bg-dark" data-section-animation="faq">
             <div class="container mx-auto px-4 md:px-6">
                 <div class="flex flex-col md:flex-row gap-12">
-                    <div class="md:w-1/3">
-                        <h2 class="text-3xl md:text-4xl font-bold mb-4">Questions?<br>Let's clear things up</h2>
+                    <div class="md:w-1/3" data-scroll-animation="slideInLeft" data-animation-delay="0">
+                        <h2 class="text-3xl md:text-4xl font-bold mb-4"><span class="text-gradient-animated">Questions?</span><br>Let's clear things up</h2>
                         <p class="text-gray-400">
-                            Yes, we understand—AI-powered solutions, business automation tools, AI for market insights... a lot of big words can get confusing.
+                            Yes, we understand-AI-powered solutions, business automation tools, AI for market insights... a lot of big words can get confusing.
                         </p>
                         <p class="text-gray-400 mt-4">
-                            We're here to make it clear—check out our FAQs, and if you still feel the need to ask questions, Arzani's always ready to answer.
+                            We're here to make it clear-check out our FAQs, and if you still feel the need to ask questions, Arzani's always ready to answer.
                         </p>
                     </div>
                     
-                    <div class="md:w-2/3">
-                        <div class="space-y-4 faq-accordion">
-                            <div class="faq-item bg-dark-light/40 backdrop-blur-md rounded-xl p-5 border border-gray-800">
+                    <div class="md:w-2/3" data-scroll-animation="slideInRight" data-animation-delay="200">
+                        <div class="space-y-4 faq-accordion" data-scroll-animation="staggeredChildren" data-stagger="100">
+                            <div class="faq-item bg-dark-light/40 backdrop-blur-md rounded-xl p-5 border border-gray-800" data-scroll-animation="fadeInUp" data-animation-delay="0">
                                 <div class="faq-question flex justify-between items-center cursor-pointer">
                                     <h5 class="font-semibold text-xl">What makes Arzani's marketplace different?</h5>
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 faq-icon transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1398,7 +1929,7 @@
                                     </svg>
                                 </div>
                                 <div class="faq-answer hidden mt-4 text-gray-400">
-                                    <p>We offer three subscription tiers: Basic, Premium, and Enterprise. The Basic plan includes business listings, basic AI insights, and marketplace access. The Premium plan adds advanced valuation tools, detailed market analytics, priority support, and enhanced visibility for listings. Our Enterprise plan includes all premium features plus custom API access, white-labeled reports, dedicated account management, and bespoke AI training for your specific business sector. Visit our pricing page for current rates and special offers. All plans start with a 14-day free trial with no credit card required.</p>
+                                    <p>We offer three subscription tiers: Basic, Gold, and Platinum. The Basic plan includes business listings, basic AI insights, and marketplace access. The Platinum plan adds advanced valuation tools, detailed market analytics, priority support, and enhanced visibility for listings. Our Platinum plan includes all premium features plus custom API access, white-labeled reports, dedicated account management, and bespoke AI training for your specific business sector. Visit our pricing page for current rates and special offers. All plans start with a 14-day free trial with no credit card required.</p>
                                 </div>
                             </div>
                         </div>
@@ -1531,16 +2062,17 @@
                 <button id="acceptAllCookies" class="btn-primary text-sm px-4 py-2">Accept All</button>
             </div>
         </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
-    <script src="/js/navigation.js"></script>
+    </div>    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>    <script src="/js/navigation.js"></script>
     <script src="/js/animations.js"></script>
     <script src="/js/testimonial-carousel.js"></script>
     <script src="/js/scroll-animations.js"></script>
     <script src="/js/ai-features.js"></script>
+    <script src="/js/feature-animations.js"></script>
     <script src="/js/faq-accordion.js"></script>
     <script src="/js/cookie-banner.js"></script>
+    <script src="/js/journey-animations.js"></script>
+    <script src="/js/ai-hero-animations.js"></script>
+
     
     
 
@@ -1564,8 +2096,347 @@
                     }
                 },
                 retina_detect: true
+            });        }
+    </script>    <!-- Business Preview Slider JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            let currentSlide = 0;
+            let businesses = [];
+            let slideInterval;
+            let isHovered = false;
+            let slidesToShow = 1;
+            let cardWidth = 0;
+            let cardGap = 20; // Gap between cards in pixels
+
+            // Show loading state
+            const showLoadingState = () => {
+                const loadingState = document.querySelector('.loading-state');
+                if (loadingState) loadingState.classList.remove('hidden');
+                
+                const sliderTrack = document.getElementById('businessSliderTrack');
+                if (sliderTrack) sliderTrack.classList.add('opacity-0');
+            };
+            
+            // Hide loading state
+            const hideLoadingState = () => {
+                const loadingState = document.querySelector('.loading-state');
+                if (loadingState) loadingState.classList.add('hidden');
+                
+                const sliderTrack = document.getElementById('businessSliderTrack');
+                if (sliderTrack) sliderTrack.classList.remove('opacity-0');
+            };              // Calculate slides to show based on screen size
+            function calculateSlidesToShow() {
+                const prevSlidesToShow = slidesToShow;
+                
+                // Increase number of visible slides based on screen size
+                if (window.innerWidth >= 1600) {
+                    slidesToShow = 5; // Show 5 on very large screens
+                } else if (window.innerWidth >= 1400) {
+                    slidesToShow = 4; // Show 4 on large screens
+                } else if (window.innerWidth >= 1280) {
+                    slidesToShow = 3; // Show 3 on medium screens
+                } else if (window.innerWidth >= 768) {
+                    slidesToShow = 2; // Show 2 on tablets
+                } else {
+                    slidesToShow = 1; // Show 1 on mobile
+                }
+                
+                // Get actual card width for precise calculations (including gap)
+                const track = document.getElementById('businessSliderTrack');
+                if (track && track.children.length > 0) {
+                    const firstCard = track.children[0];
+                    const computedStyle = window.getComputedStyle(track);
+                    const gapSize = parseInt(computedStyle.gap) || cardGap;
+                    cardWidth = firstCard.offsetWidth + gapSize;
+                    
+                    // Adjust the track width to accommodate all business cards
+                    if (businesses.length > 0) {
+                        // Make track wide enough for all cards plus gaps
+                        const totalWidth = (businesses.length * firstCard.offsetWidth) + ((businesses.length - 1) * gapSize);
+                        track.style.width = `${totalWidth}px`;
+                    }
+                }
+                
+                // If slidesToShow changed, we need to recalculate
+                if (prevSlidesToShow !== slidesToShow) {
+                    renderDots();
+                    goToSlide(Math.min(currentSlide, Math.max(0, businesses.length - slidesToShow)));
+                }
+                
+                // Make sure we show all businesses, even on resize
+                if (businesses.length > 0) {
+                    // Force rerender of slider if we have no children yet
+                    if (track && track.children.length < businesses.length) {
+                        renderSlider();
+                    }
+                }
+            }
+
+            // Fetch business data from API
+            async function fetchBusinessData() {
+                showLoadingState();
+                try {
+                    const response = await fetch('/api/business-preview/featured');
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch business data');
+                    }
+                    businesses = await response.json();
+                    if (businesses.length > 0) {
+                        renderSlider();
+                        initializeNavButtons();
+                        calculateSlidesToShow();
+                        startAutoSlide();
+                    } else {
+                        showNoDataMessage();
+                    }
+                } catch (error) {
+                    console.error('Error fetching business data:', error);
+                    showErrorMessage();
+                } finally {
+                    hideLoadingState();
+                }
+            }
+
+            // Format currency values
+            function formatCurrency(value) {
+                if (value >= 1000000) {
+                    return '£' + (value / 1000000).toFixed(1) + 'M';
+                } else if (value >= 1000) {
+                    return '£' + (value / 1000).toFixed(0) + 'K';
+                } else {
+                    return '£' + value.toLocaleString();
+                }
+            }            // Create business card HTML with signup redirect
+            function createBusinessCard(business) {
+                return `
+                    <div class="business-card cursor-pointer" onclick="window.location.href='/signup'">
+                        <div class="business-card-header">
+                            <div class="business-card-overlay">
+                                <span class="business-card-category">${business.industry || 'Business'}</span>
+                                <h3 class="business-card-title">${business.name}</h3>
+                                <div class="business-card-location">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                    ${business.location || 'UK'}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="business-card-body">
+                            <div class="business-metrics">
+                                <div class="metric-item">
+                                    <div class="metric-label">Asking Price</div>
+                                    <div class="metric-value">${formatCurrency(business.price)}</div>
+                                </div>
+                                <div class="metric-item">
+                                    <div class="metric-label">Annual Revenue</div>
+                                    <div class="metric-value">${formatCurrency(business.revenue)}</div>
+                                </div>
+                                <div class="metric-item">
+                                    <div class="metric-label">Annual Profit</div>
+                                    <div class="metric-value">${formatCurrency(business.profit)}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Render the slider
+            function renderSlider() {
+                const track = document.getElementById('businessSliderTrack');
+                
+                if (!track) return;
+
+                // Clear existing content
+                track.innerHTML = '';
+
+                // Add business cards
+                businesses.forEach((business, index) => {
+                    track.innerHTML += createBusinessCard(business);
+                });
+                
+                // After cards are rendered, calculate slides to show
+                calculateSlidesToShow();
+                
+                // Create dots now that we know how many slides we have
+                renderDots();
+
+                // Add hover listeners to pause auto-slide
+                const sliderContainer = document.querySelector('.business-slider-container');
+                if (sliderContainer) {
+                    sliderContainer.addEventListener('mouseenter', () => {
+                        isHovered = true;
+                        stopAutoSlide();
+                    });
+                    
+                    sliderContainer.addEventListener('mouseleave', () => {
+                        isHovered = false;
+                        startAutoSlide();
+                    });
+                }
+                
+                // Reset to first slide after render
+                currentSlide = 0;
+                goToSlide(0);
+            }
+            
+            // Render the navigation dots
+            function renderDots() {
+                const dotsContainer = document.getElementById('sliderDots');
+                if (!dotsContainer) return;
+                
+                // Clear existing dots
+                dotsContainer.innerHTML = '';
+                
+                // Calculate max number of possible slides
+                const maxSlides = Math.max(1, businesses.length - slidesToShow + 1);
+                
+                // Add navigation dots only for the number of possible slide positions
+                for (let i = 0; i < maxSlides; i++) {
+                    const dot = document.createElement('button');
+                    dot.className = `slider-dot ${i === currentSlide ? 'active' : ''}`;
+                    dot.setAttribute('aria-label', `Go to slide ${i + 1}`);
+                    dot.addEventListener('click', () => goToSlide(i));
+                    dotsContainer.appendChild(dot);
+                }
+            }            // Go to specific slide with improved calculation
+            function goToSlide(slideIndex) {
+                const track = document.getElementById('businessSliderTrack');
+                const dots = document.querySelectorAll('.slider-dot');
+                
+                if (!track || track.children.length === 0) return;
+                
+                // Calculate max slides to prevent going beyond available content
+                const maxSlides = Math.max(1, businesses.length - slidesToShow + 1);
+                
+                // Ensure slideIndex is within bounds
+                currentSlide = Math.max(0, Math.min(slideIndex, maxSlides - 1));
+                
+                // Get the container width and card width for precise pixel calculations
+                const container = document.querySelector('.business-slider-container');
+                const containerWidth = container ? container.clientWidth : 0;
+                const cardElement = track.children[0];
+                const cardElementWidth = cardElement ? cardElement.offsetWidth : 0;
+                const computedStyle = window.getComputedStyle(track);
+                const gapSize = parseInt(computedStyle.gap) || cardGap;
+                
+                // Calculate the total width of a card including the gap
+                const totalCardWidth = cardElementWidth + gapSize;
+                
+                // Fix for the gap at the end - calculate exact pixel amount to move
+                // This ensures we don't move too far on the last slide
+                let translateXPixels;
+                
+                if (currentSlide === maxSlides - 1 && businesses.length > slidesToShow) {
+                    // If we're on the last slide, calculate the exact amount to prevent the gap
+                    const remainingCards = businesses.length - slidesToShow;
+                    translateXPixels = remainingCards * totalCardWidth;
+                } else {
+                    // Normal slide calculation
+                    translateXPixels = currentSlide * totalCardWidth;
+                }
+                
+                // Apply the transform
+                track.style.transform = `translateX(-${translateXPixels}px)`;
+                
+                // Update dots
+                dots.forEach((dot, index) => {
+                    dot.classList.toggle('active', index === currentSlide);
+                });
+            }
+
+            // Auto-slide functionality
+            function startAutoSlide() {
+                if (slideInterval) clearInterval(slideInterval);
+                const maxSlides = Math.max(1, businesses.length - slidesToShow + 1);
+                
+                if (maxSlides > 1) {
+                    slideInterval = setInterval(() => {
+                        if (!isHovered) {
+                            nextSlide();
+                        }
+                    }, 5000); // 5 seconds
+                }
+            }
+
+            function stopAutoSlide() {
+                if (slideInterval) {
+                    clearInterval(slideInterval);
+                    slideInterval = null;
+                }
+            }
+
+            function nextSlide() {
+                const maxSlides = Math.max(1, businesses.length - slidesToShow + 1);
+                currentSlide = (currentSlide + 1) % maxSlides;
+                goToSlide(currentSlide);
+            }
+
+            function prevSlide() {
+                const maxSlides = Math.max(1, businesses.length - slidesToShow + 1);
+                currentSlide = (currentSlide - 1 + maxSlides) % maxSlides;
+                goToSlide(currentSlide);
+            }
+
+            // Handle window resize
+            function handleResize() {
+                calculateSlidesToShow();
+            }
+
+            // Show no data message
+            function showNoDataMessage() {
+                const track = document.getElementById('businessSliderTrack');
+                if (track) {
+                    track.innerHTML = `
+                        <div class="business-slide">
+                            <div class="business-card" style="text-align: center; padding: 3rem;">
+                                <p class="text-gray-600">No featured businesses available.</p>
+                                <p class="text-gray-500 text-sm mt-2">Check back soon for new listings!</p>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            
+            // Initialize navigation buttons
+            function initializeNavButtons() {
+                const slideLeftBtn = document.getElementById('slideLeft');
+                const slideRightBtn = document.getElementById('slideRight');
+                
+                if (slideLeftBtn) {
+                    slideLeftBtn.addEventListener('click', () => {
+                        prevSlide();
+                        stopAutoSlide();
+                        startAutoSlide();
+                    });
+                }
+                
+                if (slideRightBtn) {
+                    slideRightBtn.addEventListener('click', () => {
+                        nextSlide();
+                        stopAutoSlide();
+                        startAutoSlide();
+                    });
+                }
+            }
+
+            // Initialize slider
+            fetchBusinessData();
+
+            // Add window resize listener with debounce for better performance
+            let resizeTimeout;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(handleResize, 100);
             });
-        }
+
+            // Cleanup on page unload
+            window.addEventListener('beforeunload', () => {
+                stopAutoSlide();
+            });
+        });
     </script>
 </body>
 </html>

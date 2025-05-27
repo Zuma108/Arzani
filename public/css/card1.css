@@ -55,8 +55,8 @@
 }
 
 .card1 .button:first-child {
-  box-shadow: 0 4px 6px -1px #488aec31, 0 2px 4px -1px #488aec17;
-  background-color: #488aec;
+  box-shadow: 0 4px 6px -1px #041b7631, 0 2px 4px -1px #041b7617;
+  background-color: #041b76;
 }
 
 .card1 .button:last-child {

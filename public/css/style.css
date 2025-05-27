@@ -1036,9 +1036,6 @@
 .group-18-section {
     position: relative;
     width: 100vw;
-    margin: 0;
-    padding: 0;
-    overflow: visible;
     height: 100%;
 }
 
@@ -1076,7 +1073,6 @@
     mix-blend-mode: overlay; /* Blend mode for desired effect */
     opacity: 0.8; /* Adjust opacity as needed */
     pointer-events: none;
-    display: block;
 }
 
 
@@ -1641,4 +1637,332 @@
     max-width: 250px;
     font-size: 8px;
     line-height: 1.0;
+}
+
+/* Light Theme AI Hero Section Styles */
+.ai-hero-section {
+    position: relative;
+    overflow: hidden;
+}
+
+.light-grid-pattern {
+    background-image: 
+        linear-gradient(rgba(148, 163, 184, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(148, 163, 184, 0.1) 1px, transparent 1px);
+    background-size: 50px 50px;
+    width: 100%;
+    height: 100%;
+}
+
+.text-gradient-light {
+    background: linear-gradient(135deg, #3B82F6, #8B5CF6, #06B6D4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.hero-grid {
+    align-items: start;
+}
+
+.btn-primary-light {
+    transition: all 0.3s ease;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.btn-primary-light:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Light theme chart and metrics styling */
+.chart-labels {
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.metric-progress-bar {
+    transition: width 1.5s ease-in-out;
+    animation: progressFill 2s ease-in-out forwards;
+}
+
+@keyframes progressFill {
+    from { width: 0%; }
+    to { width: var(--progress-width, 0%); }
+}
+
+/* Light theme feature cards */
+.feature-card:hover {
+    box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Light theme responsive adjustments */
+@media (max-width: 1024px) {
+    .hero-grid {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+    
+    .lg\\:col-span-7,
+    .lg\\:col-span-5 {
+        grid-column: span 1;
+    }
+}
+
+/* Animation delays for progressive loading */
+[data-animation="fade-in-up"] {
+    animation: fadeInUp 0.8s ease-out forwards;
+}
+
+[data-animation="fade-in-left"] {
+    animation: fadeInLeft 0.8s ease-out forwards;
+}
+
+[data-animation="fade-in-right"] {
+    animation: fadeInRight 0.8s ease-out forwards;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes fadeInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Enhanced animations for metrics dashboard */
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+[data-animation="slide-in-left"] {
+    animation: slideInLeft 0.8s ease-out forwards;
+}
+
+[data-animation="slide-in-up"] {
+    animation: slideInUp 0.8s ease-out forwards;
+}
+
+[data-animation="slide-in-right"] {
+    animation: slideInRight 0.8s ease-out forwards;
+}
+
+/* Chart animation styles for light theme */
+.chart-line {
+    stroke-dasharray: 1200;
+    stroke-dashoffset: 1200;
+    transition: stroke-dashoffset 3s ease-in-out;
+}
+
+.chart-area {
+    opacity: 0;
+    transition: opacity 2s ease-in-out 1s;
+}
+
+.chart-animation {
+    overflow: visible;
+}
+
+.chart-animation .search-cursor {
+    opacity: 0;
+    transition: all 0.5s ease-in-out;
+    filter: drop-shadow(0 2px 4px rgba(59, 130, 246, 0.3));
+}
+
+.chart-animation circle:not(.search-cursor) {
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.3s ease-out;
+    filter: drop-shadow(0 2px 4px rgba(59, 130, 246, 0.2));
+}
+
+/* Enhanced metric cards animations */
+.revenue-metric:hover,
+.digital-metric:hover,
+.metrics-dashboard > div:hover {
+    box-shadow: 0 10px 25px rgba(59, 130, 246, 0.15);
+    transform: scale(1.05) translateY(-2px);
+}
+
+/* AI insight overlay animations */
+.ai-insight-overlay {
+    animation: glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+    from {
+        box-shadow: 0 0 5px rgba(59, 130, 246, 0.2);
+    }
+    to {
+        box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+    }
+}
+
+/* Enhanced progress bar animations */
+.metric-progress-bar {
+    transition: all 2s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-origin: left center;
+}
+
+.metric-progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.6) 50%, transparent 100%);
+    animation: shimmer 2s ease-in-out infinite;
+    transform: translateX(-100%);
+}
+
+@keyframes shimmer {
+    0% {
+        transform: translateX(-100%);
+    }
+    50% {
+        transform: translateX(100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+/* Feature card enhancements for light theme */
+.feature-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.feature-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 
+                0 10px 10px -5px rgba(0, 0, 0, 0.04),
+                0 0 0 1px rgba(59, 130, 246, 0.1);
+}
+
+/* Accessibility enhancements */
+@media (prefers-reduced-motion: reduce) {
+    .chart-line,
+    .metric-progress-bar,
+    .feature-card,
+    [data-animation] {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+
+/* Light theme button enhancements */
+.btn-primary-light {
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-primary-light::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+.btn-primary-light:hover::before {
+    left: 100%;
+}
+
+/* Chart visualization enhancements */
+.chart-labels span {
+    opacity: 0;
+    animation: fadeInLabels 0.5s ease-out forwards;
+    animation-delay: calc(var(--label-index, 0) * 0.1s + 3.5s);
+}
+
+@keyframes fadeInLabels {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Mobile optimizations for light theme */
+@media (max-width: 768px) {
+    .metrics-dashboard {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .feature-card {
+        flex-direction: column;
+    }
+    
+    .feature-card .w-16 {
+        width: 100%;
+        height: 4rem;
+    }
+    
+    .ai-insight-overlay {
+        margin: 1rem 0;
+        padding: 1rem;
+    }
 }

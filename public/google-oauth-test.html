@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google OAuth Test Page</title>
+    
+    <!-- Add Google Client ID metadata -->
+    <meta name="google-client-id" content="1039909939855-66mkfud3r7f3bk16besfn49m628q3o85.apps.googleusercontent.com">
+    <meta name="google-signin-scope" content="profile email">
+    <meta name="google-signin-origin" content="http://localhost:5000">
+    
+    <!-- Load Google Identity Services API FIRST to ensure it loads properly -->
+    <script src="https://accounts.google.com/gsi/client"></script>
+    
+    <!-- Load debug and fix scripts AFTER the Google API -->
+    <script src="/js/debug-google-oauth.js"></script>
+    <script src="/js/google-oauth-fix.js"></script>
+    
+    <!-- Load manual test script -->
+    <script src="/js/manual-google-oauth-test.js" defer></script>
+      <script>
+        // Enhanced logging
+        console.log('Test page loaded at: ' + new Date().toISOString());
+        
+        // Simplified config
+        window.config = {
+            GOOGLE_CLIENT_ID: '1039909939855-66mkfud3r7f3bk16besfn49m628q3o85.apps.googleusercontent.com'
+        };
+        console.log('Using Google Client ID:', window.config.GOOGLE_CLIENT_ID);
+        
+        // Check if Google API is loaded
+        function checkGoogleApiLoaded() {
+            if (window.google && window.google.accounts) {
+                console.log('Google API loaded successfully!');
+                return true;
+            }
+            console.error('Google API not loaded');
+            return false;
+        }
+        
+        // Initialize Google Sign-In when document is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOMContentLoaded event fired');
+            
+            // Check Google API immediately
+            const googleLoaded = checkGoogleApiLoaded();
+            document.getElementById('status').textContent = googleLoaded ? 
+                'Google API loaded' : 'Google API not loaded';
+            document.getElementById('status').style.color = googleLoaded ?
+                'green' : 'red';
+                
+            if (googleLoaded) {
+                initializeGoogleSignIn();
+            } else {
+                // Try once more after a delay
+                setTimeout(function() {
+                    const delayedCheck = checkGoogleApiLoaded();
+                    document.getElementById('status').textContent = delayedCheck ?
+                        'Google API loaded after delay' : 'Google API failed to load';
+                    document.getElementById('status').style.color = delayedCheck ?
+                        'green' : 'red';
+                        
+                    if (delayedCheck) {
+                        initializeGoogleSignIn();
+                    }
+                }, 2000);
+            }
+            
+            // Test button to run manual tests
+            document.getElementById('run-tests').addEventListener('click', function() {
+                console.log('Running manual tests');
+                const scriptContent = document.getElementById('test-script').value;
+                try {
+                    const result = eval(scriptContent);
+                    console.log('Test result:', result);
+                } catch (e) {
+                    console.error('Test script error:', e);
+                    document.getElementById('test-results').innerHTML = `<p style="color: red">Error: ${e.message}</p>`;
+                }
+            });
+            
+            // Add reload button functionality
+            document.getElementById('reload-btn').addEventListener('click', function() {
+                console.log('Reloading page');
+                window.location.reload();
+            });
+            
+            // Add debug button functionality
+            document.getElementById('debug-btn').addEventListener('click', function() {
+                console.log('Running debug info');
+                try {
+                    const debugInfo = window.googleOAuthDebug.getInfo();
+                    const issues = window.googleOAuthDebug.detectIssues();
+                    document.getElementById('debug-output').innerHTML = 
+                        `<h4>Debug Info:</h4>
+                         <pre>${JSON.stringify(debugInfo, null, 2)}</pre>
+                         <h4>Issues (${issues.length}):</h4>
+                         <ul>${issues.map(issue => `<li>${issue}</li>`).join('')}</ul>`;
+                } catch (e) {
+                    document.getElementById('debug-output').innerHTML = 
+                        `<p style="color: red">Error getting debug info: ${e.message}</p>`;
+                }
+            });
+        });
+        function initializeGoogleSignIn() {
+            console.log('Initializing Google Sign-In');
+            if (!window.google || !window.google.accounts) {
+                console.error('Google API not available for initialization');
+                document.getElementById('status').textContent = 'Google API not loaded';
+                document.getElementById('status').style.color = 'red';
+                return;
+            }
+            
+            try {
+                // Initialize with explicit origin settings
+                window.google.accounts.id.initialize({
+                    client_id: window.config.GOOGLE_CLIENT_ID,
+                    callback: handleCredentialResponse,
+                    auto_select: false,
+                    cancel_on_tap_outside: true,
+                    itp_support: true,
+                    context: 'signin',
+                    ux_mode: 'popup',
+                    state_cookie_domain: window.location.hostname,
+                    use_fedcm_for_prompt: false,
+                    allowed_parent_origin: window.location.origin,
+                    debug: true
+                });
+                
+                // Render button with fixed pixel width
+                window.google.accounts.id.renderButton(
+                    document.getElementById('google-signin-btn'),
+                    {
+                        theme: 'outline',
+                        size: 'large',
+                        shape: 'rectangular',
+                        text: 'continue_with',
+                        logo_alignment: 'left',
+                        width: 250
+                    }
+                );
+                
+                console.log('Google Sign-In initialized successfully');
+                document.getElementById('status').textContent = 'Ready for Sign-In';
+                document.getElementById('status').style.color = 'green';
+            } catch (e) {
+                console.error('Error initializing Google Sign-In:', e);
+                document.getElementById('status').textContent = 'Error: ' + e.message;
+                document.getElementById('status').style.color = 'red';
+            }
+            
+            document.getElementById('status').textContent = 'Google API loaded successfully';
+            document.getElementById('status').style.color = 'green';
+            
+            try {
+                console.log('Calling google.accounts.id.initialize');
+                // Initialize Google Sign-In
+                google.accounts.id.initialize({
+                    client_id: window.config.GOOGLE_CLIENT_ID,
+                    callback: handleCredentialResponse,
+                    auto_select: false,
+                    cancel_on_tap_outside: true,
+                    itp_support: true,
+                    context: 'signin',
+                    ux_mode: 'popup',
+                    allowed_parent_origin: window.location.origin,
+                    state_cookie_domain: window.location.hostname
+                });
+                console.log('Google Sign-In initialized successfully');
+                
+                // Render button with fixed width
+                console.log('Rendering Google Sign-In button');
+                google.accounts.id.renderButton(
+                    document.getElementById('google-signin-btn'),
+                    {
+                        theme: 'outline',
+                        size: 'large',
+                        shape: 'rectangular',
+                        text: 'continue_with',
+                        logo_alignment: 'left',
+                        width: 250 // Fixed pixel width
+                    }
+                );
+                console.log('Google Sign-In button rendered');
+                
+                // Also prompt One Tap
+                if (document.getElementById('enable-one-tap').checked) {
+                    console.log('Prompting One Tap');
+                    google.accounts.id.prompt();
+                }
+            } catch (e) {
+                console.error('Error initializing Google Sign-In:', e);
+                document.getElementById('status').textContent = 'Error initializing Google Sign-In: ' + e.message;
+                document.getElementById('status').style.color = 'red';
+            }
+        }
+        
+        function handleCredentialResponse(response) {
+            console.log('Received credential response:', response);
+            document.getElementById('result').textContent = 'Received credential: ' + 
+                                                          (response.credential ? 'Success!' : 'Failed');
+            
+            // For testing only - normally you would send this to your server
+            if (response.credential) {
+                document.getElementById('token').textContent = response.credential.substring(0, 20) + '...';
+                document.getElementById('result').style.backgroundColor = '#e8f5e9';
+                
+                // Show success details
+                const payload = parseJwt(response.credential);
+                if (payload) {
+                    document.getElementById('token-details').innerHTML = 
+                        `<h4>Token Info:</h4>
+                         <p><strong>Email:</strong> ${payload.email || 'N/A'}</p>
+                         <p><strong>Name:</strong> ${payload.name || 'N/A'}</p>
+                         <p><strong>Picture:</strong> ${payload.picture ? '<img src="' + payload.picture + '" style="width:50px; border-radius:50%;" />' : 'N/A'}</p>
+                         <p><strong>Expires:</strong> ${new Date(payload.exp * 1000).toLocaleString()}</p>`;
+                }
+            } else {
+                document.getElementById('result').style.backgroundColor = '#ffebee';
+            }
+        }
+        
+        // Helper function to decode JWT tokens
+        function parseJwt(token) {
+            try {
+                const base64Url = token.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+                return JSON.parse(jsonPayload);
+            } catch (e) {
+                console.error('Error parsing JWT:', e);
+                return null;
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            background-color: #f9f9f9;
+        }
+        .section {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .status {
+            padding: 10px;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            font-family: monospace;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #3367d6;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        pre {
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        .log-container {
+            max-height: 200px;
+            overflow-y: auto;
+            background-color: #000;
+            color: #00ff00;
+            padding: 10px;
+            font-family: monospace;
+            border-radius: 4px;
+        }
+        h1, h2, h3 {
+            color: #333;
+        }
+        .success {
+            color: green;
+        }
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>Google OAuth Test Page</h1>
+    <p>Use this page to test the Google OAuth Sign-In flow and diagnose any issues</p>
+    
+    <div class="container">
+        <div class="section">
+            <h2>Google Sign-In Status</h2>
+            <div id="status" class="status">Checking Google API...</div>
+            <div class="btn-group">
+                <button id="reload-btn">Reload Page</button>
+                <button id="debug-btn">Show Debug Info</button>
+            </div>
+            <div id="debug-output"></div>
+        </div>
+        
+        <div class="section">
+            <h2>Sign-In Configuration</h2>
+            <label>
+                <input type="checkbox" id="enable-one-tap" checked> 
+                Enable Google One-Tap
+            </label>
+            <div style="margin-top: 15px;">
+                <strong>Client ID:</strong> 
+                <code id="client-id">${window.config.GOOGLE_CLIENT_ID}</code>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>Sign-In Button</h2>
+            <div id="google-signin-btn"></div>
+        </div>
+        
+        <div class="section">
+            <h2>Result</h2>
+            <div id="result" class="result">No authentication attempt yet</div>
+            <div id="token" style="font-family: monospace; word-break: break-all; margin-top: 10px;"></div>
+            <div id="token-details" style="margin-top: 15px;"></div>
+        </div>
+        
+        <div class="section">
+            <h2>Manual Tests</h2>
+            <textarea id="test-script">
+// This will run the same tests as manual-google-oauth-test.js
+(function() {
+  const results = [];
+  
+  // Test 1: Check if debug script is loaded
+  results.push({
+    name: 'Debug Script Loaded',
+    passed: typeof window.googleOAuthDebug !== 'undefined'
+  });
+  
+  // Test 2: Check if fix script is loaded
+  results.push({
+    name: 'Fix Script Loaded',
+    passed: typeof window._patchedGoogleOneTap !== 'undefined'
+  });
+  
+  // Test 3: Check if Google API is loaded
+  results.push({
+    name: 'Google API Loaded',
+    passed: typeof window.google !== 'undefined' && 
+           typeof window.google.accounts !== 'undefined'
+  });
+  
+  // Test 4: Check if popup is allowed
+  let popupAllowed = false;
+  try {
+    const popup = window.open('', '_blank', 'width=1,height=1');
+    popupAllowed = popup !== null;
+    if (popup) popup.close();
+  } catch (e) {}
+  
+  results.push({
+    name: 'Popup Allowed',
+    passed: popupAllowed
+  });
+  
+  // Display results
+  const html = results.map((result, i) => 
+    `<div style="margin-bottom:5px">
+      <strong style="color:${result.passed ? 'green' : 'red'}">
+        ${result.passed ? '✓' : '✗'} ${i+1}. ${result.name}
+      </strong>
+    </div>`
+  ).join('');
+  
+  document.getElementById('test-results').innerHTML = html;
+  
+  return results;
+})();
+            </textarea>
+            <div style="margin-top: 10px;">
+                <button id="run-tests">Run Tests</button>
+            </div>
+            <div id="test-results" style="margin-top: 10px;"></div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <h3>Debug Tips</h3>
+        <p>Open the browser console (F12) and run these commands:</p>
+        <ul>
+            <li><code>googleOAuthDebug.getInfo()</code> - Show detailed debug info</li>
+            <li><code>googleOAuthDebug.detectIssues()</code> - List detected issues</li>
+            <li><code>googleOAuthDebug.checkPopup()</code> - Test popup functionality</li>
+        </ul>
+        <p>Check for these common issues:</p>
+        <ul>
+            <li>Popup blockers enabled</li>
+            <li>Third-party cookies blocked</li>
+            <li>Content security policy restrictions</li>
+            <li>Invalid Client ID or unauthorized origin</li>
+            <li>Browser extensions interfering with OAuth</li>
+        </ul>
+    </div>
+    
+    <script>
+        // Console log override to display in page
+        (function() {
+            const oldLog = console.log;
+            const oldError = console.error;
+            const oldWarn = console.warn;
+            
+            function addToLog(message, type) {
+                oldLog.apply(console, arguments);
+                
+                // Only create log if debug output exists
+                if (document.getElementById('debug-output')) {
+                    if (!document.getElementById('console-log')) {
+                        const logElement = document.createElement('div');
+                        logElement.id = 'console-log';
+                        logElement.className = 'log-container';
+                        document.getElementById('debug-output').appendChild(logElement);
+                    }
+                    
+                    const logContainer = document.getElementById('console-log');
+                    const entry = document.createElement('div');
+                    entry.className = type;
+                    
+                    // Format the message
+                    let formattedMessage;
+                    if (typeof message === 'object') {
+                        try {
+                            formattedMessage = JSON.stringify(message);
+                        } catch(e) {
+                            formattedMessage = String(message);
+                        }
+                    } else {
+                        formattedMessage = message;
+                    }
+                    
+                    entry.textContent = `[${new Date().toLocaleTimeString()}] ${formattedMessage}`;
+                    logContainer.appendChild(entry);
+                    logContainer.scrollTop = logContainer.scrollHeight;
+                }
+            }
+            
+            console.log = function() {
+                addToLog(arguments[0], 'log');
+                oldLog.apply(console, arguments);
+            };
+            
+            console.error = function() {
+                addToLog(arguments[0], 'error');
+                oldError.apply(console, arguments);
+            };
+            
+            console.warn = function() {
+                addToLog(arguments[0], 'warn');
+                oldWarn.apply(console, arguments);
+            };
+        })();
+    </script>
+</body>
+</html>

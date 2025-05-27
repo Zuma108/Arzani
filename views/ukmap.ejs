@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Neon Glow Mockup</title>
+  <style>
+    body {
+      background: #0d0f13;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .glow-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+    .glow-wrapper::before {
+      content: "";
+      position: absolute;
+      top: -12px; left: -12px; right: -12px; bottom: -12px;
+      border-radius: 16px;
+      background: linear-gradient(135deg,
+        rgba(128, 0, 255, 0.8),
+        rgba(0, 200, 255, 0.8));
+      filter: blur(24px);
+      opacity: 0.8;
+      animation: neon-pulse 3s ease-in-out infinite;
+      z-index: -1;
+    }
+    @keyframes neon-pulse {
+      0%,100% { filter: blur(20px); opacity: 0.7; }
+      50%     { filter: blur(28px); opacity: 1; }
+    }
+    .glow-wrapper img {
+      display: block;
+      border-radius: 16px;
+      width: 480px;         /* scale as needed */
+      height: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="glow-wrapper">
+    <!-- Replace with your actual screenshot -->
+                                <img src="/figma design exports/images/Arzani-seller-visualiser.webp" alt="Arzani Data and Analysis Visualizer" class="w-full h-auto" />
+  </div>
+</body>
+</html>

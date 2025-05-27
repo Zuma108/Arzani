@@ -3,4 +3,5 @@ const awsConfig = {
     bucketName: 'arzani-images1'
 };
 
-export default awsConfig;
+// Export to global scope instead of ES6 module
+window.awsConfig = awsConfig;

@@ -145,8 +145,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (data.success === false) {
           throw new Error(data.message || 'Login failed');
         }
-        
-        // Store authentication data
+          // Store authentication data
         if (data.token) {
           localStorage.setItem('token', data.token);
           
@@ -168,8 +167,12 @@ document.addEventListener('DOMContentLoaded', function() {
           localStorage.removeItem('email');
         }
         
-        // Always redirect to marketplace2 after successful login with proper domain based on environment
-        window.location.href = getBaseUrl() + '/marketplace2';
+        // Use server-provided redirect URL or fall back to marketplace2
+        const redirectTo = data.redirectTo || getBaseUrl() + '/marketplace2';
+        console.log('Regular login successful, redirecting to:', redirectTo);
+        
+        // Redirect to the appropriate URL
+        window.location.href = redirectTo;
         
       } catch (error) {
         console.error('Login error:', error);
@@ -501,8 +504,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (data.success === false) {
       throw new Error(data.message || 'Login failed');
     }
-    
-    // If we get here, login succeeded
+      // If we get here, login succeeded
     // Store auth data
     if (data.token) {
       localStorage.setItem('token', data.token);
@@ -525,8 +527,12 @@ document.addEventListener('DOMContentLoaded', function() {
       localStorage.removeItem('email');
     }
     
-    // Always redirect to marketplace2 with proper domain based on environment
-    window.location.href = getBaseUrl() + '/marketplace2';
+    // Use server-provided redirect URL or fall back to marketplace2
+    const redirectTo = data.redirectTo || getBaseUrl() + '/marketplace2';
+    console.log('Regular login successful (retry), redirecting to:', redirectTo);
+    
+    // Redirect to the appropriate URL
+    window.location.href = redirectTo;
   }
   
   // Show success message if verification was successful

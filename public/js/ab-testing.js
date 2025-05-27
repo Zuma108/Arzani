@@ -48,9 +48,9 @@ class ABTesting {
                 'test_name': testName,
                 'variant': this.userGroup,
                 'plan': window.location.pathname.includes('gold') ? 'gold' : 'platinum'
-            });
-        }
+            });        }
     }
 }
 
-export const abTesting = new ABTesting();
+// Export to global scope instead of using ES6 modules
+window.abTesting = new ABTesting();

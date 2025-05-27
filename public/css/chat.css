@@ -404,7 +404,7 @@ body {
 .message-input button {
     margin-left: 10px;
     padding: 0 20px;
-    background: #1890ff;
+    background: #041b76;
     color: white;
     border: none;
     border-radius: 20px;
@@ -413,7 +413,7 @@ body {
 }
 
 .message-input button:hover {
-    background: #40a9ff;
+    background: #05206c;
 }
 
 .empty-state {
@@ -428,7 +428,7 @@ body {
 
 #new-conversation-btn {
     padding: 5px 10px;
-    background: #1890ff;
+    background: #041b76;
     color: white;
     border: none;
     border-radius: 4px;

@@ -1,0 +1,140 @@
+/* Journey Step Glowing Effect CSS */
+
+/* Base class for the glowing effect */
+.journey-step-visual.glow-effect {
+  position: relative;
+  border: 2px solid transparent;
+  border-radius: 0.75rem;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  transform: translateZ(0); /* Force hardware acceleration */
+}
+
+/* Animated glow overlay */
+.journey-step-visual.glow-effect::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border-radius: 0.75rem;
+  background: linear-gradient(
+    45deg,
+    rgba(59, 130, 246, 0.4),
+    rgba(139, 92, 246, 0.5),
+    rgba(99, 102, 241, 0.6),
+    rgba(147, 51, 234, 0.5),
+    rgba(59, 130, 246, 0.4)
+  );
+  background-size: 400% 400%;
+  z-index: -1;
+  animation: borderGlow 6s infinite linear;
+  filter: blur(10px);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+/* Animated shadow effect */
+.journey-step-visual.glow-effect::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 0.75rem;
+  box-shadow: 0 0 20px 8px rgba(99, 102, 241, 0.4);
+  z-index: -2;
+  animation: shadowPulse 4s infinite alternate;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+/* Active state for animations */
+.journey-step-visual.glow-effect.glow-animation-active::before,
+.journey-step-visual.glow-effect.glow-animation-active::after {
+  opacity: 1;
+}
+
+/* Animation for the border glow */
+@keyframes borderGlow {
+  0% {
+    background-position: 0% 50%;
+    transform: scale(1);
+  }
+  25% {
+    background-position: 50% 75%;
+    transform: scale(1.02);
+  }
+  50% {
+    background-position: 100% 50%;
+    transform: scale(1.03);
+  }
+  75% {
+    background-position: 50% 25%;
+    transform: scale(1.02);
+  }
+  100% {
+    background-position: 0% 50%;
+    transform: scale(1);
+  }
+}
+
+/* Animation for the shadow pulse */
+@keyframes shadowPulse {
+  0% {
+    box-shadow: 0 0 15px 5px rgba(99, 102, 241, 0.4);
+    opacity: 0.7;
+  }
+  33% {
+    box-shadow: 0 0 20px 8px rgba(147, 51, 234, 0.5);
+    opacity: 0.9;
+  }
+  66% {
+    box-shadow: 0 0 25px 10px rgba(79, 70, 229, 0.6);
+    opacity: 1;
+  }
+  100% {
+    box-shadow: 0 0 30px 12px rgba(139, 92, 246, 0.5);
+    opacity: 0.8;
+  }
+}
+
+/* Specific styling for hover state */
+.journey-step-visual.glow-effect:hover::before,
+.journey-step-visual.glow-effect.glow-hover-active::before {
+  filter: blur(15px);
+  animation-duration: 3s;
+  opacity: 1;
+  background: linear-gradient(
+    45deg,
+    rgba(79, 70, 229, 0.6),
+    rgba(147, 51, 234, 0.7),
+    rgba(139, 92, 246, 0.8),
+    rgba(67, 56, 202, 0.7),
+    rgba(79, 70, 229, 0.6)
+  );
+}
+
+.journey-step-visual.glow-effect:hover::after,
+.journey-step-visual.glow-effect.glow-hover-active::after {
+  animation-duration: 2s;
+  opacity: 1;
+  box-shadow: 0 0 30px 15px rgba(139, 92, 246, 0.6);
+}
+
+/* Add a subtle scale effect on hover */
+.journey-step-visual.glow-effect:hover,
+.journey-step-visual.glow-effect.glow-hover-active {
+  transform: translateZ(0) scale(1.02) translateY(-5px);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 15px 30px rgba(79, 70, 229, 0.2);
+}
+
+/* Make sure the content inside stays on top */
+.journey-step-visual.glow-effect iframe,
+.journey-step-visual.glow-effect img {
+  position: relative;
+  z-index: 1;
+}

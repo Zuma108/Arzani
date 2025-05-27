@@ -61,7 +61,8 @@ import {
   getUserById, 
   verifyUser, 
   authenticateUser,
-  addProviderColumns // Add this import
+  addProviderColumns, // Add this import
+  getFeaturedBusinesses // Add this import for featured businesses
 } from './database.js';
 import sgMail from '@sendgrid/mail';
 import cors from 'cors';
@@ -168,6 +169,11 @@ import verificationUploadRoutes from './routes/verificationUploadRoutes.js';
 // Import professional routes
 import professionalRoutes from './routes/professionalRoutes.js';
 
+// Import valuation payment routes
+import valuationPaymentRoutes from './routes/valuationPaymentRoutes.js';
+
+// Import blog approval routes
+import blogApprovalRoutes from './routes/blogApprovalRoutes.js';
 
 const businessAuth = async (req, res, next) => {
   try {
@@ -438,6 +444,11 @@ app.use((req, res, next) => {
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
   next();
 });
+
+// Add before other middleware
+app.use('/webhook', express.raw({type: 'application/json'}));
+
+
 app.use('/api/admin', adminAuth, adminRoutes); // <-- Register admin API routes, protected by adminAuth
 // Add specific headers for Stripe.js
 app.use('/checkout-gold', (req, res, next) => {
@@ -448,6 +459,75 @@ app.use('/checkout-gold', (req, res, next) => {
 app.use('/checkout-platinum', (req, res, next) => {
   res.setHeader('Cross-Origin-Embedder-Policy', 'credentialless');
   next();
+});
+
+app.get('/valuation-payment', (req, res, next) => {
+  // Check if this is a redirect from Stripe with success indicators
+  if (req.query.redirect_status === 'succeeded' || 
+      req.query.payment_intent || 
+      req.query.session_id ||
+      req.headers.referer?.includes('stripe.com')) {
+    
+    console.log('Payment success indicators detected, redirecting to confirmation');
+    return res.redirect('/valuation-confirmation' + req.originalUrl.substring(req.originalUrl.indexOf('?')));
+  }
+  next();
+});
+
+// Add valuation confirmation route
+// Explicitly define the route handler for valuation-confirmation BEFORE any middleware
+// This ensures it takes precedence over other route handlers
+app.get('/valuation-confirmation', (req, res) => {
+  // Check for session payment flag or incoming Stripe payment success indicators
+  const paymentComplete = req.session?.paymentComplete || 
+                         req.query.redirect_status === 'succeeded' || 
+                         req.query.payment_intent || 
+                         req.query.session_id ||
+                         req.headers.referer?.includes('stripe.com');
+  
+  // Store payment success in session for future requests
+  if (req.session) {
+    if (paymentComplete) {
+      req.session.paymentComplete = true;
+      
+      // Store payment info in session if available
+      if (req.query.payment_intent) {
+        req.session.paymentIntentId = req.query.payment_intent;
+      }
+      if (req.query.session_id) {
+        req.session.sessionId = req.query.session_id;
+      }
+      
+      // Add cookie as backup method in case session is lost
+      res.cookie('valuation_payment_complete', 'true', { 
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days,
+        path: '/'
+      });
+    }
+    
+    // Flag that user accessed the questionnaire successfully
+    req.session.accessedQuestionnaire = true;
+    
+    // Save session explicitly
+    req.session.save();
+  }
+  
+  // Log detailed information to help diagnose issues
+  console.log('Valuation confirmation page accessed:', {
+    paymentComplete,
+    sessionData: req.session ? {
+      paymentComplete: req.session.paymentComplete,
+      accessedQuestionnaire: req.session.accessedQuestionnaire
+    } : 'No session',
+    queryParams: req.query,
+    referer: req.headers.referer || 'none'
+  });
+  
+  // Always render the confirmation page in both development and production
+  // This ensures the auto-redirect script runs properly
+  res.render('valuation-confirmation', {
+    title: 'Payment Confirmed | Arzani Marketplace'
+  });
 });
 
 // Make sure cookie parser runs early (before session middleware)
@@ -558,10 +638,9 @@ const corsOptions = {
   preflightContinue: false,
   optionsSuccessStatus: 204
 };
-// Add before other middleware
-app.use('/webhook', express.raw({type: 'application/json'}));
-// Use the corsOptions once
-app.use(cors(corsOptions));
+
+// Register valuation payment routes
+app.use('/', valuationPaymentRoutes);
 
 // Add specific CORS headers for API routes
 app.use('/api', (req, res, next) => {
@@ -675,6 +754,7 @@ app.use('/debug', chatDebugRouter);
 
 // Apply routes
 app.use('/blog', blogRoutes);  // Frontend blog routes
+app.use('/blog-approval', blogApprovalRoutes);  // Blog approval routes
 app.use('/api/blog', blogApiRoutes);  // API blog endpoints
 app.use('/api', blogApiRoutes);  // ALSO register at /api to support both URL patterns
 // Register the AI assistant routes
@@ -713,6 +793,7 @@ app.use('/api/business', (req, res, next) => {
 }, valuationRoutes);
 
 // Register the seller questionnaire routes - removed authentication middleware
+
 app.use('/seller-questionnaire', sellerQuestionnaireRoutes);
 app.use('/api/subscription', apiSubRoutes);
 // Add this before other routes
@@ -744,8 +825,7 @@ app.use('/marketplace/edit', authMiddleware);
 app.use('/', populateUser); // Optional: populate user for all routes
 app.use('/stripe', stripeRoutes);
 app.use('/profile', profileRoutes);
-// Register the seller questionnaire routes - removed authentication middleware
-app.use('/seller-questionnaire', sellerQuestionnaireRoutes);
+// Register checkout routes
 app.use('/checkout', checkoutRoutes);
 app.use('/checkout-gold', (req, res) => res.redirect('/checkout/gold'));
 app.use('/checkout-platinum', (req, res) => res.redirect('/checkout/platinum'));
@@ -773,6 +853,7 @@ app.post('/api/business/calculate-valuation', async (req, res) => {
     });
   }
 });
+app.use('/webhook', express.raw({ type: 'application/json' }));
 
 // Set view engine (ensure the public folder is included)
 app.set('view engine', 'ejs');
@@ -792,6 +873,20 @@ app.get('/privacy', (req, res) => {
   }
 });
 
+// Add route for Cookie Policy page
+app.get('/cookies', (req, res) => {
+  try {
+    // Pass user data if available for the navbar
+    res.render('cookies', {
+      user: req.user || null,
+      isAuthenticated: !!req.user
+    });
+  } catch (error) {
+    console.error('Error rendering cookies page:', error);
+    res.status(500).send('Error loading cookie policy page');
+  }
+});
+
 // Add business valuation page route
 app.get('/business-valuation', (req, res) => {
   res.render('business-valuation', {
@@ -806,6 +901,13 @@ app.get('/ai-insights', (req, res) => {
   });
 });
 
+// Add UK Map 3D visualization page route
+app.get('/ukmap', (req, res) => {
+  res.render('ukmap', {
+    title: 'UK Map 3D Visualization | Arzani'
+  });
+});
+
 // NEW Route for Contact Us page
 app.get('/contact', (req, res) => {
   res.render('contact-us');
@@ -815,6 +917,7 @@ app.get('/contact', (req, res) => {
 app.get('/faq', (req, res) => {
   res.render('faq');
 });
+
 
 // Add routes for static pages like About Us, FAQ, etc.
 app.get('/about-us', (req, res) => {
@@ -836,6 +939,83 @@ app.get('/features/power-ups', (req, res) => {
     user: req.user // Pass user if needed for navbar logic
   });
 });
+// Add API endpoint for featured businesses with mock data
+app.get('/api/business-preview/featured', async (req, res) => {
+  try {
+    // Mock featured brick-and-mortar businesses in the UK for testing
+    const mockFeaturedBusinesses = [
+      {
+        id: 1,
+        name: "Corner Café",
+        industry: "Food & Beverage",
+        location: "London",
+        price: 250000,
+        revenue: 380000,
+        profit: 95000
+      },
+      {
+        id: 2,
+        name: "Manchester Bookshop",
+        industry: "Retail",
+        location: "Manchester",
+        price: 180000,
+        revenue: 270000,
+        profit: 60000
+      },
+      {
+        id: 3,
+        name: "Birmingham Fitness Studio",
+        industry: "Health & Fitness",
+        location: "Birmingham",
+        price: 425000,
+        revenue: 620000,
+        profit: 140000
+      },
+      {
+        id: 4,
+        name: "Bristol Green Grocers",
+        industry: "Retail",
+        location: "Bristol",
+        price: 180000,
+        revenue: 320000,
+        profit: 65000
+      },
+      {
+        id: 5,
+        name: "Edinburgh Florist",
+        industry: "Retail",
+        location: "Edinburgh",
+        price: 120000,
+        revenue: 200000,
+        profit: 50000
+      },
+      {
+        id: 6,
+        name: "Leeds Artisan Bakery",
+        industry: "Food & Beverage",
+        location: "Leeds",
+        price: 210000,
+        revenue: 330000,
+        profit: 80000
+      },
+      {
+        id: 7,
+        name: "Glasgow Electronics Repair",
+        industry: "Repair & Maintenance",
+        location: "Glasgow",
+        price: 300000,
+        revenue: 450000,
+        profit: 120000
+      }
+    ];
+
+    res.json(mockFeaturedBusinesses);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to load featured businesses." });
+  }
+});
+
 
 // For serving static files
 app.use(express.static('public', {
@@ -1169,6 +1349,42 @@ app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) =
   res.json({received: true});
 });
 
+// Business valuation payment with Stripe Checkout
+app.post('/create-valuation-checkout', async (req, res) => {
+  try {
+    const { useDiscount } = req.body;
+    
+    // Set price based on whether a discount is applied
+    const unitAmount = useDiscount ? 18000 : 25000; // £180.00 or £250.00 in pence
+    
+    // Create a Checkout Session
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price_data: {
+            currency: 'gbp',
+            product_data: {
+              name: 'Business Valuation',
+              description: 'Comprehensive business valuation report'
+            },
+            unit_amount: unitAmount
+          },
+          quantity: 1
+        }
+      ],      mode: 'payment',
+      success_url: `${req.protocol}://${req.get('host')}/valuation-confirmation?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${req.protocol}://${req.get('host')}/valuation-payment?canceled=true`
+    });
+
+    res.json({ url: session.url });
+  } catch (error) {
+    console.error('Error creating checkout session:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
   app.get('/', (req, res) => {
     // Redirect the root URL to the homepage
     res.redirect('/homepage');
@@ -1203,167 +1419,6 @@ app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) =
 
   app.get('/signup', (req, res) => {
     res.sendFile(path.join(__dirname, 'public/signup.html'));
-  });
-  
-  // Add comprehensive S3 test route - no authentication required for testing
-  app.get('/s3-test', async (req, res) => {
-    try {
-      // Check if we have required AWS environment variables
-      const hasRequiredEnvVars = 
-        process.env.AWS_ACCESS_KEY_ID && 
-        process.env.AWS_SECRET_ACCESS_KEY && 
-        process.env.AWS_REGION && 
-        process.env.AWS_BUCKET_NAME;
-
-      if (!hasRequiredEnvVars) {
-        return res.render('s3-test', {
-          title: 'S3 Configuration Test',
-          error: 'Missing required AWS environment variables',
-          envStatus: {
-            AWS_ACCESS_KEY_ID: !!process.env.AWS_ACCESS_KEY_ID,
-            AWS_SECRET_ACCESS_KEY: !!process.env.AWS_SECRET_ACCESS_KEY,
-            AWS_REGION: process.env.AWS_REGION || 'missing',
-            AWS_BUCKET_NAME: process.env.AWS_BUCKET_NAME || 'missing'
-          },
-          testResults: null,
-          user: req.user || null
-        });
-      }
-
-      // Test connection to primary region (eu-west-2)
-      let primaryRegionClient = new S3Client({
-        region: 'eu-west-2',
-        credentials: {
-          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-        }
-      });
-
-      // Test connection to backup region (eu-north-1)
-      let fallbackRegionClient = new S3Client({
-        region: 'eu-north-1',
-        credentials: {
-          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-        }
-      });
-
-      // Test connections
-      const testResults = {
-        primaryRegion: { success: false, error: null },
-        fallbackRegion: { success: false, error: null },
-        bucketName: process.env.AWS_BUCKET_NAME || 'arzani-images1'
-      };
-
-      try {
-        await primaryRegionClient.send(new ListBucketsCommand({}));
-        testResults.primaryRegion.success = true;
-      } catch (error) {
-        testResults.primaryRegion.error = error.message;
-      }
-
-      try {
-        await fallbackRegionClient.send(new ListBucketsCommand({}));
-        testResults.fallbackRegion.success = true;
-      } catch (error) {
-        testResults.fallbackRegion.error = error.message;
-      }
-
-      // Render the test page with results
-      res.render('s3-test', {
-        title: 'S3 Configuration Test',
-        error: null,
-        envStatus: {
-          AWS_ACCESS_KEY_ID: '***' + (process.env.AWS_ACCESS_KEY_ID || '').substr(-4),
-          AWS_SECRET_ACCESS_KEY: '***' + (process.env.AWS_SECRET_ACCESS_KEY || '').substr(-4),
-          AWS_REGION: process.env.AWS_REGION || 'eu-west-2',
-          AWS_BUCKET_NAME: process.env.AWS_BUCKET_NAME || 'arzani-images1'
-        },
-        testResults,
-        user: req.user || null
-      });
-    } catch (error) {
-      console.error('S3 test page error:', error);
-      res.render('s3-test', {
-        title: 'S3 Configuration Test',
-        error: error.message,
-        envStatus: {
-          AWS_ACCESS_KEY_ID: !!process.env.AWS_ACCESS_KEY_ID,
-          AWS_SECRET_ACCESS_KEY: !!process.env.AWS_SECRET_ACCESS_KEY,
-          AWS_REGION: process.env.AWS_REGION || 'missing',
-          AWS_BUCKET_NAME: process.env.AWS_BUCKET_NAME || 'missing'
-        },
-        testResults: null,
-        user: req.user || null
-      });
-    }
-  });
-
-  // Add a REST API endpoint for testing S3 upload
-  app.post('/api/s3-test/upload', upload.single('testImage'), async (req, res) => {
-    try {
-      console.log('S3 test upload request received:', {
-        hasFile: !!req.file,
-        fileDetails: req.file ? {
-          fieldname: req.file.fieldname,
-          originalname: req.file.originalname,
-          mimetype: req.file.mimetype,
-          size: req.file.size,
-          buffer: req.file.buffer ? 'Buffer present' : 'No buffer'
-        } : 'No file'
-      });
-
-      // Check if we have a file in the request
-      if (!req.file) {
-        return res.status(400).json({
-          success: false,
-          message: 'No test image uploaded'
-        });
-      }
-
-      const testImage = req.file;
-      const timestamp = Date.now();
-      const fileExt = path.extname(testImage.originalname) || '.jpg';
-      const s3Key = `test-uploads/test-${timestamp}${fileExt}`;
-
-      console.log('Attempting to upload file to S3:', {
-        originalname: testImage.originalname,
-        size: testImage.size,
-        s3Key: s3Key
-      });
-
-      // First validate the bucket and get the correct region
-      const region = process.env.AWS_REGION || 'eu-west-2';
-      const bucket = process.env.AWS_BUCKET_NAME || 'arzani-images1';
-      
-      // Upload to S3 - the uploadToS3 function now handles region redirects
-      try {
-        const s3Url = await uploadToS3(testImage, s3Key, region, bucket);
-        
-        console.log('S3 upload successful:', s3Url);
-        return res.json({
-          success: true,
-          message: 'Successfully uploaded',
-          url: s3Url,
-          region: region
-        });
-      } catch (error) {
-        console.error('S3 upload error:', error);
-        
-        return res.status(500).json({
-          success: false,
-          message: 'Upload failed: ' + error.message,
-          error: error.message
-        });
-      }
-    } catch (error) {
-      console.error('S3 test upload error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Server error during upload test',
-        error: error.message
-      });
-    }
   });
   
   createUserTable();
@@ -1432,12 +1487,20 @@ app.get('/marketplace', authDebug.enforceNonChatPage, (req, res) => {
         }
       }
       
-      // Render the marketplace2 template with isChatPage explicitly set to false
+      // Create a non-writable isChatPage property
+      Object.defineProperty(res.locals, 'isChatPage', {
+        value: false,
+        writable: false,
+        configurable: false
+      });
+      
+      // Render the marketplace2 template with guaranteed non-chat page settings
       res.render('marketplace2', {
         title: 'Business Marketplace',
-        isChatPage: false, // Explicitly set to false
+        isChatPage: false, // Explicitly set to false for redundancy
         user: userData,
-        isAuthenticated: !!userData
+        isAuthenticated: !!userData,
+        isMarketplacePage: true  // Add an explicit marketplace flag
       });
     } catch (error) {
       console.error('Error rendering marketplace2:', error);
@@ -1787,11 +1850,10 @@ app.get('/profile', authenticateToken, async (req, res) => {
 });
 
 
-
-// Add this route before the last export statement
 app.post('/api/business/track', authenticateToken, async (req, res) => {
   try {
     const { businessId, action } = req.body;
+// Add this route before the last export statement
     const userId = req.user.userId;
 
     console.log('Tracking request received:', { userId, businessId, action });
@@ -2213,12 +2275,6 @@ app.post('/auth/refresh-token', async (req, res) => {
 });
 
 
-
-// Ensure this is after all route registrations
-app.use((req, res, next) => {
-    console.log('Request path:', req.path);
-    next();
-});
 
 // Important: Move these routes before any catch-all routes and other business routes
 // Make sure these come BEFORE the general /api/business routes
@@ -2681,7 +2737,6 @@ app.use(['/history', '/talk-to-arzani', '/profile'], async (req, res, next) => {
   try {
     // Always try all possible token sources
     const authHeader = req.headers['authorization'];
-    const headerToken = authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
     const cookieToken = req.cookies?.token;
     const sessionToken = req.session?.token;
     
@@ -3325,7 +3380,7 @@ app.get('/api/migrate-profile-pictures', adminAuth, async (req, res) => {
           
           await pool.query(
             'UPDATE users SET profile_picture = $1 WHERE id = $2',
-            [s3Url, user.id]
+              [s3Url, user.id]
           );
         }
       } catch (err) {
@@ -3343,7 +3398,6 @@ app.get('/api/migrate-profile-pictures', adminAuth, async (req, res) => {
 // After all routes are registered, print them
 console.log("All registered routes:");
 printRoutes(app);
-
 // Apply routes
 app.use('/post-business', postBusinessRoutes);
 app.use('/api/verification', verificationUploadRoutes); // Add the verification upload routes

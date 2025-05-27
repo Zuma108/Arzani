@@ -1,9 +1,11 @@
-import * as chai from 'chai';
-const expect = chai.expect;
+// Comment out ES6 imports and exports for browser compatibility
+// import * as chai from 'chai';
+// const expect = chai.expect;
 
-import { RealtimeAPI } from '../../openai-realtime-api-beta/index.js';
+// import { RealtimeAPI } from '../../openai-realtime-api-beta/index.js';
 
-export async function run() {
+// Export as global function instead of ES6 module
+window.runApiTests = async function() {
   describe('RealtimeAPI', ({ debug = false } = {}) => {
     let realtime;
 
@@ -45,11 +47,10 @@ export async function run() {
     it('Should close the RealtimeAPI connection', async () => {
       realtime.disconnect();
 
-      expect(realtime.isConnected()).to.equal(false);
-    });
+      expect(realtime.isConnected()).to.equal(false);    });
 
     after(() => {
       realtime.isConnected() && realtime.disconnect();
     });
   });
-}
+};

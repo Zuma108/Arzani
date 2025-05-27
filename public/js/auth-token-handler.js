@@ -23,14 +23,16 @@
     
     return false;
   }
-  
-  // Ensure token is in cookies for server-side auth
+    // Ensure token is in cookies for server-side auth
   function syncTokenToCookie() {
     const token = localStorage.getItem('token');
     
     if (token) {
-      // Set token as cookie if it's in localStorage
-      document.cookie = `token=${token}; path=/; max-age=14400`; // 4 hours
+      // Set token as cookie with secure settings based on protocol
+      const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+      const expiryTime = new Date(Date.now() + (4 * 60 * 60 * 1000)); // 4 hours
+      document.cookie = `token=${token}; expires=${expiryTime.toUTCString()}; path=/; SameSite=Lax${secure}`;
+      console.log('Token synced to cookie');
       return true;
     }
     
@@ -82,11 +84,11 @@
         window.location.href = `/login2?returnTo=${encodeURIComponent(currentPath)}`;
         return;
       }
-      
-      // Validate token with the server
+        // Validate token with the server
       fetch('/api/verify-token', {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
         }
       })
       .then(response => {
@@ -96,15 +98,19 @@
         return response.json();
       })
       .then(data => {
-        if (!data.valid) {
+        if (!data.valid || !data.userId) {
           console.log('Token invalid, redirecting to login');
           localStorage.removeItem('token');
+          document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
           window.location.href = `/login2?returnTo=${encodeURIComponent(currentPath)}`;
+        } else {
+          console.log('Token validated successfully for user:', data.userId);
         }
       })
       .catch(error => {
         console.error('Token validation error:', error);
         localStorage.removeItem('token');
+        document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
         window.location.href = `/login2?returnTo=${encodeURIComponent(currentPath)}`;
       });
     }
@@ -183,12 +189,13 @@
     const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
     return match ? match[2] : null;
   }
-  
-  // Enhanced init function
+    // Enhanced init function
   function init() {
+    // Check for token in URL first (high priority for OAuth flows)
     const tokenInUrl = checkUrlForToken();
     const tokenInLocalStorage = !!localStorage.getItem('token');
     
+    // Always ensure token synchronization
     if (tokenInUrl || tokenInLocalStorage) {
       syncTokenToCookie();
       addTokenToFetchRequests();
@@ -197,8 +204,15 @@
       ensureTokenConsistency();
     }
     
-    // Check auth status for protected pages
-    checkAuthAndRedirect();
+    // For protected pages, check auth status - but give a small delay if token was just found in URL
+    if (tokenInUrl) {
+      // Small delay to allow token to be processed
+      setTimeout(() => {
+        checkAuthAndRedirect();
+      }, 100);
+    } else {
+      checkAuthAndRedirect();
+    }
     
     // Periodically check token validity
     setInterval(ensureTokenConsistency, 60000); // Check every minute

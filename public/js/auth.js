@@ -874,6 +874,60 @@ function isProtectedRoute() {
   return protectedRoutes.some(route => window.location.pathname.startsWith(route));
 }
 
-// Export the auth object
+// Export the auth object to global scope
 window.auth = auth;
-export default auth;
+
+// Add Google-specific authentication method
+auth.googleSignIn = async function(credential, returnTo) {
+  try {
+    console.log('Starting Google sign-in process');
+    
+    const response = await fetch('/auth/google', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        credential,
+        returnTo: returnTo || '/marketplace2'
+      })
+    });
+
+    const data = await response.json();
+    console.log('Google auth response:', data);
+
+    if (response.ok && data.success && data.token) {
+      // Store token and sync across storage
+      this.token = data.token;
+      
+      // Parse token for user info
+      const tokenData = this.parseJwt(data.token);
+      if (tokenData) {
+        this.userId = tokenData.userId;
+        this.tokenExpiry = new Date(tokenData.exp * 1000);
+        this.authenticated = true;
+        
+        // Sync token across all storage mechanisms
+        this.syncTokenAcrossStorage(data.token);
+      }
+
+      return {
+        success: true,
+        redirectTo: data.redirectTo,
+        user: data.user
+      };
+    }
+
+    return {
+      success: false,
+      error: data.message || 'Google authentication failed'
+    };
+  } catch (error) {
+    console.error('Google sign-in error:', error);
+    return {
+      success: false,
+      error: 'Network error during Google sign-in'
+    };
+  }
+};

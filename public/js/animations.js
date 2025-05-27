@@ -14,6 +14,70 @@ document.addEventListener('DOMContentLoaded', function() {
                 element.classList.add('animated');
             }
         });
+    };    // Initialize journey step glow animations
+    const initJourneyGlowAnimations = () => {
+        const journeyVisuals = document.querySelectorAll('.journey-step-visual.glow-effect');
+        
+        journeyVisuals.forEach(visual => {
+            // Add animation active class when element is in viewport
+            const elementPosition = visual.getBoundingClientRect().top;
+            const windowHeight = window.innerHeight;
+            
+            // Function to handle animation activation
+            const activateGlow = () => {
+                visual.classList.add('glow-animation-active');
+                
+                // GitHub-style animations will be handled by the github-style-animation.js
+                // This is the original pulse animation as a fallback
+                if (!window.githubAnimationsInitialized) {
+                    // Add subtle pulse animation for extra effect
+                    const pulseAnimation = () => {
+                        visual.style.transform = 'translateZ(0) scale(1.01)';
+                        setTimeout(() => {
+                            visual.style.transform = 'translateZ(0) scale(1)';
+                        }, 700);
+                    };
+                    
+                    // Apply initial pulse
+                    setTimeout(pulseAnimation, 300);
+                    
+                    // Set up occasional subtle pulse for continuous visual interest
+                    setInterval(pulseAnimation, 5000);
+                } else {
+                    // When GitHub animations are active, let those handle the transform
+                    visual.classList.add('github-animation-active');
+                }
+            };
+            
+            if (elementPosition < windowHeight * 0.9) {
+                activateGlow();
+            } else {
+                // Use IntersectionObserver if available for better performance
+                if ('IntersectionObserver' in window && window.githubAnimationsInitialized) {
+                    // The intersection observer is handled in github-style-animation.js
+                } else {
+                    // Fallback to scroll event
+                    window.addEventListener('scroll', function scrollHandler() {
+                        const position = visual.getBoundingClientRect().top;
+                        if (position < windowHeight * 0.9) {
+                            activateGlow();
+                            window.removeEventListener('scroll', scrollHandler);
+                        }
+                    });
+                }
+            }
+            
+            // Add hover effect if GitHub animations aren't handling it
+            if (!window.githubAnimationsInitialized) {
+                visual.addEventListener('mouseenter', () => {
+                    visual.classList.add('glow-hover-active');
+                });
+                
+                visual.addEventListener('mouseleave', () => {
+                    visual.classList.remove('glow-hover-active');
+                });
+            }
+        });
     };
 
     // Handle counting animations
@@ -199,9 +263,7 @@ document.addEventListener('DOMContentLoaded', function() {
         start() {
             requestAnimationFrame(this.animate.bind(this));
         }
-    }
-
-    // Initialize animations
+    }    // Initialize animations
     animateOnScroll();
     window.addEventListener('scroll', animateOnScroll);
     
@@ -213,6 +275,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize typing animations
     initTypingAnimations();
+    
+    // Initialize journey glow animations
+    initJourneyGlowAnimations();
 
     // Animate elements with data-scroll-animation when they come into view
     const animateScrollElements = () => {

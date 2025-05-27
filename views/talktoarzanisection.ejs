@@ -1,0 +1,177 @@
+ <!-- Talk to Arzani AI Section - Business Intelligence + Chatbot -->
+        <section class="py-20 md:py-32 bg-dark relative overflow-hidden">
+            <!-- Animated background elements -->
+            <div class="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
+                <div class="particles-js" id="particles-js"></div>
+                <div class="absolute -top-40 -left-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl"></div>
+                <div class="absolute -bottom-60 -right-40 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
+            </div>
+            
+            <!-- Background grid pattern -->
+            <div class="absolute inset-0 z-0 opacity-10">
+                <div class="grid-pattern"></div>
+            </div>
+            
+            <div class="container mx-auto px-4 md:px-6 relative z-10">
+                <div class="text-center mb-16" data-animation="fade-in-up">
+                    <h2 class="text-3xl md:text-5xl font-bold mb-6">Talk to <span class="text-gradient-animated">Arzani</span></h2>
+                    <p class="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
+                        Uncover insights you won't find anywhere else with AI-powered analysis to discover opportunities, 
+                        evaluate businesses, and make confident decisions
+                    </p>
+                </div>
+                
+                <div class="flex flex-col gap-12 mb-20">
+                    <!-- Business Intelligence Visualizations -->
+                    <div class="w-full" data-animation="fade-in-left" data-delay="300">
+                        <div class="mb-6">
+                            <h3 class="text-3xl font-bold mb-4">AI-powered business intelligence</h3>
+                            <p class="text-gray-300 text-lg mb-6">
+                                Leverage our cutting-edge AI to uncover critical insights, track market trends, and make data-driven decisions that maximize your business potential.
+                            </p>
+                        </div>
+                        
+                        <!-- Main visualization panel -->
+                        <div class="bg-dark-light/40 backdrop-blur-md border border-gray-800/50 rounded-2xl p-6 overflow-hidden relative mb-8" data-animation="fade-in-up" data-delay="400">
+                            <!-- Chart visualization SVG -->
+                            <div class="h-72 relative">
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <svg width="100%" height="100%" viewBox="0 0 800 200" class="chart-animation">
+                                        <path class="chart-line" d="M0,150 C100,120 200,180 300,80 C400,20 500,100 600,60 C700,90 800,40" fill="none" stroke="url(#gradient)" stroke-width="3"/>
+                                        <path d="M0,150 C100,120 200,180 300,80 C400,20 500,100 600,60 C700,90 800,40 L800,200 L0,200 Z" fill="url(#areaGradient)" opacity="0.2"/>
+                                        
+                                        <!-- Gradient definitions -->
+                                        <defs>
+                                            <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                                <stop offset="0%" stop-color="#3B82F6"/>
+                                                <stop offset="100%" stop-color="#8B5CF6"/>
+                                            </linearGradient>
+                                            <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                                <stop offset="0%" stop-color="#3B82F6" stop-opacity="0.5"/>
+                                                <stop offset="100%" stop-color="#3B82F6" stop-opacity="0"/>
+                                            </linearGradient>
+                                        </defs>
+                                        
+                                        <!-- Data points -->
+                                        <circle cx="0" cy="150" r="5" fill="#3B82F6"/>
+                                        <circle cx="100" cy="120" r="5" fill="#3B82F6"/>
+                                        <circle cx="200" cy="180" r="5" fill="#3B82F6"/>
+                                        <circle cx="300" cy="80" r="5" fill="#3B82F6"/>
+                                        <circle cx="400" cy="20" r="5" fill="#3B82F6"/>
+                                        <circle cx="500" cy="100" r="5" fill="#3B82F6"/>
+                                        <circle cx="600" cy="60" r="5" fill="#3B82F6"/>
+                                        <circle cx="700" cy="90" r="5" fill="#3B82F6"/>
+                                        <circle cx="800" cy="40" r="5" fill="#3B82F6"/>
+                                        
+                                        <!-- Animated search cursor -->
+                                        <circle class="search-cursor" cx="0" cy="0" r="6" fill="rgba(49,111,212,0.7)"/>
+                                    </svg>
+                                </div>
+                                
+                                <!-- Chart overlay elements -->
+                                <div class="absolute bottom-0 left-0 right-0 flex justify-between text-xs text-gray-400 px-4">
+                                    <span>Jan</span>
+                                    <span>Feb</span>
+                                    <span>Mar</span>
+                                    <span>Apr</span>
+                                    <span>May</span>
+                                    <span>Jun</span>
+                                    <span>Jul</span>
+                                    <span>Aug</span>
+                                </div>
+                                  <!-- AI Insight overlay -->
+                                <div class="absolute top-10 right-10 max-w-xs bg-gray-900/80 backdrop-blur-md p-4 rounded-lg border border-gray-700 shadow-lg opacity-0" style="transition: opacity 1s ease; animation: fadeIn 1s forwards 3s;">
+                                    <div class="flex items-center mb-2">
+                                        <div class="w-6 h-6 rounded-full overflow-hidden flex items-center justify-center mr-2">
+                                            <img src="/figma design exports/images.webp/arzani-icon-nobackground.png" alt="Arzani AI" class="w-6 h-6 object-contain">
+                                        </div>
+                                        <p class="font-semibold text-sm">AI Insight:</p>
+                                    </div>
+                                    <div class="text-xs text-gray-300 ai-insight-box">
+                                        <p>Your Q2 growth is 28% above industry average.</p>
+                                        <p>Acquisition value increased by £45K this quarter.</p>
+                                        <p>Consider expanding digital channels for 2x ROI.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Interactive metrics dashboard -->
+                            <div class="grid grid-cols-3 gap-4 mt-4">
+                                <div class="bg-dark-light/60 rounded-lg p-3 border border-gray-800/50">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-xs text-gray-400">Revenue Growth</span>
+                                        <span class="text-green-400 text-xs font-medium">+24.5%</span>
+                                    </div>
+                                    <div class="mt-2 h-2 bg-gray-800 rounded-full overflow-hidden">
+                                        <div class="h-full bg-green-500/50 rounded-full" style="width:75%; transition: width 1.5s ease-out;"></div>
+                                    </div>
+                                </div>
+                                <div class="bg-dark-light/60 rounded-lg p-3 border border-gray-800/50">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-xs text-gray-400">Market Share</span>
+                                        <span class="text-blue-400 text-xs font-medium">12.8%</span>
+                                    </div>
+                                    <div class="mt-2 h-2 bg-gray-800 rounded-full overflow-hidden">
+                                        <div class="h-full bg-blue-500/50 rounded-full" style="width:45%; transition: width 1.5s ease-out;"></div>
+                                    </div>
+                                </div>
+                                <div class="bg-dark-light/60 rounded-lg p-3 border border-gray-800/50">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-xs text-gray-400">Customer Retention</span>
+                                        <span class="text-purple-400 text-xs font-medium">68%</span>
+                                    </div>
+                                    <div class="mt-2 h-2 bg-gray-800 rounded-full overflow-hidden">
+                                        <div class="h-full bg-purple-500/50 rounded-full" style="width:68%; transition: width 1.5s ease-out;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Business analysis features -->
+                        <div class="space-y-4">
+                            <!-- Feature item 1 - Real-time Valuation -->
+                            <div class="feature-card flex rounded-xl overflow-hidden transform transition-all hover:translate-y-[-5px]" data-animation="fade-in-left" data-delay="500">
+                                <div class="w-16 h-auto bg-gradient-to-b from-blue-500/20 to-purple-500/20 flex items-center justify-center px-3">
+                                    <img src="/figma design exports/icons/3dicons-clock-dynamic-color.png" alt="Real-time Valuation" class="w-12 h-12 object-contain">
+                                </div>
+                                <div class="flex-1 p-4 bg-dark-light/40 backdrop-blur-sm border-t border-r border-b border-gray-800/50">
+                                    <h4 class="text-lg font-semibold mb-2">Real-time Valuation</h4>
+                                    <p class="text-gray-400">Get instant business valuations based on current market data and industry-specific metrics.</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Feature item 2 - Growth Analysis -->
+                            <div class="feature-card flex rounded-xl overflow-hidden transform transition-all hover:translate-y-[-5px]" data-animation="fade-in-left" data-delay="600">
+                                <div class="w-16 h-auto bg-gradient-to-b from-blue-500/20 to-purple-500/20 flex items-center justify-center px-3">
+                                    <img src="/figma design exports/icons/3dicons-chart-dynamic-color.png" alt="Growth Analysis" class="w-12 h-12 object-contain">
+                                </div>
+                                <div class="flex-1 p-4 bg-dark-light/40 backdrop-blur-sm border-t border-r border-b border-gray-800/50">
+                                    <h4 class="text-lg font-semibold mb-2">Growth Predictors</h4>
+                                    <p class="text-gray-400">Identify trends and growth opportunities based on analyzed data from thousands of similar businesses.</p>
+                                </div>
+                            </div>
+
+                            <!-- Feature item 3 - Security Analysis -->
+                            <div class="feature-card flex rounded-xl overflow-hidden transform transition-all hover:translate-y-[-5px]" data-animation="fade-in-left" data-delay="700">
+                                <div class="w-16 h-auto bg-gradient-to-b from-blue-500/20 to-purple-500/20 flex items-center justify-center px-3">
+                                    <img src="/figma design exports/icons/3dicons-shield-dynamic-color.png" alt="Security Analysis" class="w-12 h-12 object-contain">
+                                </div>
+                                <div class="flex-1 p-4 bg-dark-light/40 backdrop-blur-sm border-t border-r border-b border-gray-800/50">
+                                    <h4 class="text-lg font-semibold mb-2">Secure Analysis</h4>
+                                    <p class="text-gray-400">Enterprise-grade security ensuring your business data is protected while providing comprehensive market analysis.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6">
+                            <a href="/features/ai-assistant" class="btn-primary inline-flex items-center">
+                                Explore Business Insights
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                </svg>
+                            </a>
+                        </div>
+                    </div>                    
+                </div>
+            </div>
+        </section> 

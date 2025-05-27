@@ -299,7 +299,7 @@ body {
 }
 
 .escalation-button {
-  background: linear-gradient(to right, #3B82F6, #8B5CF6);
+  background: linear-gradient(to right, #041b76, #8B5CF6);
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
@@ -307,12 +307,12 @@ body {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 4px 6px rgba(59, 130, 246, 0.25);
+  box-shadow: 0 4px 6px rgba(4, 27, 118, 0.25);
 }
 
 .escalation-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 10px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 6px 10px rgba(4, 27, 118, 0.3);
 }
 
 /* Alerts and Notifications */

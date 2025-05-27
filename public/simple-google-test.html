@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Google API Test</title>
+</head>
+<body>
+    <h1>Simple Google API Loading Test</h1>
+    
+    <div id="status">Loading...</div>
+    <div id="google-button"></div>
+    
+    <script>
+        // Add logging to track API loading
+        console.log('Starting Google API test');
+        
+        function updateStatus(message, color = 'black') {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.style.color = color;
+            console.log('Status:', message);
+        }
+        
+        // Load Google Identity Services
+        function loadGoogleAPI() {
+            return new Promise((resolve, reject) => {
+                // Check if already loaded
+                if (window.google && window.google.accounts) {
+                    updateStatus('Google API already loaded', 'green');
+                    resolve();
+                    return;
+                }
+                
+                updateStatus('Loading Google API...', 'orange');
+                
+                // Create script element
+                const script = document.createElement('script');
+                script.src = 'https://accounts.google.com/gsi/client';
+                script.async = true;
+                script.defer = true;
+                
+                script.onload = () => {
+                    console.log('Google API script loaded');
+                    // Wait a bit for the API to initialize
+                    setTimeout(() => {
+                        if (window.google && window.google.accounts) {
+                            updateStatus('Google API loaded successfully!', 'green');
+                            resolve();
+                        } else {
+                            updateStatus('Google API script loaded but not available', 'red');
+                            reject(new Error('Google API not available'));
+                        }
+                    }, 100);
+                };
+                
+                script.onerror = (error) => {
+                    console.error('Failed to load Google API script:', error);
+                    updateStatus('Failed to load Google API script', 'red');
+                    reject(error);
+                };
+                
+                document.head.appendChild(script);
+            });
+        }
+        
+        // Initialize Google Sign-In
+        function initializeGoogleSignIn() {
+            try {
+                const clientId = '1039909939855-66mkfud3r7f3bk16besfn49m628q3o85.apps.googleusercontent.com';
+                
+                window.google.accounts.id.initialize({
+                    client_id: clientId,
+                    callback: handleCredentialResponse,
+                    allowed_parent_origin: window.location.origin,
+                    use_fedcm_for_prompt: false
+                });
+                
+                window.google.accounts.id.renderButton(
+                    document.getElementById('google-button'),
+                    {
+                        theme: 'outline',
+                        size: 'large',
+                        width: 250
+                    }
+                );
+                
+                updateStatus('Google Sign-In initialized successfully!', 'green');
+                
+            } catch (error) {
+                console.error('Error initializing Google Sign-In:', error);
+                updateStatus('Error initializing Google Sign-In: ' + error.message, 'red');
+            }
+        }
+        
+        // Handle credential response
+        function handleCredentialResponse(response) {
+            console.log('Credential response:', response);
+            updateStatus('Received Google credential!', 'green');
+        }
+        
+        // Start the test
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('DOM loaded, starting test');
+            
+            try {
+                await loadGoogleAPI();
+                initializeGoogleSignIn();
+            } catch (error) {
+                console.error('Test failed:', error);
+                updateStatus('Test failed: ' + error.message, 'red');
+            }
+        });
+    </script>
+</body>
+</html>

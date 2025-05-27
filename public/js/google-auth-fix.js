@@ -1,84 +1,124 @@
 /**
- * Google Sign-In error handling and configuration fix
- * This script addresses the "origin not allowed" error with Google Sign-In
+ * Google Authentication Fix
+ * Handles Google Sign-In issues and provides fallback mechanisms
  */
 
-(function() {
-  // Function to check and fix Google Sign-In configuration
-  function fixGoogleSignIn() {
-    // Check if Google API is loaded
-    if (typeof window.gapi === 'undefined' || !window.google) {
-      console.log('Google API not loaded yet, will retry');
-      return;
-    }
-
-    // Get the current domain/origin
-    const currentOrigin = window.location.origin;
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if Google Identity Services is loaded
+    let googleLoadAttempts = 0;
+    const maxGoogleLoadAttempts = 10;
     
-    // Debug information
-    console.log('Current origin:', currentOrigin);
-    
-    // Set the correct client ID based on environment
-    const clientIdMeta = document.querySelector('meta[name="google-signin-client_id"]');
-    if (!clientIdMeta) {
-      console.error('Google client ID meta tag not found - add it to your HTML head section');
-      // Try to create one with the client ID from environment
-      const clientId = window.googleClientId || localStorage.getItem('googleClientId');
-      if (clientId) {
-        const meta = document.createElement('meta');
-        meta.name = 'google-signin-client_id';
-        meta.content = clientId;
-        document.head.appendChild(meta);
-        console.log('Added Google client ID meta tag dynamically');
-      }
+    function checkGoogleLoaded() {
+        googleLoadAttempts++;
+        
+        if (typeof google !== 'undefined' && google.accounts) {
+            console.log('Google Identity Services loaded successfully');
+            return true;
+        }
+        
+        if (googleLoadAttempts < maxGoogleLoadAttempts) {
+            setTimeout(checkGoogleLoaded, 500);
+            return false;
+        }
+        
+        console.error('Google Identity Services failed to load after', maxGoogleLoadAttempts, 'attempts');
+        showGoogleSignInFallback();
+        return false;
     }
     
-    // Add event listener for Google Sign-In errors
-    window.addEventListener('error', function(event) {
-      // Check if this is a Google Sign-In error about origins
-      if (event.message && (
-          event.message.includes('The given origin is not allowed') || 
-          event.message.includes('GSI_LOGGER'))) {
+    function showGoogleSignInFallback() {
+        const googleBtn = document.getElementById('google-signin-btn');
+        if (googleBtn) {
+            googleBtn.innerHTML = `
+                <div style="
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 100%;
+                    padding: 12px;
+                    background-color: white;
+                    border: 1px solid #dadce0;
+                    border-radius: 4px;
+                    color: #3c4043;
+                    cursor: not-allowed;
+                    opacity: 0.6;
+                ">
+                    <span style="margin-right: 10px;">⚠️</span>
+                    <span>Google Sign-In temporarily unavailable</span>
+                </div>
+            `;
+        }
+    }
+    
+    // Start checking if Google is loaded
+    checkGoogleLoaded();
+    
+    // Add error handling for Google Sign-In
+    window.addEventListener('error', function(e) {
+        if (e.message && e.message.includes('google')) {
+            console.error('Google Sign-In error:', e);
+            showGoogleSignInFallback();
+        }
+    });
+    
+    // Enhanced credential response handler with better error handling
+    window.handleCredentialResponse = function(response) {
+        console.log('Google credential response received');
         
-        console.warn('Google Sign-In origin error detected');
+        if (!response || !response.credential) {
+            console.error('Invalid credential response:', response);
+            alert('Google Sign-In failed. Please try again or use email login.');
+            return;
+        }
         
-        // Show user-friendly message
-        const errorDiv = document.createElement('div');
-        errorDiv.style.cssText = 'position:fixed; top:10px; right:10px; background:#f8d7da; color:#721c24; padding:10px; border-radius:5px; z-index:9999;';
-        errorDiv.innerHTML = `
-          <strong>Google Sign-In Error</strong>
-          <p>The current domain is not configured for Google Sign-In.</p>
-          <p>Please add "${currentOrigin}" to the allowed origins in your Google Cloud Console.</p>
-          <button id="dismiss-gsi-error" style="background:#721c24; color:white; border:none; padding:5px 10px; border-radius:3px; cursor:pointer;">Dismiss</button>
-        `;
-        document.body.appendChild(errorDiv);
+        const returnTo = localStorage.getItem('authReturnTo') || '/marketplace2';
         
-        document.getElementById('dismiss-gsi-error').addEventListener('click', function() {
-          errorDiv.remove();
+        // Show loading state
+        const googleBtn = document.getElementById('google-signin-btn');
+        if (googleBtn) {
+            googleBtn.style.opacity = '0.5';
+            googleBtn.style.pointerEvents = 'none';
+        }
+        
+        fetch('/auth/google', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                credential: response.credential,
+                returnTo: returnTo
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Server error: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success && data.token) {
+                localStorage.setItem('token', data.token);
+                localStorage.removeItem('authReturnTo');
+                
+                console.log('Google authentication successful, redirecting to:', data.redirectTo);
+                window.location.href = data.redirectTo || returnTo;
+            } else {
+                throw new Error(data.message || 'Authentication failed');
+            }
+        })
+        .catch(error => {
+            console.error('Google authentication error:', error);
+            
+            // Restore button state
+            if (googleBtn) {
+                googleBtn.style.opacity = '1';
+                googleBtn.style.pointerEvents = 'auto';
+            }
+            
+            alert('Google Sign-In failed: ' + error.message + '\nPlease try using email login instead.');
         });
-        
-        // Disable Google Sign-In button to prevent further errors
-        const googleButtons = document.querySelectorAll('.google-signin-button, [data-provider="google"]');
-        googleButtons.forEach(button => {
-          button.disabled = true;
-          button.title = 'Google Sign-In not available - domain not configured';
-          button.classList.add('disabled');
-        });
-      }
-    }, true); // Use capture phase to catch errors before they propagate
-  }
-  
-  // Run when DOM is loaded
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', fixGoogleSignIn);
-  } else {
-    fixGoogleSignIn();
-  }
-  
-  // Also run when Google API is loaded (in case it loads after this script)
-  window.addEventListener('load', fixGoogleSignIn);
-  
-  // Export function to global scope for manual triggering
-  window.fixGoogleSignIn = fixGoogleSignIn;
-})();
+    };
+});
 

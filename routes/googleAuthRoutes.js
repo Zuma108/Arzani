@@ -3,6 +3,7 @@ import { google } from 'googleapis';
 import pool from '../db.js';
 import jwt from 'jsonwebtoken';
 import { getUserByEmail, createUser } from '../database.js';
+import { OAuth2Client } from 'google-auth-library';
 
 const router = express.Router();
 
@@ -12,6 +13,12 @@ const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_SECRET,
     process.env.GOOGLE_REDIRECT_URI
 );
+
+// Create a client for ID token verification
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+// Note: POST route for /auth/google is now handled in routes/auth.js to avoid conflicts
+// This file now only handles the traditional OAuth callback flow
 
 // Google auth callback route
 router.get('/auth/google/callback', async (req, res) => {

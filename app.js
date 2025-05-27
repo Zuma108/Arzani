@@ -99,7 +99,11 @@ app.use('/checkout', checkoutRouter);
 app.use('/stripe', stripeImportedRoutes); // Use the imported ESM routes
 app.use('/stripe-legacy', stripeRoutes); // Keep the CommonJS routes at a different path
 app.use('/auth', authRoutes);
-app.use('/chat', chatRoutes); // Add chat routes
+
+// Test route for Google OAuth
+app.get('/test/google-oauth', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'google-oauth-test.html'));
+});
 
 // Register the API route
 app.use('/api/submit-business', submitBusinessRoutes);

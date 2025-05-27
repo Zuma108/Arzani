@@ -2,21 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Page</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">    <title>Login Page</title>
     <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">
-
-    <!-- Load Google Identity Services API -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script src="/js/config.js"></script>
-    <script>
-        window.config.GOOGLE_CLIENT_ID = '<%- process.env.GOOGLE_CLIENT_ID %>';
-        window.config.MICROSOFT_CLIENT_ID = '<%- process.env.MICROSOFT_CLIENT_ID %>';
-        window.config.MICROSOFT_REDIRECT_URI = '<%- process.env.MICROSOFT_REDIRECT_URI %>';
-        window.config.LINKEDIN_CLIENT_ID = '<%- process.env.LINKEDIN_CLIENT_ID %>';
-        window.config.LINKEDIN_REDIRECT_URI = '<%- process.env.LINKEDIN_REDIRECT_URI %>';
-    </script>
-    <script src="/js/auth.js"></script>
+    
+    <!-- Load the simple login handler script -->
+    <script src="/js/simple-login-handler.js" defer></script>
 
     <style>
         body {
@@ -110,169 +100,11 @@
         .other-page {
             text-align: center;
             font-size: 14px;
-        }
-
-        .other-page-link {
+        }        .other-page-link {
             color: #007bff;
             text-decoration: none;
         }
-
-        .divider-wrapper {
-            text-align: center;
-            margin: 15px 0;
-        }
-
-        .divider {
-            font-size: 14px;
-            color: #666;
-        }
-
-        .social-section {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .social-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            padding: 12px;
-            background-color: white;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            cursor: pointer;
-            text-align: center;
-        }
-
-        .social-logo-wrapper {
-            margin-right: 10px;
-        }
-
-        .social-logo {
-            width: 20px;
-            height: 20px;
-        }
-
-        .social-text {
-            font-size: 14px;
-            font-weight: bold;
-        }
     </style>
-
-    <script>
-        window.onload = function() {
-            google.accounts.id.initialize({
-                client_id: '<%- process.env.GOOGLE_CLIENT_ID %>',
-                callback: handleCredentialResponse,
-                auto_select: false,
-                allowed_parent_origin: window.location.origin,
-                redirect_uri: 'http://localhost:5000/auth/google/callback'
-            });
-
-            // Render Google's built-in button
-            google.accounts.id.renderButton(
-                document.getElementById('google-signin-btn'),  // Container element for the button
-                {
-                    theme: 'outline',  // Button theme: 'outline' or 'filled_blue'
-                    size: 'large',  // Button size: 'large', 'medium', 'small'
-                    shape: 'rectangular',  // Button shape: 'rectangular' or 'pill'
-                    text: 'continue_with',  // Button text: 'continue_with' or 'signin_with'
-                    logo_alignment: 'left',  // Logo position: 'left' or 'center'
-                    width: '100%'  // Full-width button
-                }
-            );
-        };
-
-        // Handle the Google sign-in response
-        function handleCredentialResponse(response) {
-            if (!response.credential) {
-                console.error('No credential received');
-                return;
-            }
-
-            fetch('/auth/google', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'same-origin',
-                body: JSON.stringify({
-                    credential: response.credential
-                })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success && data.token) {
-                    localStorage.setItem('token', data.token);
-                    window.location.href = '/marketplace';
-                } else {
-                    throw new Error(data.error || 'Authentication failed');
-                }
-            })
-            .catch(error => {
-                console.error('Authentication error:', error);
-                alert('Login failed. Please try again.');
-            });
-        }
-    </script>
-    <script>
-        function handleMicrosoftSignIn() {
-            const clientId = '34e0be00-5879-49bb-84f7-b2854723224e';
-            const tenantId = 'common';  // Use 'common' for multi-tenant apps or replace with your tenant ID
-            const redirectUri = 'http://localhost:5000/auth/microsoft/callback';  // Backend route for Microsoft callback
-            const responseType = 'code';
-            const scope = 'openid profile email';
-    
-            // Redirect to Microsoft's OAuth 2.0 authorization endpoint
-            const authUrl = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/authorize` +
-                            `?client_id=${clientId}` +
-                            `&response_type=${responseType}` +
-                            `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-                            `&scope=${encodeURIComponent(scope)}`;
-    
-            window.location.href = authUrl;
-        }
-    </script>
-    <script>
-    // Add secure message handling
-    function receiveMessage(event) {
-        const allowedOrigins = [
-            'https://accounts.google.com',
-            'https://login.microsoftonline.com',
-            'https://www.linkedin.com'
-        ];
-        
-        if (!allowedOrigins.includes(event.origin)) {
-            console.error('Unauthorized message origin:', event.origin);
-            return;
-        }
-
-        // Process the message
-        if (event.data.type === 'oauth_complete') {
-            window.location.href = '/marketplace';
-        }
-    }
-
-    window.addEventListener('message', receiveMessage, false);
-</script>
-    <!-- Add meta tag for Google client ID -->
-    <meta name="google-client-id" content="<%= process.env.GOOGLE_CLIENT_ID %>">
-  
-    <!-- Load the login handler script -->
-    <script src="/js/login-handler.js" defer></script>
-    <!-- Add this near the end of your <head> section, before the closing </head> tag -->
-<script src="/js/google-auth-fix.js"></script>
-<!-- Add this after your existing Google-related script but before the closing </head> tag -->
-<meta name="google-signin-client_id" content="<%= process.env.GOOGLE_CLIENT_ID %>">
-<script src="/js/google-auth-fix.js"></script>
-<script src="/js/auth-token-handler.js"></script>
 </head>
 
 <body>
@@ -281,143 +113,21 @@
         <h1 class="title">Login</h1>
     </div>
     <div class="form-container">
-      <!-- Update the form action to point to login2 view, not /auth/login2 endpoint -->
-      <form id="login-form" action="/auth/login2" method="GET">
-        <div class="input-wrapper">
-          <input class="input-field" type="email" id="email" name="email" required>
-          <label class="label-field" for="email">Email*</label>
-          <div class="error-message" id="email-error" style="display: none;">
-            <img class="error-icon" src="/images/error_icon.svg" alt="Error Icon">Email is not valid.
-          </div>
-        </div>
+        <form id="login-form" action="/auth/login2" method="GET">
+            <div class="input-wrapper">
+                <input class="input-field" type="email" id="email" name="email" required>
+                <label class="label-field" for="email">Email*</label>
+                <div class="error-message" id="email-error" style="display: none;">
+                    <img class="error-icon" src="/images/error_icon.svg" alt="Error Icon">Email is not valid.
+                </div>
+            </div>
 
-        <button type="submit" class="login-button">Continue</button>
-      </form>
-    </div>
-    <p class="other-page">Don't have an account? 
-        <a class="other-page-link" href="/signup">Sign Up</a>
-    </p>
-
-    <div class="divider-wrapper">
-        <span class="divider">Or</span>
-    </div>
-
-    <div class="social-section">
-        <!-- Google provided button -->
-        <div id="google-signin-btn"></div>
-        <!-- Add this right after your Google Sign-In button -->
-<script>
-  // Provide fallback for Google Sign-In
-  document.querySelector('[data-provider="google"]')?.addEventListener('click', function(e) {
-    if (this.classList.contains('disabled')) {
-      e.preventDefault();
-      alert('Google Sign-In is not available for this domain. Please use email login instead or contact the administrator.');
-    }
-  });
-</script>
-
-        <!-- Microsoft Sign-In Button -->
-        <button class="social-btn" onclick="handleMicrosoftSignIn()">
-            <span class="social-logo-wrapper">
-                <img class="social-logo" src="/images/Microsoft_logo.svg" alt="Microsoft logo">
-            </span>
-            <span class="social-text">Continue with Microsoft Account</span>
-        </button>
-
-        <!-- LinkedIn Sign-In Button -->
-        <button class="social-btn" id="linkedin-signin-btn">
-            <span class="social-logo-wrapper">
-                <img class="social-logo" src="/images/LinkedIn_logo.svg" alt="LinkedIn logo">
-            </span>
-            <span class="social-text">Continue with LinkedIn</span>
-        </button>
-    </div>
+            <button type="submit" class="login-button">Continue</button>
+        </form>
+    </div>    <p class="other-page">Don't have an account? 
+        <a class="other-page-link" href="/signup">Sign Up</a>    </p>
 </section>
+
 <%- include('partials/footer') %>
-
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    const loginForm = document.getElementById('login-form');
-    const emailInput = document.getElementById('email');
-    const emailError = document.getElementById('email-error');
-
-    if (loginForm) {
-        loginForm.addEventListener('submit', function(event) {
-            event.preventDefault();
-            
-            // Validate the email
-            const emailValue = emailInput.value.trim();
-            if (!validateEmail(emailValue)) {
-                // Show error if email is invalid
-                emailError.style.display = 'block';
-                return;
-            }
-            
-            // Hide error if email is valid
-            emailError.style.display = 'none';
-
-            // Save email to localStorage
-            localStorage.setItem('email', emailValue);
-
-            // Redirect to the password login page
-            window.location.href = '/auth/login2?email=' + encodeURIComponent(emailValue);
-        });
-    }
-    
-    function validateEmail(email) {
-        const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return regex.test(email);
-    }
-});
-</script>
-<!-- Add this before the closing </body> tag -->
-<script>
-  // Enhanced Google Sign-In handling
-  document.addEventListener('DOMContentLoaded', function() {
-    // Store the return URL in localStorage so it persists through OAuth redirects
-    const urlParams = new URLSearchParams(window.location.search);
-    const returnTo = urlParams.get('returnTo') || '/marketplace2';
-    localStorage.setItem('authReturnTo', returnTo);
-    
-    // Add click event handler for Google button
-    document.getElementById('google-signin-btn')?.addEventListener('click', function() {
-      console.log('Google sign-in button clicked');
-    });
-    
-    // Override Google's callback
-    window.handleCredentialResponse = function(response) {
-      console.log('Google callback received');
-      
-      if (!response.credential) {
-        console.error('No credential received');
-        return;
-      }
-      
-      fetch('/auth/google', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          credential: response.credential
-        })
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success && data.token) {
-          // Store token and redirect
-          localStorage.setItem('token', data.token);
-          window.location.href = localStorage.getItem('authReturnTo') || '/marketplace2';
-        } else {
-          throw new Error(data.message || 'Authentication failed');
-        }
-      })
-      .catch(error => {
-        console.error('Authentication error:', error);
-        alert('Login failed: ' + error.message);
-      });
-    };
-  });
-</script>
 </body>
 </html>

@@ -88,3 +88,108 @@ document.addEventListener('DOMContentLoaded', function() {
         window.history.replaceState({}, document.title, newUrl);
     }
 });
+
+/**
+ * Login Redirect Handler
+ * Manages redirects after successful authentication
+ */
+
+class LoginRedirectHandler {
+    constructor() {
+        this.init();
+    }
+    
+    init() {
+        // Check if we're on a login success page with token
+        this.checkForTokenInUrl();
+        
+        // Handle OAuth redirects
+        this.handleOAuthRedirect();
+        
+        // Set up redirect preservation
+        this.preserveReturnUrl();
+    }
+    
+    checkForTokenInUrl() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        
+        if (token) {
+            console.log('Token found in URL, processing login');
+            
+            // Store the token
+            localStorage.setItem('token', token);
+            
+            // Get return URL
+            const returnTo = localStorage.getItem('authReturnTo') || '/marketplace2';
+            
+            // Clean up
+            localStorage.removeItem('authReturnTo');
+            
+            // Remove token from URL for security
+            urlParams.delete('token');
+            const newUrl = window.location.pathname + 
+                          (urlParams.toString() ? '?' + urlParams.toString() : '') + 
+                          window.location.hash;
+            
+            // Replace current URL to remove token
+            history.replaceState({}, document.title, newUrl);
+            
+            // Redirect to intended destination
+            setTimeout(() => {
+                window.location.href = returnTo;
+            }, 100);
+        }
+    }
+    
+    handleOAuthRedirect() {
+        // Check if this is an OAuth callback
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        if (urlParams.has('code') || urlParams.has('error')) {
+            console.log('OAuth callback detected');
+            
+            if (urlParams.has('error')) {
+                const error = urlParams.get('error');
+                const errorDescription = urlParams.get('error_description');
+                console.error('OAuth error:', error, errorDescription);
+                
+                alert('Authentication failed: ' + (errorDescription || error));
+                window.location.href = '/login2';
+            }
+        }
+    }
+    
+    preserveReturnUrl() {
+        // Preserve return URL when navigating between login pages
+        const urlParams = new URLSearchParams(window.location.search);
+        const returnTo = urlParams.get('returnTo');
+        
+        if (returnTo) {
+            localStorage.setItem('authReturnTo', returnTo);
+        }
+    }
+    
+    static redirectAfterLogin(token, returnTo = null) {
+        if (token) {
+            localStorage.setItem('token', token);
+        }
+        
+        const destination = returnTo || 
+                           localStorage.getItem('authReturnTo') || 
+                           '/marketplace2';
+        
+        localStorage.removeItem('authReturnTo');
+        
+        console.log('Redirecting after login to:', destination);
+        window.location.href = destination;
+    }
+}
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    new LoginRedirectHandler();
+});
+
+// Export for use in other scripts
+window.LoginRedirectHandler = LoginRedirectHandler;

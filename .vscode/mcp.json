@@ -1,0 +1,65 @@
+{
+  // Prompt you once for any secrets, then VS Code stores them securely
+  "inputs": [
+    {
+      "type": "promptString",
+      "id": "brave_api_key",
+      "description": "Brave Search API Key",
+      "password": true
+    },
+    {
+      "type": "promptString",
+      "id": "firecrawl_api_key",
+      "description": "Firecrawl API Key",
+      "password": true
+    }
+  ],
+
+  "servers": {
+    // 1. Brave Search MCP Server 
+    "braveSearch": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-brave-search"],
+      "env": {
+        "BRAVE_API_KEY": "${input:brave_api_key}"
+      }
+    },
+
+    // 2. Filesystem MCP Server 
+    //    Only allows ops within your workspace folder
+    "filesystem": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "${workspaceFolder}"
+      ]
+    },
+
+    // 3. Sequential Thinking MCP Server 
+    "sequentialThinking": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
+    },
+
+    // 4. Firecrawl MCP Server 
+    "firecrawl": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "firecrawl-mcp"],
+      "env": {
+        "FIRECRAWL_API_KEY": "${input:firecrawl_api_key}"
+      }
+    },
+
+    // 5. Knowledge-Graph Memory MCP Server 
+    "knowledgeGraphMemory": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"]
+    }
+  }
+}

@@ -1,0 +1,250 @@
+/* filepath: c:\Users\Micha\OneDrive\Documents\my-marketplace-project\public\css\cookie-banner.css */
+#cookieConsent {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: #2d3748; /* Dark background */
+    color: #e2e8f0; /* Light text */
+    padding: 1.5rem;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    transform: translateY(100%);
+    transition: transform 0.5s ease-in-out;
+    max-height: 100vh; /* Ensure it doesn't overflow */
+    overflow-y: auto; /* Allow scrolling if content is too long */
+}
+
+#cookieConsent.cookie-slide-up {
+    transform: translateY(0);
+}
+
+#cookieConsent.cookie-slide-down {
+    transform: translateY(100%);
+}
+
+#cookieConsent.hidden {
+    display: none; /* Use display: none after animation */
+}
+
+.cookie-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.cookie-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #4a5568;
+    padding-bottom: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.cookie-header h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #cbd5e0;
+}
+
+#cookieClose {
+    background: none;
+    border: none;
+    color: #9fa6b2;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.25rem;
+}
+
+#cookieClose:hover {
+    color: #e2e8f0;
+}
+
+.cookie-body p {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+}
+
+.cookie-body a {
+    color: #63b3ed; /* Light blue link */
+    text-decoration: underline;
+}
+
+.cookie-body a:hover {
+    color: #90cdf4;
+}
+
+.cookie-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.cookie-option {
+    background-color: #4a5568; /* Slightly lighter background for options */
+    padding: 1rem;
+    border-radius: 0.375rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer; /* Make the whole option clickable */
+}
+
+.cookie-option[data-disabled="true"] {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.cookie-option label {
+    font-weight: 500;
+    color: #e2e8f0;
+    margin-right: 1rem;
+    flex-grow: 1;
+}
+
+/* Toggle Switch Styles */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 40px; /* Smaller width */
+    height: 20px; /* Smaller height */
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-bg {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #718096; /* Gray background */
+    transition: .4s;
+    border-radius: 20px; /* Fully rounded */
+}
+
+.toggle-bg:before {
+    position: absolute;
+    content: "";
+    height: 16px; /* Smaller handle */
+    width: 16px; /* Smaller handle */
+    left: 2px; /* Adjust position */
+    bottom: 2px; /* Adjust position */
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .toggle-bg {
+    background-color: #48bb78; /* Green when active */
+}
+
+input:checked + .toggle-bg.toggle-active {
+    background-color: #48bb78; /* Ensure green when active */
+}
+
+input:focus + .toggle-bg {
+    box-shadow: 0 0 1px #48bb78;
+}
+
+input:checked + .toggle-bg:before {
+    transform: translateX(20px); /* Adjust translation distance */
+}
+
+input:disabled + .toggle-bg {
+    background-color: #a0aec0; /* Lighter gray when disabled */
+    cursor: not-allowed;
+}
+
+input:disabled + .toggle-bg:before {
+    background-color: #e2e8f0;
+}
+
+.cookie-actions {
+    display: flex;
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    gap: 0.75rem;
+    justify-content: flex-end; /* Align buttons to the right */
+    margin-top: 1rem;
+}
+
+.cookie-actions button {
+    padding: 0.6rem 1.2rem;
+    border: none;
+    border-radius: 0.375rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-size: 0.9rem;
+}
+
+#cookieAcceptSelected {
+    background-color: #4a5568;
+    color: #e2e8f0;
+}
+
+#cookieAcceptSelected:hover {
+    background-color: #718096;
+}
+
+#cookieAcceptAll {
+    background-color: #48bb78; /* Green */
+    color: #1a202c; /* Dark text */
+}
+
+#cookieAcceptAll:hover {
+    background-color: #68d391;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    #cookieConsent {
+        padding: 1rem;
+        max-height: 85vh; /* Limit height on mobile */
+    }
+
+    .cookie-content {
+        gap: 0.75rem;
+    }
+
+    .cookie-header {
+        padding-bottom: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .cookie-header h2 {
+        font-size: 1.1rem;
+    }
+
+    .cookie-body p {
+        font-size: 0.85rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .cookie-options {
+        grid-template-columns: 1fr; /* Stack options vertically */
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .cookie-actions {
+        flex-direction: column; /* Stack buttons vertically */
+        align-items: stretch; /* Make buttons full width */
+    }
+
+    .cookie-actions button {
+        width: 100%;
+        padding: 0.75rem 1rem;
+    }
+}

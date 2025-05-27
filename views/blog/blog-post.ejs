@@ -128,14 +128,21 @@
                     <span class="mx-2">/</span>
                     <span class="text-gray-900"><%= blog.title %></span>
                 </div>
-                
-                <!-- Post Category Tags -->
+                  <!-- Post Category Tags -->
                 <div class="flex flex-wrap gap-2 mb-4">
-                    <% blog.categories.forEach(category => { %>
-                        <a href="/blog/category/<%= category.slug %>" class="text-xs px-3 py-1 rounded-full bg-primary bg-opacity-10 text-primary hover:bg-opacity-20 transition-all">
-                            <%= category.name %>
-                        </a>
-                    <% }); %>
+                    <% if (blog.categories && blog.categories.length > 0) { %>
+                        <% blog.categories.forEach(category => { %>
+                            <a href="/blog/category/<%= category.slug %>" 
+                               class="text-xs px-3 py-1 rounded-full bg-primary bg-opacity-10 text-primary hover:bg-opacity-20 transition-all"
+                               aria-label="View more posts in <%= category.name %> category">
+                                <%= category.name %>
+                            </a>
+                        <% }); %>
+                    <% } else { %>
+                        <span class="text-xs px-3 py-1 rounded-full bg-gray-100 text-gray-500">
+                            Uncategorized
+                        </span>
+                    <% } %>
                 </div>
                 
                 <!-- Post Title -->
@@ -158,34 +165,43 @@
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Social Share Links -->
+                      <!-- Social Share Links -->
                     <div class="ml-auto flex items-center gap-3">
-                        <a href="https://twitter.com/intent/tweet?url=<%= encodeURIComponent(`https://arzani.co.uk/blog/${blog.slug}`) %>&text=<%= encodeURIComponent(blog.title) %>" target="_blank" class="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100 border border-gray-200 text-gray-500 hover:bg-primary/10 hover:text-primary transition-colors">
+                        <span class="text-sm text-gray-500 mr-2 hidden sm:block">Share:</span>
+                        <a href="https://twitter.com/intent/tweet?url=<%= encodeURIComponent(`https://arzani.co.uk/blog/${blog.slug}`) %>&text=<%= encodeURIComponent(blog.title) %>" 
+                           target="_blank" 
+                           aria-label="Share on Twitter"
+                           class="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100 border border-gray-200 text-gray-500 hover:bg-primary/10 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:bg-primary/10 focus:text-primary active:bg-primary/20 transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                                 <path d="M5.026 15c6.038 0 9.341-5.003 9.341-9.334 0-.14 0-.282-.006-.422A6.685 6.685 0 0 0 16 3.542a6.658 6.658 0 0 1-1.889.518 3.301 3.301 0 0 0 1.447-1.817 6.533 6.533 0 0 1-2.087.793A3.286 3.286 0 0 0 7.875 6.03a9.325 9.325 0 0 1-6.767-3.429 3.289 3.289 0 0 0 1.018 4.382A3.323 3.323 0 0 1 .64 6.575v.045a3.288 3.288 0 0 0 2.632 3.218 3.203 3.203 0 0 1-.865.115 3.23 3.23 0 0 1-.614-.057 3.283 3.283 0 0 0 3.067 2.277A6.588 6.588 0 0 1 .78 13.58a6.32 6.32 0 0 1-.78-.045A9.344 9.344 0 0 0 5.026 15z"/>
                             </svg>
                         </a>
-                        <a href="https://www.linkedin.com/shareArticle?mini=true&url=<%= encodeURIComponent(`https://arzani.co.uk/blog/${blog.slug}`) %>&title=<%= encodeURIComponent(blog.title) %>" target="_blank" class="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100 border border-gray-200 text-gray-500 hover:bg-primary/10 hover:text-primary transition-colors">
+                        <a href="https://www.linkedin.com/shareArticle?mini=true&url=<%= encodeURIComponent(`https://arzani.co.uk/blog/${blog.slug}`) %>&title=<%= encodeURIComponent(blog.title) %>" 
+                           target="_blank" 
+                           aria-label="Share on LinkedIn"
+                           class="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100 border border-gray-200 text-gray-500 hover:bg-primary/10 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:bg-primary/10 focus:text-primary active:bg-primary/20 transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                                 <path d="M0 1.146C0 .513.526 0 1.175 0h13.65C15.474 0 16 .513 16 1.146v13.708c0 .633-.526 1.146-1.175 1.146H1.175C.526 16 0 15.487 0 14.854V1.146zm4.943 12.248V6.169H2.542v7.225h2.401zm-1.2-8.212c.837 0 1.358-.554 1.358-1.248-.015-.709-.52-1.248-1.342-1.248-.822 0-1.359.54-1.359 1.248 0 .694.521 1.248 1.327 1.248h.016zm4.908 8.212V9.359c0-.216.016-.432.08-.586.173-.431.568-.878 1.232-.878.869 0 1.216.662 1.216 1.634v3.865h2.401V9.25c0-2.22-1.184-3.252-2.764-3.252-1.274 0-1.845.7-2.165 1.193v.025h-.016a5.54 5.54 0 0 1 .016-.025V6.169h-2.4c.03.678 0 7.225 0 7.225h2.4z"/>
                             </svg>
                         </a>
-                        <a href="mailto:?subject=<%= encodeURIComponent(blog.title) %>&body=<%= encodeURIComponent(`Check out this article: https://arzani.co.uk/blog/${blog.slug}`) %>" class="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100 border border-gray-200 text-gray-500 hover:bg-primary/10 hover:text-primary transition-colors">
+                        <a href="mailto:?subject=<%= encodeURIComponent(blog.title) %>&body=<%= encodeURIComponent(`Check out this article: https://arzani.co.uk/blog/${blog.slug}`) %>" 
+                           aria-label="Share via Email"
+                           class="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100 border border-gray-200 text-gray-500 hover:bg-primary/10 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:bg-primary/10 focus:text-primary active:bg-primary/20 transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                                 <path d="M.05 3.555A2 2 0 0 1 2 2h12a2 2 0 0 1 1.95 1.555L8 8.414.05 3.555ZM0 4.697v7.104l5.803-3.558L0 4.697ZM6.761 8.83l-6.57 4.027A2 2 0 0 0 2 14h12a2 2 0 0 0 1.808-1.144l-6.57-4.027L8 9.586l-1.239-.757Zm3.436-.586L16 11.801V4.697l-5.803 3.546Z"/>
                             </svg>
                         </a>
                     </div>
                 </div>
-                
-                <!-- Hero Image -->
+                  <!-- Hero Image -->
                 <div class="w-full flex justify-center mb-12 animate-fade-in-up">
                     <div class="w-full max-w-3xl h-[150px] md:h-[250px] rounded-xl overflow-hidden bg-gray-100">
                         <img src="<%= blog.hero_image || blog.heroImage || 'https://arzani-images1.s3.eu-west-2.amazonaws.com/blogs/default-blog-hero.jpg' %>" 
                              alt="<%= blog.title %>" 
-                             class="w-full h-full object-contain"
-                             onerror="this.onerror=null; this.src='https://arzani-images1.s3.eu-west-2.amazonaws.com/blogs/default-blog-hero.jpg';">
+                             class="blog-hero-image blog-lazy-image w-full h-full object-cover"
+                             loading="eager"
+                             onerror="this.onerror=null; this.src='https://arzani-images1.s3.eu-west-2.amazonaws.com/blogs/default-blog-hero.jpg'; this.alt='Default hero image';"
+                             onload="this.classList.add('loaded')">
                     </div>
                 </div>
             </div>
@@ -200,15 +216,18 @@
                         <article class="prose max-w-none blog-content">
                             <!-- Blog content will be rendered here as HTML -->
                             <%- blog.content %>
-                            
-                            <!-- Tags -->
-                            <div class="flex flex-wrap gap-2 mt-12">
-                                <% blog.tags.forEach(tag => { %>
-                                    <a href="/blog/tag/<%= tag.slug %>" class="text-xs px-3 py-1 rounded-full bg-gray-100 border border-gray-200 text-gray-700 hover:bg-gray-200 transition-all">
-                                        #<%= tag.name %>
-                                    </a>
-                                <% }); %>
-                            </div>
+                              <!-- Tags -->
+                            <% if (blog.tags && blog.tags.length > 0) { %>
+                                <div class="flex flex-wrap gap-2 mt-12">
+                                    <% blog.tags.forEach(tag => { %>
+                                        <a href="/blog/tag/<%= tag.slug %>" 
+                                           class="text-xs px-3 py-1 rounded-full bg-gray-100 border border-gray-200 text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-primary focus:bg-gray-200 active:bg-gray-300 transition-all"
+                                           aria-label="View more posts with tag <%= tag.name %>">
+                                            #<%= tag.name %>
+                                        </a>
+                                    <% }); %>
+                                </div>
+                            <% } %>
                         </article>
                         
                         <!-- Author Bio -->
@@ -291,13 +310,15 @@
                     
                     <!-- Sidebar -->
                     <div class="col-span-12 lg:col-span-4">
-                        <div class="sticky top-32">
-                            <!-- Table of Contents -->
-                            <div class="bg-white border border-gray-200 rounded-xl p-6 mb-8 shadow-sm">
+                        <div class="sticky top-32">                    <!-- Table of Contents -->
+                            <div class="bg-white border border-gray-200 rounded-xl p-6 mb-8 shadow-sm" id="tocContainer">
                                 <h4 class="text-lg font-bold mb-4 text-gray-900">Table of Contents</h4>
                                 <ul class="space-y-2 text-gray-700" id="tableOfContents">
                                     <!-- This will be populated by JavaScript -->
                                 </ul>
+                                <div id="emptyToc" class="hidden text-gray-500 text-sm italic">
+                                    No section headers found in this article.
+                                </div>
                             </div>
                             
                             <!-- Newsletter Signup -->
@@ -317,11 +338,12 @@
                                 <div class="space-y-4">
                                     <% popularPosts.forEach(post => { %>
                                         <a href="/blog/<%= post.slug %>" class="flex items-start group">
-                                            <div class="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 mr-3">
-                                                <img src="<%= post.hero_image || post.heroImage || 'https://arzani-images1.s3.eu-west-2.amazonaws.com/blogs/default-blog-hero.jpg' %>" 
+                                            <div class="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 mr-3">                                                <img src="<%= post.hero_image || post.heroImage || 'https://arzani-images1.s3.eu-west-2.amazonaws.com/blogs/default-blog-hero.jpg' %>" 
                                                      alt="<%= post.title %>" 
-                                                     class="w-full h-full object-cover"
-                                                     onerror="this.onerror=null; this.src='https://arzani-images1.s3.eu-west-2.amazonaws.com/blogs/default-blog-hero.jpg';">
+                                                     class="w-full h-full object-cover blog-lazy-image"
+                                                     loading="lazy"
+                                                     onload="this.classList.add('loaded')"
+                                                     onerror="this.onerror=null; this.src='https://arzani-images1.s3.eu-west-2.amazonaws.com/blogs/default-blog-hero.jpg'; this.alt='Default image for <%= post.title %>';">
                                             </div>
                                             <div>
                                                 <h5 class="font-medium group-hover:text-primary transition-colors line-clamp-2 text-gray-900"><%= post.title %></h5>
@@ -355,16 +377,19 @@
         </div>
     </div>
 
-    <script src="/js/navigation.js"></script>
-    <script>
-        // Table of Contents Generator
+    <script src="/js/navigation.js"></script>    <script>
+        // Table of Contents Generator and Image Optimization
         document.addEventListener('DOMContentLoaded', function() {
+            // Table of Contents Generator
             const article = document.querySelector('article');
             const tableOfContents = document.getElementById('tableOfContents');
+            const tocContainer = document.getElementById('tocContainer');
+            const emptyToc = document.getElementById('emptyToc');
             
             if (article && tableOfContents) {
                 const headings = article.querySelectorAll('h2, h3');
                 if (headings.length > 0) {
+                    // Create and populate TOC
                     headings.forEach((heading, index) => {
                         // Create an ID if the heading doesn't have one
                         if (!heading.id) {
@@ -375,32 +400,55 @@
                         const link = document.createElement('a');
                         link.href = `#${heading.id}`;
                         link.textContent = heading.textContent;
-                        link.className = heading.tagName === 'H3' ? 'pl-4 text-sm text-gray-400 hover:text-white block py-1 transition-colors' : 'hover:text-white block py-1 transition-colors';
+                        
+                        // Add proper classes and indentation for hierarchy
+                        if (heading.tagName === 'H3') {
+                            link.className = 'pl-4 text-sm text-gray-600 hover:text-primary block py-1 transition-colors';
+                            // Add aria label for better accessibility
+                            link.setAttribute('aria-label', `Jump to section: ${heading.textContent}`);
+                        } else {
+                            link.className = 'text-gray-900 hover:text-primary block py-1 transition-colors font-medium';
+                            link.setAttribute('aria-label', `Jump to main section: ${heading.textContent}`);
+                        }
                         
                         listItem.appendChild(link);
                         tableOfContents.appendChild(listItem);
                         
-                        // Add click event for smooth scrolling
+                        // Add click event for smooth scrolling with keyboard accessibility
                         link.addEventListener('click', function(e) {
                             e.preventDefault();
                             const targetId = this.getAttribute('href').substring(1);
                             const targetElement = document.getElementById(targetId);
                             
                             if (targetElement) {
+                                // Check for reduced motion preference
+                                const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                                
                                 window.scrollTo({
                                     top: targetElement.offsetTop - 100,
-                                    behavior: 'smooth'
+                                    behavior: prefersReducedMotion ? 'auto' : 'smooth'
                                 });
+                                
+                                // Set focus to the heading for better accessibility
+                                targetElement.setAttribute('tabindex', '-1');
+                                targetElement.focus();
                             }
                         });
+                        
+                        // Make headings focusable for keyboard navigation
+                        heading.setAttribute('tabindex', '0');
                     });
                 } else {
-                    // Hide TOC if no headings
-                    document.querySelector('.bg-dark-light/40.rounded-xl').style.display = 'none';
+                    // Show empty state message
+                    tableOfContents.classList.add('hidden');
+                    emptyToc.classList.remove('hidden');
                 }
+            } else if (tocContainer) {
+                // Hide entire TOC container if article doesn't exist
+                tocContainer.classList.add('hidden');
             }
             
-            // Add lazy loading for images inside blog content
+            // Enhanced lazy loading for images inside blog content
             const contentImages = document.querySelectorAll('.prose img');
             contentImages.forEach(img => {
                 // Add blog-lazy-image class
@@ -412,7 +460,22 @@
                 img.style.margin = '1.5rem auto';
                 img.style.display = 'block';
                 
-                // Create an IntersectionObserver for lazy loading
+                // Add loading="lazy" attribute for native lazy loading
+                img.setAttribute('loading', 'lazy');
+                
+                // Add missing alt text if not present
+                if (!img.alt) {
+                    img.alt = 'Blog image';
+                }
+                
+                // Add error handling
+                img.addEventListener('error', function() {
+                    this.src = 'https://arzani-images1.s3.eu-west-2.amazonaws.com/blogs/default-blog-hero.jpg';
+                    this.alt = 'Image could not be loaded';
+                    this.classList.add('image-error');
+                });
+                
+                // Create an IntersectionObserver for enhanced lazy loading
                 const observer = new IntersectionObserver(entries => {
                     entries.forEach(entry => {
                         if (entry.isIntersecting) {
@@ -422,6 +485,8 @@
                             observer.unobserve(entry.target);
                         }
                     });
+                }, {
+                    rootMargin: '100px' // Start loading when within 100px of viewport
                 });
                 
                 observer.observe(img);

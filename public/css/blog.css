@@ -10,6 +10,22 @@
   width: 100%;
 }
 
+/* Accessibility - Focus States */
+a:focus, 
+button:focus,
+input:focus,
+textarea:focus,
+select:focus {
+  outline: 2px solid #316FD4;
+  outline-offset: 2px;
+}
+
+/* Improved contrast for category pills and links */
+.blog-content a,
+a.text-primary {
+  color: #2855a9; /* Darker blue for better contrast */
+}
+
 /* Blog Navbar Styles */
 .blog-header {
     background-color: rgba(20, 20, 20, 0.95);
@@ -36,6 +52,18 @@
 
 .blog-header .navbar__drawer_card {
     background-color: rgba(30, 30, 30, 0.95);
+}
+
+/* Focus and active states for navigation elements */
+.navbar__link:focus,
+.navbar__drawer_trigger:focus {
+  outline: 2px solid #316FD4;
+  outline-offset: 2px;
+}
+
+.navbar__link:active,
+.navbar__drawer_trigger:active {
+  background-color: rgba(49, 111, 212, 0.2);
 }
 
 /* Blog post content styling for light theme */
@@ -192,7 +220,7 @@
 /* Button styles for light theme blogs */
 .btn-primary {
   display: inline-block;
-  background-color: #316FD4;
+  background-color: #041b76;
   color: white;
   font-weight: 500;
   padding: 0.5rem 1rem;
@@ -201,7 +229,7 @@
 }
 
 .btn-primary:hover {
-  background-color: #2855a9;
+  background-color: #05206c;
 }
 
 /* Thumbnail images */
@@ -286,5 +314,22 @@
   
   .prose img {
     max-height: 300px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Additional mobile optimizations */
+@media (max-width: 480px) {
+  .blog-hero-image {
+    max-height: 150px;
   }
 }

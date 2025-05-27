@@ -561,7 +561,55 @@ async function addSubscriptionColumns() {
   }
 }
 
-// Single export statement
+// Get featured businesses from database
+export async function getFeaturedBusinesses(limit = 5) {
+  try {
+    const query = `
+      SELECT 
+        id,
+        business_name as name,
+        industry,
+        location,
+        price::numeric as price,
+        gross_revenue::numeric as revenue,
+        ebitda::numeric as profit,
+        date_listed
+      FROM businesses
+      WHERE is_featured = TRUE OR random() < 0.3
+      ORDER BY date_listed DESC
+      LIMIT $1
+    `;
+
+    const result = await pool.query(query, [limit]);
+    
+    // If no featured businesses, return some random ones
+    if (result.rows.length === 0) {
+      const fallbackQuery = `
+        SELECT 
+          id,
+          business_name as name,
+          industry,
+          location,
+          price::numeric as price,
+          gross_revenue::numeric as revenue,
+          ebitda::numeric as profit,
+          date_listed
+        FROM businesses
+        ORDER BY random()
+        LIMIT $1
+      `;
+      
+      const fallbackResult = await pool.query(fallbackQuery, [limit]);
+      return fallbackResult.rows;
+    }
+    
+    return result.rows;
+  } catch (error) {
+    console.error('Error getting featured businesses:', error);
+    return [];
+  }
+}
+
 export {
   createUserTable,
   createUser,
