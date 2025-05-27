@@ -73,8 +73,7 @@ export async function sendVerificationEmail(email, verificationToken) {
   `;
 
   try {
-    if (useSendGrid) {
-      // Use SendGrid
+    if (useSendGrid) {      // Use SendGrid
       const msg = {
         to: email,
         from: {
@@ -82,7 +81,15 @@ export async function sendVerificationEmail(email, verificationToken) {
           name: 'Arzani Marketplace'
         },
         subject: 'Verify your Arzani Marketplace account',
-        html: htmlContent
+        html: htmlContent,
+        tracking_settings: {
+          click_tracking: {
+            enable: false
+          },
+          open_tracking: {
+            enable: false
+          }
+        }
       };
 
       const response = await sgMail.send(msg);
@@ -145,8 +152,7 @@ export async function sendPasswordResetEmail(email, username, resetUrl) {
   `;
 
   try {
-    if (useSendGrid) {
-      // Use SendGrid
+    if (useSendGrid) {      // Use SendGrid
       const msg = {
         to: email,
         from: {
@@ -154,7 +160,15 @@ export async function sendPasswordResetEmail(email, username, resetUrl) {
           name: 'Arzani Marketplace'
         },
         subject: 'Reset your Arzani Marketplace password',
-        html: htmlContent
+        html: htmlContent,
+        tracking_settings: {
+          click_tracking: {
+            enable: false
+          },
+          open_tracking: {
+            enable: false
+          }
+        }
       };
 
       const response = await sgMail.send(msg);
@@ -236,8 +250,7 @@ export async function sendWelcomeEmail(email, username) {
   `;
 
   try {
-    if (useSendGrid) {
-      // Use SendGrid
+    if (useSendGrid) {      // Use SendGrid
       const msg = {
         to: email,
         from: {
@@ -245,7 +258,15 @@ export async function sendWelcomeEmail(email, username) {
           name: 'Arzani Marketplace'
         },
         subject: 'Welcome to Arzani Marketplace!',
-        html: htmlContent
+        html: htmlContent,
+        tracking_settings: {
+          click_tracking: {
+            enable: false
+          },
+          open_tracking: {
+            enable: false
+          }
+        }
       };
 
       const response = await sgMail.send(msg);
@@ -327,8 +348,7 @@ export async function sendContactEmail(email, name, subject, message) {
   `;
 
   try {
-    if (useSendGrid) {
-      // Send notification to admin
+    if (useSendGrid) {      // Send notification to admin
       const adminMsg = {
         to: process.env.ADMIN_EMAIL || 'hello@arzani.co.uk',
         from: {
@@ -336,7 +356,15 @@ export async function sendContactEmail(email, name, subject, message) {
           name: 'Arzani Marketplace Contact Form'
         },
         subject: `New Contact: ${subject}`,
-        html: htmlContent
+        html: htmlContent,
+        tracking_settings: {
+          click_tracking: {
+            enable: false
+          },
+          open_tracking: {
+            enable: false
+          }
+        }
       };
 
       // Send confirmation to user
@@ -347,7 +375,15 @@ export async function sendContactEmail(email, name, subject, message) {
           name: 'Arzani Marketplace'
         },
         subject: 'We\'ve received your message - Arzani Marketplace',
-        html: confirmationHtml
+        html: confirmationHtml,
+        tracking_settings: {
+          click_tracking: {
+            enable: false
+          },
+          open_tracking: {
+            enable: false
+          }
+        }
       };
 
       await sgMail.send(adminMsg);
@@ -459,8 +495,7 @@ export async function sendVerificationStatusEmail(email, username, status, profe
   `;
 
   try {
-    if (useSendGrid) {
-      // Use SendGrid
+    if (useSendGrid) {      // Use SendGrid
       const msg = {
         to: email,
         from: {
@@ -468,7 +503,15 @@ export async function sendVerificationStatusEmail(email, username, status, profe
           name: 'Arzani Marketplace'
         },
         subject: subject,
-        html: htmlContent
+        html: htmlContent,
+        tracking_settings: {
+          click_tracking: {
+            enable: false
+          },
+          open_tracking: {
+            enable: false
+          }
+        }
       };
 
       const response = await sgMail.send(msg);

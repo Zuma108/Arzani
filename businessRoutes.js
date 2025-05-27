@@ -693,6 +693,14 @@ const emailTemplate = {
       message: data.message || 'No message provided',
       businessName: data.businessName,
       year: new Date().getFullYear()
+    },
+    tracking_settings: {
+      click_tracking: {
+        enable: false
+      },
+      open_tracking: {
+        enable: false
+      }
     }
   }),
   
@@ -708,6 +716,14 @@ const emailTemplate = {
       firstName: data.firstName,
       businessName: data.businessName,
       year: new Date().getFullYear()
+    },
+    tracking_settings: {
+      click_tracking: {
+        enable: false
+      },
+      open_tracking: {
+        enable: false
+      }
     }
   })
 };
