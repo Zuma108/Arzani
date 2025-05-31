@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= blog.title %> | TechBlog</title>
+    <meta name="description" content="<%= blog.meta_description || blog.excerpt %>">
+    
+    <!-- Open Graph metadata -->
+    <meta property="og:title" content="<%= blog.title %> | TechBlog">
+    <meta property="og:description" content="<%= blog.meta_description || blog.excerpt %>">
+    <meta property="og:image" content="<%= blog.hero_image %>">
+    <meta property="og:url" content="<%= `https://arzani.co.uk/blog/${blog.slug}` %>">
+    <meta property="og:type" content="article">
+      <!-- Modern font preloading for optimal performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Professional font combinations for enhanced readability and style -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&family=Source+Serif+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+      <link rel="icon" href="/figma%20design%20exports/images.webp/arzani-icon-nobackground.png" type="image/png">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+      <!-- Custom styles for enhanced blog design -->
+    <style>        /* Modern color palette and gradients */
+        :root {
+            --primary-color: #0c7ff2;
+            --secondary-color: #1e40af;
+            --accent-color: #667eea;
+            --text-dark: #1e293b;
+            --text-gray: #374151;
+            --bg-light: #f8fafc;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            
+            /* Professional font stacks */
+            --font-heading: 'Playfair Display', 'Times New Roman', serif;
+            --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            --font-content: 'Source Serif Pro', 'Georgia', 'Times New Roman', serif;
+            --font-mono: 'JetBrains Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            font-family: var(--font-body);
+            font-weight: 400;
+            line-height: 1.6;
+        }
+
+        .blog-gradient-bg {
+            background: linear-gradient(135deg, var(--accent-color) 0%, var(--secondary-color) 100%);
+        }
+
+        .blog-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 20px var(--shadow-color);
+        }
+
+        .blog-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .blog-button {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            border-radius: 12px;
+            font-weight: 600;
+            text-transform: none;
+            letter-spacing: 0.025em;
+        }
+
+        .blog-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(12, 127, 242, 0.4);
+            background: linear-gradient(45deg, var(--secondary-color), var(--primary-color));
+        }
+
+        .blog-interactive {
+            transition: all 0.2s ease;
+            border-radius: 8px;
+        }
+
+        .blog-interactive:hover {
+            background: rgba(12, 127, 242, 0.08);
+            transform: translateX(4px);
+        }        /* Enhanced Reading Progress Bar */
+        .reading-progress-container {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(240, 242, 245, 0.8);
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
+            padding: 1rem 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .progress-bar-wrapper {
+            max-width: 960px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .progress-bar-track {
+            flex: 1;
+            height: 6px;
+            background: linear-gradient(90deg, #f1f5f9, #e2e8f0);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color), var(--accent-color));
+            border-radius: 10px;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 20px rgba(12, 127, 242, 0.4);
+            position: relative;
+        }
+
+        .progress-bar-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 3px;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 0 10px 10px 0;
+        }
+
+        .progress-text {
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            min-width: 45px;
+            text-align: right;
+        }
+
+        .progress-label {
+            font-family: var(--font-body);
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-gray);
+            white-space: nowrap;
+        }
+
+        /* Animate progress bar on scroll */
+        @keyframes progressPulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(12, 127, 242, 0.4); }
+            50% { box-shadow: 0 0 30px rgba(12, 127, 242, 0.6); }
+        }
+
+        .progress-bar-fill.active {
+            animation: progressPulse 2s ease-in-out infinite;
+        }/* Enhanced typography for blog content with professional fonts */
+        .blog-content {
+            font-family: var(--font-content);
+            line-height: 1.8;
+            font-weight: 400;
+        }
+
+        .blog-content h1, .blog-content h2, .blog-content h3 {
+            font-family: var(--font-heading);
+            color: var(--text-dark);
+            margin: 2rem 0 1.5rem 0;
+            font-weight: 600;
+            letter-spacing: -0.025em;
+        }
+
+        .blog-content h1 { 
+            font-size: 3rem; 
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--text-dark), var(--primary-color));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1.2;
+        }
+        
+        .blog-content h2 { 
+            font-size: 2.25rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            line-height: 1.3;
+        }
+        
+        .blog-content h3 { 
+            font-size: 1.875rem;
+            font-weight: 500;
+            color: var(--text-dark);
+            line-height: 1.4;
+        }
+
+        .blog-content p {
+            margin: 1.5rem 0;
+            line-height: 1.9;
+            color: var(--text-gray);
+            font-size: 1.125rem;
+            font-weight: 400;
+        }
+
+        .blog-content blockquote {
+            border-left: 4px solid var(--primary-color);
+            padding: 1.5rem 2rem;
+            margin: 2rem 0;
+            font-style: italic;
+            color: var(--text-gray);
+            background: linear-gradient(135deg, var(--bg-light), #ffffff);
+            border-radius: 0 12px 12px 0;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            position: relative;
+            font-family: var(--font-content);
+            font-size: 1.1rem;
+        }
+
+        .blog-content blockquote::before {
+            content: '"';
+            font-size: 4rem;
+            color: var(--primary-color);
+            position: absolute;
+            top: -10px;
+            left: 10px;
+            opacity: 0.3;
+        }
+
+        .blog-content ul, .blog-content ol {
+            margin: 1.5rem 0;
+            padding-left: 2rem;
+        }
+
+        .blog-content li {
+            margin: 0.75rem 0;
+            line-height: 1.8;
+            color: var(--text-gray);
+        }
+
+        .blog-content li::marker {
+            color: var(--primary-color);
+        }
+
+        .blog-tag {
+            background: linear-gradient(45deg, #f0f2f5, #e2e8f0);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 20px;
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+
+        .blog-tag:hover {
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(12, 127, 242, 0.3);
+        }
+
+        .sidebar-glow {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(240, 242, 245, 0.8);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            border-radius: 16px;
+        }
+
+        /* Header enhancement */
+        .blog-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(240, 242, 245, 0.8);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Author info styling */
+        .author-info {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.9));
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border: 1px solid rgba(240, 242, 245, 0.8);
+        }
+
+        /* Newsletter signup enhancement */
+        .newsletter-signup {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 16px;
+            padding: 2rem;
+            color: white;
+            margin: 3rem 0;
+        }
+
+        .newsletter-signup input {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+
+        .newsletter-signup input::placeholder {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* Animated elements */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .floating-element {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Typography enhancements for specific elements */
+        .blog-title {
+            font-family: var(--font-heading);
+            font-weight: 700;
+            font-size: 3rem;
+            line-height: 1.2;
+            background: linear-gradient(135deg, var(--text-dark), var(--primary-color));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .blog-author-name {
+            font-family: var(--font-body);
+            font-weight: 600;
+            font-size: 1.25rem;
+            color: var(--text-dark);
+        }
+
+        .blog-author-bio {
+            font-family: var(--font-body);
+            font-weight: 400;
+            line-height: 1.6;
+            color: var(--text-gray);
+        }
+
+        .blog-newsletter-title {
+            font-family: var(--font-heading);
+            font-weight: 600;
+            color: white;
+        }
+
+        .blog-newsletter-text {
+            font-family: var(--font-body);
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .blog-sidebar-heading {
+            font-family: var(--font-body);
+            font-weight: 700;
+            color: var(--text-dark);
+            letter-spacing: -0.015em;
+        }
+
+        .blog-sidebar-link {
+            font-family: var(--font-body);
+            font-weight: 400;
+            transition: all 0.2s ease;
+        }
+
+        .blog-sidebar-link:hover {
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+
+        .blog-meta-text {
+            font-family: var(--font-body);
+            font-weight: 400;
+            color: var(--text-gray);
+            font-size: 0.875rem;
+        }
+
+        /* Code blocks styling */
+        .blog-content pre {
+            font-family: var(--font-mono);
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 1.5rem;
+            border-radius: 12px;
+            overflow-x: auto;
+            margin: 2rem 0;
+            border: 1px solid rgba(226, 232, 240, 0.1);
+        }
+
+        .blog-content code {
+            font-family: var(--font-mono);
+            background: rgba(226, 232, 240, 0.8);
+            color: var(--text-dark);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+
+        .blog-content pre code {
+            background: transparent;
+            color: inherit;
+            padding: 0;
+        }
+
+        /* Enhanced button typography */
+        .blog-button {
+            font-family: var(--font-body);
+            font-weight: 600;
+            letter-spacing: 0.025em;
+        }
+
+        /* Enhanced tag typography */
+        .blog-tag {
+            font-family: var(--font-body);
+            font-weight: 500;
+            font-size: 0.875rem;
+        }/* Comprehensive Mobile Responsive Styles */
+        @media (max-width: 768px) {
+            /* Typography adjustments */
+            .blog-title {
+                font-size: 2.25rem;
+                line-height: 1.2;
+                padding: 0 1rem;
+            }
+            
+            .blog-content h1 {
+                font-size: 2.5rem;
+                line-height: 1.2;
+            }
+            
+            .blog-content h2 {
+                font-size: 2rem;
+                line-height: 1.3;
+            }
+            
+            .blog-content h3 {
+                font-size: 1.5rem;
+                line-height: 1.4;
+            }
+            
+            .blog-content p {
+                font-size: 1rem;
+                line-height: 1.7;
+            }
+            
+            /* Header adjustments */
+            .blog-header {
+                padding: 0.75rem 1rem;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+            
+            .blog-header .flex.flex-1.justify-end {
+                justify-content: center;
+                width: 100%;
+                margin-top: 0.5rem;
+            }
+            
+            .blog-header .flex.items-center.gap-9 {
+                gap: 1rem;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .blog-header .flex.items-center.gap-9 a {
+                font-size: 0.875rem;
+            }
+            
+            /* Hide some header buttons on mobile */
+            .blog-header .flex.gap-2 {
+                display: none;
+            }
+            
+            /* Mobile progress bar adjustments */
+            .reading-progress-container {
+                padding: 0.75rem 1rem;
+            }
+            
+            .progress-label {
+                display: none;
+            }
+            
+            .progress-text {
+                font-size: 0.75rem;
+                min-width: 35px;
+            }
+            
+            .progress-bar-track {
+                height: 4px;
+            }
+            
+            /* Layout adjustments */
+            .gap-1.px-6.flex.flex-1.justify-center.py-5 {
+                flex-direction: column;
+                padding: 0.5rem;
+                gap: 0;
+            }
+            
+            /* Hide sidebar on mobile */
+            .layout-content-container.flex.flex-col.w-80 {
+                display: none;
+            }
+            
+            /* Main content full width on mobile */
+            .layout-content-container.flex.flex-col.max-w-\[960px\].flex-1.blog-card {
+                margin: 0.5rem;
+                max-width: none;
+            }
+            
+            /* Content padding adjustments */
+            .blog-content {
+                padding: 1rem;
+            }
+            
+            /* Author info responsive */
+            .author-info {
+                flex-direction: column;
+                text-align: center;
+                gap: 1rem;
+            }
+            
+            .author-info .w-20.h-20 {
+                width: 4rem;
+                height: 4rem;
+                align-self: center;
+            }
+            
+            /* Interaction buttons responsive */
+            .flex.flex-wrap.gap-6.px-6.py-4.justify-center {
+                gap: 1rem;
+                padding: 1rem;
+                flex-wrap: wrap;
+            }
+            
+            .blog-interactive {
+                min-width: 5rem;
+                padding: 0.75rem 1rem;
+            }
+  
+            
+            /* Share button responsive */
+            .flex.justify-center.overflow-hidden.px-6.pb-8 {
+                padding: 1rem 1rem 2rem;
+            }
+            
+            .blog-button.h-16 {
+                height: 3rem;
+                font-size: 1rem;
+                padding: 0 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            /* Extra small screen adjustments */
+            .blog-title {
+                font-size: 1.875rem;
+                line-height: 1.1;
+                padding: 0 0.75rem;
+            }
+            
+            .blog-content h1 {
+                font-size: 2rem;
+                line-height: 1.1;
+            }
+            
+            .blog-content h2 {
+                font-size: 1.75rem;
+                line-height: 1.2;
+            }
+            
+            .blog-content h3 {
+                font-size: 1.375rem;
+                line-height: 1.3;
+            }
+            
+            .blog-content p {
+                font-size: 0.95rem;
+                line-height: 1.6;
+            }
+            
+            /* Header for very small screens */
+            .blog-header {
+                padding: 0.5rem;
+            }
+            
+            .blog-header .h-12 {
+                height: 2.5rem;
+            }
+            
+            .blog-header .flex.items-center.gap-9 {
+                gap: 0.75rem;
+            }
+            
+            .blog-header .flex.items-center.gap-9 a {
+                font-size: 0.8rem;
+            }
+            
+            /* Content adjustments */
+            .layout-content-container.flex.flex-col.max-w-\[960px\].flex-1.blog-card {
+                margin: 0.25rem;
+            }
+            
+            .blog-content {
+                padding: 0.75rem;
+            }
+            
+            /* Breadcrumbs */
+            .flex.flex-wrap.gap-2.p-4 {
+                padding: 0.75rem;
+                font-size: 0.875rem;
+            }
+            
+            /* Author info very small screens */
+            .author-info .w-20.h-20 {
+                width: 3rem;
+                height: 3rem;
+            }
+            
+            /* Tags responsive */
+            .flex.gap-3.p-6.flex-wrap {
+                padding: 0.75rem;
+                gap: 0.5rem;
+            }
+            
+            .blog-tag {
+                font-size: 0.8rem;
+                padding: 0.25rem 0.75rem;
+                height: 2rem;
+            }
+            
+            /* Interaction buttons very small */
+            .blog-interactive {
+                padding: 0.5rem 0.75rem;
+                gap: 0.5rem;
+            }
+            
+            .blog-interactive p {
+                font-size: 0.75rem;
+            }
+  
+            
+            .flex.w-full.flex-1.items-stretch.rounded-xl.h-14 {
+                height: 2.5rem;
+            }
+            
+            .blog-button.min-w-\[84px\] {
+                min-width: 3rem;
+                font-size: 0.875rem;
+                padding: 0 0.75rem;
+            }
+        }
+
+        /* Landscape orientation on mobile */
+        @media (max-width: 768px) and (orientation: landscape) {
+            .blog-header .flex.flex-1.justify-end {
+                width: auto;
+                margin-top: 0;
+            }
+            
+            .gap-1.px-6.flex.flex-1.justify-center.py-5 {
+                flex-direction: row;
+                padding: 0.5rem;
+            }
+            
+            .layout-content-container.flex.flex-col.w-80 {
+                display: flex;
+                width: 16rem;
+            }
+        }
+
+        /* Touch-friendly interactive elements */
+        @media (hover: none) and (pointer: coarse) {
+            .blog-interactive {
+                min-height: 2.75rem;
+                min-width: 2.75rem;
+            }
+            
+            .blog-button {
+                min-height: 2.75rem;
+                padding: 0.75rem 1rem;
+            }
+            
+            /* Larger tap targets for mobile */
+            .blog-header a {
+                padding: 0.5rem;
+                margin: -0.5rem;
+            }
+        }/* Make logo completely static - no animations, transforms, or effects */
+        .blog-header img[alt="Arzani Logo"] {
+            transform: none !important;
+            transition: none !important;
+            animation: none !important;
+            filter: none !important;
+            opacity: 1 !important;
+            will-change: auto !important;
+            position: static !important;
+            pointer-events: none !important;
+        }
+
+        .blog-header img[alt="Arzani Logo"]:hover,
+        .blog-header img[alt="Arzani Logo"]:focus,
+        .blog-header img[alt="Arzani Logo"]:active {
+            transform: none !important;
+            transition: none !important;
+            animation: none !important;
+            filter: none !important;
+            opacity: 1 !important;
+            box-shadow: none !important;
+            scale: 1 !important;
+        }
+
+        /* Ensure logo container is also static */
+        .blog-header .h-12.w-auto {
+            transform: none !important;
+            transition: none !important;
+            animation: none !important;
+            position: static !important;
+        }
+
+        .blog-header .h-12.w-auto:hover,
+        .blog-header .h-12.w-auto:focus,
+        .blog-header .h-12.w-auto:active {
+            transform: none !important;
+            transition: none !important;
+            animation: none !important;
+            box-shadow: none !important;
+            scale: 1 !important;
+        }
+
+        /* Override any global animations that might affect the logo */
+        .blog-header img[alt="Arzani Logo"], 
+        .blog-header img[alt="Arzani Logo"] * {
+            animation-name: none !important;
+            animation-duration: 0s !important;
+            animation-iteration-count: 1 !important;
+            animation-play-state: paused !important;
+        }
+    </style>
+    
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-W50GKB6F3M"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-W50GKB6F3M');
+    </script>
+</head>
+<body class="relative flex size-full min-h-screen flex-col bg-white group/design-root overflow-x-hidden" 
+      style='font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;'>
+    
+    <div class="layout-container flex h-full grow flex-col">
+        <!-- Header -->
+        <header class="blog-header flex items-center justify-between whitespace-nowrap px-4 sm:px-6 lg:px-10 py-4">
+            <div class="flex items-center gap-4 text-[#111418]">                <div class="h-8 sm:h-10 lg:h-12 w-auto">
+                    <img src="/figma%20design%20exports/logos/Arzani%20black-white%20background.png" 
+                         alt="Arzani Logo" 
+                         class="h-full w-auto object-contain">
+                </div>
+            </div>
+            <div class="flex flex-1 justify-end gap-2 sm:gap-8">
+                <div class="hidden sm:flex items-center gap-4 lg:gap-9">
+                    <a class="text-[#111418] text-xs sm:text-sm font-medium leading-normal hover:text-[#0c7ff2] transition-colors" href="/">Home</a>
+                    <a class="text-[#111418] text-xs sm:text-sm font-medium leading-normal hover:text-[#0c7ff2] transition-colors" href="/blog">Articles</a>
+                    <a class="text-[#111418] text-xs sm:text-sm font-medium leading-normal hover:text-[#0c7ff2] transition-colors" href="/about-us">About</a>
+                    <a class="text-[#111418] text-xs sm:text-sm font-medium leading-normal hover:text-[#0c7ff2] transition-colors" href="/contact">Contact</a>
+                </div>
+                
+                <!-- Mobile menu button -->
+                <div class="sm:hidden flex items-center">
+                    <button id="mobile-menu-button" class="p-2 rounded-lg hover:bg-gray-100 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- Desktop buttons -->
+                <div class="hidden lg:flex gap-2">
+                   
+                </div>                <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full w-8 h-8 sm:w-10 sm:h-10" 
+                     style='background-image: url("/figma%20design%20exports/images/default-avatar.png");'></div>
+            </div>
+        </header>
+        
+        <!-- Mobile menu (hidden by default) -->
+        <div id="mobile-menu" class="hidden sm:hidden bg-white border-b border-gray-200 px-4 py-3">
+            <div class="flex flex-col space-y-3">
+                <a class="text-[#111418] text-sm font-medium leading-normal hover:text-[#0c7ff2] transition-colors" href="/">Home</a>
+                <a class="text-[#111418] text-sm font-medium leading-normal hover:text-[#0c7ff2] transition-colors" href="/blog">Articles</a>
+                <a class="text-[#111418] text-sm font-medium leading-normal hover:text-[#0c7ff2] transition-colors" href="/about">About</a>
+                <a class="text-[#111418] text-sm font-medium leading-normal hover:text-[#0c7ff2] transition-colors" href="/contact">Contact</a>
+            </div>
+        </div>
+        
+        <!-- Enhanced Reading Progress Bar -->
+        <div class="reading-progress-container">
+            <div class="progress-bar-wrapper">
+                <span class="progress-label">Reading Progress</span>
+                <div class="progress-bar-track">
+                    <div class="progress-bar-fill" id="reading-progress-bar" style="width: 0%;"></div>
+                </div>
+                <span class="progress-text" id="reading-progress-text">0%</span>
+            </div>
+        </div>
+          <!-- Main Content -->
+        <div class="gap-1 px-2 sm:px-4 lg:px-6 flex flex-1 justify-center py-5">            <!-- Sidebar -->
+            <div class="layout-content-container hidden lg:flex flex-col w-80 sidebar-glow p-6 mx-4">
+                <h3 class="blog-sidebar-heading text-[#111418] text-lg font-bold leading-tight tracking-[-0.015em] pb-4">Past Articles</h3>
+                <% if (typeof recentPosts !== 'undefined' && recentPosts && recentPosts.length > 0) { %>
+                    <% recentPosts.slice(0, 5).forEach(post => { %>
+                        <div class="blog-interactive flex items-center gap-4 px-4 py-3 min-h-14 mb-2">
+                            <p class="blog-sidebar-link text-[#111418] text-base font-normal leading-normal flex-1 truncate">
+                                <a href="/blog/<%= post.slug %>" class="hover:text-[#0c7ff2] transition-colors">
+                                    <%= post.title %>
+                                </a>
+                            </p>
+                        </div>
+                    <% }); %>
+                <% } else if (typeof relatedPosts !== 'undefined' && relatedPosts && relatedPosts.length > 0) { %>
+                    <% relatedPosts.slice(0, 5).forEach(post => { %>
+                        <div class="blog-interactive flex items-center gap-4 px-4 py-3 min-h-14 mb-2">
+                            <p class="blog-sidebar-link text-[#111418] text-base font-normal leading-normal flex-1 truncate">
+                                <a href="/blog/<%= post.slug %>" class="hover:text-[#0c7ff2] transition-colors">
+                                    <%= post.title %>
+                                </a>
+                            </p>
+                        </div>
+                    <% }); %>                <% } else { %>
+                    <div class="blog-interactive flex items-center gap-4 px-4 py-3 min-h-14 mb-2">
+                        <p class="text-gray-500 text-base font-normal leading-normal flex-1 truncate">No articles available</p>
+                    </div>
+                <% } %>
+                
+                <!-- Search -->
+                <div class="px-4 py-3">
+                    <label class="flex flex-col min-w-40 h-12 w-full">
+                        <div class="flex w-full flex-1 items-stretch rounded-lg h-full">
+                            <div class="text-[#60758a] flex border-none bg-[#f0f2f5] items-center justify-center pl-4 rounded-l-lg border-r-0" data-icon="MagnifyingGlass" data-size="24px" data-weight="regular">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+                                    <path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"></path>
+                                </svg>
+                            </div>
+                            <input placeholder="Search articles" 
+                                   class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111418] focus:outline-0 focus:ring-0 border-none bg-[#f0f2f5] focus:border-none h-full placeholder:text-[#60758a] px-4 rounded-l-none border-l-0 pl-2 text-base font-normal leading-normal" 
+                                   value="" />
+                        </div>
+                    </label>
+                </div>
+                
+                <!-- Categories -->
+                <h3 class="blog-sidebar-heading text-[#111418] text-lg font-bold leading-tight tracking-[-0.015em] px-4 pb-2 pt-4">Categories</h3>
+                <div class="flex gap-3 p-3 flex-wrap pr-4">
+                    <% if (typeof categories !== 'undefined' && categories && categories.length > 0) { %>
+                        <% categories.slice(0, 5).forEach(category => { %>
+                            <div class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-[#f0f2f5] pl-4 pr-4">
+                                <p class="text-[#111418] text-sm font-medium leading-normal">
+                                    <a href="/blog/category/<%= category.slug %>" class="hover:text-[#0c7ff2] transition-colors">
+                                        <%= category.name %>
+                                    </a>
+                                </p>
+                            </div>
+                        <% }); %>
+                    <% } else { %>
+                        <div class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-[#f0f2f5] pl-4 pr-4">
+                            <p class="text-[#111418] text-sm font-medium leading-normal">AI</p>
+                        </div>
+                        <div class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-[#f0f2f5] pl-4 pr-4">
+                            <p class="text-[#111418] text-sm font-medium leading-normal">Cloud</p>
+                        </div>
+                        <div class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-[#f0f2f5] pl-4 pr-4">
+                            <p class="text-[#111418] text-sm font-medium leading-normal">Security</p>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Main Article -->
+            <div class="layout-content-container flex flex-col max-w-4xl flex-1 blog-card mx-2 sm:mx-4 lg:mx-6 my-4">
+                <!-- Breadcrumbs -->
+                <div class="flex flex-wrap gap-2 p-3 sm:p-4">
+                    <a class="text-[#60758a] text-sm sm:text-base font-medium leading-normal hover:text-[#0c7ff2] transition-colors" href="/blog">Articles</a>
+                    <span class="text-[#60758a] text-sm sm:text-base font-medium leading-normal">/</span>
+                    <% if (typeof postCategories !== 'undefined' && postCategories && postCategories.length > 0) { %>
+                        <span class="text-[#111418] text-sm sm:text-base font-medium leading-normal"><%= postCategories[0].name %></span>
+                    <% } else { %>
+                        <span class="text-[#111418] text-sm sm:text-base font-medium leading-normal">Technology</span>
+                    <% } %>
+                </div>
+
+                <!-- Article Title -->
+                <h1 class="blog-title text-[#111418] tracking-light px-3 sm:px-4 text-left pb-4 pt-6 text-3xl sm:text-4xl lg:text-5xl font-bold">
+                    <%= blog.title %>
+                </h1>
+                
+                <!-- Author Info -->
+                <div class="p-3 sm:p-4">
+                    <div class="author-info flex flex-col sm:flex-row items-center sm:items-stretch justify-between gap-4">
+                        <div class="flex flex-col gap-2 flex-1 text-center sm:text-left">
+                            <p class="blog-author-name text-[#111418] leading-tight text-lg font-semibold">
+                                <%= blog.author_name || 'Sophia Carter' %>
+                            </p>
+                            <p class="blog-author-bio text-[#60758a] text-sm sm:text-base leading-relaxed">
+                                <%= blog.author_bio || 'Tech enthusiast exploring AI\'s impact on society.' %>
+                            </p>
+                        </div>                        <div class="w-16 h-16 sm:w-20 sm:h-20 bg-center bg-no-repeat bg-cover rounded-full flex-shrink-0 blog-card" 
+                             style="background-image: url('<%= blog.author_image || "/figma%20design%20exports/images/default-avatar.png" %>');"></div>
+                    </div>
+                </div>
+                
+                <!-- Publication Date -->
+                <p class="blog-meta-text text-[#60758a] text-xs sm:text-sm font-normal leading-normal pb-3 pt-1 px-3 sm:px-4">
+                    Published on <%= new Date(blog.publish_date || blog.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %>
+                </p>
+                  <!-- Hero Image -->
+                <% if (blog.hero_image) { %>
+                <div class="flex w-full grow bg-white @container py-2 sm:py-3 px-2 sm:px-0">
+                    <div class="w-full gap-1 overflow-hidden bg-white @[480px]:gap-2 aspect-[16/9] sm:aspect-[3/2] flex">
+                        <div class="w-full bg-center bg-no-repeat bg-cover aspect-auto rounded-xl sm:rounded-2xl flex-1 shadow-lg sm:shadow-xl blog-card"
+                             data-bg-image="<%= blog.hero_image %>"></div>
+                    </div>
+                </div>
+                <% } %>                  <!-- Article Content -->
+                <div class="p-3 sm:p-4 lg:p-6">
+                    <div class="blog-content text-[#111418] text-base sm:text-lg font-normal leading-relaxed pb-4 pt-2">
+                        <%- blog.content %>
+                    </div>
+                </div>                  <!-- Newsletter Signup -->
+                <div class="p-3 sm:p-4 lg:p-6">
+                    <% const source = 'modern-blog-post'; %>
+                    <%- include('../partials/newsletter', { source: source }) %>
+                </div>                  <!-- Tags -->
+                <div class="flex gap-2 sm:gap-3 p-3 sm:p-4 lg:p-6 flex-wrap">
+                    <% if (typeof tags !== 'undefined' && tags && tags.length > 0) { %>
+                        <% tags.forEach(tag => { %>
+                            <div class="blog-tag flex h-8 sm:h-10 shrink-0 items-center justify-center gap-x-2 px-3 sm:px-4">
+                                <p class="text-[#111418] text-xs sm:text-sm font-medium leading-normal">
+                                    <a href="/blog/tag/<%= tag.slug %>" class="hover:text-white transition-colors">
+                                        #<%= tag.name %>
+                                    </a>
+                                </p>
+                            </div>
+                        <% }); %>
+                    <% } else { %>
+                        <div class="blog-tag flex h-8 sm:h-10 shrink-0 items-center justify-center gap-x-2 px-3 sm:px-4">
+                            <p class="text-[#111418] text-xs sm:text-sm font-medium leading-normal">#AI Trends</p>
+                        </div>
+                        <div class="blog-tag flex h-8 sm:h-10 shrink-0 items-center justify-center gap-x-2 px-3 sm:px-4">
+                            <p class="text-[#111418] text-xs sm:text-sm font-medium leading-normal">#Future Tech</p>
+                        </div>
+                        <div class="blog-tag flex h-8 sm:h-10 shrink-0 items-center justify-center gap-x-2 px-3 sm:px-4">
+                            <p class="text-[#111418] text-xs sm:text-sm font-medium leading-normal">#Innovation</p>
+                        </div>
+                    <% } %>
+                </div>                <!-- Interaction Buttons -->
+                <div class="flex flex-wrap gap-3 sm:gap-4 lg:gap-6 px-3 sm:px-4 lg:px-6 py-3 sm:py-4 justify-center bg-white/50 rounded-xl sm:rounded-2xl mx-3 sm:mx-4 lg:mx-6 backdrop-blur-sm">
+                    <div class="blog-interactive flex items-center justify-center gap-2 sm:gap-3 px-3 sm:px-4 lg:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl cursor-pointer min-h-[44px]" id="like-button">
+                        <div class="text-[#60758a]" data-icon="Heart" data-size="20px" data-weight="regular">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" fill="currentColor" viewBox="0 0 256 256" class="sm:w-6 sm:h-6">
+                                <path d="M178,32c-20.65,0-38.73,8.88-50,23.89C116.73,40.88,98.65,32,78,32A62.07,62.07,0,0,0,16,94c0,70,103.79,126.66,108.21,129a8,8,0,0,0,7.58,0C136.21,220.66,240,164,240,94A62.07,62.07,0,0,0,178,32ZM128,206.8C109.74,196.16,32,147.69,32,94A46.06,46.06,0,0,1,78,48c19.45,0,35.78,10.36,42.6,27a8,8,0,0,0,14.8,0c6.82-16.67,23.15-27,42.6-27a46.06,46.06,0,0,1,46,46C224,147.61,146.24,196.15,128,206.8Z"></path>
+                            </svg>
+                        </div>
+                        <p class="text-[#60758a] text-xs sm:text-sm font-bold leading-normal tracking-[0.015em]" id="like-count">125</p>
+                    </div>                    <div class="blog-interactive flex items-center justify-center gap-2 sm:gap-3 px-3 sm:px-4 lg:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl cursor-pointer min-h-[44px]" id="bookmark-button">
+                        <div class="text-[#60758a]" data-icon="Bookmark" data-size="20px" data-weight="regular">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" fill="currentColor" viewBox="0 0 256 256" class="sm:w-6 sm:h-6">
+                                <path d="M184,32H72A16,16,0,0,0,56,48V224a8,8,0,0,0,12.24,6.78L128,193.43l59.77,37.35A8,8,0,0,0,200,224V48A16,16,0,0,0,184,32Zm0,16V161.57l-51.77-32.35a8,8,0,0,0-8.48,0L72,161.56V48ZM132.23,177.22a8,8,0,0,0-8.48,0L72,209.57V180.43l56-35,56,35v29.14Z"></path>
+                            </svg>
+                        </div>
+                        <p class="text-[#60758a] text-xs sm:text-sm font-bold leading-normal tracking-[0.015em]" id="bookmark-count">28</p>
+                    </div>
+                </div>                  <!-- Share Button -->
+                <div class="flex justify-center overflow-hidden px-3 sm:px-4 lg:px-6 pb-6 sm:pb-8">
+                    <button class="blog-button flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-xl sm:rounded-2xl h-12 sm:h-14 lg:h-16 text-white text-sm sm:text-base lg:text-lg font-bold leading-normal tracking-[0.015em] min-w-0 px-4 sm:px-6 lg:px-8 gap-2 sm:gap-3 lg:gap-4 min-h-[44px]" 
+                            id="share-button">
+                        <div class="text-white" data-icon="Share" data-size="24px" data-weight="regular">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256" class="sm:w-6 sm:h-6 lg:w-7 lg:h-7">
+                                <path d="M229.66,109.66l-48,48a8,8,0,0,1-11.32-11.32L204.69,112H165a88,88,0,0,0-85.23,66,8,8,0,0,1-15.5-4A103.94,103.94,0,0,1,165,96h39.71L170.34,61.66a8,8,0,0,1,11.32-11.32l48,48A8,8,0,0,1,229.66,109.66ZM192,208H40V88a8,8,0,0,0-16,0V208a16,16,0,0,0,16,16H192a8,8,0,0,0,0-16Z"></path>
+                            </svg>
+                        </div>
+                        <span class="truncate">Share This Article</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>      <!-- JavaScript for interactions -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mobile menu functionality
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            
+            if (mobileMenuButton && mobileMenu) {
+                mobileMenuButton.addEventListener('click', function() {
+                    mobileMenu.classList.toggle('hidden');
+                    
+                    // Update button icon
+                    const svg = mobileMenuButton.querySelector('svg');
+                    if (mobileMenu.classList.contains('hidden')) {
+                        // Show hamburger icon
+                        svg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>';
+                    } else {
+                        // Show close icon
+                        svg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>';
+                    }
+                });
+                
+                // Close mobile menu when clicking outside
+                document.addEventListener('click', function(event) {
+                    if (!mobileMenuButton.contains(event.target) && !mobileMenu.contains(event.target)) {
+                        mobileMenu.classList.add('hidden');
+                        const svg = mobileMenuButton.querySelector('svg');
+                        svg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>';
+                    }
+                });
+                
+                // Close mobile menu when window is resized to desktop size
+                window.addEventListener('resize', function() {
+                    if (window.innerWidth >= 640) { // sm breakpoint
+                        mobileMenu.classList.add('hidden');
+                        const svg = mobileMenuButton.querySelector('svg');
+                        svg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>';
+                    }
+                });
+            }
+            
+            // Set background images dynamically to avoid EJS parsing issues
+            const bgImageElements = document.querySelectorAll('[data-bg-image]');
+            bgImageElements.forEach(element => {
+                const bgImage = element.getAttribute('data-bg-image');
+                if (bgImage) {
+                    element.style.backgroundImage = `url('${bgImage}')`;
+                }
+            });// Enhanced Reading progress indicator
+            function updateReadingProgress() {
+                const article = document.querySelector('.blog-content');
+                const scrollTop = window.pageYOffset;
+                const windowHeight = window.innerHeight;
+                const docHeight = document.body.scrollHeight - windowHeight;
+                
+                // More accurate calculation based on article content
+                const articleTop = article ? article.offsetTop : 0;
+                const articleHeight = article ? article.scrollHeight : 0;
+                const scrollPercent = Math.min(Math.max(((scrollTop - articleTop + windowHeight) / articleHeight) * 100, 0), 100);
+                
+                const progressBar = document.getElementById('reading-progress-bar');
+                const progressText = document.getElementById('reading-progress-text');
+                
+                if (progressBar && progressText) {
+                    progressBar.style.width = scrollPercent + '%';
+                    progressText.textContent = Math.round(scrollPercent) + '%';
+                    
+                    // Add active animation when user is actively scrolling
+                    progressBar.classList.add('active');
+                    clearTimeout(progressBar.scrollTimeout);
+                    progressBar.scrollTimeout = setTimeout(() => {
+                        progressBar.classList.remove('active');
+                    }, 150);
+                }
+            }
+            
+            window.addEventListener('scroll', updateReadingProgress);
+            
+            // Like button functionality with enhanced animations
+            const likeButton = document.getElementById('like-button');
+            const likeCount = document.getElementById('like-count');
+            let isLiked = false;
+            
+            if (likeButton && likeCount) {
+                likeButton.addEventListener('click', function() {
+                    isLiked = !isLiked;
+                    const count = parseInt(likeCount.textContent);
+                    
+                    if (isLiked) {
+                        likeCount.textContent = count + 1;
+                        likeButton.style.color = '#0c7ff2';
+                        likeButton.style.transform = 'scale(1.1)';
+                        setTimeout(() => {
+                            likeButton.style.transform = 'scale(1)';
+                        }, 200);
+                    } else {
+                        likeCount.textContent = count - 1;
+                        likeButton.style.color = '#60758a';
+                    }
+                });
+            }
+            
+            // Bookmark button functionality
+            const bookmarkButton = document.getElementById('bookmark-button');
+            let isBookmarked = false;
+            
+            if (bookmarkButton) {
+                bookmarkButton.addEventListener('click', function() {
+                    isBookmarked = !isBookmarked;
+                    
+                    if (isBookmarked) {
+                        bookmarkButton.style.color = '#0c7ff2';
+                        bookmarkButton.style.transform = 'scale(1.1)';
+                        setTimeout(() => {
+                            bookmarkButton.style.transform = 'scale(1)';
+                        }, 200);
+                    } else {
+                        bookmarkButton.style.color = '#60758a';
+                    }
+                });
+            }
+            
+            // Share button functionality
+            const shareButton = document.getElementById('share-button');
+            
+            if (shareButton) {
+                shareButton.addEventListener('click', function() {
+                    if (navigator.share) {
+                        navigator.share({
+                            title: document.title,
+                            url: window.location.href
+                        });
+                    } else {
+                        // Fallback: copy to clipboard
+                        navigator.clipboard.writeText(window.location.href).then(function() {
+                            // Show a temporary success message
+                            const originalText = shareButton.querySelector('span').textContent;
+                            shareButton.querySelector('span').textContent = 'Copied!';
+                            setTimeout(() => {
+                                shareButton.querySelector('span').textContent = originalText;
+                            }, 2000);
+                        });
+                    }
+                });
+            }
+
+            // Add smooth scroll behavior for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+
+            // Add loading animation for images
+            document.querySelectorAll('img').forEach(img => {
+                img.addEventListener('load', function() {
+                    this.style.opacity = '1';
+                    this.style.transform = 'scale(1)';
+                });
+                img.style.opacity = '0';
+                img.style.transform = 'scale(0.95)';
+                img.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+            });
+        });
+    </script>
+    
+    <!-- Include cookie banner if needed -->
+    <script src="/js/cookie-banner.js"></script>
+</body>
+</html>

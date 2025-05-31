@@ -42,216 +42,509 @@
         gtag('js', new Date());
         gtag('config', 'G-W50GKB6F3M');
     </script>
-    
-    <!-- Blog-specific navbar styles -->
+      <!-- Modern Blog Navigation Styles -->
     <style>
-        /* Force white text in navbar dropdown items regardless of scroll position */
-        .navbar__drawer_dropdown .navbar__link,
-        .navbar__drawer_dropdown .text-base,
-        .navbar__drawer_dropdown .text-xs {
-            color: white !important;
+        /* Modern Navbar Styles */
+        .modern-navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
-        /* Style dropdown background for blog pages */
-        .navbar__drawer_card {
-            background-color: rgba(30, 30, 30, 0.95) !important;
-            backdrop-filter: blur(10px);
+        .modern-navbar.scrolled {
+            background: rgba(255, 255, 255, 0.98);
+            box-shadow: 0 4px 32px rgba(0, 0, 0, 0.08);
+            backdrop-filter: blur(24px);
         }
         
-        /* Override any text color in dropdown items */
-        .navbar__drawer_dropdown p {
-            color: rgba(156, 163, 175, 1) !important;
+        .nav-link {
+            position: relative;
+            color: #374151;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
         }
         
-        /* Fix hover state */
-        .navbar__drawer_dropdown .navbar__link:hover {
-            background-color: rgba(55, 65, 81, 0.5) !important;
+        .nav-link:hover {
+            color: #316FD4;
+            background: rgba(49, 111, 212, 0.05);
         }
         
-        /* Ensure the header is dark even at top of page */
-        header.blog-header {
-            background-color: rgba(20, 20, 20, 0.95);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(75, 85, 99, 0.3);
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -4px;
+            left: 50%;
+            background: linear-gradient(90deg, #316FD4, #60A5FA);
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+        
+        .nav-link:hover::after {
+            width: 80%;
+        }
+        
+        .dropdown-menu {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
+            border-radius: 0.75rem;
+            padding: 0.5rem;
+            min-width: 280px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .dropdown:hover .dropdown-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .dropdown-item {
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+            display: block;
+            color: #374151;
+            text-decoration: none;
+        }
+        
+        .dropdown-item:hover {
+            background: rgba(49, 111, 212, 0.08);
+            color: #316FD4;
+            transform: translateX(4px);
+        }
+        
+        .mobile-menu {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-20px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .mobile-menu.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .mobile-menu-item {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
+        }
+        
+        .mobile-menu-item:hover {
+            background: rgba(49, 111, 212, 0.05);
+            padding-left: 2rem;
+        }
+        
+        .cta-button {
+            background: linear-gradient(135deg, #316FD4, #60A5FA);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(49, 111, 212, 0.3);
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(49, 111, 212, 0.4);
+            background: linear-gradient(135deg, #2563EB, #3B82F6);
+        }
+        
+        .logo-container {
+            transition: all 0.3s ease;
+        }
+        
+        .logo-container:hover {
+            transform: scale(1.05);
+        }
+        
+        /* Enhanced page styles */
+        .hero-section {
+            background: linear-gradient(135deg, rgba(49, 111, 212, 0.03) 0%, rgba(96, 165, 250, 0.03) 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23316FD4' fill-opacity='0.02'%3E%3Ccircle cx='30' cy='30' r='4'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat;
+            opacity: 0.5;
+        }
+        
+        .content-section {
+            background: linear-gradient(to bottom, #ffffff 0%, #fafbff 100%);
+        }
+        
+        .animate-fade-in-up {
+            animation: fadeInUp 0.8s ease-out;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .animate-fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        /* Reading Progress Bar */
+        .reading-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 3px;
+            background: linear-gradient(90deg, #316FD4, #60A5FA);
+            z-index: 9999;
+            transition: width 0.3s ease;
         }
     </style>
 </head>
-<body class="bg-white text-gray-900 font-sans">
-    <div class="page-wrapper">
-       
-        <header class="header-transparent blog-header fixed w-full z-50 transition-all duration-300">
-            <nav class="container max-w-[1920px] mx-auto px-4 md:px-6 py-4">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-4 md:gap-10">
-                        <a href="/" class="navbar__logo">
-                            <img src="/figma design exports/logos/white-arzani-logo.svg" alt="Arzani Logo" class="h-6 md:h-8">
-                        </a>
-                        <div class="hidden md:flex items-center space-x-8">
-                            <!-- Products Dropdown -->
-                            <div class="navbar__drawer group relative">
-                                <div class="navbar__drawer_trigger flex items-center">
-                                    <span class="text-sm font-medium">Products</span>
-                                    <div class="icon-1x1-xsmall ml-2">
-                                        <svg width="20" height="20" fill="none" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" class="transition-transform duration-200 group-hover:rotate-180">
-                                            <path clip-rule="evenodd" d="M15.5303 13.0303C15.2374 13.3232 14.7626 13.3232 14.4697 13.0303L11.7324 10.2931C11.3276 9.8883 11.0555 9.61703 10.8292 9.42491C10.6096 9.23847 10.4829 9.17101 10.3863 9.13961C10.1352 9.05803 9.86478 9.05803 9.61373 9.13961C9.51706 9.17101 9.39038 9.23847 9.17076 9.42491C8.94445 9.61704 8.67236 9.8883 8.26759 10.2931L5.53033 13.0303C5.23744 13.3232 4.76256 13.3232 4.46967 13.0303C4.17678 12.7374 4.17678 12.2626 4.46967 11.9697L7.20693 9.23241L7.22846 9.21088C7.60615 8.83317 7.9214 8.51791 8.2 8.2814C8.49056 8.03473 8.79021 7.82999 9.1502 7.71302C9.70252 7.53356 10.2975 7.53356 10.8498 7.71302C11.2098 7.82999 11.5094 8.03473 11.8 8.2814C12.0786 8.51791 12.3939 8.83318 12.7715 9.21089L12.7931 9.23241L15.5303 11.9697C15.8232 12.2626 15.8232 12.7374 15.5303 13.0303Z" fill="currentColor" fill-rule="evenodd"></path>
-                                        </svg>
-                                    </div>
-                                </div>
-                                <div class="navbar__drawer_dropdown invisible group-hover:visible opacity-0 group-hover:opacity-100 absolute top-full left-0 mt-1 transition-all duration-300 ease-in-out">
-                                    <div class="navbar__drawer_dropdown__wrapper pt-2">
-                                        <div class="navbar__drawer_card rounded-lg shadow-lg border border-gray-800 overflow-hidden p-4 min-w-[240px]">
-                                            <!-- Dropdown content -->
-                                        </div>
-                                    </div>
-                                </div>
+<body class="bg-white text-gray-900 font-sans">    <!-- Reading Progress Bar -->
+    <div class="reading-progress" id="readingProgress"></div>
+    
+    <!-- Modern Navigation Header -->
+    <header class="modern-navbar fixed w-full top-0 z-50" id="navbar">
+        <nav class="container mx-auto px-4 lg:px-8 py-4">
+            <div class="flex items-center justify-between">
+                <!-- Logo -->
+                <div class="logo-container">
+                    <a href="/" class="flex items-center">
+                        <img src="/figma design exports/logos/arzani-logo.svg" 
+                             alt="Arzani Logo" 
+                             class="h-8 w-auto">
+                    </a>
+                </div>
+                
+                <!-- Desktop Navigation -->
+                <div class="hidden lg:flex items-center space-x-1">
+                    <!-- Products Dropdown -->
+                    <div class="dropdown relative">
+                        <button class="nav-link flex items-center gap-2">
+                            Products
+                            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="transition-transform duration-200">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        <div class="dropdown-menu absolute top-full left-0 mt-2">
+                            <div class="py-2">
+                                <a href="/business-valuation" class="dropdown-item">
+                                    <div class="font-medium">Business Valuation</div>
+                                    <div class="text-sm text-gray-500 mt-1">Get your business valued professionally</div>
+                                </a>
+                                <a href="/marketplace" class="dropdown-item">
+                                    <div class="font-medium">Marketplace</div>
+                                    <div class="text-sm text-gray-500 mt-1">Buy and sell businesses</div>
+                                </a>
+                                <a href="/advisory" class="dropdown-item">
+                                    <div class="font-medium">Advisory Services</div>
+                                    <div class="text-sm text-gray-500 mt-1">Expert business guidance</div>
+                                </a>
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- Resources Dropdown -->
+                    <div class="dropdown relative">
+                        <button class="nav-link flex items-center gap-2">
+                            Resources
+                            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="transition-transform duration-200">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        <div class="dropdown-menu absolute top-full left-0 mt-2">
+                            <div class="py-2">
+                                <a href="/blog" class="dropdown-item">
+                                    <div class="font-medium">Blog</div>
+                                    <div class="text-sm text-gray-500 mt-1">Latest insights and articles</div>
+                                </a>
+                                <a href="/guides" class="dropdown-item">
+                                    <div class="font-medium">Guides</div>
+                                    <div class="text-sm text-gray-500 mt-1">Step-by-step business guides</div>
+                                </a>
+                                <a href="/case-studies" class="dropdown-item">
+                                    <div class="font-medium">Case Studies</div>
+                                    <div class="text-sm text-gray-500 mt-1">Real success stories</div>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <a href="/about" class="nav-link">About</a>
+                    <a href="/contact" class="nav-link">Contact</a>
                 </div>
-            </nav>
-        </header>
-
-        <%- include('../partials/navbar') %>
-
-        <!-- Blog Post Header with Hero Image -->
-        <section class="relative pt-28 md:pt-32 pb-10 md:pb-16 bg-primary bg-opacity-5">
-            <div class="absolute inset-0 z-0 opacity-5">
-                <div class="grid-pattern"></div>
+                
+                <!-- CTA Button -->
+                <div class="hidden lg:flex items-center space-x-4">
+                    <a href="/seller-questionnaire" class="cta-button">
+                        Get Started
+                    </a>
+                </div>
+                
+                <!-- Mobile Menu Button -->
+                <button class="lg:hidden flex items-center justify-center w-10 h-10 rounded-lg hover:bg-gray-100 transition-colors" 
+                        id="mobileMenuToggle">
+                    <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
             </div>
             
-            <div class="container mx-auto px-4 md:px-6 relative z-10">
-                <!-- Breadcrumbs -->
-                <div class="mb-8 flex items-center text-sm text-gray-500">
-                    <a href="/" class="hover:text-primary transition-colors">Home</a>
-                    <span class="mx-2">/</span>
-                    <a href="/blog" class="hover:text-primary transition-colors">Blog</a>
-                    <span class="mx-2">/</span>
-                    <span class="text-gray-900"><%= blog.title %></span>
+            <!-- Mobile Navigation Menu -->
+            <div class="mobile-menu absolute top-full left-4 right-4 mt-2 rounded-xl lg:hidden" id="mobileMenu">
+                <div class="py-2">
+                    <div class="mobile-menu-item">
+                        <div class="font-medium text-gray-900 mb-2">Products</div>
+                        <div class="pl-4 space-y-2">
+                            <a href="/business-valuation" class="block text-gray-600 hover:text-primary">Business Valuation</a>
+                            <a href="/marketplace" class="block text-gray-600 hover:text-primary">Marketplace</a>
+                            <a href="/advisory" class="block text-gray-600 hover:text-primary">Advisory Services</a>
+                        </div>
+                    </div>
+                    <div class="mobile-menu-item">
+                        <div class="font-medium text-gray-900 mb-2">Resources</div>
+                        <div class="pl-4 space-y-2">
+                            <a href="/blog" class="block text-gray-600 hover:text-primary">Blog</a>
+                            <a href="/guides" class="block text-gray-600 hover:text-primary">Guides</a>
+                            <a href="/case-studies" class="block text-gray-600 hover:text-primary">Case Studies</a>
+                        </div>
+                    </div>
+                    <a href="/about" class="mobile-menu-item font-medium text-gray-900">About</a>
+                    <a href="/contact" class="mobile-menu-item font-medium text-gray-900">Contact</a>
+                    <div class="mobile-menu-item">
+                        <a href="/seller-questionnaire" class="cta-button inline-block w-full text-center">
+                            Get Started
+                        </a>
+                    </div>
                 </div>
-                  <!-- Post Category Tags -->
-                <div class="flex flex-wrap gap-2 mb-4">
+            </div>
+        </nav>
+    </header>        <!-- Enhanced Blog Post Hero Section -->
+        <section class="hero-section pt-24 lg:pt-28 pb-12 lg:pb-20">
+            <div class="container mx-auto px-4 lg:px-8 relative z-10">
+                <!-- Breadcrumbs -->
+                <div class="animate-fade-in mb-8 flex items-center text-sm text-gray-500">
+                    <a href="/" class="hover:text-primary transition-colors duration-200 font-medium">Home</a>
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="mx-2 text-gray-400">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                    <a href="/blog" class="hover:text-primary transition-colors duration-200 font-medium">Blog</a>
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="mx-2 text-gray-400">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                    <span class="text-gray-700 font-medium"><%= blog.title.length > 40 ? blog.title.substring(0, 40) + '...' : blog.title %></span>
+                </div>
+                
+                <!-- Post Category Tags -->
+                <div class="animate-fade-in-up flex flex-wrap gap-2 mb-6" style="animation-delay: 0.1s;">
                     <% if (blog.categories && blog.categories.length > 0) { %>
                         <% blog.categories.forEach(category => { %>
                             <a href="/blog/category/<%= category.slug %>" 
-                               class="text-xs px-3 py-1 rounded-full bg-primary bg-opacity-10 text-primary hover:bg-opacity-20 transition-all"
+                               class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20 hover:border-primary/30 transition-all duration-200"
                                aria-label="View more posts in <%= category.name %> category">
+                                <span class="w-1.5 h-1.5 bg-primary rounded-full mr-2"></span>
                                 <%= category.name %>
                             </a>
                         <% }); %>
                     <% } else { %>
-                        <span class="text-xs px-3 py-1 rounded-full bg-gray-100 text-gray-500">
+                        <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
+                            <span class="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
                             Uncategorized
                         </span>
                     <% } %>
                 </div>
                 
                 <!-- Post Title -->
-                <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 leading-tight max-w-4xl text-gray-900">
+                <h1 class="animate-fade-in-up text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold mb-8 leading-tight max-w-5xl text-gray-900" 
+                    style="animation-delay: 0.2s;">
                     <%= blog.title %>
                 </h1>
                 
-                <!-- Author and Date Info -->
-                <div class="flex items-center mb-8">
+                <!-- Author and Meta Info -->
+                <div class="animate-fade-in-up flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 mb-10" 
+                     style="animation-delay: 0.3s;">
                     <div class="flex items-center">
-                        <img src="<%= blog.author_image || blog.author?.avatar || '/figma design exports/images/default-avatar.png' %>" 
-                             alt="<%= blog.author_name || blog.author?.name || 'Arzani Team' %>" 
-                             class="w-10 h-10 rounded-full mr-3 border border-gray-200">
+                        <div class="relative">
+                            <img src="<%= blog.author_image || blog.author?.avatar || '/figma design exports/images/default-avatar.png' %>" 
+                                 alt="<%= blog.author_name || blog.author?.name || 'Arzani Team' %>" 
+                                 class="w-12 h-12 rounded-full mr-4 border-2 border-white shadow-lg">
+                            <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
+                        </div>
                         <div>
-                            <p class="font-medium text-gray-900"><%= blog.author_name || blog.author?.name || 'Arzani Team' %></p>
-                            <div class="text-sm text-gray-500 flex items-center">
-                                <span><%= new Date(blog.publish_date || blog.publishDate || blog.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) %></span>
-                                <span class="mx-2">•</span>
-                                <span><%= blog.reading_time || blog.readingTime || 5 %> min read</span>
+                            <p class="font-semibold text-gray-900 text-lg"><%= blog.author_name || blog.author?.name || 'Arzani Team' %></p>
+                            <div class="text-sm text-gray-600 flex items-center gap-3">
+                                <time class="flex items-center gap-1">
+                                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="text-gray-400">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                    <%= new Date(blog.publish_date || blog.publishDate || blog.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) %>
+                                </time>
+                                <span class="flex items-center gap-1">
+                                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="text-gray-400">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <%= blog.reading_time || blog.readingTime || 5 %> min read
+                                </span>
                             </div>
                         </div>
                     </div>
-                      <!-- Social Share Links -->
-                    <div class="ml-auto flex items-center gap-3">
-                        <span class="text-sm text-gray-500 mr-2 hidden sm:block">Share:</span>
-                        <a href="https://twitter.com/intent/tweet?url=<%= encodeURIComponent(`https://arzani.co.uk/blog/${blog.slug}`) %>&text=<%= encodeURIComponent(blog.title) %>" 
-                           target="_blank" 
-                           aria-label="Share on Twitter"
-                           class="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100 border border-gray-200 text-gray-500 hover:bg-primary/10 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:bg-primary/10 focus:text-primary active:bg-primary/20 transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                <path d="M5.026 15c6.038 0 9.341-5.003 9.341-9.334 0-.14 0-.282-.006-.422A6.685 6.685 0 0 0 16 3.542a6.658 6.658 0 0 1-1.889.518 3.301 3.301 0 0 0 1.447-1.817 6.533 6.533 0 0 1-2.087.793A3.286 3.286 0 0 0 7.875 6.03a9.325 9.325 0 0 1-6.767-3.429 3.289 3.289 0 0 0 1.018 4.382A3.323 3.323 0 0 1 .64 6.575v.045a3.288 3.288 0 0 0 2.632 3.218 3.203 3.203 0 0 1-.865.115 3.23 3.23 0 0 1-.614-.057 3.283 3.283 0 0 0 3.067 2.277A6.588 6.588 0 0 1 .78 13.58a6.32 6.32 0 0 1-.78-.045A9.344 9.344 0 0 0 5.026 15z"/>
-                            </svg>
-                        </a>
-                        <a href="https://www.linkedin.com/shareArticle?mini=true&url=<%= encodeURIComponent(`https://arzani.co.uk/blog/${blog.slug}`) %>&title=<%= encodeURIComponent(blog.title) %>" 
-                           target="_blank" 
-                           aria-label="Share on LinkedIn"
-                           class="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100 border border-gray-200 text-gray-500 hover:bg-primary/10 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:bg-primary/10 focus:text-primary active:bg-primary/20 transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                <path d="M0 1.146C0 .513.526 0 1.175 0h13.65C15.474 0 16 .513 16 1.146v13.708c0 .633-.526 1.146-1.175 1.146H1.175C.526 16 0 15.487 0 14.854V1.146zm4.943 12.248V6.169H2.542v7.225h2.401zm-1.2-8.212c.837 0 1.358-.554 1.358-1.248-.015-.709-.52-1.248-1.342-1.248-.822 0-1.359.54-1.359 1.248 0 .694.521 1.248 1.327 1.248h.016zm4.908 8.212V9.359c0-.216.016-.432.08-.586.173-.431.568-.878 1.232-.878.869 0 1.216.662 1.216 1.634v3.865h2.401V9.25c0-2.22-1.184-3.252-2.764-3.252-1.274 0-1.845.7-2.165 1.193v.025h-.016a5.54 5.54 0 0 1 .016-.025V6.169h-2.4c.03.678 0 7.225 0 7.225h2.4z"/>
-                            </svg>
-                        </a>
-                        <a href="mailto:?subject=<%= encodeURIComponent(blog.title) %>&body=<%= encodeURIComponent(`Check out this article: https://arzani.co.uk/blog/${blog.slug}`) %>" 
-                           aria-label="Share via Email"
-                           class="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100 border border-gray-200 text-gray-500 hover:bg-primary/10 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:bg-primary/10 focus:text-primary active:bg-primary/20 transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                <path d="M.05 3.555A2 2 0 0 1 2 2h12a2 2 0 0 1 1.95 1.555L8 8.414.05 3.555ZM0 4.697v7.104l5.803-3.558L0 4.697ZM6.761 8.83l-6.57 4.027A2 2 0 0 0 2 14h12a2 2 0 0 0 1.808-1.144l-6.57-4.027L8 9.586l-1.239-.757Zm3.436-.586L16 11.801V4.697l-5.803 3.546Z"/>
-                            </svg>
-                        </a>
+                    
+                    <!-- Enhanced Social Share Links -->
+                    <div class="flex items-center gap-3">
+                        <span class="text-sm text-gray-500 mr-2 hidden sm:block font-medium">Share article:</span>
+                        <div class="flex items-center gap-2">
+                            <a href="https://twitter.com/intent/tweet?url=<%= encodeURIComponent(`https://arzani.co.uk/blog/${blog.slug}`) %>&text=<%= encodeURIComponent(blog.title) %>" 
+                               target="_blank" 
+                               rel="noopener noreferrer"
+                               aria-label="Share on Twitter"
+                               class="group w-10 h-10 rounded-full flex items-center justify-center bg-white border border-gray-200 text-gray-500 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-sm hover:shadow">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16" class="group-hover:scale-110 transition-transform duration-200">
+                                    <path d="M5.026 15c6.038 0 9.341-5.003 9.341-9.334 0-.14 0-.282-.006-.422A6.685 6.685 0 0 0 16 3.542a6.658 6.658 0 0 1-1.889.518 3.301 3.301 0 0 0 1.447-1.817 6.533 6.533 0 0 1-2.087.793A3.286 3.286 0 0 0 7.875 6.03a9.325 9.325 0 0 1-6.767-3.429 3.289 3.289 0 0 0 1.018 4.382A3.323 3.323 0 0 1 .64 6.575v.045a3.288 3.288 0 0 0 2.632 3.218 3.203 3.203 0 0 1-.865.115 3.23 3.23 0 0 1-.614-.057 3.283 3.283 0 0 0 3.067 2.277A6.588 6.588 0 0 1 .78 13.58a6.32 6.32 0 0 1-.78-.045A9.344 9.344 0 0 0 5.026 15z"/>
+                                </svg>
+                            </a>
+                            <a href="https://www.linkedin.com/shareArticle?mini=true&url=<%= encodeURIComponent(`https://arzani.co.uk/blog/${blog.slug}`) %>&title=<%= encodeURIComponent(blog.title) %>" 
+                               target="_blank" 
+                               rel="noopener noreferrer"
+                               aria-label="Share on LinkedIn"
+                               class="group w-10 h-10 rounded-full flex items-center justify-center bg-white border border-gray-200 text-gray-500 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-sm hover:shadow">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16" class="group-hover:scale-110 transition-transform duration-200">
+                                    <path d="M0 1.146C0 .513.526 0 1.175 0h13.65C15.474 0 16 .513 16 1.146v13.708c0 .633-.526 1.146-1.175 1.146H1.175C.526 16 0 15.487 0 14.854V1.146zm4.943 12.248V6.169H2.542v7.225h2.401zm-1.2-8.212c.837 0 1.358-.554 1.358-1.248-.015-.709-.52-1.248-1.342-1.248-.822 0-1.359.54-1.359 1.248 0 .694.521 1.248 1.327 1.248h.016zm4.908 8.212V9.359c0-.216.016-.432.08-.586.173-.431.568-.878 1.232-.878.869 0 1.216.662 1.216 1.634v3.865h2.401V9.25c0-2.22-1.184-3.252-2.764-3.252-1.274 0-1.845.7-2.165 1.193v.025h-.016a5.54 5.54 0 0 1 .016-.025V6.169h-2.4c.03.678 0 7.225 0 7.225h2.4z"/>
+                                </svg>
+                            </a>
+                            <a href="mailto:?subject=<%= encodeURIComponent(blog.title) %>&body=<%= encodeURIComponent(`Check out this article: https://arzani.co.uk/blog/${blog.slug}`) %>" 
+                               aria-label="Share via Email"
+                               class="group w-10 h-10 rounded-full flex items-center justify-center bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-200 shadow-sm hover:shadow">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16" class="group-hover:scale-110 transition-transform duration-200">
+                                    <path d="M.05 3.555A2 2 0 0 1 2 2h12a2 2 0 0 1 1.95 1.555L8 8.414.05 3.555ZM0 4.697v7.104l5.803-3.558L0 4.697ZM6.761 8.83l-6.57 4.027A2 2 0 0 0 2 14h12a2 2 0 0 0 1.808-1.144l-6.57-4.027L8 9.586l-1.239-.757Zm3.436-.586L16 11.801V4.697l-5.803 3.546Z"/>
+                                </svg>
+                            </a>
+                            <button id="copyLinkBtn" 
+                                    aria-label="Copy link to clipboard"
+                                    class="group w-10 h-10 rounded-full flex items-center justify-center bg-white border border-gray-200 text-gray-500 hover:bg-green-50 hover:text-green-600 hover:border-green-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-200 shadow-sm hover:shadow">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="group-hover:scale-110 transition-transform duration-200">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
-                  <!-- Hero Image -->
-                <div class="w-full flex justify-center mb-12 animate-fade-in-up">
-                    <div class="w-full max-w-3xl h-[150px] md:h-[250px] rounded-xl overflow-hidden bg-gray-100">
-                        <img src="<%= blog.hero_image || blog.heroImage || 'https://arzani-images1.s3.eu-west-2.amazonaws.com/blogs/default-blog-hero.jpg' %>" 
-                             alt="<%= blog.title %>" 
-                             class="blog-hero-image blog-lazy-image w-full h-full object-cover"
-                             loading="eager"
-                             onerror="this.onerror=null; this.src='https://arzani-images1.s3.eu-west-2.amazonaws.com/blogs/default-blog-hero.jpg'; this.alt='Default hero image';"
-                             onload="this.classList.add('loaded')">
+                
+                <!-- Enhanced Hero Image -->
+                <div class="animate-fade-in-up w-full flex justify-center" style="animation-delay: 0.4s;">
+                    <div class="w-full max-w-4xl">
+                        <div class="relative rounded-2xl overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 shadow-2xl hover:shadow-3xl transition-all duration-500">
+                            <div class="aspect-video">
+                                <img src="<%= blog.hero_image || blog.heroImage || 'https://arzani-images1.s3.eu-west-2.amazonaws.com/blogs/default-blog-hero.jpg' %>" 
+                                     alt="<%= blog.title %>" 
+                                     class="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
+                                     loading="eager"
+                                     onerror="this.onerror=null; this.src='https://arzani-images1.s3.eu-west-2.amazonaws.com/blogs/default-blog-hero.jpg'; this.alt='Default hero image';">
+                            </div>
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
+                        </div>
                     </div>
                 </div>
             </div>
         </section>
-        
-        <!-- Blog Post Content -->
-        <section class="py-12 md:py-16 bg-white">
-            <div class="container mx-auto px-4 md:px-6">
-                <div class="grid grid-cols-12 gap-8">
+          <!-- Enhanced Blog Post Content -->
+        <section class="content-section py-16 lg:py-20">
+            <div class="container mx-auto px-4 lg:px-8">
+                <div class="grid grid-cols-12 gap-8 lg:gap-12">
                     <!-- Main Content -->
                     <div class="col-span-12 lg:col-span-8">
-                        <article class="prose max-w-none blog-content">
-                            <!-- Blog content will be rendered here as HTML -->
-                            <%- blog.content %>
-                              <!-- Tags -->
+                        <article class="prose prose-lg max-w-none blog-content">
+                            <!-- Enhanced blog content styling -->
+                            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 lg:p-12">
+                                <%- blog.content %>
+                            </div>
+                              
+                            <!-- Enhanced Tags Section -->
                             <% if (blog.tags && blog.tags.length > 0) { %>
-                                <div class="flex flex-wrap gap-2 mt-12">
-                                    <% blog.tags.forEach(tag => { %>
-                                        <a href="/blog/tag/<%= tag.slug %>" 
-                                           class="text-xs px-3 py-1 rounded-full bg-gray-100 border border-gray-200 text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-primary focus:bg-gray-200 active:bg-gray-300 transition-all"
-                                           aria-label="View more posts with tag <%= tag.name %>">
-                                            #<%= tag.name %>
-                                        </a>
-                                    <% }); %>
+                                <div class="mt-8 p-6 bg-gray-50 rounded-xl border border-gray-100">
+                                    <h4 class="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="text-primary">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                        </svg>
+                                        Tags
+                                    </h4>
+                                    <div class="flex flex-wrap gap-2">
+                                        <% blog.tags.forEach(tag => { %>
+                                            <a href="/blog/tag/<%= tag.slug %>" 
+                                               class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-white border border-gray-200 text-gray-700 hover:bg-primary/5 hover:text-primary hover:border-primary/30 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+                                               aria-label="View more posts with tag <%= tag.name %>">
+                                                #<%= tag.name %>
+                                            </a>
+                                        <% }); %>
+                                    </div>
                                 </div>
                             <% } %>
                         </article>
                         
-                        <!-- Author Bio -->
-                        <div class="mt-12 p-6 bg-gray-100 backdrop-blur-sm border border-gray-200 rounded-xl">
-                            <div class="flex items-start">
-                                <img src="<%= blog.author_image || blog.author?.avatar || '/figma design exports/images/default-avatar.png' %>" 
-                                     alt="<%= blog.author_name || blog.author?.name || 'Arzani Team' %>" 
-                                     class="w-16 h-16 rounded-full mr-4 border border-gray-200">
-                                <div>
-                                    <h3 class="text-xl font-bold mb-2 text-gray-900">About <%= blog.author_name || blog.author?.name || 'Arzani Team' %></h3>
-                                    <p class="text-gray-700 mb-4"><%= blog.author_bio || blog.author?.bio || 'Arzani contributor' %></p>
-                                    <div class="flex gap-3">
+                        <!-- Enhanced Author Bio -->
+                        <div class="mt-12 p-8 bg-gradient-to-r from-primary/5 to-blue-50 border border-primary/10 rounded-2xl relative overflow-hidden">
+                            <div class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-16 translate-x-16"></div>
+                            <div class="absolute bottom-0 left-0 w-24 h-24 bg-blue-100 rounded-full translate-y-12 -translate-x-12"></div>
+                            <div class="relative flex items-start gap-6">
+                                <div class="relative">
+                                    <img src="<%= blog.author_image || blog.author?.avatar || '/figma design exports/images/default-avatar.png' %>" 
+                                         alt="<%= blog.author_name || blog.author?.name || 'Arzani Team' %>" 
+                                         class="w-20 h-20 rounded-full border-4 border-white shadow-lg">
+                                    <div class="absolute -bottom-2 -right-2 w-6 h-6 bg-green-500 border-2 border-white rounded-full"></div>
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="text-2xl font-bold mb-3 text-gray-900">About <%= blog.author_name || blog.author?.name || 'Arzani Team' %></h3>
+                                    <p class="text-gray-700 mb-6 leading-relaxed"><%= blog.author_bio || blog.author?.bio || 'Arzani contributor bringing you the latest insights on business growth and valuation.' %></p>
+                                    <div class="flex gap-4">
                                         <% if (blog.author?.twitter) { %>
-                                            <a href="<%= blog.author.twitter %>" target="_blank" class="text-primary hover:text-primary/80">
+                                            <a href="<%= blog.author.twitter %>" target="_blank" rel="noopener noreferrer" 
+                                               class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/80 border border-gray-200 text-gray-600 hover:bg-white hover:text-blue-600 hover:border-blue-200 transition-all duration-200">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-                                                    <path d="M5.026 15c6.038 0 9.341-5.003 9.341-9.334 0-.14 0-.282-.006-.422A6.685 6.685 0 0 0 16 3.542a6.658 6.658 0 0 1-1.889.518 3.301 3.301 0 0 0 1.447-1.817 6.533 6.533 0 0 1-2.087.793A3.286 3.286 0 0 0 7.875 6.03a9.325 9.325 0 0 1-6.767-3.429 3.289 3.289 0 0 0 1.018 4.382A3.323 3.323 0 0 1 .64 6.575v.045a3.288 3.288 0 0 0 2.632 3.218 3.203 3.203 0  0 1-.865.115 3.23 3.23 0 0 1-.614-.057 3.283 3.283 0 0 0 3.067 2.277A6.588 6.588 0 0 1 .78 13.58a6.32 6.32 0 0 1-.78-.045A9.344 9.344 0 0 0 5.026 15z"/>
+                                                    <path d="M5.026 15c6.038 0 9.341-5.003 9.341-9.334 0-.14 0-.282-.006-.422A6.685 6.685 0 0 0 16 3.542a6.658 6.658 0 0 1-1.889.518 3.301 3.301 0 0 0 1.447-1.817 6.533 6.533 0 0 1-2.087.793A3.286 3.286 0 0 0 7.875 6.03a9.325 9.325 0 0 1-6.767-3.429 3.289 3.289 0 0 0 1.018 4.382A3.323 3.323 0 0 1 .64 6.575v.045a3.288 3.288 0 0 0 2.632 3.218 3.203 3.203 0 0 1-.865.115 3.23 3.23 0 0 1-.614-.057 3.283 3.283 0 0 0 3.067 2.277A6.588 6.588 0 0 1 .78 13.58a6.32 6.32 0 0 1-.78-.045A9.344 9.344 0 0 0 5.026 15z"/>
                                                 </svg>
+                                                Twitter
                                             </a>
                                         <% } %>
                                         <% if (blog.author?.linkedin) { %>
-                                            <a href="<%= blog.author.linkedin %>" target="_blank" class="text-primary hover:text-primary/80">
+                                            <a href="<%= blog.author.linkedin %>" target="_blank" rel="noopener noreferrer" 
+                                               class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/80 border border-gray-200 text-gray-600 hover:bg-white hover:text-blue-700 hover:border-blue-200 transition-all duration-200">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
                                                     <path d="M0 1.146C0 .513.526 0 1.175 0h13.65C15.474 0 16 .513 16 1.146v13.708c0 .633-.526 1.146-1.175 1.146H1.175C.526 16 0 15.487 0 14.854V1.146zm4.943 12.248V6.169H2.542v7.225h2.401zm-1.2-8.212c.837 0 1.358-.554 1.358-1.248-.015-.709-.52-1.248-1.342-1.248-.822 0-1.359.54-1.359 1.248 0 .694.521 1.248 1.327 1.248h.016zm4.908 8.212V9.359c0-.216.016-.432.08-.586.173-.431.568-.878 1.232-.878.869 0 1.216.662 1.216 1.634v3.865h2.401V9.25c0-2.22-1.184-3.252-2.764-3.252-1.274 0-1.845.7-2.165 1.193v.025h-.016a5.54 5.54 0 0 1 .016-.025V6.169h-2.4c.03.678 0 7.225 0 7.225h2.4z"/>
                                                 </svg>
+                                                LinkedIn
                                             </a>
                                         <% } %>
                                     </div>
@@ -259,51 +552,184 @@
                             </div>
                         </div>
                         
-                        <!-- Call to Action Section -->
-                        <div class="mt-12 p-8 bg-primary bg-opacity-5 border border-primary border-opacity-20 rounded-xl text-center">
-                            <h3 class="text-2xl font-bold mb-3 text-gray-900">Ready to take your business to the next level?</h3>
-                            <p class="text-gray-700 mb-6 max-w-2xl mx-auto">Get a professional valuation of your business and unlock insights to drive growth and maximize value.</p>
-                            <a href="/seller-questionnaire" class="btn-primary">Get Started</a>
+                        <!-- Enhanced Call to Action Section -->
+                        <div class="mt-12 relative">
+                            <div class="bg-gradient-to-br from-primary to-blue-600 rounded-2xl p-8 lg:p-12 text-white relative overflow-hidden">
+                                <div class="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -translate-y-20 translate-x-20"></div>
+                                <div class="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full translate-y-16 -translate-x-16"></div>
+                                <div class="relative text-center max-w-2xl mx-auto">
+                                    <h3 class="text-3xl lg:text-4xl font-bold mb-4">Ready to take your business to the next level?</h3>
+                                    <p class="text-blue-100 mb-8 text-lg leading-relaxed">Get a professional valuation of your business and unlock insights to drive growth and maximize value.</p>
+                                    <a href="/seller-questionnaire" 
+                                       class="inline-flex items-center gap-2 px-8 py-4 bg-white text-primary font-semibold rounded-xl hover:bg-gray-50 focus:outline-none focus:ring-4 focus:ring-white/30 transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105">
+                                        Get Started
+                                        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                                        </svg>
+                                    </a>
+                                </div>
+                            </div>
                         </div>
-                        
+                          <!-- Engagement Stats -->
+                        <div class="mt-12 flex items-center justify-between p-6 bg-gray-50 rounded-xl border border-gray-200">
+                            <div class="flex items-center gap-6">
+                                <div class="flex items-center gap-2">
+                                    <button id="likeButton" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-gray-200 hover:bg-primary/5 hover:border-primary/30 transition-all">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="text-gray-600">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                        </svg>
+                                        <span class="text-sm font-medium text-gray-700" id="likeCount"><%= blog.likes || 42 %></span>
+                                    </button>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <div class="flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-gray-200">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="text-gray-600">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                        </svg>
+                                        <span class="text-sm font-medium text-gray-700" id="commentCount"><%= blog.comments_count || 8 %></span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button id="bookmarkButton" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-gray-200 hover:bg-primary/5 hover:border-primary/30 transition-all">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="text-gray-600">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                                        </svg>
+                                        <span class="text-sm font-medium text-gray-700" id="bookmarkCount"><%= blog.bookmarks || 28 %></span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Comments Section -->
+                        <div class="mt-16">
+                            <h3 class="text-2xl font-bold mb-8 text-gray-900">Comments</h3>
+                            
+                            <!-- Existing Comments -->
+                            <div class="space-y-6 mb-8">
+                                <!-- Sample Comment 1 -->
+                                <div class="flex gap-4">
+                                    <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full w-12 h-12 flex-shrink-0"
+                                         style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCZwbZ1wtONE0HosQZnUj8W37KxqQLvtFRpC7DsF4zwCHd5eelLmHmHo5vnLaQUAAvt34Slh7FTM403LHxd1YBKgKwwCnJsiVRK7011U6_hpjZrO7GAmmWGNpmuFmYEoVkiEtNfVRaT9VsDSqMcxBWvwgj_rmSP7gT67-OlGYzzZ8Dn92YzeJZyCOYkNYW8fDxKAxZ7qvpvIGr6R3g69ll62385ooCG4bxfOrLShItjh33v9p1Tf7aeGC-uwHb1nYZP4aW05hQppmY0");'>
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+                                            <div class="flex items-center gap-3 mb-2">
+                                                <p class="font-semibold text-gray-900 text-sm">Liam Carter</p>
+                                                <p class="text-gray-500 text-sm">2 days ago</p>
+                                            </div>
+                                            <p class="text-gray-700 text-sm leading-relaxed">Great article! I'm excited to see how AI will shape the future. The insights about automation in healthcare are particularly interesting.</p>
+                                        </div>
+                                        
+                                        <!-- Reply -->
+                                        <div class="ml-8 mt-4 flex gap-4">
+                                            <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full w-10 h-10 flex-shrink-0"
+                                                 style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBzhCISKN-tPHKAIqA3WCrfW6tPrxWldYV_N9KyPqv3Oa-Gy0hE2PqEB50TRNqEz_ruzcFfusKbLi8gTPcN6t6sQQlg28BY9KAxDf6vSRmUdFbun7iIr2lZ9NEGOOBD4W3dDESFdg91FcT5CnifWu2K8opIIzniJ-K92eTg-3E_rGsMmr8503TCAW4kODf8hOR3ACq0K-njp48m9bm1MFrdTghRNxxw6Oyp9suyMPbEeczVSUYwM9c_MK5HIJuucccjt0FQkJrz20Re");'>
+                                            </div>
+                                            <div class="flex-1">
+                                                <div class="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                                                    <div class="flex items-center gap-3 mb-2">
+                                                        <p class="font-semibold text-gray-900 text-sm">Chloe Turner</p>
+                                                        <p class="text-gray-500 text-sm">1 day ago</p>
+                                                    </div>
+                                                    <p class="text-gray-700 text-sm leading-relaxed">I agree, the potential of AI is immense. However, we also need to consider the ethical implications and ensure responsible development.</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Sample Comment 2 -->
+                                <div class="flex gap-4">
+                                    <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full w-12 h-12 flex-shrink-0"
+                                         style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBggKzKGEQvrw01J0jP6LsM6Yk2goIKto3qUTPIRE-vWtscfnzzmrFaCa2QmD-LrDVt96ejssJ9dgrkWrxNTWgfQuusfPkZfGs8_QCl6Dh3t1jgBZWkQBkCeiNcqDSGgbLgTv9EhCTk2pPlO_ofHkHU5CZ0yImpUFoKa8aVCuVuUrbShMYxmq1D30FpobhlkW4cXL3zAmw78FSwvgjqKDHxkd1wC5O4dUHdd0UTfPDTSr4CYdVRxeX4WFmrwx4miMbUwF9dGI3Gkkfv");'>
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+                                            <div class="flex items-center gap-3 mb-2">
+                                                <p class="font-semibold text-gray-900 text-sm">Sarah Mitchell</p>
+                                                <p class="text-gray-500 text-sm">5 hours ago</p>
+                                            </div>
+                                            <p class="text-gray-700 text-sm leading-relaxed">This really helped me understand the current state of AI in business. Looking forward to implementing some of these insights in my company.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Add Comment Form -->
+                            <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+                                <h4 class="text-lg font-semibold mb-4 text-gray-900">Leave a Comment</h4>
+                                <form id="commentForm" class="space-y-4">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label for="commentName" class="block text-sm font-medium text-gray-700 mb-2">Name</label>
+                                            <input type="text" id="commentName" name="name" required
+                                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                                        </div>
+                                        <div>
+                                            <label for="commentEmail" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                                            <input type="email" id="commentEmail" name="email" required
+                                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label for="commentMessage" class="block text-sm font-medium text-gray-700 mb-2">Comment</label>
+                                        <textarea id="commentMessage" name="message" rows="4" required
+                                                  placeholder="Share your thoughts..."
+                                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none"></textarea>
+                                    </div>
+                                    <div class="flex justify-end">
+                                        <button type="submit" class="btn-primary">
+                                            Post Comment
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
                         <!-- Related Articles -->
                         <div class="mt-16">
                             <h3 class="text-2xl font-bold mb-8 text-gray-900">Related Articles</h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <% relatedPosts.forEach(post => { %>
-                                    <a href="/blog/<%= post.slug %>" class="block group">
-                                        <div class="bg-white border border-gray-200 rounded-xl overflow-hidden transition-all group-hover:border-primary/30 shadow-sm hover:shadow">
-                                            <div class="h-32 overflow-hidden">
-                                                <img src="<%= post.hero_image || post.heroImage || 'https://arzani-images1.s3.eu-west-2.amazonaws.com/blogs/default-blog-hero.jpg' %>" 
-                                                     alt="<%= post.title %>" 
-                                                     class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                                     onerror="this.onerror=null; this.src='https://arzani-images1.s3.eu-west-2.amazonaws.com/blogs/default-blog-hero.jpg';">
-                                            </div>
-                                            <div class="p-6">
-                                                <div class="flex gap-2 mb-3">
-                                                    <% if (post.categories && post.categories.slice && post.categories.length > 0) { %>
-                                                        <% post.categories.slice(0, 2).forEach(category => { %>
+                                <% if (typeof relatedPosts !== 'undefined' && relatedPosts && relatedPosts.length > 0) { %>
+                                    <% relatedPosts.forEach(post => { %>
+                                        <a href="/blog/<%= post.slug %>" class="block group">
+                                            <div class="bg-white border border-gray-200 rounded-xl overflow-hidden transition-all group-hover:border-primary/30 shadow-sm hover:shadow">
+                                                <div class="h-32 overflow-hidden">
+                                                    <img src="<%= post.hero_image || post.heroImage || 'https://arzani-images1.s3.eu-west-2.amazonaws.com/blogs/default-blog-hero.jpg' %>" 
+                                                         alt="<%= post.title %>" 
+                                                         class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                         onerror="this.onerror=null; this.src='https://arzani-images1.s3.eu-west-2.amazonaws.com/blogs/default-blog-hero.jpg';">
+                                                </div>
+                                                <div class="p-6">
+                                                    <div class="flex gap-2 mb-3">
+                                                        <% if (post.categories && post.categories.slice && post.categories.length > 0) { %>
+                                                            <% post.categories.slice(0, 2).forEach(category => { %>
+                                                                <span class="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary">
+                                                                    <%= category.name %>
+                                                                </span>
+                                                            <% }); %>
+                                                        <% } else { %>
                                                             <span class="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary">
-                                                                <%= category.name %>
+                                                                Blog
                                                             </span>
-                                                        <% }); %>
-                                                    <% } else { %>
-                                                        <span class="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary">
-                                                            Blog
-                                                        </span>
-                                                    <% } %>
-                                                </div>
-                                                <h4 class="text-lg font-bold mb-2 line-clamp-2 text-gray-900"><%= post.title %></h4>
-                                                <p class="text-gray-600 text-sm mb-4 line-clamp-2"><%= post.excerpt || post.meta_description || '' %></p>
-                                                <div class="flex items-center text-xs text-gray-500">
-                                                    <span><%= new Date(post.publish_date || post.publishDate || post.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) %></span>
-                                                    <span class="mx-2">•</span>
-                                                    <span><%= post.reading_time || post.readingTime || 5 %> min read</span>
+                                                        <% } %>
+                                                    </div>
+                                                    <h4 class="text-lg font-bold mb-2 line-clamp-2 text-gray-900"><%= post.title %></h4>
+                                                    <p class="text-gray-600 text-sm mb-4 line-clamp-2"><%= post.excerpt || post.meta_description || '' %></p>
+                                                    <div class="flex items-center text-xs text-gray-500">
+                                                        <span><%= new Date(post.publish_date || post.publishDate || post.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) %></span>
+                                                        <span class="mx-2">•</span>
+                                                        <span><%= post.reading_time || post.readingTime || 5 %> min read</span>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </a>
-                                <% }); %>
+                                        </a>
+                                    <% }); %>
+                                <% } else { %>
+                                    <div class="col-span-2 text-center py-8">
+                                        <p class="text-gray-500">No related articles available at this time.</p>
+                                    </div>
+                                <% } %>
                             </div>
                         </div>
                     </div>
@@ -320,39 +746,37 @@
                                     No section headers found in this article.
                                 </div>
                             </div>
-                            
-                            <!-- Newsletter Signup -->
-                            <div class="bg-white border border-gray-200 rounded-xl p-6 mb-8 shadow-sm">
-                                <h4 class="text-lg font-bold mb-3 text-gray-900">Stay Updated</h4>
-                                <p class="text-gray-700 text-sm mb-4">Get the latest business insights and market trends delivered to your inbox.</p>
-                                <form action="/subscribe" method="POST" class="space-y-3">
-                                    <input type="email" name="email" placeholder="Your email address" required
-                                           class="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
-                                    <button type="submit" class="w-full btn-primary">Subscribe</button>
-                                </form>
-                            </div>
-                            
-                            <!-- Popular Posts -->
+                              <!-- Newsletter Signup -->
+                            <% const newsletterSource = 'blog-post-sidebar'; %>
+                            <%- include('../partials/newsletter-compact') %>
+                              <!-- Popular Posts -->
                             <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
                                 <h4 class="text-lg font-bold mb-4 text-gray-900">Popular Posts</h4>
                                 <div class="space-y-4">
-                                    <% popularPosts.forEach(post => { %>
-                                        <a href="/blog/<%= post.slug %>" class="flex items-start group">
-                                            <div class="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 mr-3">                                                <img src="<%= post.hero_image || post.heroImage || 'https://arzani-images1.s3.eu-west-2.amazonaws.com/blogs/default-blog-hero.jpg' %>" 
-                                                     alt="<%= post.title %>" 
-                                                     class="w-full h-full object-cover blog-lazy-image"
-                                                     loading="lazy"
-                                                     onload="this.classList.add('loaded')"
-                                                     onerror="this.onerror=null; this.src='https://arzani-images1.s3.eu-west-2.amazonaws.com/blogs/default-blog-hero.jpg'; this.alt='Default image for <%= post.title %>';">
-                                            </div>
-                                            <div>
-                                                <h5 class="font-medium group-hover:text-primary transition-colors line-clamp-2 text-gray-900"><%= post.title %></h5>
-                                                <div class="flex text-xs text-gray-500 mt-1">
-                                                    <span><%= new Date(post.publish_date || post.publishDate || post.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) %></span>
+                                    <% if (typeof popularPosts !== 'undefined' && popularPosts && popularPosts.length > 0) { %>
+                                        <% popularPosts.forEach(post => { %>
+                                            <a href="/blog/<%= post.slug %>" class="flex items-start group">
+                                                <div class="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 mr-3">
+                                                    <img src="<%= post.hero_image || post.heroImage || 'https://arzani-images1.s3.eu-west-2.amazonaws.com/blogs/default-blog-hero.jpg' %>" 
+                                                         alt="<%= post.title %>" 
+                                                         class="w-full h-full object-cover blog-lazy-image"
+                                                         loading="lazy"
+                                                         onload="this.classList.add('loaded')"
+                                                         onerror="this.onerror=null; this.src='https://arzani-images1.s3.eu-west-2.amazonaws.com/blogs/default-blog-hero.jpg'; this.alt='Default image for <%= post.title %>';">
                                                 </div>
-                                            </div>
-                                        </a>
-                                    <% }); %>
+                                                <div>
+                                                    <h5 class="font-medium group-hover:text-primary transition-colors line-clamp-2 text-gray-900"><%= post.title %></h5>
+                                                    <div class="flex text-xs text-gray-500 mt-1">
+                                                        <span><%= new Date(post.publish_date || post.publishDate || post.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) %></span>
+                                                    </div>
+                                                </div>
+                                            </a>
+                                        <% }); %>
+                                    <% } else { %>
+                                        <div class="text-center py-4">
+                                            <p class="text-gray-500 text-sm">No popular posts available.</p>
+                                        </div>
+                                    <% } %>
                                 </div>
                             </div>
                         </div>
@@ -375,11 +799,218 @@
                 <button id="acceptAllCookies" class="btn-primary text-sm px-4 py-2">Accept All</button>
             </div>
         </div>
-    </div>
-
-    <script src="/js/navigation.js"></script>    <script>
-        // Table of Contents Generator and Image Optimization
+    </div>    <script src="/js/navigation.js"></script>
+    
+    <!-- Enhanced Blog Styles -->
+    <style>
+        /* Blog-specific animations and styles */
+        .blog-lazy-image {
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+        
+        .blog-lazy-image.loaded {
+            opacity: 1;
+        }
+        
+        .prose {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.75;
+        }
+        
+        .prose h2, .prose h3, .prose h4 {
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+        
+        .prose p {
+            margin-bottom: 1.5rem;
+        }
+        
+        .animate-fade-in-up {
+            animation: fadeInUp 0.6s ease-out;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+          .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        /* Reading progress indicator */
+        .reading-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 3px;
+            background: linear-gradient(90deg, #316FD4, #64B5F6);
+            z-index: 1000;
+            transition: width 0.1s ease;
+        }
+        
+        /* Enhanced button styles */
+        .btn-primary {
+            background: linear-gradient(135deg, #316FD4, #1976D2);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #1976D2, #0D47A1);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(49, 111, 212, 0.3);
+        }
+        
+        /* Grid pattern background */
+        .grid-pattern {
+            background-image: radial-gradient(circle, rgba(49, 111, 212, 0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+    
+    <!-- Reading Progress Indicator -->
+    <div class="reading-progress" id="readingProgress"></div>
+    
+    <script>        // Enhanced Blog functionality with interactions
         document.addEventListener('DOMContentLoaded', function() {
+            // Reading Progress Indicator
+            const readingProgress = document.getElementById('readingProgress');
+            const mainArticle = document.querySelector('article');
+            
+            if (readingProgress && mainArticle) {
+                function updateReadingProgress() {
+                    const scrollTop = window.pageYOffset;
+                    const docHeight = document.body.offsetHeight;
+                    const winHeight = window.innerHeight;
+                    const scrollPercent = scrollTop / (docHeight - winHeight);
+                    const scrollPercentRounded = Math.round(scrollPercent * 100);
+                    
+                    readingProgress.style.width = `${Math.min(scrollPercentRounded, 100)}%`;
+                }
+                
+                window.addEventListener('scroll', updateReadingProgress);
+            }
+            
+            // Interactive buttons functionality
+            const likeButton = document.getElementById('likeButton');
+            const bookmarkButton = document.getElementById('bookmarkButton');
+            const commentForm = document.getElementById('commentForm');
+            
+            // Like button functionality
+            if (likeButton) {
+                likeButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const likeCount = document.getElementById('likeCount');
+                    const currentCount = parseInt(likeCount.textContent);
+                    const isLiked = this.classList.contains('liked');
+                    
+                    if (isLiked) {
+                        likeCount.textContent = currentCount - 1;
+                        this.classList.remove('liked');
+                        this.style.background = 'white';
+                        this.style.color = '#374151';
+                    } else {
+                        likeCount.textContent = currentCount + 1;
+                        this.classList.add('liked');
+                        this.style.background = 'linear-gradient(135deg, #EF4444, #DC2626)';
+                        this.style.color = 'white';
+                    }
+                    
+                    // Add animation effect
+                    this.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        this.style.transform = 'scale(1)';
+                    }, 150);
+                });
+            }
+            
+            // Bookmark button functionality
+            if (bookmarkButton) {
+                bookmarkButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const bookmarkCount = document.getElementById('bookmarkCount');
+                    const currentCount = parseInt(bookmarkCount.textContent);
+                    const isBookmarked = this.classList.contains('bookmarked');
+                    
+                    if (isBookmarked) {
+                        bookmarkCount.textContent = currentCount - 1;
+                        this.classList.remove('bookmarked');
+                        this.style.background = 'white';
+                        this.style.color = '#374151';
+                    } else {
+                        bookmarkCount.textContent = currentCount + 1;
+                        this.classList.add('bookmarked');
+                        this.style.background = 'linear-gradient(135deg, #316FD4, #1976D2)';
+                        this.style.color = 'white';
+                    }
+                    
+                    // Add animation effect
+                    this.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        this.style.transform = 'scale(1)';
+                    }, 150);
+                });
+            }
+            
+            // Comment form functionality
+            if (commentForm) {
+                commentForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const name = document.getElementById('commentName').value;
+                    const email = document.getElementById('commentEmail').value;
+                    const message = document.getElementById('commentMessage').value;
+                    
+                    if (name && email && message) {
+                        // Show success message
+                        const successMessage = document.createElement('div');
+                        successMessage.className = 'bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mt-4';
+                        successMessage.innerHTML = '<p class="font-medium">Thank you for your comment!</p><p class="text-sm">Your comment has been submitted and is awaiting moderation.</p>';
+                        
+                        this.parentNode.insertBefore(successMessage, this.nextSibling);
+                        
+                        // Reset form
+                        this.reset();
+                        
+                        // Remove success message after 5 seconds
+                        setTimeout(() => {
+                            successMessage.remove();
+                        }, 5000);
+                        
+                        // Update comment count
+                        const commentCount = document.getElementById('commentCount');
+                        if (commentCount) {
+                            const currentCount = parseInt(commentCount.textContent);
+                            commentCount.textContent = currentCount + 1;
+                        }
+                    }
+                });
+            }
+            
+            // Original Table of Contents and Image Optimization code
             // Table of Contents Generator
             const article = document.querySelector('article');
             const tableOfContents = document.getElementById('tableOfContents');

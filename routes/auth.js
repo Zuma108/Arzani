@@ -279,13 +279,17 @@ router.post('/signup', async (req, res) => {
       { userId: user.id },
       EMAIL_SECRET,
       { expiresIn: '24h' }
-    );
-
-    // Send verification email
+    );    // Send verification email
     try {
+      console.log('Attempting to send verification email to:', email);
       await sendVerificationEmail(email, verificationToken);
+      console.log('Verification email sent successfully to:', email);
     } catch (emailError) {
-      console.error('Failed to send verification email:', emailError);
+      console.error('Failed to send verification email to:', email);
+      console.error('Email error details:', emailError.message);
+      if (emailError.response && emailError.response.body) {
+        console.error('SendGrid error response:', emailError.response.body);
+      }
       // Continue anyway, user can request another verification email
     }
 

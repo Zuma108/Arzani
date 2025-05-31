@@ -1,0 +1,356 @@
+<!-- Modern Navbar Partial - Reusable across all pages -->
+<header class="modern-navbar fixed w-full top-0 z-50 transition-all duration-300 bg-white/95 backdrop-blur-sm border-b border-gray-200/50">
+    <nav class="container mx-auto px-4 lg:px-6 py-3">
+        <div class="flex items-center justify-between">
+            <!-- Logo Section -->
+            <div class="flex items-center">
+                <a href="/" class="flex items-center space-x-3">
+                    <img src="/figma design exports/logos/Arzani black-white background.png" 
+                         alt="Arzani Logo" 
+                         class="h-8 md:h-10 w-auto transition-transform duration-200 hover:scale-105">
+                    <span class="hidden sm:block text-xl font-bold text-gray-900">Arzani</span>
+                </a>
+            </div>
+            
+            <!-- Desktop Navigation Links -->
+            <div class="hidden lg:flex items-center space-x-8">
+                <!-- Products Dropdown -->
+                <div class="relative group">
+                    <button class="flex items-center space-x-1 text-gray-700 hover:text-blue-600 transition-colors duration-200 py-2 px-3 rounded-lg hover:bg-gray-50">
+                        <span class="font-medium">Products</span>
+                        <svg class="w-4 h-4 transition-transform duration-200 group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div class="absolute top-full left-0 mt-1 w-80 bg-white rounded-xl shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+                        <div class="p-4 space-y-2">
+                            <a href="/seller-questionnaire" class="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                                <div class="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-gray-900">Business Valuation</h3>
+                                    <p class="text-sm text-gray-600">Get accurate AI-powered valuations</p>
+                                </div>
+                            </a>
+                            <a href="/ai-insights" class="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                                <div class="flex-shrink-0 w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                    <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-gray-900">AI Market Insights</h3>
+                                    <p class="text-sm text-gray-600">Data-driven market analysis</p>
+                                </div>
+                            </a>
+                            <a href="/marketplace2" class="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                                <div class="flex-shrink-0 w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                                    <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-gray-900">Marketplace</h3>
+                                    <p class="text-sm text-gray-600">Browse business listings</p>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Features Dropdown -->
+                <div class="relative group">
+                    <button class="flex items-center space-x-1 text-gray-700 hover:text-blue-600 transition-colors duration-200 py-2 px-3 rounded-lg hover:bg-gray-50">
+                        <span class="font-medium">Features</span>
+                        <svg class="w-4 h-4 transition-transform duration-200 group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div class="absolute top-full left-0 mt-1 w-64 bg-white rounded-xl shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+                        <div class="p-4 space-y-2">
+                            <a href="/features/brain-ai" class="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                                <div class="flex-shrink-0 w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
+                                    <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-gray-900">Brain AI</h3>
+                                    <p class="text-sm text-gray-600">Intelligent analytics</p>
+                                </div>
+                            </a>
+                            <a href="/features/power-ups" class="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                                <div class="flex-shrink-0 w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                                    <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-gray-900">Power-ups</h3>
+                                    <p class="text-sm text-gray-600">Enhanced features</p>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Company Dropdown -->
+                <div class="relative group">
+                    <button class="flex items-center space-x-1 text-gray-700 hover:text-blue-600 transition-colors duration-200 py-2 px-3 rounded-lg hover:bg-gray-50">
+                        <span class="font-medium">Company</span>
+                        <svg class="w-4 h-4 transition-transform duration-200 group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div class="absolute top-full left-0 mt-1 w-56 bg-white rounded-xl shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+                        <div class="p-4 space-y-2">
+                            <a href="/about-us" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                                <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <div>
+                                    <h3 class="font-semibold text-gray-900">About Us</h3>
+                                    <p class="text-xs text-gray-600">Our mission & vision</p>
+                                </div>
+                            </a>
+                            <a href="/contact" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                                <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                </svg>
+                                <div>
+                                    <h3 class="font-semibold text-gray-900">Contact</h3>
+                                    <p class="text-xs text-gray-600">Get in touch</p>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Direct Links -->
+                <a href="/blog" class="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200 py-2 px-3 rounded-lg hover:bg-gray-50">Blog</a>
+                <a href="/pricing" class="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200 py-2 px-3 rounded-lg hover:bg-gray-50">Pricing</a>
+            </div>
+            
+            <!-- Auth & CTA Section -->
+            <div class="hidden lg:flex items-center space-x-4">
+                <a href="/login" class="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200">Log in</a>
+                <a href="/seller-questionnaire" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl">
+                    Get Started
+                </a>
+            </div>
+            
+            <!-- Mobile Menu Button -->
+            <button id="mobileMenuBtn" class="lg:hidden flex items-center justify-center w-10 h-10 rounded-lg hover:bg-gray-100 transition-colors duration-200" aria-expanded="false" aria-label="Toggle navigation">
+                <div class="flex flex-col space-y-1.5">
+                    <span class="block w-6 h-0.5 bg-gray-700 transition-all duration-300 transform burger-line"></span>
+                    <span class="block w-6 h-0.5 bg-gray-700 transition-all duration-300 transform burger-line"></span>
+                    <span class="block w-6 h-0.5 bg-gray-700 transition-all duration-300 transform burger-line"></span>
+                </div>
+            </button>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div id="mobileMenu" class="lg:hidden hidden mt-4 pb-4 border-t border-gray-200">
+            <div class="space-y-4 pt-4">
+                <!-- Mobile Products Section -->
+                <div class="space-y-2">
+                    <h3 class="text-sm font-semibold text-gray-900 px-3">Products</h3>
+                    <a href="/seller-questionnaire" class="flex items-center space-x-3 px-3 py-3 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                        </svg>
+                        <span class="font-medium">Business Valuation</span>
+                    </a>
+                    <a href="/ai-insights" class="flex items-center space-x-3 px-3 py-3 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                        <span class="font-medium">AI Market Insights</span>
+                    </a>
+                    <a href="/marketplace2" class="flex items-center space-x-3 px-3 py-3 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                        </svg>
+                        <span class="font-medium">Marketplace</span>
+                    </a>
+                </div>
+                
+                <!-- Mobile Features Section -->
+                <div class="space-y-2 border-t border-gray-200 pt-4">
+                    <h3 class="text-sm font-semibold text-gray-900 px-3">Features</h3>
+                    <a href="/features/brain-ai" class="flex items-center space-x-3 px-3 py-3 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                        </svg>
+                        <span class="font-medium">Brain AI</span>
+                    </a>
+                    <a href="/features/power-ups" class="flex items-center space-x-3 px-3 py-3 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                        <span class="font-medium">Power-ups</span>
+                    </a>
+                </div>
+                
+                <!-- Mobile Direct Links -->
+                <div class="space-y-2 border-t border-gray-200 pt-4">
+                    <a href="/blog" class="block px-3 py-3 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg font-medium transition-colors duration-200">Blog</a>
+                    <a href="/pricing" class="block px-3 py-3 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg font-medium transition-colors duration-200">Pricing</a>
+                    <a href="/about-us" class="block px-3 py-3 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg font-medium transition-colors duration-200">About Us</a>
+                    <a href="/contact" class="block px-3 py-3 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg font-medium transition-colors duration-200">Contact</a>
+                </div>
+                
+                <!-- Mobile Auth Links -->
+                <div class="space-y-3 border-t border-gray-200 pt-4">
+                    <a href="/login" class="block px-3 py-3 text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200">Log in</a>
+                    <a href="/seller-questionnaire" class="block bg-blue-600 hover:bg-blue-700 text-white px-3 py-3 rounded-lg font-medium text-center transition-colors duration-200">
+                        Get Started
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+</header>
+
+<!-- Modern Navbar JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const mobileMenu = document.getElementById('mobileMenu');
+    const burgerLines = document.querySelectorAll('.burger-line');
+    
+    if (mobileMenuBtn && mobileMenu) {
+        mobileMenuBtn.addEventListener('click', function() {
+            const isExpanded = this.getAttribute('aria-expanded') === 'true';
+            const newExpanded = !isExpanded;
+            
+            // Toggle aria-expanded
+            this.setAttribute('aria-expanded', newExpanded);
+            
+            // Toggle mobile menu visibility
+            mobileMenu.classList.toggle('hidden', !newExpanded);
+            
+            // Animate burger lines
+            if (newExpanded) {
+                burgerLines[0].style.transform = 'rotate(45deg) translate(6px, 6px)';
+                burgerLines[1].style.opacity = '0';
+                burgerLines[2].style.transform = 'rotate(-45deg) translate(6px, -6px)';
+            } else {
+                burgerLines[0].style.transform = 'none';
+                burgerLines[1].style.opacity = '1';
+                burgerLines[2].style.transform = 'none';
+            }
+        });
+        
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!mobileMenuBtn.contains(event.target) && !mobileMenu.contains(event.target)) {
+                mobileMenuBtn.setAttribute('aria-expanded', 'false');
+                mobileMenu.classList.add('hidden');
+                
+                // Reset burger lines
+                burgerLines[0].style.transform = 'none';
+                burgerLines[1].style.opacity = '1';
+                burgerLines[2].style.transform = 'none';
+            }
+        });
+    }
+    
+    // Navbar scroll effect
+    window.addEventListener('scroll', function() {
+        const navbar = document.querySelector('.modern-navbar');
+        if (navbar) {
+            if (window.scrollY > 20) {
+                navbar.classList.add('shadow-md');
+                navbar.classList.remove('border-b');
+            } else {
+                navbar.classList.remove('shadow-md');
+                navbar.classList.add('border-b');
+            }
+        }
+    });
+    
+    // Active page highlighting
+    const currentPath = window.location.pathname;
+    const navLinks = document.querySelectorAll('.modern-navbar a[href]');
+    
+    navLinks.forEach(link => {
+        const href = link.getAttribute('href');
+        if (href && (currentPath === href || (href !== '/' && currentPath.startsWith(href)))) {
+            link.classList.add('text-blue-600', 'font-semibold');
+            // Add indicator for desktop dropdown items
+            if (link.closest('.group')) {
+                link.classList.add('bg-blue-50');
+            }
+        }
+    });
+});
+</script>
+
+<!-- Modern Navbar Styles -->
+<style>
+.modern-navbar {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.modern-navbar .group:hover .group-hover\\:opacity-100 {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modern-navbar .group:hover .group-hover\\:visible {
+    visibility: visible;
+}
+
+.modern-navbar .group:hover .group-hover\\:translate-y-0 {
+    transform: translateY(0);
+}
+
+/* Custom dropdown animations */
+.modern-navbar .group .absolute {
+    transform: translateY(8px);
+}
+
+.modern-navbar .group:hover .absolute {
+    transform: translateY(0);
+}
+
+/* Smooth transitions for all interactive elements */
+.modern-navbar a,
+.modern-navbar button {
+    transition: all 0.2s ease-in-out;
+}
+
+/* Logo hover effect */
+.modern-navbar img {
+    filter: brightness(1);
+    transition: filter 0.2s ease-in-out;
+}
+
+.modern-navbar img:hover {
+    filter: brightness(1.1);
+}
+
+/* Mobile menu slide animation */
+#mobileMenu {
+    transition: all 0.3s ease-in-out;
+    max-height: 0;
+    overflow: hidden;
+}
+
+#mobileMenu:not(.hidden) {
+    max-height: 1000px;
+}
+
+/* Focus styles for accessibility */
+.modern-navbar a:focus,
+.modern-navbar button:focus {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+    border-radius: 0.375rem;
+}
+</style>

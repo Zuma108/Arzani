@@ -198,17 +198,24 @@ async function handleBlogPostCreation(postData, res) {
         );
       }
     }
-    
-    // Commit transaction
+      // Commit transaction
     await db.query('COMMIT');
-    
+
+    // Trigger sitemap update after successful blog post creation
+    try {
+      await triggerSitemapUpdate(createdPost.slug, 'n8n_create');
+    } catch (sitemapError) {
+      console.error('Error triggering sitemap update after blog creation:', sitemapError);
+      // Don't fail the response if sitemap update fails
+    }
+
     // Log the success
     await logWebhookActivity('create_post', {
       postId: createdPost.id,
       slug: createdPost.slug,
       title: createdPost.title
     }, true);
-    
+
     return res.status(201).json({
       success: true,
       message: 'Blog post created successfully',
@@ -353,9 +360,16 @@ async function handleBlogPostUpdate(postData, res) {
        WHERE id = $${valueIndex} RETURNING *`,
       updateValues
     );
-    
-    const updatedPost = result.rows[0];
-    
+      const updatedPost = result.rows[0];
+
+    // Trigger sitemap update after successful blog post update
+    try {
+      await triggerSitemapUpdate(updatedPost.slug, 'n8n_update');
+    } catch (sitemapError) {
+      console.error('Error triggering sitemap update after blog update:', sitemapError);
+      // Don't fail the response if sitemap update fails
+    }
+
     // Log the success
     await logWebhookActivity('update_post', {
       postId: updatedPost.id,
@@ -482,11 +496,42 @@ async function getRecentLogs(limit = 50) {
 async function publishBlogPost(post) {
   try {
     console.log('Triggering n8n workflow to publish blog post:', post.slug);
-    // Your implementation...
+      // Trigger n8n workflow if configured
+    if (config.baseUrl && config.apiKey) {
+      const response = await axios.post(`${config.baseUrl}/webhook/${config.workflows.publishBlog}`, {
+        action: 'publish_post',
+        post: {
+          id: post.id,
+          title: post.title,
+          slug: post.slug,
+          content: post.content,
+          excerpt: post.excerpt,
+          author: post.author_name,
+          hero_image: post.hero_image,
+          categories: post.categories || [],
+          tags: post.tags || [],
+          status: post.status,
+          publish_date: post.publish_date,
+          url: `/blog/${post.slug}`
+        }      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${config.apiKey}`
+        },
+        timeout: 10000
+      });
+      
+      console.log('n8n publish workflow triggered successfully:', response.status);
+    }
+
+    // Trigger sitemap update
+    await triggerSitemapUpdate(post.slug, 'blog_publish');
+    
     return { success: true };
   } catch (error) {
     console.error('Error triggering n8n publish workflow:', error);
-    throw error;
+    // Don't throw error to avoid breaking the blog creation process
+    return { success: false, error: error.message };
   }
 }
 
@@ -496,11 +541,43 @@ async function publishBlogPost(post) {
 async function updateBlogPost(post) {
   try {
     console.log('Triggering n8n workflow to update blog post:', post.slug);
-    // Your implementation...
+      // Trigger n8n workflow if configured
+    if (config.baseUrl && config.apiKey) {
+      const response = await axios.post(`${config.baseUrl}/webhook/${config.workflows.updateBlog}`, {
+        action: 'update_post',
+        post: {
+          id: post.id,
+          title: post.title,
+          slug: post.slug,
+          content: post.content,
+          excerpt: post.excerpt,
+          author: post.author_name,
+          hero_image: post.hero_image,
+          categories: post.categories || [],
+          tags: post.tags || [],
+          status: post.status,
+          updated_at: post.updated_at,
+          url: `/blog/${post.slug}`
+        }
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${config.apiKey}`
+        },
+        timeout: 10000
+      });
+      
+      console.log('n8n update workflow triggered successfully:', response.status);
+    }
+
+    // Trigger sitemap update
+    await triggerSitemapUpdate(post.slug, 'blog_update');
+    
     return { success: true };
   } catch (error) {
     console.error('Error triggering n8n update workflow:', error);
-    throw error;
+    // Don't throw error to avoid breaking the blog update process
+    return { success: false, error: error.message };
   }
 }
 
@@ -510,11 +587,34 @@ async function updateBlogPost(post) {
 async function sendPublicationNotification(post, channels = ['email']) {
   try {
     console.log('Sending blog post publication notification for:', post.slug);
-    // Your implementation...
+      // Trigger n8n notification workflow if configured
+    if (config.baseUrl && config.apiKey) {
+      const response = await axios.post(`${config.baseUrl}/webhook/notify`, {
+        action: 'send_notification',
+        post: {
+          title: post.title,
+          slug: post.slug,
+          author: post.author_name,
+          url: `/blog/${post.slug}`,
+          published_at: post.publish_date
+        },
+        channels: channels
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${config.apiKey}`
+        },
+        timeout: 10000
+      });
+      
+      console.log('n8n notification workflow triggered successfully:', response.status);
+    }
+    
     return { success: true };
   } catch (error) {
     console.error('Error sending publication notification:', error);
-    throw error;
+    // Don't throw error to avoid breaking the blog process
+    return { success: false, error: error.message };
   }
 }
 
@@ -524,11 +624,64 @@ async function sendPublicationNotification(post, channels = ['email']) {
 async function refreshBlogCache(slug) {
   try {
     console.log('Triggering n8n workflow to refresh blog cache for:', slug);
-    // Your implementation...
+      // Trigger n8n cache refresh workflow if configured
+    if (config.baseUrl && config.apiKey) {
+      const response = await axios.post(`${config.baseUrl}/webhook/${config.workflows.refreshCache}`, {
+        action: 'refresh_cache',
+        slug: slug
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${config.apiKey}`
+        },
+        timeout: 10000
+      });
+      
+      console.log('n8n cache refresh workflow triggered successfully:', response.status);
+    }
+    
     return { success: true };
   } catch (error) {
     console.error('Error refreshing blog cache:', error);
-    throw error;
+    // Don't throw error to avoid breaking the main process
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Trigger sitemap update when blog posts are created or updated
+ */
+async function triggerSitemapUpdate(postSlug, source = 'blog') {
+  try {
+    console.log(`Triggering sitemap update for ${postSlug} from ${source}`);
+    
+    // Use the existing sitemap webhook endpoint
+    const sitemapUrl = process.env.SITE_URL || 'https://www.arzani.co.uk';
+    const apiSecret = process.env.SITEMAP_API_SECRET;
+    
+    if (!apiSecret) {
+      console.warn('SITEMAP_API_SECRET not configured, skipping sitemap update');
+      return { success: false, error: 'API secret not configured' };
+    }
+    
+    const response = await axios.post(`${sitemapUrl}/webhooks/n8n/update-sitemap`, {
+      postSlug: postSlug,
+      source: source,
+      timestamp: new Date().toISOString()
+    }, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiSecret}`
+      },
+      timeout: 15000
+    });
+    
+    console.log('Sitemap update triggered successfully:', response.data);
+    return { success: true, data: response.data };
+  } catch (error) {
+    console.error('Error triggering sitemap update:', error.message);
+    // Log but don't throw - sitemap update failure shouldn't break blog operations
+    return { success: false, error: error.message };
   }
 }
 
@@ -538,5 +691,6 @@ export default {
   updateBlogPost,
   sendPublicationNotification,
   refreshBlogCache,
+  triggerSitemapUpdate,
   getRecentLogs
 };

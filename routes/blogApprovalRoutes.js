@@ -41,7 +41,7 @@ router.post('/webhook', webhookMiddleware.logWebhookRequest, async (req, res) =>
       });
     }
     
-    // Transform the payload to match what the workflow service expects
+    // Transform the payload to match what the workflow service expects from n8n
     const transformedPayload = {
       title,
       content,

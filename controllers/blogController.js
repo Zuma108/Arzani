@@ -237,15 +237,33 @@ async function getBlogPostBySlug(req, res) {
     await db.query(
       'UPDATE blog_posts SET view_count = view_count + 1 WHERE id = $1',
       [post.id]
+    );    // Get all categories for sidebar
+    const allCategoriesResult = await db.query(
+      'SELECT c.*, COUNT(pc.post_id) as post_count FROM blog_categories c ' +
+      'LEFT JOIN blog_post_categories pc ON c.id = pc.category_id ' +
+      'LEFT JOIN blog_posts p ON pc.post_id = p.id AND p.status = $1 ' +
+      'GROUP BY c.id ORDER BY c.name',
+      ['Published']
     );
-    
-    // Render the blog post page
-    return res.render('blog/post', {
-      post,
-      categories: categoriesResult.rows,
+
+    // Get recent posts for "Past Articles" sidebar (exclude current post)
+    const recentPostsResult = await db.query(
+      'SELECT id, title, slug, publish_date, reading_time FROM blog_posts ' +
+      'WHERE status = $1 AND id != $2 ' +
+      'ORDER BY publish_date DESC LIMIT 6',
+      ['Published', post.id]
+    );
+
+    // Render the blog post page with modern template
+    return res.render('blog/modern-blog-post', {
+      blog: post, // Use 'blog' instead of 'post' to match template expectations
+      post, // Keep 'post' for backward compatibility
+      categories: allCategoriesResult.rows, // All categories for sidebar
+      postCategories: categoriesResult.rows, // Categories for this specific post
       tags: tagsResult.rows,
       relatedPosts,
-      title: `${post.title} - Arzani Blog`,
+      recentPosts: recentPostsResult.rows, // Recent posts for sidebar
+      title: `${post.title} - TechBlog`,
       description: post.meta_description || contentProcessor.generateExcerpt(post.content, 160)
     });
   } catch (error) {
@@ -807,12 +825,19 @@ async function createBlogPost(req, res) {
         
         // Trigger the n8n workflow to publish the post
         await n8nWorkflowService.publishBlogPost(fullPost);
-        
-        // Send notification
+          // Send notification
         await n8nWorkflowService.sendPublicationNotification(fullPost, ['email', 'slack']);
       } catch (error) {
         console.error('Error triggering n8n workflow:', error);
         // Note: We don't want to fail the API response if the workflow fails
+      }
+    } else {
+      // Even if not published, trigger sitemap update for draft posts that might become visible
+      try {
+        await n8nWorkflowService.triggerSitemapUpdate(post.slug, 'api_create');
+      } catch (error) {
+        console.error('Error triggering sitemap update:', error);
+        // Don't fail the API response if sitemap update fails
       }
     }
     
@@ -1051,12 +1076,19 @@ async function updateBlogPost(req, res) {
         
         // Trigger the n8n workflow to update the post
         await n8nWorkflowService.updateBlogPost(fullPost);
-        
-        // Refresh cache
+          // Refresh cache
         await n8nWorkflowService.refreshBlogCache(fullPost.slug);
       } catch (error) {
         console.error('Error triggering n8n update workflow:', error);
         // Note: We don't want to fail the API response if the workflow fails
+      }
+    } else {
+      // For any other updates, still trigger sitemap update
+      try {
+        await n8nWorkflowService.triggerSitemapUpdate(updatedPost.slug, 'api_update');
+      } catch (error) {
+        console.error('Error triggering sitemap update:', error);
+        // Don't fail the API response if sitemap update fails
       }
     }
     

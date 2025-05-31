@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import session from 'express-session';
 import multer from 'multer';
@@ -6,7 +9,6 @@ import { WebSocketServer } from 'ws';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import path from 'path';
-import dotenv from 'dotenv';
 import pool from './db.js';
 import bcrypt from 'bcrypt';
 import { sendVerificationEmail } from './utils/email.js';
@@ -198,7 +200,6 @@ const businessAuth = async (req, res, next) => {
 };
 
 // 2. Configuration
-dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const PORT = process.env.PORT || 5000; // Update default port to 8080 for Azure
