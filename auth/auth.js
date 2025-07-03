@@ -302,12 +302,15 @@ export const generateVerificationCode = () => {
  * @param {string} code - 6-digit verification code
  * @returns {Promise<string>} The verification code
  */
-export const storeVerificationCode = async (userId, code) => {
+export const storeVerificationCode = async (userId, code, client = null) => {
   try {
     const hashedCode = await bcrypt.hash(code, 10);
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
     
-    await pool.query(
+    // Use the provided client (for transactions) or the pool directly
+    const queryExecutor = client || pool;
+    
+    await queryExecutor.query(
       'UPDATE users_auth SET verification_token = $1, verification_expires = $2 WHERE user_id = $3',
       [hashedCode, expiresAt, userId]
     );

@@ -289,68 +289,93 @@ router.post('/signup', async (req, res) => {
       });
     }
     
-    // Create user
-    const hashedPassword = await hashPassword(password);
-    const newUserResult = await pool.query(
-      'INSERT INTO users (username, email, auth_provider) VALUES ($1, $2, $3) RETURNING id, email, username',
-      [username, email, 'email']
-    );
-    
-    const newUser = newUserResult.rows[0];
-    
-    // Create auth record
-    await pool.query(
-      'INSERT INTO users_auth (user_id, password_hash, verified) VALUES ($1, $2, $3)',
-      [newUser.id, hashedPassword, false]
-    );
-    
-    // Generate verification code
-    const verificationCode = generateVerificationCode();
-    
-    // Store the code in database
-    await storeVerificationCode(newUser.id, verificationCode);
-    
-    // Send verification email with code
+    // Use a transaction to ensure all related records are created atomically
+    const client = await pool.connect();
     try {
-      console.log('Attempting to send verification email to:', email);
-      await sendVerificationEmail(email, verificationCode);
-      console.log('Verification email sent successfully to:', email);
-    } catch (emailError) {
-      console.error('Failed to send verification email to:', email);
-      console.error(emailError);
-      // Continue anyway, user can request another verification email
-    }
-    
-    // Send analytics email to track signup
-    try {
-      // Send analytics email
-      await sendSignupAnalyticsEmail(email, newUser.id);
-      console.log('Analytics email sent for user signup:', newUser.id);
+      await client.query('BEGIN');
       
-      // Track signup in analytics system
-      await trackSignup(newUser.id, email, username);
+      // Create user - let the database generate the ID using SERIAL
+      const hashedPassword = await hashPassword(password);
+      const newUserResult = await client.query(
+        'INSERT INTO users (username, email, auth_provider) VALUES ($1, $2, $3) RETURNING id, email, username',
+        [username, email, 'email']
+      );
       
-      // For backward compatibility, still record in the old way
-      await recordAnalyticsEvent('user_signup', newUser.id, {
-        email,
-        timestamp: new Date().toISOString(),
-        username,
-        status: 'verification_pending'
+      const newUser = newUserResult.rows[0];
+      
+      // Create auth record
+      await client.query(
+        'INSERT INTO users_auth (user_id, password_hash, verified) VALUES ($1, $2, $3)',
+        [newUser.id, hashedPassword, false]
+      );
+      
+      // Generate verification code
+      const verificationCode = generateVerificationCode();
+      
+      // Store the code in database - pass the client to use the same transaction
+      await storeVerificationCode(newUser.id, verificationCode, client);
+      
+      // Commit the transaction
+      await client.query('COMMIT');
+      
+      // Send verification email with code
+      try {
+        console.log('Attempting to send verification email to:', email);
+        await sendVerificationEmail(email, verificationCode);
+        console.log('Verification email sent successfully to:', email);
+      } catch (emailError) {
+        console.error('Failed to send verification email to:', email);
+        console.error(emailError);
+        // Continue anyway, user can request another verification email
+      }
+      
+      // Send analytics email to track signup
+      try {
+        // Send analytics email
+        await sendSignupAnalyticsEmail(email, newUser.id);
+        console.log('Analytics email sent for user signup:', newUser.id);
+        
+        // Track signup in analytics system
+        await trackSignup(newUser.id, email, username);
+        
+        // For backward compatibility, still record in the old way
+        await recordAnalyticsEvent('user_signup', newUser.id, {
+          email,
+          timestamp: new Date().toISOString(),
+          username,
+          status: 'verification_pending'
+        });
+      } catch (analyticsError) {
+        console.error('Failed to send analytics for signup:', analyticsError);
+        // Don't block signup process if analytics fails
+      }
+      
+      // Return success with userId for verification step
+      return res.status(201).json({
+        success: true,
+        message: 'Account created! Please check your email for verification code.',
+        userId: newUser.id,
+        requiresVerification: true
       });
-    } catch (analyticsError) {
-      console.error('Failed to send analytics for signup:', analyticsError);
-      // Don't block signup process if analytics fails
+    } catch (dbError) {
+      // Rollback the transaction on error
+      await client.query('ROLLBACK');
+      throw dbError; // Re-throw to be caught by outer try-catch
+    } finally {
+      // Release the client back to the pool
+      client.release();
     }
-    
-    // Return success with userId for verification step
-    return res.status(201).json({
-      success: true,
-      message: 'Account created! Please check your email for verification code.',
-      userId: newUser.id,
-      requiresVerification: true
-    });
   } catch (error) {
     console.error('Signup error:', error);
+    
+    // Check for duplicate key violation
+    if (error.code === '23505') {
+      return res.status(400).json({
+        success: false,
+        message: 'This account already exists. Please try logging in or use a different email.'
+      });
+    }
+    
     res.status(500).json({
       success: false,
       message: 'Failed to create account'
