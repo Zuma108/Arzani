@@ -481,6 +481,7 @@
 
 /* Journey Card Visual */
 .journey-card-visual {
+  position: relative;
   background-color: #f9fafb;
   border-radius: 0.75rem;
   overflow: hidden;
@@ -596,6 +597,7 @@
   height: 100%;
   border: none;
   border-radius: 0.5rem;
+  z-index: 10;
 }
 
 /* Journey Image */
@@ -648,6 +650,23 @@
 .journey-footer {
   text-align: center;
   margin-top: 3rem;
+  background-color: white !important;
+  color: #1a202c !important;
+  padding: 2rem;
+  border-radius: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: none !important;
+  outline: none !important;
+}
+
+.journey-footer * {
+  border: none !important;
+  outline: none !important;
+}
+
+.journey-footer h3 {
+  color: #1a202c !important;
+  font-weight: 700;
 }
 
 .journey-cta-buttons {

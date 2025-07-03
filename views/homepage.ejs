@@ -6,7 +6,6 @@
     <title>Arzani</title>    <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">    <link rel="stylesheet" href="/css/modern.css">
     <link rel="stylesheet" href="/css/talk.css">
     <link rel="stylesheet" href="/css/testimonial-carousel.css">
-    <link rel="stylesheet" href="/css/testimonial-enhancements.css">
     <link rel="stylesheet" href="/css/feature-animations.css">
     <link rel="stylesheet" href="/css/journey-section.css">
     <link rel="stylesheet" href="/css/section-separators.css">
@@ -1480,62 +1479,44 @@
         
 
         <!-- Enhanced Customer Testimonials Section -->
-        <section class="testimonials-section py-20 md:py-32 bg-gradient-to-b from-dark to-dark-light relative overflow-hidden">
-            <!-- Background elements with updated styling -->
-            <div class="testimonial-bg-element opacity-20"></div>
-            <div class="testimonial-bg-element-2 opacity-20"></div>
+        <section class="testimonials-section py-20 md:py-32 bg-dark relative overflow-hidden">
+            <!-- Background elements -->
+            <div class="testimonial-bg-element"></div>
+            <div class="testimonial-bg-element-2"></div>
             
-            <!-- Animated background patterns -->
-            <div class="absolute inset-0 z-0 opacity-5">
+            <!-- Background grid pattern -->
+            <div class="absolute inset-0 z-0 opacity-10">
                 <div class="grid-pattern"></div>
             </div>
             
-            <!-- Floating elements for visual enhancement -->
-            <div class="absolute w-64 h-64 rounded-full bg-primary-blue/5 filter blur-3xl top-20 left-10 animate-pulse-slow"></div>
-            <div class="absolute w-96 h-96 rounded-full bg-indigo-500/5 filter blur-3xl bottom-20 right-10 animate-pulse-slow animation-delay-2000"></div>
-            
             <div class="container mx-auto px-4 md:px-6 relative z-10">
-                <!-- Section header with enhanced typography and animation -->
                 <div class="text-center mb-12 md:mb-16" data-animation="fade-in-up">
-                    <div class="inline-block mb-3">
-                        <span class="badge-primary text-xs font-semibold py-1 px-3 rounded-full bg-primary-blue/10 text-primary-blue">TESTIMONIALS</span>
-                    </div>
-                    <h2 class="text-3xl md:text-5xl font-bold mb-4 relative">
-                        Success Stories from <span class="text-gradient-animated relative">Our Marketplace
-                            <svg class="absolute bottom-0 left-0 w-full h-2 text-primary-blue/30 -mb-1" viewBox="0 0 100 100" preserveAspectRatio="none">
-                                <path d="M0,50 Q30,30 50,50 Q70,70 100,50" stroke="currentColor" stroke-width="8" fill="none" vector-effect="non-scaling-stroke" />
-                            </svg>
-                        </span>
-                    </h2>
-                    <p class="text-lg md:text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
-                        Hear from business owners who have achieved remarkable results and growth
-                        through our platform's innovative approach to business selling.
+                    <h2 class="text-3xl md:text-5xl font-bold mb-6">What Our <span class="text-gradient-animated">Sellers</span> Say</h2>
+                    <p class="text-xl text-gray-300 max-w-3xl mx-auto">
+                        Don't just take our word for it - hear from business owners who have transformed 
+                        their operations and achieved growth with Arzani Marketplace.
                     </p>
                 </div>
                 
-                <!-- Enhanced Testimonials Carousel -->
+                <!-- Testimonials Carousel -->
                 <div class="testimonials-scroll-container">
-                    <!-- Navigation Buttons with improved styling -->
-                    <button id="scroll-left" class="testimonial-nav-button group">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" class="group-hover:-translate-x-0.5 transition-transform">
+                    <!-- Navigation Buttons -->
+                    <button id="scroll-left" class="testimonial-nav-button">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
                             <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                         </svg>
                     </button>
-                    <button id="scroll-right" class="testimonial-nav-button group">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" class="group-hover:translate-x-0.5 transition-transform">
+                    <button id="scroll-right" class="testimonial-nav-button">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
                             <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                         </svg>
                     </button>
                     
-                    <!-- Scrollable Testimonial Cards with modernized design -->
+                    <!-- Scrollable Testimonial Cards -->
                     <div class="testimonials-wrapper">
                         <!-- Testimonial 1 -->
-                        <div class="testimonial-card group">
-                            <!-- Enhanced quote mark -->
-                            <div class="testimonial-quote group-hover:scale-110 group-hover:rotate-12 transition-transform">"</div>
-                            
-                            <!-- Card top accent border with glow effect -->
-                            <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-blue/80 to-indigo-500/80 rounded-t-lg"></div>
+                        <div class="testimonial-card">
+                            <div class="testimonial-quote">"</div>
                             <div class="testimonial-content">
                                 <p class="mb-6">This marketplace helped me achieve a 32% increase in my restaurant’s valuation in just six months. Their in‐depth market analysis revealed opportunities I never would have discovered on my own.</p>
                                 <div class="flex items-center justify-between mt-auto">

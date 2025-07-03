@@ -237,7 +237,10 @@ All visual customization can be done in `onboarding.css` without affecting funct
 ## Future Enhancements
 
 1. **A/B Testing**: Different onboarding flows for different user segments
-2. **Video Integration**: Add introductory videos to slides
+2. **Video Integration**: Add introductory videos to slides (PLANNED FOR NEXT RELEASE)
+   - Placeholder has been added to the UI
+   - Backend video hosting and integration will be implemented in the future
+   - Will include analytics tracking for video engagement
 3. **Progress Saving**: Allow users to resume onboarding later
 4. **Multilingual Support**: Translate onboarding content
 5. **Advanced Analytics**: Heat mapping and user behavior tracking

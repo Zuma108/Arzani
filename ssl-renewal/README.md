@@ -4,27 +4,34 @@ This directory contains scripts and configuration for automatic SSL certificate 
 
 ## 🚨 Important Notice
 
-Your SSL certificates expire on **June 14, 2025** (in ~15 days). This automation will prevent future expirations and ensure continuous HTTPS service.
+Your SSL certificates are now expired. The automation scripts here will renew them and prevent future expirations to ensure continuous HTTPS service.
+
+Last update: July 3, 2025
 
 ## 📁 Files Overview
 
 | File | Purpose |
 |------|---------|
-| `renew-ssl.sh` | Main renewal script with comprehensive error handling |
-| `setup-cron.sh` | Sets up automated renewal using cron jobs |
-| `test-setup.sh` | Tests and validates the entire setup |
+| `renew-ssl.sh` | Main renewal script for Linux environments |
+| `renew-ssl.ps1` | Main renewal script for Windows environments |
+| `setup-cron.sh` | Sets up automated renewal using cron jobs (Linux) |
+| `setup-scheduled-task.ps1` | Sets up automated renewal using Windows Task Scheduler |
+| `run-renewal-now.ps1` | Runs the renewal process immediately on Windows |
+| `test-setup.sh` | Tests and validates the Linux setup |
 | `config.conf` | Configuration file for customizing behavior |
 | `README.md` | This documentation file |
 
 ## 🚀 Quick Setup
 
-### Prerequisites
+### Linux Setup (Ubuntu/Debian)
+
+#### Prerequisites
 - Ubuntu/Debian server with root access
 - Certbot installed (`sudo apt install certbot`)
 - Nginx web server running
 - Existing Let's Encrypt certificates for your domains
 
-### 1. Deploy Scripts to Server
+#### 1. Deploy Scripts to Server
 
 Copy all files from this directory to your server:
 
@@ -37,7 +44,7 @@ sudo cp renew-ssl.sh setup-cron.sh test-setup.sh config.conf /opt/ssl-renewal/
 cd /opt/ssl-renewal
 ```
 
-### 2. Run Setup
+#### 2. Run Setup
 
 ```bash
 # Make scripts executable
@@ -48,6 +55,45 @@ sudo ./setup-cron.sh
 
 # Test the setup
 sudo ./test-setup.sh
+```
+
+### Windows Setup
+
+#### Prerequisites
+- Windows Server or Windows 10/11
+- PowerShell with Administrator privileges
+- Certbot installed (install via `winget install certbot` or download from [Certbot website](https://certbot.eff.org/instructions?ws=other&os=windows))
+- Web server (IIS or other) running on Windows
+
+#### 1. Setup Steps
+
+1. Open PowerShell as Administrator
+2. Navigate to this directory
+3. Run the setup script:
+   ```powershell
+   .\setup-scheduled-task.ps1
+   ```
+   This creates a scheduled task to automatically renew certificates on the 1st of each month at 3:00 AM.
+
+#### 2. Manual Renewal
+
+If you need to renew certificates immediately:
+
+1. Open PowerShell as Administrator
+2. Navigate to this directory
+3. Run:
+   ```powershell
+   .\run-renewal-now.ps1
+   ```
+
+#### 3. Troubleshooting
+
+Check the log file at `C:\ssl-logs\ssl-renewal.log` for detailed information about renewal attempts.
+
+Common issues:
+- Certbot not installed or not in PATH
+- Insufficient permissions
+- Web server configuration issues
 ```
 
 ### 3. Configure Notifications (Optional)

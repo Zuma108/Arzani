@@ -6,14 +6,14 @@
     <title>Buy & Sell Businesses | Arzani Marketplace</title>    
     <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">    
     <link rel="stylesheet" href="/css/marketplace-landing.css">
-    <link rel="stylesheet" href="/css/talk.css">
     <link rel="stylesheet" href="/css/testimonial-carousel.css">
-    <link rel="stylesheet" href="/css/testimonial-enhancements.css">
     <link rel="stylesheet" href="/css/feature-animations.css">
+    <link rel="stylesheet" href="/css/modern.css">
     <link rel="stylesheet" href="/css/journey-section.css">
     <link rel="stylesheet" href="/css/section-separators.css">
     <link rel="stylesheet" href="/css/enhanced-scroll-animations.css">
     <link rel="stylesheet" href="/css/white-section-glows.css">
+    <link rel="stylesheet" href="/css/performance-fixes.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -134,7 +134,7 @@
                     </div>
                     <div class="flex items-center gap-4 md:gap-6">
                         <a href="/login" class="hidden md:block text-sm font-medium">Log in</a>
-                        <a href="/seller-questionnaire" class="bg-navbar-blue hover:bg-blue-800 rounded-lg btn-primary text-sm md:text-base px-4 py-2 md:px-6 transition-all duration-300">
+                        <a href="/seller-questionnaire" class="btn-primary text-sm md:text-base px-4 py-2 md:px-6">
                             Get Started
                         </a>
                         <button class="navbar__burger md:hidden flex flex-col items-center" id="mobileMenuBtn" aria-expanded="false">
@@ -248,8 +248,7 @@
                                                 <option value="food-beverage">Food & Beverage</option>
                                             </select>
                                         </div>
-                                                          <div style="position: relative; box-sizing: content-box; max-height: 80vh; max-height: 80svh; width: 100%; aspect-ratio: 2.0310296191819464; padding: 40px 0 40px 0;"><iframe src="https://app.supademo.com/embed/cmb13re9t1i3appkpit9238wo?embed_v=2" loading="lazy" title="Supademo Demo" allow="clipboard-write" frameborder="0" webkitallowfullscreen="true" mozallowfullscreen="true" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe></div>
-
+                                        
                                         <!-- Revenue Range -->
                                         <div>
                                             <label class="block text-sm font-medium text-gray-700 mb-2">Revenue Range</label>
@@ -407,7 +406,7 @@
                     <!-- Centered content column -->
                     <article class="w-full md:w-4/5 lg:w-3/4 xl:w-2/3 space-y-6 text-center" data-animation="fade-in-up" data-delay="300">
                         <header class="content-header">
-                            <h3 class="text-2xl md:text-3xl font-bold text-gray-900 mb-4"><span class="text-gradient-blue">Know Your Company's True Value—in Seconds</span></h3>
+                            <h3 class="text-2xl md:text-3xl font-bold text-gray-900 mb-4"><span class="text-gradient-blue">Know Your Company's True Value - in Seconds</span></h3>
                             <p class="text-gray-600 text-lg mb-6">
                                 Instant valuations, growth forecasts & secure market analysis—all powered by AI.
                             </p>
@@ -608,15 +607,15 @@
             </div>
         </section>
 
-        <section class="py-24 bg-black relative overflow-hidden" id="features-section" data-section-animation="features">
-            <div class="absolute top-0 left-0 w-full h-full opacity-10">
+        <section class="py-24 bg-black relative overflow-hidden" id="features-section" data-section-animation="features" style="opacity: 1 !important; visibility: visible !important;">
+            <div class="absolute top-0 left-0 w-full h-full opacity-10" style="opacity: 0.1 !important; visibility: visible !important;">
                 <div class="grid-pattern"></div>
             </div>
             
-            <div class="container mx-auto px-6 relative z-10">
-                <div class="text-center mb-16" data-scroll-animation="fadeInUp" data-animation-delay="0">
-                    <h2 class="text-3xl md:text-5xl font-bold mb-6" data-scroll-animation="slideInUp" data-animation-delay="200"><span class="text-gradient-animated">Powerful Tools</span> for Business Success</h2>
-                    <p class="text-xl text-gray-300 max-w-3xl mx-auto" data-scroll-animation="fadeInUp" data-animation-delay="400">Our AI-powered platform delivers the insights and analytics you need to maximize your business value</p>
+            <div class="container mx-auto px-6 relative z-10" style="opacity: 1 !important;">
+                <div class="text-center mb-16" data-scroll-animation="fadeInUp" data-animation-delay="0" style="opacity: 1 !important; transform: translateY(0) !important;">
+                    <h2 class="text-3xl md:text-5xl font-bold mb-6" data-scroll-animation="slideInUp" data-animation-delay="200" style="opacity: 1 !important; transform: translateY(0) !important;"><span class="text-gradient-animated">Powerful Tools</span> for Business Success</h2>
+                    <p class="text-xl text-gray-300 max-w-3xl mx-auto" data-scroll-animation="fadeInUp" data-animation-delay="400" style="opacity: 1 !important; transform: translateY(0) !important;">Our AI-powered platform delivers the insights and analytics you need to maximize your business value</p>
                 </div>
                   <!-- Feature Cards Grid -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8" data-scroll-animation="staggeredChildren" data-stagger="200">                    <!-- Feature Card 1 - Real-time Valuation -->
@@ -673,10 +672,10 @@
                         </div>
                     </div>
                 </div>
-            </div>        </section>            <section class="journey-section journey-section-solid-bg py-20 md:py-32" aria-label="Business Success Journey" data-section-animation="journey">
+            </div>        </section>            <section class="journey-section journey-section-solid-bg py-20 md:py-32" aria-label="Business Success Journey" data-section-animation="journey" style="opacity: 1 !important; visibility: visible !important;">
                 <!-- Background elements with improved layering -->
-                <div class="absolute inset-0 bg-white z-[-1]"></div>
-                <div class="journey-section-background"></div>
+                <div class="absolute inset-0 bg-white z-[-1]" style="opacity: 1 !important;"></div>
+                <div class="journey-section-background" style="opacity: 1 !important;"></div>
                 
                 <!-- Enhanced decorative elements -->
                 <div class="bg-decoration-circle purple"></div>
@@ -783,7 +782,9 @@
                                         List your business with comprehensive details or create offer proposals with our intelligent templates. Our AI suggests the perfect positioning and valuation for maximum market appeal.
                                     </p>
                                     <div class="journey-card-visual">
-                                        <div style="position: relative; box-sizing: content-box; max-height: 80vh; max-height: 80svh; width: 100%; aspect-ratio: 2.1068032187271397; padding: 40px 0 40px 0;"><iframe src="https://app.supademo.com/embed/cm9ihwub02li4ljv5x9uy5g5k?embed_v=2" loading="lazy" title="Co Demo" allow="clipboard-write" frameborder="0" webkitallowfullscreen="true" mozallowfullscreen="true" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe></div>
+                                        <div style="position: relative; box-sizing: content-box; width: 100%; aspect-ratio: 16/9; padding: 20px 0;">
+                                            <iframe src="https://app.supademo.com/embed/cm9ihwub02li4ljv5x9uy5g5k?embed_v=2" loading="lazy" title="Create Demo" allow="clipboard-write" frameborder="0" webkitallowfullscreen="true" mozallowfullscreen="true" allowfullscreen class="journey-iframe" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="journey-card-footer">
@@ -838,10 +839,10 @@
                     </div>
                     
                     <!-- Enhanced Bottom CTA area with better accessibility -->
-                    <footer class="journey-footer" data-animation="fade-in-up">
-                        <h3 class="text-2xl font-bold mb-6 text-gray-900">Ready to transform your business journey?</h3>
-                        <div class="journey-cta-buttons">
-                            <a href="/signup" class="journey-cta-primary" aria-label="Get started with your business valuation">
+                    <footer class="journey-footer bg-white" data-animation="fade-in-up" style="background-color: white !important; color: black !important; padding: 2.5rem; border-radius: 1rem; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15); margin: 3rem auto; max-width: 800px; position: relative; z-index: 10; border: none !important; outline: none !important;">
+                        <h3 class="text-2xl font-bold mb-6" style="color: #1a202c !important; border: none !important;">Ready to transform your business journey?</h3>
+                        <div class="journey-cta-buttons" style="border: none !important;">
+                            <a href="/signup" class="journey-cta-primary" aria-label="Get started with your business valuation" style="border-color: transparent !important;">
                                 Get started today
                             </a>
                             <a href="/demo" class="journey-cta-secondary" aria-label="See how our platform works">
@@ -855,19 +856,15 @@
         
 
         <!-- Enhanced Customer Testimonials Section -->
-        <section class="testimonials-section py-20 md:py-32 bg-gradient-to-b from-dark to-dark-light relative overflow-hidden">
-            <!-- Background elements with updated styling -->
-            <div class="testimonial-bg-element opacity-20"></div>
-            <div class="testimonial-bg-element-2 opacity-20"></div>
+        <section class="testimonials-section py-20 md:py-32 bg-dark relative overflow-hidden">
+            <!-- Background elements -->
+            <div class="testimonial-bg-element"></div>
+            <div class="testimonial-bg-element-2"></div>
             
-            <!-- Animated background patterns -->
-            <div class="absolute inset-0 z-0 opacity-5">
+            <!-- Background grid pattern -->
+            <div class="absolute inset-0 z-0 opacity-10">
                 <div class="grid-pattern"></div>
             </div>
-            
-            <!-- Floating elements for visual enhancement -->
-            <div class="absolute w-64 h-64 rounded-full bg-primary-blue/5 filter blur-3xl top-20 left-10 animate-pulse-slow"></div>
-            <div class="absolute w-96 h-96 rounded-full bg-indigo-500/5 filter blur-3xl bottom-20 right-10 animate-pulse-slow animation-delay-2000"></div>
             
             <div class="container mx-auto px-4 md:px-6 relative z-10">
                 <div class="text-center mb-12 md:mb-16" data-animation="fade-in-up">
@@ -1455,6 +1452,7 @@
 
     <!-- Scripts -->
     <script src="/js/navigation.js"></script>
+    <script src="/js/performance-optimized-animations.js"></script>
     <script src="/js/marketplace-landing.js"></script>
     <script src="/js/animations.js"></script>
     <script src="/js/scroll-animations.js"></script>

@@ -108,7 +108,8 @@
     "uuid": "^9.0.1",
     "web-vitals": "^4.2.4",
     "ws": "^8.17.1",
-    "zod": "^3.22.4"
+    "zod": "^3.22.4",
+    "node-fetch": "^3.3.2"
   },
   "devDependencies": {
     "@babel/core": "^7.26.10",
@@ -120,7 +121,6 @@
     "babel-jest": "^29.7.0",
     "jest": "^29.7.0",
     "ngrok": "^5.0.0-beta.2",
-    "node-fetch": "^3.3.2",
     "nodemon": "^3.1.9",
     "postcss": "^8.5.3",
     "tailwindcss": "^3.4.17"

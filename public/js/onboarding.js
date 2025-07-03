@@ -1,6 +1,6 @@
 /**
- * Onboarding Modal JavaScript
- * Handles the 5-slide onboarding flow for new users
+ * Onboarding Modal JavaScript - 2025 Edition
+ * Enhanced with modern features: checklist, personalization, feedback, and accessibility
  */
 
 class OnboardingModal {
@@ -8,10 +8,16 @@ class OnboardingModal {
     this.currentSlide = 1;
     this.totalSlides = 5;
     this.discoverySource = null;
+    this.userInterests = [];
+    this.feedbackRating = null;
+    this.feedbackComment = '';
+    this.checklistItems = [];
     this.onboardingData = {};
     
     this.initializeElements();
     this.bindEvents();
+    this.initAccessibility();
+    this.initDarkModeDetection();
   }
 
   initializeElements() {
@@ -22,7 +28,13 @@ class OnboardingModal {
     this.prevButton = document.getElementById('onboardingPrev');
     this.nextButton = document.getElementById('onboardingNext');
     this.completeButton = document.getElementById('onboardingComplete');
+    this.skipButton = document.getElementById('skipOnboarding');
     this.slides = document.querySelectorAll('.onboarding-slide');
+    this.stepDots = document.querySelectorAll('.step-dot');
+    this.feedbackOptions = document.querySelectorAll('.feedback-option');
+    this.feedbackCommentSection = document.getElementById('feedbackComment');
+    this.feedbackTextarea = this.feedbackCommentSection?.querySelector('textarea');
+    this.checklistElements = document.querySelectorAll('.checklist-item');
   }
 
   bindEvents() {
@@ -30,6 +42,20 @@ class OnboardingModal {
     this.nextButton?.addEventListener('click', () => this.nextSlide());
     this.prevButton?.addEventListener('click', () => this.prevSlide());
     this.completeButton?.addEventListener('click', () => this.completeOnboarding());
+    this.skipButton?.addEventListener('click', (e) => {
+      e.preventDefault();
+      this.handleSkipOnboarding();
+    });
+    
+    // Step dots for navigation
+    this.stepDots?.forEach(dot => {
+      dot.addEventListener('click', () => {
+        const stepNumber = parseInt(dot.getAttribute('data-step'));
+        if (stepNumber <= this.getMaxAccessibleSlide()) {
+          this.transitionToSlide(stepNumber);
+        }
+      });
+    });
     
     // Discovery source selection
     const discoveryInputs = document.querySelectorAll('input[name="discoverySource"]');
@@ -37,6 +63,98 @@ class OnboardingModal {
       input.addEventListener('change', (e) => {
         this.discoverySource = e.target.value;
         this.updateNavigationButtons();
+        
+        // Track selection event
+        if (typeof trackEvent === 'function') {
+          trackEvent('onboarding_discovery_source_selected', {
+            source: this.discoverySource
+          });
+        }
+      });
+    });
+    
+    // User interests selection
+    const interestInputs = document.querySelectorAll('input[name="userInterest"]');
+    interestInputs.forEach(input => {
+      input.addEventListener('change', (e) => {
+        if (e.target.checked) {
+          this.userInterests.push(e.target.value);
+        } else {
+          this.userInterests = this.userInterests.filter(interest => interest !== e.target.value);
+        }
+        
+        // Track interest selection
+        if (typeof trackEvent === 'function') {
+          trackEvent('onboarding_interest_toggled', {
+            interest: e.target.value,
+            selected: e.target.checked
+          });
+        }
+      });
+    });
+    
+    // Feedback options
+    this.feedbackOptions?.forEach(option => {
+      option.addEventListener('click', () => {
+        // Remove active class from all options
+        this.feedbackOptions.forEach(opt => opt.classList.remove('active'));
+        
+        // Add active class to selected option
+        option.classList.add('active');
+        
+        // Store feedback rating
+        this.feedbackRating = option.getAttribute('data-rating');
+        
+        // Show comment textarea
+        if (this.feedbackCommentSection) {
+          this.feedbackCommentSection.style.display = 'block';
+        }
+        
+        // Track feedback selection
+        if (typeof trackEvent === 'function') {
+          trackEvent('onboarding_feedback_selected', {
+            rating: this.feedbackRating
+          });
+        }
+      });
+    });
+    
+    // Feedback comment
+    this.feedbackTextarea?.addEventListener('input', (e) => {
+      this.feedbackComment = e.target.value;
+    });
+    
+    // Checklist interaction
+    this.checklistElements?.forEach(item => {
+      item.addEventListener('click', () => {
+        const checkbox = item.querySelector('.checkbox');
+        const checkIcon = checkbox.querySelector('i');
+        const itemId = item.getAttribute('data-item');
+        
+        // Toggle checked state
+        const isChecked = checkbox.classList.contains('checked');
+        
+        if (!isChecked) {
+          checkbox.classList.add('checked');
+          checkIcon.style.display = 'inline';
+          
+          if (!this.checklistItems.includes(itemId)) {
+            this.checklistItems.push(itemId);
+          }
+        } else {
+          checkbox.classList.remove('checked');
+          checkIcon.style.display = 'none';
+          
+          this.checklistItems = this.checklistItems.filter(id => id !== itemId);
+        }
+        
+        // Track checklist interaction
+        if (typeof trackEvent === 'function') {
+          trackEvent('onboarding_checklist_interaction', {
+            item: itemId,
+            checked: !isChecked
+          });
+        }
       });
     });
 
@@ -48,12 +166,85 @@ class OnboardingModal {
     }
   }
 
+  initAccessibility() {
+    // Add keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      // Only handle keyboard events when modal is visible
+      const modalInstance = bootstrap.Modal.getInstance(this.modal);
+      if (!modalInstance) return;
+      
+      // Navigation with arrow keys
+      if (e.key === 'ArrowRight' && this.canProceed()) {
+        this.nextSlide();
+      } else if (e.key === 'ArrowLeft' && this.currentSlide > 1) {
+        this.prevSlide();
+      }
+    });
+    
+    // Ensure all interactive elements are keyboard focusable
+    const focusableElements = this.modal?.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+    focusableElements?.forEach(el => {
+      if (!el.getAttribute('aria-label') && !el.innerText.trim()) {
+        el.setAttribute('aria-label', el.getAttribute('title') || 'Interactive element');
+      }
+    });
+  }
+  
+  initDarkModeDetection() {
+    // Detect system dark mode preference
+    const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    
+    // Initial check
+    this.handleDarkModeChange(darkModeMediaQuery);
+    
+    // Add listener for changes
+    darkModeMediaQuery.addEventListener('change', (e) => this.handleDarkModeChange(e));
+  }
+  
+  handleDarkModeChange(mediaQuery) {
+    if (mediaQuery.matches) {
+      document.body.classList.add('dark-mode');
+    } else {
+      document.body.classList.remove('dark-mode');
+    }
+  }
+
+  handleSkipOnboarding() {
+    // Show confirmation dialog
+    if (confirm('Are you sure you want to skip the onboarding? You can access it later from your profile settings.')) {
+      // Track skip event
+      if (typeof trackEvent === 'function') {
+        trackEvent('onboarding_skipped', {
+          current_slide: this.currentSlide,
+          discovery_source: this.discoverySource || 'not_selected'
+        });
+      }
+      
+      // Mark as skipped in user preferences
+      localStorage.setItem('onboarding_skipped', 'true');
+      
+      // Hide modal
+      this.hideModal();
+      
+      // Show skipped toast message
+      this.showSkippedToast();
+    }
+  }
+
   showModal() {
     if (this.modal) {
       const modalInstance = new bootstrap.Modal(this.modal);
       modalInstance.show();
       this.updateProgress();
       this.updateNavigationButtons();
+      this.updateStepDots();
+      
+      // Track modal shown
+      if (typeof trackEvent === 'function') {
+        trackEvent('onboarding_modal_shown', {
+          timestamp: new Date().toISOString()
+        });
+      }
     }
   }
 
@@ -79,27 +270,52 @@ class OnboardingModal {
   }
 
   transitionToSlide(targetSlide) {
+    if (targetSlide < 1 || targetSlide > this.totalSlides) return;
+    
     const currentSlideElement = document.getElementById(`slide-${this.currentSlide}`);
     const targetSlideElement = document.getElementById(`slide-${targetSlide}`);
 
     if (!currentSlideElement || !targetSlideElement) return;
 
+    // Track direction for animation
+    const isForward = targetSlide > this.currentSlide;
+
     // Animate out current slide
-    currentSlideElement.classList.add('slide-out');
+    currentSlideElement.classList.add(isForward ? 'slide-out' : 'slide-out-reverse');
     
     setTimeout(() => {
-      currentSlideElement.classList.remove('active', 'slide-out');
-      targetSlideElement.classList.add('active', 'slide-in');
+      currentSlideElement.classList.remove('active', 'slide-out', 'slide-out-reverse');
+      targetSlideElement.classList.add('active', isForward ? 'slide-in' : 'slide-in-reverse');
       
       this.currentSlide = targetSlide;
       this.updateProgress();
       this.updateNavigationButtons();
+      this.updateStepDots();
       this.trackSlideView();
       
+      // Apply entrance animations to elements in the new slide
+      this.animateSlideElements(targetSlideElement);
+      
       setTimeout(() => {
-        targetSlideElement.classList.remove('slide-in');
-      }, 300);
-    }, 150);
+        targetSlideElement.classList.remove('slide-in', 'slide-in-reverse');
+      }, 400);
+    }, 300);
+  }
+
+  animateSlideElements(slideElement) {
+    // Animate elements with a staggered delay
+    const animatableElements = slideElement.querySelectorAll('.feature-card, .capability-item, .feature-item, .filter-demo, .action-item, .checklist-item');
+    
+    animatableElements.forEach((element, index) => {
+      element.style.opacity = '0';
+      element.style.transform = 'translateY(20px)';
+      
+      setTimeout(() => {
+        element.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+        element.style.opacity = '1';
+        element.style.transform = 'translateY(0)';
+      }, 100 + (index * 100)); // Staggered delay
+    });
   }
 
   updateProgress() {
@@ -116,6 +332,27 @@ class OnboardingModal {
     if (this.progressPercentageSpan) {
       this.progressPercentageSpan.textContent = Math.round(progressPercentage);
     }
+  }
+
+  updateStepDots() {
+    this.stepDots?.forEach(dot => {
+      const stepNumber = parseInt(dot.getAttribute('data-step'));
+      
+      // Remove active class from all dots
+      dot.classList.remove('active');
+      
+      // Add active class to current step dot
+      if (stepNumber === this.currentSlide) {
+        dot.classList.add('active');
+      }
+      
+      // Add completed class to previous steps
+      if (stepNumber < this.currentSlide) {
+        dot.classList.add('completed');
+      } else {
+        dot.classList.remove('completed');
+      }
+    });
   }
 
   updateNavigationButtons() {
@@ -145,6 +382,12 @@ class OnboardingModal {
         return true;
     }
   }
+  
+  getMaxAccessibleSlide() {
+    // Allow users to navigate to any slide they've already seen
+    // plus one slide ahead (but not further)
+    return Math.min(this.currentSlide + 1, this.totalSlides);
+  }
 
   async completeOnboarding() {
     try {
@@ -157,8 +400,14 @@ class OnboardingModal {
       // Collect onboarding data
       this.onboardingData = {
         slidesViewed: this.currentSlide,
+        discoverySource: this.discoverySource,
+        userInterests: this.userInterests,
+        checklistItems: this.checklistItems,
+        feedbackRating: this.feedbackRating,
+        feedbackComment: this.feedbackComment,
         completedAt: new Date().toISOString(),
         userAgent: navigator.userAgent,
+        prefersDarkMode: window.matchMedia('(prefers-color-scheme: dark)').matches,
         timestamp: Date.now()
       };
 
@@ -171,12 +420,38 @@ class OnboardingModal {
         credentials: 'include', // Include cookies for authentication
         body: JSON.stringify({
           discoverySource: this.discoverySource,
+          userInterests: this.userInterests,
+          feedbackRating: this.feedbackRating,
+          feedbackComment: this.feedbackComment,
           onboardingData: this.onboardingData
         })
       });
 
       if (!response.ok) {
-        throw new Error('Failed to complete onboarding');
+        // If API call fails, use a fallback mechanism
+        console.warn('Onboarding API failed, using localStorage fallback');
+        
+        // Store in localStorage as backup
+        localStorage.setItem('onboarding_completed', 'true');
+        localStorage.setItem('onboarding_completed_at', new Date().toISOString());
+        localStorage.setItem('onboarding_data', JSON.stringify(this.onboardingData));
+        
+        // Show a warning but proceed
+        if (typeof showToast === 'function') {
+          showToast('Onboarding saved locally. Some features may need synchronization later.', 'warning');
+        }
+        
+        // Continue with success flow
+        this.trackOnboardingCompletion();
+        this.showSuccessMessage();
+        
+        setTimeout(() => {
+          this.hideModal();
+          this.showWelcomeToast();
+          this.highlightRelevantFeatures();
+        }, 2500);
+        
+        return; // Exit early
       }
 
       const result = await response.json();
@@ -187,6 +462,7 @@ class OnboardingModal {
         
         // Store completion status in localStorage for future quick checks
         localStorage.setItem('onboarding_completed', 'true');
+        localStorage.setItem('onboarding_completed_at', new Date().toISOString());
         
         // Show success message
         this.showSuccessMessage();
@@ -194,12 +470,12 @@ class OnboardingModal {
         // Hide modal after a delay
         setTimeout(() => {
           this.hideModal();
-          // Optionally trigger a page refresh or redirect
-          if (window.location.pathname === '/marketplace2') {
-            // Maybe show a welcome toast or highlight key features
-            this.showWelcomeToast();
-          }
-        }, 2000);
+          // Show welcome toast
+          this.showWelcomeToast();
+          
+          // Highlight key features based on user interests
+          this.highlightRelevantFeatures();
+        }, 2500);
       } else {
         throw new Error(result.message || 'Failed to complete onboarding');
       }
@@ -219,11 +495,14 @@ class OnboardingModal {
   showSuccessMessage() {
     const modalBody = this.modal?.querySelector('.modal-body');
     if (modalBody) {
+      // Create a more engaging success message with confetti animation
       modalBody.innerHTML = `
         <div class="text-center py-5">
-          <i class="fas fa-check-circle fa-5x text-success mb-4"></i>
-          <h3 class="text-success mb-3">Welcome to Arzani!</h3>
-          <p class="text-muted mb-4">You're all set to start exploring our marketplace.</p>
+          <div class="success-animation mb-4">
+            <i class="fas fa-check-circle fa-5x text-success"></i>
+          </div>
+          <h3 class="text-white mb-3 onboarding-success-title">Welcome to Arzani!</h3>
+          <p class="mb-4">You're all set to start exploring our marketplace.</p>
           <div class="d-flex justify-content-center">
             <div class="spinner-border text-primary" role="status">
               <span class="visually-hidden">Loading...</span>
@@ -231,22 +510,133 @@ class OnboardingModal {
           </div>
         </div>
       `;
+      
+      // Add confetti animation CSS
+      const style = document.createElement('style');
+      style.textContent = `
+        .success-animation {
+          animation: successPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes successPop {
+          0% { transform: scale(0.5); opacity: 0; }
+          70% { transform: scale(1.2); }
+          100% { transform: scale(1); opacity: 1; }
+        }
+      `;
+      document.head.appendChild(style);
     }
   }
 
-  showErrorMessage() {
+  showErrorMessage(errorMsg = 'Error completing onboarding. Please try again.') {
     // Show a toast or alert for error
     if (typeof showToast === 'function') {
-      showToast('Error completing onboarding. Please try again.', 'error');
+      showToast(errorMsg, 'error');
     } else {
-      alert('Error completing onboarding. Please try again.');
+      alert(errorMsg);
     }
   }
 
   showWelcomeToast() {
     if (typeof showToast === 'function') {
-      showToast('Welcome to Arzani! Start exploring businesses now.', 'success');
+      // Personalize toast based on interests
+      let message = 'Welcome to Arzani! Start exploring businesses now.';
+      
+      if (this.userInterests.includes('buying')) {
+        message = 'Welcome to Arzani! Start exploring businesses for sale now.';
+      } else if (this.userInterests.includes('selling')) {
+        message = 'Welcome to Arzani! Ready to list your business?';
+      } else if (this.userInterests.includes('investing')) {
+        message = 'Welcome to Arzani! Discover investment opportunities now.';
+      }
+      
+      showToast(message, 'success');
     }
+  }
+  
+  showSkippedToast() {
+    if (typeof showToast === 'function') {
+      showToast('Onboarding skipped. You can access it anytime from your profile settings.', 'info');
+    }
+  }
+
+  highlightRelevantFeatures() {
+    // Highlight features based on user interests
+    setTimeout(() => {
+      if (this.userInterests.includes('buying')) {
+        this.pulseElement('.marketplace-link', 'Ready to browse businesses? Click here!');
+      } else if (this.userInterests.includes('selling')) {
+        this.pulseElement('.sell-business-link', 'Ready to list your business? Click here!');
+      } else if (this.userInterests.includes('investing')) {
+        this.pulseElement('.investment-link', 'Looking for investment opportunities? Click here!');
+      }
+    }, 1000);
+  }
+  
+  pulseElement(selector, tooltipText) {
+    const element = document.querySelector(selector);
+    if (!element) return;
+    
+    // Add pulse animation
+    element.classList.add('pulse-animation');
+    
+    // Create and add tooltip
+    const tooltip = document.createElement('div');
+    tooltip.className = 'highlight-tooltip';
+    tooltip.textContent = tooltipText;
+    tooltip.style.cssText = `
+      position: absolute;
+      background: var(--primary-color, #1A237E);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 8px;
+      z-index: 1000;
+      font-size: 14px;
+      max-width: 250px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    `;
+    
+    document.body.appendChild(tooltip);
+    
+    // Position tooltip relative to element
+    const positionTooltip = () => {
+      const rect = element.getBoundingClientRect();
+      tooltip.style.top = `${rect.top - tooltip.offsetHeight - 10 + window.scrollY}px`;
+      tooltip.style.left = `${rect.left + (rect.width / 2) - (tooltip.offsetWidth / 2) + window.scrollX}px`;
+    };
+    
+    // Show tooltip
+    positionTooltip();
+    tooltip.style.opacity = '1';
+    
+    // Add arrow to tooltip
+    const arrow = document.createElement('div');
+    arrow.style.cssText = `
+      position: absolute;
+      bottom: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 8px solid transparent;
+      border-right: 8px solid transparent;
+      border-top: 8px solid var(--primary-color, #1A237E);
+    `;
+    tooltip.appendChild(arrow);
+    
+    // Remove after a delay
+    setTimeout(() => {
+      tooltip.style.opacity = '0';
+      setTimeout(() => {
+        tooltip.remove();
+        element.classList.remove('pulse-animation');
+      }, 300);
+    }, 5000);
+    
+    // Handle window resize
+    window.addEventListener('resize', positionTooltip);
   }
 
   trackSlideView() {
@@ -254,9 +644,20 @@ class OnboardingModal {
     if (typeof trackEvent === 'function') {
       trackEvent('onboarding_slide_view', {
         slide_number: this.currentSlide,
-        slide_name: this.getSlideNameByNumber(this.currentSlide)
+        slide_name: this.getSlideNameByNumber(this.currentSlide),
+        time_spent: this.calculateTimeSpentOnPreviousSlide()
       });
     }
+    
+    // Store timestamp for time tracking
+    this.lastSlideChangeTime = Date.now();
+  }
+
+  calculateTimeSpentOnPreviousSlide() {
+    if (!this.lastSlideChangeTime) return 0;
+    
+    const timeSpent = Date.now() - this.lastSlideChangeTime;
+    return Math.round(timeSpent / 1000); // Convert to seconds
   }
 
   trackOnboardingCompletion() {
@@ -264,10 +665,22 @@ class OnboardingModal {
     if (typeof trackEvent === 'function') {
       trackEvent('onboarding_completed', {
         discovery_source: this.discoverySource,
+        user_interests: this.userInterests,
+        checklist_items: this.checklistItems,
+        feedback_rating: this.feedbackRating,
         slides_viewed: this.currentSlide,
+        total_time: this.calculateTotalTime(),
         completion_time: Date.now()
       });
     }
+  }
+
+  calculateTotalTime() {
+    // Calculate total time spent in onboarding
+    if (!this.initialLoadTime) return 0;
+    
+    const totalTime = Date.now() - this.initialLoadTime;
+    return Math.round(totalTime / 1000); // Convert to seconds
   }
 
   getSlideNameByNumber(slideNumber) {
@@ -284,11 +697,17 @@ class OnboardingModal {
   resetModal() {
     this.currentSlide = 1;
     this.discoverySource = null;
+    this.userInterests = [];
+    this.feedbackRating = null;
+    this.feedbackComment = '';
+    this.checklistItems = [];
     this.onboardingData = {};
+    this.initialLoadTime = Date.now();
+    this.lastSlideChangeTime = null;
     
     // Reset all slides
     this.slides.forEach((slide, index) => {
-      slide.classList.remove('active', 'slide-in', 'slide-out');
+      slide.classList.remove('active', 'slide-in', 'slide-out', 'slide-in-reverse', 'slide-out-reverse');
       if (index === 0) {
         slide.classList.add('active');
       }
@@ -300,170 +719,101 @@ class OnboardingModal {
       input.checked = false;
     });
     
-    // Reset button states
-    if (this.completeButton) {
-      this.completeButton.disabled = false;
-      this.completeButton.innerHTML = 'Get Started<i class="fas fa-check ms-2"></i>';
+    const interestInputs = document.querySelectorAll('input[name="userInterest"]');
+    interestInputs.forEach(input => {
+      input.checked = false;
+    });
+    
+    // Reset feedback options
+    this.feedbackOptions?.forEach(option => option.classList.remove('active'));
+    if (this.feedbackCommentSection) {
+      this.feedbackCommentSection.style.display = 'none';
+    }
+    if (this.feedbackTextarea) {
+      this.feedbackTextarea.value = '';
     }
     
+    // Reset checklist items
+    this.checklistElements?.forEach(item => {
+      const checkbox = item.querySelector('.checkbox');
+      const checkIcon = checkbox?.querySelector('i');
+      
+      if (checkbox) checkbox.classList.remove('checked');
+      if (checkIcon) checkIcon.style.display = 'none';
+    });
+    
+    // Update UI
     this.updateProgress();
     this.updateNavigationButtons();
+    this.updateStepDots();
   }
 }
 
-// Initialize onboarding when DOM is loaded
-let onboardingModal = null;
-let onboardingCheckCompleted = false; // Flag to prevent multiple checks
-
+// Initialization
 document.addEventListener('DOMContentLoaded', function() {
-  // Check if user needs onboarding
-  if (!onboardingCheckCompleted) {
-    checkOnboardingStatus();
+  // Create onboarding instance
+  window.onboardingModal = new OnboardingModal();
+  
+  // Check if user needs to see onboarding
+  const shouldShowOnboarding = () => {
+    // Check if already completed or skipped in localStorage
+    const completed = localStorage.getItem('onboarding_completed') === 'true';
+    const skipped = localStorage.getItem('onboarding_skipped') === 'true';
+    
+    // For demo purposes, add a way to force show the modal
+    const forceShow = new URLSearchParams(window.location.search).get('showOnboarding') === 'true';
+    
+    if (forceShow) return true;
+    if (completed || skipped) return false;
+    
+    // Additional checks can be added here
+    // For example, check if user is logged in, or if it's their first visit
+    
+    return true;
+  };
+  
+  // Auto-show onboarding if needed
+  if (shouldShowOnboarding()) {
+    // Small delay to ensure page is fully loaded
+    setTimeout(() => {
+      window.onboardingModal.showModal();
+    }, 1000);
   }
 });
 
-async function checkOnboardingStatus() {
-  // Prevent multiple simultaneous checks
-  if (onboardingCheckCompleted) {
-    console.log('Onboarding check already completed in this session');
-    return;
-  }
-  
-  try {
-    // First check localStorage for a quick bypass
-    const onboardingCompleted = localStorage.getItem('onboarding_completed');
-    if (onboardingCompleted === 'true') {
-      console.log('Onboarding already completed (localStorage check)');
-      onboardingCheckCompleted = true;
-      return;
-    }
-    
-    // Check if user is logged in and needs onboarding
-    const response = await fetch('/users/onboarding-status', {
-      credentials: 'include' // Include cookies for authentication
-    });
-    
-    if (response.ok) {
-      const result = await response.json();
-      
-      if (result.success) {
-        if (result.onboarding.onboarding_completed) {
-          // User has completed onboarding - store in localStorage for future quick checks
-          localStorage.setItem('onboarding_completed', 'true');
-          console.log('Onboarding already completed (server check)');
-          onboardingCheckCompleted = true;
-          return;
-        } else {
-          // User needs onboarding
-          console.log('User needs onboarding - showing modal (from onboarding.js)');
-          onboardingCheckCompleted = true;
-          initializeOnboarding();
-        }
+// Add CSS for new animations
+document.addEventListener('DOMContentLoaded', function() {
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes slideInRightReverse {
+      from {
+        transform: translateX(-80px);
+        opacity: 0;
       }
-    } else if (response.status === 401) {
-      console.log('User not authenticated (onboarding.js check)');
-      onboardingCheckCompleted = true;
-    } else {
-      console.warn('Onboarding status check failed:', response.status);
-      onboardingCheckCompleted = true;
-    }
-  } catch (error) {
-    console.error('Error checking onboarding status:', error);
-    onboardingCheckCompleted = true;
-    // Silently fail - onboarding is not critical for basic functionality
-  }
-}
-
-function initializeOnboarding() {
-  // Prevent multiple modal instances
-  if (onboardingModal) {
-    console.log('Onboarding modal already initialized');
-    return;
-  }
-  
-  // Create onboarding instance
-  onboardingModal = new OnboardingModal();
-  
-  // Show modal after a short delay to let page load
-  setTimeout(() => {
-    if (onboardingModal) {
-      onboardingModal.showModal();
-    }
-  }, 1000);
-}
-
-// Export for potential manual triggering
-window.showOnboarding = function(force = false) {
-  // Check if onboarding is already completed (unless forced)
-  if (!force) {
-    const onboardingCompleted = localStorage.getItem('onboarding_completed');
-    if (onboardingCompleted === 'true') {
-      console.log('Onboarding already completed. Use showOnboarding(true) to force show.');
-      return;
-    }
-  }
-  
-  if (!onboardingModal) {
-    onboardingModal = new OnboardingModal();
-  }
-  onboardingModal.showModal();
-};
-
-// Utility function to reset onboarding status (for testing purposes)
-window.resetOnboarding = function() {
-  localStorage.removeItem('onboarding_completed');
-  onboardingCheckCompleted = false; // Reset the session flag
-  console.log('Onboarding status reset. Reload the page to see the onboarding modal again.');
-};
-
-// Utility function to check current onboarding status
-window.checkOnboardingStatus = function() {
-  const localStatus = localStorage.getItem('onboarding_completed');
-  console.log('LocalStorage onboarding status:', localStatus);
-  
-  // Also check server status
-  fetch('/users/onboarding-status', { credentials: 'include' })
-    .then(response => response.json())
-    .then(data => {
-      console.log('Server onboarding status:', data);
-    })
-    .catch(error => {
-      console.error('Error checking server status:', error);
-    });
-};
-
-// Function to mark that user just logged in (call this from login page)
-window.markJustLoggedIn = function() {
-  sessionStorage.setItem('justLoggedIn', 'true');
-  console.log('Marked user as just logged in');
-};
-
-// Function to trigger onboarding check (useful for post-login)
-window.triggerOnboardingCheck = function() {
-  console.log('Manually triggering onboarding check...');
-  onboardingCheckCompleted = false; // Reset the flag
-  checkOnboardingStatus();
-};
-
-// Utility function for showing toasts (if not already available)
-if (typeof showToast === 'undefined') {
-  window.showToast = function(message, type = 'info') {
-    // Simple toast implementation
-    const toast = document.createElement('div');
-    toast.className = `alert alert-${type === 'error' ? 'danger' : type} position-fixed`;
-    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-    toast.innerHTML = `
-      ${message}
-      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-    
-    document.body.appendChild(toast);
-    
-    // Auto-remove after 5 seconds
-    setTimeout(() => {
-      if (toast.parentNode) {
-        toast.parentNode.removeChild(toast);
+      to {
+        transform: translateX(0);
+        opacity: 1;
       }
-    }, 5000);
-  };
-}
+    }
+
+    @keyframes slideOutRightReverse {
+      from {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      to {
+        transform: translateX(80px);
+        opacity: 0;
+      }
+    }
+
+    .onboarding-slide.slide-in-reverse {
+      animation: slideInRightReverse 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .onboarding-slide.slide-out-reverse {
+      animation: slideOutRightReverse 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+  `;
+  document.head.appendChild(style);
+});

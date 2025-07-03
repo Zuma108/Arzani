@@ -676,6 +676,7 @@ router.get('/login2', (req, res) => {
   const email = req.query.email || '';
   const verified = req.query.verified === 'true';
   const error = req.query.error || null;
+  const passwordReset = req.query.passwordReset === 'true';
 
   // Normalize all redirect parameters to returnTo
   let returnTo = req.query.returnTo || req.query.returnUrl || req.query.redirect || '/';
@@ -686,7 +687,7 @@ router.get('/login2', (req, res) => {
     return res.redirect(`/auth/login?returnTo=${encodeURIComponent(returnTo)}`);
   }
 
-  res.render('login2', { email, verified, error, returnTo });
+  res.render('login2', { email, verified, error, returnTo, passwordReset });
 });
 
 router.get('/signup', (req, res) => {
@@ -878,215 +879,128 @@ router.post('/login2', async (req, res) => {
   }
 });
 
-// Add this new route for forgot password
-router.post('/forgot-password', async (req, res) => {
-  const { email } = req.body;
-  
-  if (!email) {
-    return res.status(400).json({
-      success: false,
-      message: 'Email is required'
-    });
+// Page rendering routes
+router.get('/forgot-password', (req, res) => {
+  res.render('auth/forgot-password', {
+    title: 'Forgot Password',
+    user: null
+  });
+});
+
+router.get('/reset-password', (req, res) => {
+  const token = req.query.token;
+  if (!token) {
+    return res.redirect('/auth/forgot-password');
   }
   
+  res.render('auth/reset-password', {
+    title: 'Reset Password',
+    token,
+    user: null
+  });
+});
+
+// Password reset API endpoints
+router.post('/forgot-password', async (req, res) => {
   try {
-    // Check if user exists
-    const userResult = await pool.query(
-      'SELECT id, email, username FROM users WHERE email = $1',
-      [email.toLowerCase()]
-    );
+    const { email } = req.body;
     
-    if (userResult.rows.length === 0) {
-      // For security reasons, don't reveal that the email doesn't exist
-      // Still return success to prevent email enumeration attacks
-      return res.json({
-        success: true,
-        message: 'If your email is registered, you will receive password reset instructions shortly.'
+    if (!email) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Email is required' 
       });
     }
     
-    const user = userResult.rows[0];
+    // Check if user exists
+    const user = await getUserByEmail(email);
     
-    // Generate reset token
+    if (!user) {
+      // Don't reveal whether a user exists for security reasons
+      return res.status(200).json({ 
+        success: true,
+        message: 'If your email exists in our system, you will receive password reset instructions.'
+      });
+    }
+    
+    // Generate a JWT token for password reset
     const resetToken = jwt.sign(
-      { 
-        userId: user.id, 
-        purpose: 'password_reset' 
-      },
-      process.env.EMAIL_SECRET || JWT_SECRET,
+      { userId: user.id, email: user.email, purpose: 'password_reset' },
+      EMAIL_SECRET,
       { expiresIn: '1h' }
     );
     
-    // Store the token in the database
-    try {
-      // First check if users_auth table has reset_token and reset_token_expires columns
-      const columnCheck = await pool.query(`
-        SELECT column_name 
-        FROM information_schema.columns 
-        WHERE table_name = 'users_auth' 
-        AND column_name IN ('reset_token', 'reset_token_expires')
-      `);
-      
-      // If both columns exist
-      if (columnCheck.rows.length === 2) {
-        await pool.query(`
-          UPDATE users_auth 
-          SET reset_token = $1, reset_token_expires = NOW() + INTERVAL '1 hour'
-          WHERE user_id = $2
-        `, [resetToken, user.id]);
-      } else {
-        // Just store the token in memory (not ideal for production)
-        console.log('Reset token columns not found in users_auth table');
-      }
-    } catch (dbError) {
-      console.error('Error storing reset token:', dbError);
-      // Continue anyway - token is still in the JWT
-    }
-    
     // Create reset URL
-    const resetUrl = `${process.env.SITE_URL || 'http://localhost:5000'}/auth/reset-password?token=${resetToken}`;
+    const resetUrl = `${process.env.NODE_ENV === 'production' ? 'https://www.arzani.co.uk' : 'http://localhost:5000'}/auth/reset-password?token=${resetToken}`;
     
-    // Send email with reset link
-    try {
-      await sendPasswordResetEmail(email, user.username, resetUrl);
-      console.log('Password reset email sent to:', email);
-    } catch (emailError) {
-      console.error('Failed to send password reset email:', emailError);
-      // Don't reveal email sending errors to the client
-    }
+    // Send password reset email
+    await sendPasswordResetEmail(user.email, user.username, resetUrl);
     
-    res.json({
+    // Log the event
+    await recordAnalyticsEvent('password_reset_requested', user.id, { email: user.email });
+    
+    return res.status(200).json({
       success: true,
-      message: 'If your email is registered, you will receive password reset instructions shortly.'
+      message: 'Password reset instructions have been sent to your email'
     });
   } catch (error) {
     console.error('Forgot password error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Server error. Please try again later.'
     });
   }
 });
 
-// Reset password - POST request to process the form
 router.post('/reset-password', async (req, res) => {
-  const { token, password } = req.body;
-  
-  if (!token || !password) {
-    return res.status(400).json({
-      success: false,
-      message: 'Token and password are required'
-    });
-  }
-  
   try {
+    const { password, token } = req.body;
+    
+    if (!password || !token) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Password and token are required' 
+      });
+    }
+    
     // Verify token
     let decoded;
     try {
-      decoded = jwt.verify(token, process.env.EMAIL_SECRET || JWT_SECRET);
+      decoded = jwt.verify(token, EMAIL_SECRET);
       
+      // Check if token is for password reset
       if (decoded.purpose !== 'password_reset') {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid reset token'
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Invalid reset token' 
         });
       }
-    } catch (jwtError) {
-      if (jwtError.name === 'TokenExpiredError') {
-        return res.status(400).json({
-          success: false,
-          message: 'Password reset link has expired. Please request a new one.'
-        });
-      } else {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid reset token. Please request a new password reset link.'
-        });
-      }
-    }
-    
-    const userId = decoded.userId;
-    
-    // Check password length
-    if (password.length < 8) {
-      return res.status(400).json({
-        success: false,
-        message: 'Password must be at least 8 characters long'
+    } catch (err) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid or expired token' 
       });
     }
     
-    // Verify user exists
-    const userCheck = await pool.query(
-      'SELECT id FROM users WHERE id = $1',
-      [userId]
+    // Hash the new password
+    const hashedPassword = await hashPassword(password);
+    
+    // Update the user's password
+    await pool.query(
+      'UPDATE users_auth SET password_hash = $1 WHERE user_id = $2',
+      [hashedPassword, decoded.userId]
     );
     
-    if (userCheck.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
-    }
+    // Log the event
+    await recordAnalyticsEvent('password_reset_completed', decoded.userId, { email: decoded.email });
     
-    // Hash new password
-    const hashedPassword = await bcrypt.hash(password, 10);
-    
-    // Update the password
-    try {
-      // Check if users_auth exists for this user
-      const authCheck = await pool.query(
-        'SELECT user_id FROM users_auth WHERE user_id = $1',
-        [userId]
-      );
-      
-      if (authCheck.rows.length === 0) {
-        // Create new auth record
-        await pool.query(
-          'INSERT INTO users_auth (user_id, password_hash, verified) VALUES ($1, $2, true)',
-          [userId, hashedPassword]
-        );
-      } else {
-        // Update existing auth record, handle different table schemas
-        const columnCheck = await pool.query(`
-          SELECT column_name 
-          FROM information_schema.columns 
-          WHERE table_name = 'users_auth' 
-          AND column_name IN ('reset_token', 'reset_token_expires')
-        `);
-        
-        if (columnCheck.rows.length === 2) {
-          await pool.query(`
-            UPDATE users_auth
-            SET password_hash = $1, 
-                reset_token = NULL,
-                reset_token_expires = NULL,
-                verified = true
-            WHERE user_id = $2
-          `, [hashedPassword, userId]);
-        } else {
-          await pool.query(`
-            UPDATE users_auth
-            SET password_hash = $1, 
-                verified = true
-            WHERE user_id = $2
-          `, [hashedPassword, userId]);
-        }
-      }
-    } catch (dbError) {
-      console.error('Database error during password reset:', dbError);
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to update password'
-      });
-    }
-    
-    res.json({
+    return res.status(200).json({
       success: true,
-      message: 'Password has been reset successfully. You can now log in with your new password.'
+      message: 'Password has been reset successfully'
     });
   } catch (error) {
     console.error('Reset password error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Server error. Please try again later.'
     });
