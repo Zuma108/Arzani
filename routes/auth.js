@@ -10,9 +10,23 @@ import {
   verifyUser, 
   createOrUpdateOAuthUser 
 } from '../database.js';
-import { sendVerificationEmail, sendPasswordResetEmail, sendWelcomeEmail } from '../utils/email.js';
+import { sendVerificationEmail, sendPasswordResetEmail, sendWelcomeEmail, sendSignupAnalyticsEmail, sendVerificationSuccessAnalyticsEmail, sendVerificationFailureAnalyticsEmail } from '../utils/email.js';
+import { recordAnalyticsEvent } from '../utils/analytics.js';
+import { trackSignup, trackVerificationSuccess, trackVerificationFailure } from '../utils/analytics-tracker.js';
 import { repairUserAccount } from '../database-repair.js';
 import { authenticateUser } from '../middleware/auth.js';
+import { 
+  generateToken, 
+  generateRefreshToken, 
+  verifyToken, 
+  verifyRefreshToken, 
+  verifyEmailToken, 
+  hashPassword, 
+  comparePassword,
+  generateVerificationCode,
+  storeVerificationCode,
+  verifyCode
+} from '../auth/auth.js';
 
 dotenv.config();
 const router = express.Router();
@@ -240,62 +254,100 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Register new user
+// Signup route
 router.post('/signup', async (req, res) => {
   try {
-    const { username, email, password } = req.body;
-    console.log('Signup request for:', email);
-
+    const { username, email, password, acceptTerms } = req.body;
+    
+    // Basic validation
     if (!username || !email || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Username, email and password are required'
+        message: 'Username, email, and password are required'
       });
     }
-
-    // Check if user exists
-    const existingUser = await getUserByEmail(email);
-    if (existingUser) {
-      return res.status(409).json({
+    
+    // Check email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
         success: false,
-        message: 'Email already registered'
+        message: 'Invalid email format'
       });
     }
-
-    // Create user with better error handling
-    let user;
-    try {
-      user = await createUser({ username, email, password });
-    } catch (createError) {
-      console.error('User creation error:', createError);
-      return res.status(500).json({
+    
+    // Check if email already exists
+    const existingUser = await pool.query(
+      'SELECT * FROM users WHERE email = $1',
+      [email]
+    );
+    
+    if (existingUser.rows.length > 0) {
+      return res.status(400).json({
         success: false,
-        message: 'Failed to create account'
+        message: 'Email already in use'
       });
     }
-
-    // Generate verification token
-    const verificationToken = jwt.sign(
-      { userId: user.id },
-      EMAIL_SECRET,
-      { expiresIn: '24h' }
-    );    // Send verification email
+    
+    // Create user
+    const hashedPassword = await hashPassword(password);
+    const newUserResult = await pool.query(
+      'INSERT INTO users (username, email, auth_provider) VALUES ($1, $2, $3) RETURNING id, email, username',
+      [username, email, 'email']
+    );
+    
+    const newUser = newUserResult.rows[0];
+    
+    // Create auth record
+    await pool.query(
+      'INSERT INTO users_auth (user_id, password_hash, verified) VALUES ($1, $2, $3)',
+      [newUser.id, hashedPassword, false]
+    );
+    
+    // Generate verification code
+    const verificationCode = generateVerificationCode();
+    
+    // Store the code in database
+    await storeVerificationCode(newUser.id, verificationCode);
+    
+    // Send verification email with code
     try {
       console.log('Attempting to send verification email to:', email);
-      await sendVerificationEmail(email, verificationToken);
+      await sendVerificationEmail(email, verificationCode);
       console.log('Verification email sent successfully to:', email);
     } catch (emailError) {
       console.error('Failed to send verification email to:', email);
-      console.error('Email error details:', emailError.message);
-      if (emailError.response && emailError.response.body) {
-        console.error('SendGrid error response:', emailError.response.body);
-      }
+      console.error(emailError);
       // Continue anyway, user can request another verification email
     }
-
-    res.status(201).json({
+    
+    // Send analytics email to track signup
+    try {
+      // Send analytics email
+      await sendSignupAnalyticsEmail(email, newUser.id);
+      console.log('Analytics email sent for user signup:', newUser.id);
+      
+      // Track signup in analytics system
+      await trackSignup(newUser.id, email, username);
+      
+      // For backward compatibility, still record in the old way
+      await recordAnalyticsEvent('user_signup', newUser.id, {
+        email,
+        timestamp: new Date().toISOString(),
+        username,
+        status: 'verification_pending'
+      });
+    } catch (analyticsError) {
+      console.error('Failed to send analytics for signup:', analyticsError);
+      // Don't block signup process if analytics fails
+    }
+    
+    // Return success with userId for verification step
+    return res.status(201).json({
       success: true,
-      message: 'Account created successfully. Please check your email to verify your account.'
+      message: 'Account created! Please check your email for verification code.',
+      userId: newUser.id,
+      requiresVerification: true
     });
   } catch (error) {
     console.error('Signup error:', error);
@@ -1041,325 +1093,180 @@ router.post('/reset-password', async (req, res) => {
   }
 });
 
-// Add a new endpoint to manually verify a user (admin or debugging only)
-router.post('/manual-verify', async (req, res) => {
+// Verify email with 6-digit code
+router.post('/verify-code', async (req, res) => {
   try {
-    // This endpoint should be protected in production
-    if (process.env.NODE_ENV === 'production' && !req.session?.isAdmin) {
-      return res.status(403).json({
-        success: false,
-        message: 'Unauthorized'
-      });
-    }
-
-    const { email } = req.body;
-
-    if (!email) {
+    const { userId, code } = req.body;
+    
+    if (!userId || !code) {
       return res.status(400).json({
         success: false,
-        message: 'Email is required'
+        message: 'User ID and verification code are required'
       });
     }
-
-    // Find the user
-    const userResult = await pool.query(
-      'SELECT id, email FROM users WHERE email = $1',
-      [email.toLowerCase()]
-    );
-
-    if (userResult.rows.length === 0) {
-      return res.status(404).json({
+    
+    // Verify the code
+    const verification = await verifyCode(userId, code);
+    
+    if (!verification.valid) {
+      // Track verification failure
+      try {
+        // Get user information for analytics
+        const userResult = await pool.query(
+          'SELECT email, username FROM users WHERE id = $1',
+          [userId]
+        );
+        
+        if (userResult.rows.length > 0) {
+          const { email, username } = userResult.rows[0];
+          
+          // Get attempt count from the database
+          const attemptsResult = await pool.query(
+            `SELECT COUNT(*) FROM analytics_events 
+             WHERE event_type = 'verification_failure' AND user_id = $1`,
+            [userId]
+          );
+          const attemptCount = parseInt(attemptsResult.rows[0].count, 10) + 1;
+          
+          // Send analytics email for failed verification
+          await sendVerificationFailureAnalyticsEmail(
+            email, 
+            userId, 
+            verification.message || 'Invalid verification code', 
+            attemptCount
+          );
+          
+          // Track verification failure in analytics system
+          await trackVerificationFailure(
+            userId, 
+            email, 
+            verification.message || 'Invalid verification code', 
+            attemptCount
+          );
+          
+          console.log('Verification failure analytics recorded for user:', userId);
+        }
+      } catch (analyticsError) {
+        console.error('Failed to record verification failure analytics:', analyticsError);
+        // Continue with the response regardless of analytics failure
+      }
+      
+      return res.status(400).json({
         success: false,
-        message: 'User not found'
+        message: verification.message || 'Invalid verification code'
       });
     }
-
-    const userId = userResult.rows[0].id;
-
-    // Check if auth record exists
-    const authCheck = await pool.query(
-      'SELECT user_id FROM users_auth WHERE user_id = $1',
-      [userId]
-    );
-
-    if (authCheck.rows.length === 0) {
-      // Create auth record
-      await pool.query(
-        'INSERT INTO users_auth (user_id, password_hash, verified) VALUES ($1, $2, true)',
-        [userId, 'REQUIRES_RESET']
-      );
-    } else {
-      // Update existing record
-      await pool.query(
-        'UPDATE users_auth SET verified = true WHERE user_id = $1',
+    
+    // Send welcome email
+    try {
+      const userResult = await pool.query(
+        'SELECT email, username FROM users WHERE id = $1',
         [userId]
       );
+      
+      if (userResult.rows.length > 0) {
+        const { email, username } = userResult.rows[0];
+        await sendWelcomeEmail(email, username);
+        
+        // Send analytics for successful verification
+        try {
+          // Send analytics email
+          await sendVerificationSuccessAnalyticsEmail(email, userId, username);
+          
+          // Track verification success in analytics system
+          await trackVerificationSuccess(userId, email, username);
+          
+          console.log('Verification success analytics recorded for user:', userId);
+        } catch (analyticsError) {
+          console.error('Failed to record verification analytics:', analyticsError);
+          // Don't block verification process if analytics fails
+        }
+      }
+    } catch (emailError) {
+      console.error('Failed to send welcome email:', emailError);
+      // Continue anyway, verification was successful
     }
-
-    console.log(`User ${userId} (${email}) manually verified`);
-
-    res.status(200).json({
+    
+    return res.status(200).json({
       success: true,
-      message: 'User verified successfully'
+      message: 'Email verified successfully'
     });
-
+    
   } catch (error) {
-    console.error('Manual verification error:', error);
-    res.status(500).json({
+    console.error('Verification error:', error);
+    return res.status(500).json({
       success: false,
       message: 'An error occurred during verification'
     });
   }
 });
 
-// Forgot password page - GET request to show the form
-router.get('/forgot-password', (req, res) => {
-  const error = req.query.error || null;
-  const success = req.query.success || null;
-  
-  res.render('auth/forgot-password', { error, success });
-});
-
-// Reset password page - GET request to show the form
-router.get('/reset-password', (req, res) => {
-  const token = req.query.token || '';
-  const error = req.query.error || null;
-  const success = req.query.success || null;
-  
-  if (!token) {
-    return res.redirect('/auth/forgot-password?error=' + encodeURIComponent('Reset token is missing. Please request a new password reset link.'));
-  }
-  
-  // Verify token is valid first
+// Resend verification code
+router.post('/resend-code', async (req, res) => {
   try {
-    const decoded = jwt.verify(token, process.env.EMAIL_SECRET || JWT_SECRET);
+    const { userId } = req.body;
     
-    if (decoded.purpose !== 'password_reset') {
-      return res.redirect('/auth/forgot-password?error=' + encodeURIComponent('Invalid reset token. Please request a new password reset link.'));
-    }
-    
-    // Token is valid, render the reset password page
-    res.render('auth/reset-password', { token, error, success });
-  } catch (error) {
-    // Token is invalid or expired
-    console.error('Invalid reset token:', error);
-    res.redirect('/auth/forgot-password?error=' + encodeURIComponent('Password reset link is invalid or has expired. Please request a new one.'));
-  }
-});
-
-// Forgot password - POST request to process the form
-router.post('/forgot-password', async (req, res) => {
-  const { email } = req.body;
-  
-  if (!email) {
-    return res.status(400).json({
-      success: false,
-      message: 'Email is required'
-    });
-  }
-  
-  try {
-    // Check if user exists
-    const userResult = await pool.query(
-      'SELECT id, email, username FROM users WHERE email = $1',
-      [email.toLowerCase()]
-    );
-    
-    if (userResult.rows.length === 0) {
-      // For security reasons, don't reveal that the email doesn't exist
-      // Still return success to prevent email enumeration attacks
-      return res.json({
-        success: true,
-        message: 'If your email is registered, you will receive password reset instructions shortly.'
-      });
-    }
-    
-    const user = userResult.rows[0];
-    
-    // Generate reset token
-    const resetToken = jwt.sign(
-      { 
-        userId: user.id, 
-        purpose: 'password_reset' 
-      },
-      process.env.EMAIL_SECRET || JWT_SECRET,
-      { expiresIn: '1h' }
-    );
-    
-    // Store the token in the database
-    try {
-      // First check if users_auth table has reset_token and reset_token_expires columns
-      const columnCheck = await pool.query(`
-        SELECT column_name 
-        FROM information_schema.columns 
-        WHERE table_name = 'users_auth' 
-        AND column_name IN ('reset_token', 'reset_token_expires')
-      `);
-      
-      // If both columns exist
-      if (columnCheck.rows.length === 2) {
-        await pool.query(`
-          UPDATE users_auth 
-          SET reset_token = $1, reset_token_expires = NOW() + INTERVAL '1 hour'
-          WHERE user_id = $2
-        `, [resetToken, user.id]);
-      } else {
-        // Just store the token in memory (not ideal for production)
-        console.log('Reset token columns not found in users_auth table');
-      }
-    } catch (dbError) {
-      console.error('Error storing reset token:', dbError);
-      // Continue anyway - token is still in the JWT
-    }
-    
-    // Create reset URL
-    const resetUrl = `${process.env.SITE_URL || 'http://localhost:5000'}/auth/reset-password?token=${resetToken}`;
-    
-    // Send email with reset link
-    try {
-      await sendPasswordResetEmail(email, user.username, resetUrl);
-      console.log('Password reset email sent to:', email);
-    } catch (emailError) {
-      console.error('Failed to send password reset email:', emailError);
-      // Don't reveal email sending errors to the client
-    }
-    
-    res.json({
-      success: true,
-      message: 'If your email is registered, you will receive password reset instructions shortly.'
-    });
-  } catch (error) {
-    console.error('Forgot password error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error. Please try again later.'
-    });
-  }
-});
-
-// Reset password - POST request to process the form
-router.post('/reset-password', async (req, res) => {
-  const { token, password } = req.body;
-  
-  if (!token || !password) {
-    return res.status(400).json({
-      success: false,
-      message: 'Token and password are required'
-    });
-  }
-  
-  try {
-    // Verify token
-    let decoded;
-    try {
-      decoded = jwt.verify(token, process.env.EMAIL_SECRET || JWT_SECRET);
-      
-      if (decoded.purpose !== 'password_reset') {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid reset token'
-        });
-      }
-    } catch (jwtError) {
-      if (jwtError.name === 'TokenExpiredError') {
-        return res.status(400).json({
-          success: false,
-          message: 'Password reset link has expired. Please request a new one.'
-        });
-      } else {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid reset token. Please request a new password reset link.'
-        });
-      }
-    }
-    
-    const userId = decoded.userId;
-    
-    // Check password length
-    if (password.length < 8) {
+    if (!userId) {
       return res.status(400).json({
         success: false,
-        message: 'Password must be at least 8 characters long'
+        message: 'User ID is required'
       });
     }
     
-    // Verify user exists
-    const userCheck = await pool.query(
-      'SELECT id FROM users WHERE id = $1',
+    // Implement rate limiting to prevent abuse
+    // This is a simple example - in production, use a more robust solution
+    const rateLimit = req.app.locals.resendRateLimits = req.app.locals.resendRateLimits || {};
+    const now = Date.now();
+    const lastResend = rateLimit[userId] || 0;
+    
+    if (now - lastResend < 60000) { // 1 minute cooldown
+      return res.status(429).json({
+        success: false,
+        message: 'Please wait before requesting another code',
+        retryAfter: Math.ceil((60000 - (now - lastResend)) / 1000)
+      });
+    }
+    
+    // Store current time as last resend timestamp
+    rateLimit[userId] = now;
+    
+    // Get user email
+    const userResult = await pool.query(
+      'SELECT email FROM users WHERE id = $1',
       [userId]
     );
     
-    if (userCheck.rows.length === 0) {
+    if (userResult.rows.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
       });
     }
     
-    // Hash new password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const email = userResult.rows[0].email;
     
-    // Update the password
-    try {
-      // Check if users_auth exists for this user
-      const authCheck = await pool.query(
-        'SELECT user_id FROM users_auth WHERE user_id = $1',
-        [userId]
-      );
-      
-      if (authCheck.rows.length === 0) {
-        // Create new auth record
-        await pool.query(
-          'INSERT INTO users_auth (user_id, password_hash, verified) VALUES ($1, $2, true)',
-          [userId, hashedPassword]
-        );
-      } else {
-        // Update existing auth record, handle different table schemas
-        const columnCheck = await pool.query(`
-          SELECT column_name 
-          FROM information_schema.columns 
-          WHERE table_name = 'users_auth' 
-          AND column_name IN ('reset_token', 'reset_token_expires')
-        `);
-        
-        if (columnCheck.rows.length === 2) {
-          await pool.query(`
-            UPDATE users_auth
-            SET password_hash = $1, 
-                reset_token = NULL,
-                reset_token_expires = NULL,
-                verified = true
-            WHERE user_id = $2
-          `, [hashedPassword, userId]);
-        } else {
-          await pool.query(`
-            UPDATE users_auth
-            SET password_hash = $1, 
-                verified = true
-            WHERE user_id = $2
-          `, [hashedPassword, userId]);
-        }
-      }
-    } catch (dbError) {
-      console.error('Database error during password reset:', dbError);
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to update password'
-      });
-    }
+    // Generate new verification code
+    const verificationCode = generateVerificationCode();
     
-    res.json({
+    // Store the code in database
+    await storeVerificationCode(userId, verificationCode);
+    
+    // Send verification email with code
+    await sendVerificationEmail(email, verificationCode);
+    
+    return res.status(200).json({
       success: true,
-      message: 'Password has been reset successfully. You can now log in with your new password.'
+      message: 'Verification code sent successfully'
     });
+    
   } catch (error) {
-    console.error('Reset password error:', error);
-    res.status(500).json({
+    console.error('Resend code error:', error);
+    return res.status(500).json({
       success: false,
-      message: 'Server error. Please try again later.'
+      message: 'An error occurred while sending verification code'
     });
   }
 });
+
 
 export default router;

@@ -364,9 +364,8 @@
                             <div class="flex items-start">
                                 <div class="conversation-avatar bg-gray-200 w-10 h-10 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
                                     <% if (conversation.is_group_chat) { %>
-                                        <i class="fas fa-users text-gray-500"></i>
-                                    <% } else if (conversation.is_ai_chat) { %>
-                                        <i class="fas fa-robot text-gray-500"></i>
+                                        <i class="fas fa-users text-gray-500"></i>                                    <% } else if (conversation.is_ai_chat) { %>
+                                        <img src="/figma design exports/images.webp/arzani-icon-nobackground.png" alt="Arzani AI" style="width: 16px; height: 16px; object-fit: contain;" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/4616/4616734.png';">
                                     <% } else { %>
                                         <i class="fas fa-user text-gray-500"></i>
                                     <% } %>

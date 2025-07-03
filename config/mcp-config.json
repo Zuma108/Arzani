@@ -1,0 +1,36 @@
+{
+  "mcpServers": {
+    "business-valuation-rag": {
+      "command": "node",
+      "args": ["./mcp-servers/business-valuation-rag.js"],
+      "env": {
+        "NODE_ENV": "production"
+      }
+    }
+  },
+  "agents": {
+    "finance": {
+      "port": 5004,
+      "mcpServers": ["business-valuation-rag"],
+      "capabilities": ["business_valuation", "financial_analysis", "industry_benchmarks"]
+    },
+    "broker": {
+      "port": 5002, 
+      "mcpServers": ["business-valuation-rag"],
+      "capabilities": ["market_insights", "comparable_sales", "pricing_recommendations"]
+    },
+    "legal": {
+      "port": 5003,
+      "mcpServers": ["business-valuation-rag"], 
+      "capabilities": ["valuation_support", "legal_precedents", "documentation"]
+    }
+  },
+  "ragConfig": {
+    "vectorDatabase": "pinecone",
+    "embeddingModel": "text-embedding-3-small",
+    "searchDefaults": {
+      "topK": 10,
+      "similarity_threshold": 0.7
+    }
+  }
+}

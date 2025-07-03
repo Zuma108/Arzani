@@ -1,5 +1,10 @@
 import { Pinecone } from '@pinecone-database/pinecone';
 import dotenv from 'dotenv';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+// Promisify exec for async/await usage
+const execAsync = promisify(exec);
 
 // Load environment variables
 dotenv.config();
@@ -13,13 +18,23 @@ class PineconeService {
   constructor() {
     this.client = null;
     this.indexName = process.env.PINECONE_INDEX_NAME || 'marketplace-index';
+    this.dockerAvailable = false;
     this.initialize();
+  }
+
+  /**
+   * Check if Docker is available (disabled - not needed for MCP)
+   * @returns {Promise<boolean>} Always returns false since we use MCP
+   */
+  async checkDockerAvailability() {
+    // Docker not needed when using MCP
+    return false;
   }
 
   /**
    * Initialize the Pinecone client
    */
-  initialize() {
+  async initialize() {
     try {
       // Check if API key is available
       if (!process.env.PINECONE_API_KEY) {
@@ -27,7 +42,10 @@ class PineconeService {
         return;
       }
 
-      // Initialize the Pinecone client
+      // Check Docker availability
+      this.dockerAvailable = await this.checkDockerAvailability();
+      
+      // Initialize the Pinecone client - no environment parameter needed in newer SDK
       this.client = new Pinecone({
         apiKey: process.env.PINECONE_API_KEY
       });
@@ -52,13 +70,24 @@ class PineconeService {
         throw new Error('Pinecone client not initialized');
       }
 
+      // Check if Docker is required but not available
+      if (!this.dockerAvailable && options.requireDocker) {
+        throw new Error('Docker is required but not available');
+      }
+
       const dimension = options.dimension || 1536; // Default to OpenAI embedding dimension
       const metric = options.metric || 'cosine';
       const indexName = options.indexName || this.indexName;
 
       // Check if index already exists
-      const indexList = await this.client.listIndexes();
-      console.log('Index list returned by Pinecone:', indexList);
+      let indexList;
+      try {
+        indexList = await this.client.listIndexes();
+        console.log('Index list returned by Pinecone:', indexList);
+      } catch (listError) {
+        console.error('Error listing Pinecone indexes:', listError);
+        throw listError;
+      }
       
       // Handle different responses from listIndexes() based on Pinecone SDK version
       let indexExists = false;
@@ -77,22 +106,31 @@ class PineconeService {
       }
 
       console.log(`Creating new Pinecone index: ${indexName}`);
-      await this.client.createIndex({
+      const createOptions = {
         name: indexName,
         dimension: dimension,
-        metric: metric,
-        spec: { 
+        metric: metric
+      };
+      
+      // Only add serverless spec if Docker is available or we're using cloud environment
+      if (this.dockerAvailable || process.env.PINECONE_ENVIRONMENT) {
+        createOptions.spec = { 
           serverless: { 
-            cloud: 'aws', 
-            region: 'us-east-1' 
+            cloud: process.env.PINECONE_CLOUD || 'aws', 
+            region: process.env.PINECONE_REGION || 'us-east-1' 
           }
-        }
-      });
+        };
+      }
+      
+      await this.client.createIndex(createOptions);
 
       console.log(`Index '${indexName}' created successfully`);
       return this.client.index(indexName);
     } catch (error) {
       console.error('Error creating Pinecone index:', error);
+      if (error.message?.includes('docker')) {
+        console.error('Docker-related error detected. Please ensure Docker Desktop is running.');
+      }
       throw error;
     }
   }
@@ -107,9 +145,16 @@ class PineconeService {
       if (!this.client) {
         throw new Error('Pinecone client not initialized');
       }
+      
+      // Add additional logging for debugging
+      console.log(`Getting Pinecone index: ${indexName}`);
+      
       return this.client.index(indexName);
     } catch (error) {
       console.error(`Error getting Pinecone index '${indexName}':`, error);
+      if (error.message?.includes('docker')) {
+        console.error('Docker-related error detected. Please ensure Docker Desktop is running.');
+      }
       throw error;
     }
   }
@@ -125,6 +170,16 @@ class PineconeService {
     try {
       if (!this.client) {
         throw new Error('Pinecone client not initialized');
+      }
+
+      // Check Docker availability if not already checked
+      if (this.dockerAvailable === undefined) {
+        this.dockerAvailable = await this.checkDockerAvailability();
+      }
+      
+      // Check if Docker is required but not available
+      if (!this.dockerAvailable && options.requireDocker) {
+        throw new Error('Docker is required but not available for upsert operation');
       }
 
       if (!options.vectors || !Array.isArray(options.vectors)) {
@@ -143,6 +198,9 @@ class PineconeService {
       return response;
     } catch (error) {
       console.error('Error upserting vectors:', error);
+      if (error.message?.includes('docker')) {
+        console.error('Docker-related error detected. Please ensure Docker Desktop is running.');
+      }
       throw error;
     }
   }
@@ -159,6 +217,16 @@ class PineconeService {
     try {
       if (!this.client) {
         throw new Error('Pinecone client not initialized');
+      }
+
+      // Check Docker availability if not already checked
+      if (this.dockerAvailable === undefined) {
+        this.dockerAvailable = await this.checkDockerAvailability();
+      }
+      
+      // Check if Docker is required but not available
+      if (!this.dockerAvailable && options.requireDocker) {
+        throw new Error('Docker is required but not available for query operation');
       }
 
       if (!options.queryVector) {
@@ -183,6 +251,9 @@ class PineconeService {
       return response;
     } catch (error) {
       console.error('Error querying vectors:', error);
+      if (error.message?.includes('docker')) {
+        console.error('Docker-related error detected. Please ensure Docker Desktop is running.');
+      }
       throw error;
     }
   }
@@ -198,6 +269,16 @@ class PineconeService {
     try {
       if (!this.client) {
         throw new Error('Pinecone client not initialized');
+      }
+
+      // Check Docker availability if not already checked
+      if (this.dockerAvailable === undefined) {
+        this.dockerAvailable = await this.checkDockerAvailability();
+      }
+      
+      // Check if Docker is required but not available
+      if (!this.dockerAvailable && options.requireDocker) {
+        throw new Error('Docker is required but not available for delete operation');
       }
 
       if (!options.ids || !Array.isArray(options.ids)) {
@@ -216,7 +297,38 @@ class PineconeService {
       return response;
     } catch (error) {
       console.error('Error deleting vectors:', error);
+      if (error.message?.includes('docker')) {
+        console.error('Docker-related error detected. Please ensure Docker Desktop is running.');
+      }
       throw error;
+    }
+  }
+
+  /**
+   * Perform a health check on the Pinecone connection
+   * @returns {Promise<boolean>} True if healthy, false otherwise
+   */
+  async healthCheck() {
+    try {
+      if (!this.client) {
+        // Client not initialized - using MCP instead
+        return false;
+      }
+
+      // List indexes to verify connection
+      const indexes = await this.client.listIndexes();
+      
+      // Different SDK versions return different response types
+      if (Array.isArray(indexes)) {
+        return indexes.some(idx => idx.name === this.indexName);
+      } else if (indexes && typeof indexes === 'object') {
+        return Object.keys(indexes).includes(this.indexName);
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Pinecone health check failed:', error);
+      return false;
     }
   }
 }

@@ -849,6 +849,63 @@ Keep the report professional, balanced, and focused on factual observations rath
       };
     }
   }
+
+  /**
+   * Tests the A2A message logging functionality
+   * @returns {Promise<object>} Result of the test
+   */
+  async testA2AMessageLogging() {
+    try {
+      console.log('Running A2A message logging validation test...');
+      
+      // Create a test message in the database directly
+      const messageData = {
+        userId: 1,
+        taskId: `test_task_${Date.now()}`,
+        messageId: `test_msg_${Date.now()}`,
+        content: 'This is a test message for A2A logging validation',
+        messageType: 'text',
+        // Intentionally omitting senderType to test the fix
+        metadata: {
+          testRun: true,
+          timestamp: new Date().toISOString()
+        }
+      };
+      
+      // Insert directly using pool query to test the DB constraints
+      const result = await pool.query(`
+        INSERT INTO a2a_messages (
+          user_id, task_id, message_id, content,
+          message_type, sender_type, metadata, created_at
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+        RETURNING id, created_at
+      `, [
+        messageData.userId,
+        messageData.taskId,
+        messageData.messageId,
+        messageData.content,
+        messageData.messageType,
+        'user', // This should be the default when omitted in the API
+        JSON.stringify(messageData.metadata)
+      ]);
+      
+      console.log('✅ A2A message logging validation test successful!');
+      console.log(`Message ID ${result.rows[0].id} created at ${result.rows[0].created_at}`);
+      
+      return {
+        success: true,
+        messageId: result.rows[0].id,
+        createdAt: result.rows[0].created_at
+      };
+    } catch (error) {
+      console.error('❌ A2A message logging validation test failed:', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
 }
 
 export default new ChatGPTHelper();

@@ -531,6 +531,143 @@ window.formatImageUrl = formatImageUrl;
 <!-- Load the marketplace2.js script (without assistant icon creation) -->
 <script src="/js/marketplace2.js"></script>
 
+<!-- Include Onboarding System -->
+<link rel="stylesheet" href="/css/onboarding.css">
+<%- include('partials/onboarding-modal') %>
+<script src="/js/onboarding.js"></script>
+
+<!-- Initialize Onboarding System -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('Marketplace2 loaded - checking for post-login onboarding needs');
+    
+    // Check for post-login indicators immediately
+    const urlParams = new URLSearchParams(window.location.search);
+    const isPostLogin = urlParams.get('login') === 'success' || 
+                       sessionStorage.getItem('justLoggedIn') === 'true' ||
+                       document.referrer.includes('/login') ||
+                       document.referrer.includes('/register');
+    
+    if (isPostLogin) {
+      console.log('🔄 Post-login detected - prioritizing onboarding check');
+      sessionStorage.setItem('justLoggedIn', 'true'); // Ensure it's set
+    }
+    
+    // Initialize onboarding modal for logged-in users with retry logic
+    const initializeOnboarding = async (retryCount = 0, maxRetries = 3) => {
+      try {
+        // Check if user is logged in by checking for user data in the page
+        const userLoggedIn = <%- user ? 'true' : 'false' %>;
+        
+        console.log('Onboarding check attempt', retryCount + 1, '- User logged in (EJS):', userLoggedIn);
+        
+        // Quick localStorage check to avoid unnecessary API calls
+        const onboardingCompleted = localStorage.getItem('onboarding_completed');
+        if (onboardingCompleted === 'true') {
+          console.log('Onboarding already completed (localStorage check)');
+          return;
+        }
+        
+        // If EJS says user not logged in, try checking via API anyway (for post-login timing issues)
+        if (!userLoggedIn && retryCount === 0) {
+          console.log('EJS user state false, but trying API check for post-login timing...');
+        }
+        
+        console.log('Checking onboarding status via API...');
+        
+        // Check onboarding status
+        const response = await fetch('/users/onboarding-status', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include'
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Onboarding status response:', data);
+          
+          // Check if onboarding is completed
+          if (data.onboarding?.onboarding_completed) {
+            console.log('User has already completed onboarding (server check)');
+            // Store in localStorage for future quick checks
+            localStorage.setItem('onboarding_completed', 'true');
+            return;
+          }
+          
+          // Show onboarding modal if not completed
+          console.log('User has not completed onboarding, showing modal');
+          
+          // Initialize onboarding modal
+          if (typeof OnboardingModal !== 'undefined') {
+            window.onboardingModal = new OnboardingModal();
+            
+            // Small delay to ensure modal is ready
+            setTimeout(() => {
+              window.onboardingModal.showModal();
+            }, 500);
+          } else {
+            console.error('OnboardingModal class not found');
+          }
+        } else if (response.status === 401) {
+          console.log('User not authenticated (401 response)');
+          
+          // If we got 401 but EJS says user is logged in, there might be a timing issue
+          if (userLoggedIn && retryCount < maxRetries) {
+            console.log(`Auth timing issue detected, retrying in ${(retryCount + 1) * 1000}ms...`);
+            setTimeout(() => {
+              initializeOnboarding(retryCount + 1, maxRetries);
+            }, (retryCount + 1) * 1000);
+            return;
+          }
+          
+          console.log('User not logged in, skipping onboarding');
+        } else {
+          console.warn('Failed to fetch onboarding status:', response.status);
+          
+          // Retry for other errors too, but only if EJS says user is logged in
+          if (userLoggedIn && retryCount < maxRetries) {
+            console.log(`API error, retrying in ${(retryCount + 1) * 1000}ms...`);
+            setTimeout(() => {
+              initializeOnboarding(retryCount + 1, maxRetries);
+            }, (retryCount + 1) * 1000);
+          }
+        }
+      } catch (error) {
+        console.error('Error checking onboarding status:', error);
+        
+        // Retry on network errors if user should be logged in
+        const userLoggedIn = <%- user ? 'true' : 'false' %>;
+        if (userLoggedIn && retryCount < maxRetries) {
+          console.log(`Network error, retrying in ${(retryCount + 1) * 1000}ms...`);
+          setTimeout(() => {
+            initializeOnboarding(retryCount + 1, maxRetries);
+          }, (retryCount + 1) * 1000);
+        }
+      }
+    };
+    
+    // Initialize onboarding after a longer delay to ensure auth is settled after login
+    // Also add a more immediate check for post-login scenarios
+    setTimeout(initializeOnboarding, 2000); // Increased from 1000ms
+    
+    // Additional check for post-login scenarios - run sooner but with retry logic
+    setTimeout(() => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const isPostLogin = urlParams.get('login') === 'success' || 
+                         sessionStorage.getItem('justLoggedIn') === 'true' ||
+                         document.referrer.includes('/login');
+      
+      if (isPostLogin) {
+        console.log('Detected post-login scenario, running immediate onboarding check...');
+        initializeOnboarding(0, 5); // More retries for post-login
+        sessionStorage.removeItem('justLoggedIn'); // Clean up
+      }
+    }, 500);
+  });
+</script>
+
 <!-- Initialize and debug AI assistant -->
 <script>
   document.addEventListener('DOMContentLoaded', function() {

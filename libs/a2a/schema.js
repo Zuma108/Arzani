@@ -8,6 +8,15 @@
 import Ajv from 'ajv';
 const ajv = new Ajv({ allErrors: true });
 
+// Add UUID format validation
+ajv.addFormat('uuid', {
+  type: 'string',
+  validate: (uuid) => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(uuid);
+  }
+});
+
 // Basic A2A Message Part Schemas
 const textPartSchema = {
   type: 'object',

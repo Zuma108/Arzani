@@ -1,0 +1,30 @@
+{
+  "mcpServers": {
+    "pinecone-official": {
+      "command": "npx",
+      "args": [
+        "-y", "@pinecone-database/mcp"
+      ],
+      "env": {
+        "PINECONE_API_KEY": "${PINECONE_API_KEY}"
+      }
+    },
+    "pinecone-community": {
+      "command": "uvx",
+      "args": [
+        "--index-name", "${PINECONE_INDEX_NAME}",
+        "--api-key", "${PINECONE_API_KEY}",
+        "mcp-pinecone"
+      ]
+    },
+    "brave-search": {
+      "command": "npx",
+      "args": [
+        "-y", "@modelcontextprotocol/server-brave-search"
+      ],
+      "env": {
+        "BRAVE_API_KEY": "${BRAVE_API_KEY}"
+      }
+    }
+  }
+}

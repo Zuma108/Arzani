@@ -11,18 +11,20 @@ import { dirname } from 'path';
 import path from 'path';
 import pool from './db.js';
 import bcrypt from 'bcrypt';
-import { sendVerificationEmail } from './utils/email.js';
 import authRoutes from './routes/auth.js';
+import { requireAuth } from './middleware/auth.js';
 import paymentRoutes from './routes/payment.routes.js';
 import morgan from 'morgan';
 import helmet from 'helmet';
 import compression from 'compression';
 import Stripe from 'stripe';
 import bodyParser from 'body-parser';
-
 // Import S3 routes
 import s3TestRoutes from './routes/api/s3-test.js';
 import s3UploadRoutes from './routes/api/s3-upload.js';
+
+// Import threads API routes
+import threadsApiRoutes from './routes/api/threads.js';
 
 // Add a simple RateLimiter class implementation
 class RateLimiter {
@@ -61,16 +63,11 @@ import {
   createUser, 
   getUserByEmail, 
   getUserById, 
-  verifyUser, 
   authenticateUser,
-  addProviderColumns, // Add this import
-  getFeaturedBusinesses // Add this import for featured businesses
-} from './database.js';
-import sgMail from '@sendgrid/mail';
+  addProviderColumns} from './database.js';
 import cors from 'cors';
 import { OAuth2Client } from 'google-auth-library';
 import jwt from 'jsonwebtoken';
-import { v4 as uuidv4 } from 'uuid';
 import BusinessMetricsService from './services/businessMetricsService.js';
 import OpenAI from 'openai';
 import fetch from 'node-fetch';
@@ -80,7 +77,6 @@ import { createBusinessHistoryTable } from './services/history.js';
 import fs from 'fs';
 import savedBusinessesRoutes from './routes/savedBusinesses.js';
 import marketTrendsRoutes from './routes/markettrendsroutes.js';
-import trendsRoutes from './routes/trendsroutes.js';
 import googleDriveRoutes from './routes/googleDriveRoutes.js';
 import googleAuthRoutes from './routes/googleAuthRoutes.js';
 import postBusinessValuationRoutes from './routes/postBusinessValuationRoutes.js';
@@ -95,18 +91,18 @@ import apiRoutes from './routes/api.js'; // Add this import
 import blogRoutes from './routes/blogRoutes.js'; // Add this import for blog routes
 import blogApiRoutes from './routes/blogApiRoutes.js'; // Add this import
 import adminRoutes from './routes/adminRoutes.js'; // <-- Import admin routes
+import { addDevAuthControls } from './utils/dev-auth.js';
+import devRoutes from './routes/dev.js';
 import { stripeWebhookMiddleware, handleStripeWebhook } from './middleware/webhookHandler.js';
 import profileRoutes from './routes/profile.routes.js';
 import apiSubRoutes from './routes/api/subscription.js';
 import checkoutRoutes from './routes/checkout.js';
 import subscriptionApiRoutes from './routes/api/subscription.js';
-
+import aiApiRoutes from './routes/api/ai.js';
 import { authenticateUser as authMiddleware, populateUser } from './middleware/auth.js'; // Add this import
 import cookieParser from 'cookie-parser';
-import marketplaceRoutes from './routes/marketplaceRoutes.js';
 import marketTrendsApiRoutes from './routes/api/market-trends.js';
-import { initializeAws, getS3Client } from './utils/awsConfig.js';
-import { refreshMarketTrends, initializeMarketTrends } from './services/marketTrendsService.js'; // Add this import
+import { initializeMarketTrends } from './services/marketTrendsService.js'; // Add this import
 
 // Import the assistant monitoring routes
 import assistantMonitorRoutes from './routes/api/assistant-monitor.js';
@@ -119,7 +115,6 @@ import { createAssistantTables } from './migrations/create_assistant_interaction
 
 // Import routes
 import postBusinessRoutes from './routes/post-business.js';
-import { debugAuth } from './middleware/authDebug.js';
 
 import tokenDebugRoutes from './routes/api/token-debug.js'; // Add this import
 import valuationApi from './api/valuation.js';
@@ -128,12 +123,10 @@ import debugApiRoutes from './routes/api/debug.js';
 
 // Add this import near the top of the file with other imports
 import { attachRootRoute } from './root-route-fix.js';
-import { WebSocket } from 'ws';
 import apiAuthRoutes from './routes/api/auth.js'; // Add this import
 
 // Import WebSocket service
 import WebSocketService from './services/websocket.js';
-import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 
 
@@ -141,15 +134,14 @@ import { Server as SocketIOServer } from 'socket.io';
 import { initializeChatSocket } from './socket/chatSocket.js';
 import publicValuationRouter from './api/public-valuation.js';
 
-// Import chat API routes
-import chatApiRoutes from './routes/api/chat.js';
+// Import chat API routes - REMOVED: Legacy chat API routes, using threads API instead
+// import chatApiRoutes from './routes/api/chat.js';
 
 import chatDebugRouter from './routes/chat-debug.js';
 
 import testRoutes from './routes/api/test-routes.js'; // Add this import
 
 import postBusinessUploadRoutes from './routes/api/post-business-upload.js';
-import submitBusinessRoutes from './routes/api/submit-business.js';
 import businessRoutes from './routes/businessRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import sellerQuestionnaireRoutes from './routes/sellerQuestionnaire.js';
@@ -176,6 +168,7 @@ import valuationPaymentRoutes from './routes/valuationPaymentRoutes.js';
 
 // Import blog approval routes
 import blogApprovalRoutes from './routes/blogApprovalRoutes.js';
+
 
 const businessAuth = async (req, res, next) => {
   try {
@@ -384,6 +377,15 @@ app.get('/homepage', (req, res) => {
   });
 });
 
+// Alternative landing page route - marketplace-landing as alternative to homepage
+app.get('/homepage-alt', (req, res) => {
+  res.render('marketplace-landing', {
+    title: 'Welcome to Arzani Marketplace',
+    user: null,
+    isAuthenticated: false
+  });
+});
+
 // IMPORTANT: Register public API endpoints BEFORE authentication middleware
 app.use('/api/public', publicValuationRouter);
 
@@ -543,7 +545,7 @@ app.use(session({
   cookie: {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    maxAge: 14 * 24 * 60 * 60 * 1000, // 14 days
     sameSite: 'lax'
   },
   name: 'sessionId' // Custom cookie name
@@ -564,8 +566,8 @@ app.use((req, res, next) => {
 });
 
 // Add token refresh configuration
-const TOKEN_EXPIRY = '4h';
-const REFRESH_TOKEN_EXPIRY = '7d';
+const TOKEN_EXPIRY = '14d';
+const REFRESH_TOKEN_EXPIRY = '30d';
 
 // Update the token checker middleware
 app.use(async (req, res, next) => {
@@ -587,21 +589,35 @@ app.use(async (req, res, next) => {
     if (!authHeader) {
       console.log('No auth header, continuing without auth for path:', req.path);
       return next();
-    }
-
-    if (!authHeader.startsWith('Bearer ') || authHeader.split(' ').length !== 2) {
+    }    if (!authHeader.startsWith('Bearer ') || authHeader.split(' ').length !== 2) {
       console.log('Invalid auth header format, continuing without auth');
       return next();
+    }    const token = authHeader.split(' ')[1];
+    
+    // Add token validation debugging - fixed string comparison issue
+    if (!token || token.trim() === '' || token === null || token === undefined) {
+      console.log('Empty or invalid token received, continuing without auth');
+      return next();
     }
-
-    const token = authHeader.split(' ')[1];
+    
+    // Log token format for debugging (first 20 chars only for security)
+    console.log('Token validation attempt:', {
+      tokenStart: token.substring(0, 20),
+      tokenLength: token.length,
+      path: req.path
+    });
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         req.user = { userId: decoded.userId };
+        console.log('Token validation successful for user:', decoded.userId);
         next();
     } catch (error) {
-        console.error('Token validation error:', error);
+        console.error('Token validation error:', {
+          error: error.message,
+          tokenStart: token.substring(0, 20),
+          path: req.path
+        });
         // Don't redirect API calls
         if (req.path.startsWith('/api/')) {
             return res.status(401).json({ error: 'Invalid token' });
@@ -676,6 +692,12 @@ app.use(session({
 }));
 app.use(cookieParser());
 
+// Add development authentication controls middleware (only in development)
+if (process.env.NODE_ENV === 'development') {
+  console.log('🔧 Adding development authentication controls middleware');
+  app.use(addDevAuthControls);
+}
+
 // Add a specific middleware to handle the save-questionnaire endpoint before any auth middleware
 // This ensures the route is properly marked as public
 
@@ -699,7 +721,9 @@ app.use('/api', historyRoutes);
 app.use('/api/public', publicValuationRouter);
 app.use('/api/public-valuation', publicValuationRouter);
 app.use('/api/auth', apiAuthRoutes); // Add API auth routes
-app.use('/api/chat', chatApiRoutes); // Use chatApiRoutes instead of chatRouter
+// REMOVED: Legacy chat API - using threads API instead
+// app.use('/api/chat', chatApiRoutes); // Use chatApiRoutes instead of chatRouter
+app.use('/api/threads', threadsApiRoutes); // Add threads API for conversation management
 app.use('/payment', paymentRoutes);
 app.use('/auth', authRoutes); // Update this line to register auth routes
 app.use('/api/market', marketTrendsRoutes);
@@ -738,6 +762,12 @@ app.use('/api/business', (req, res, next) => {
 
 // Register role management routes
 app.use('/api/users/roles', roleRoutes);
+
+// Register development authentication routes (only available in development)
+if (process.env.NODE_ENV === 'development') {
+  console.log('🔧 Registering development authentication control routes at /dev');
+  app.use('/dev', devRoutes);
+}
 
 // Register admin routes (protected by adminAuth middleware within the router file)
 app.use('/api/admin', adminRoutes); // <-- Register admin routes
@@ -799,6 +829,8 @@ app.use('/seller-questionnaire', sellerQuestionnaireRoutes);
 app.use('/api/subscription', apiSubRoutes);
 // Add this before other routes
 app.use('/debug', chatDebugRouter);
+// Register AI routes
+app.use('/api/ai', aiApiRoutes);
 // Apply routes
 app.use('/blog', blogRoutes);
 app.use('/api/subscription', subscriptionApiRoutes);
@@ -1463,6 +1495,22 @@ app.get('/marketplace', authDebug.enforceNonChatPage, (req, res) => {
   res.locals.isChatPage = false;
   res.redirect('/marketplace2');
 });
+
+// Route for the new marketplace landing page - accessible to everyone without auth
+app.get('/marketplace-landing', (req, res) => {
+  res.locals.isChatPage = false;
+  
+  // Render the template with error handling
+  try {
+    res.render('marketplace-landing', {
+      user: null,
+      isAuthenticated: false
+    });
+  } catch (error) {
+    console.error('Error rendering marketplace-landing template:', error);
+    res.status(500).send('An error occurred while loading the marketplace landing page.');
+  }
+});
   
   app.get('/marketplace2', async (req, res) => {
     try {
@@ -1729,39 +1777,35 @@ app.post('/api/business/listings/filter', async (req, res) => {
       const business = businesses.find(b => b.id === parseInt(req.params.id));
       if (!business) {
           return res.status(404).send('Business not found');
-      }
-      res.render('business', { business });
+      }      res.render('business', { business });
   });
 
+// REMOVED: Legacy chat API endpoint - using threads API instead
 // API endpoint for chat messages
-app.post('/api/chat', async (req, res) => {
-    const userQuestion = req.body.question;
-
-    try {
-        // Fetch data from the database
-        const dbQuery = 'SELECT * FROM listings'; // Adjust the query as needed
-        const dbResult = await pool.query(dbQuery);
-        const data = dbResult.rows;
-
-        // Prepare the prompt for OpenAI
-        const prompt = `
-User question: "${userQuestion}"
-Website data: ${JSON.stringify(data)}
-
-Provide a helpful answer based on the website data.
-`;
-
-        // Call the OpenAI API
-        const completion = await openai.chat.completions.create({
-            model: 'gpt-4.1-nano', // Updated from gpt-3.5-turbo to gpt-4.1-nano
-            messages: [{ role: 'user', content: prompt }],
-        });
-        res.json({ answer: aiResponse });
-    } catch (error) {
-        console.error('Error handling chat message:', error);
-        res.status(500).json({ error: 'An error occurred' });
-    }
-});
+// app.post('/api/chat', async (req, res) => {
+//     const userQuestion = req.body.question;
+//     try {
+//         // Fetch data from the database
+//         const dbQuery = 'SELECT * FROM listings'; // Adjust the query as needed
+//         const dbResult = await pool.query(dbQuery);
+//         const data = dbResult.rows;
+//         // Prepare the prompt for OpenAI
+//         const prompt = `
+// User question: "${userQuestion}"
+// Website data: ${JSON.stringify(data)}
+// Provide a helpful answer based on the website data.
+// `;
+//         // Call the OpenAI API
+//         const completion = await openai.chat.completions.create({
+//             model: 'gpt-4.1-nano', // Updated from gpt-3.5-turbo to gpt-4.1-nano
+//             messages: [{ role: 'user', content: prompt }],
+//         });
+//         res.json({ answer: aiResponse });
+//     } catch (error) {
+//         console.error('Error handling chat message:', error);
+//         res.status(500).json({ error: 'An error occurred' });
+//     }
+// });
 app.use('/api/voice', voiceRoutes);
 
 const metricsService = new BusinessMetricsService(pool);
@@ -2034,7 +2078,7 @@ app.get('/auth/linkedin/callback', async (req, res) => {
     const token = jwt.sign(
       { userId: user.id, email: user.email },
       process.env.JWT_SECRET,
-      { expiresIn: '4h' }
+      { expiresIn: '12h' }
     );
 
     // Set session
@@ -2177,10 +2221,10 @@ app.use('/api/market', authenticateToken, marketTrendsRoutes);
 
 
 // Modify the catch-all route to exclude /chat AND /professional-verification
-app.get('*', (req, res, next) => {
-  // Don't redirect specific server-rendered pages or API calls to index.html
+app.get('*', (req, res, next) => {  // Don't redirect specific server-rendered pages or API calls to index.html
   if (req.path.startsWith('/chat') || 
       req.path.startsWith('/arzani-ai') || // Add arzani-ai to excluded paths
+      req.path.startsWith('/arzani-x') || // Add arzani-x to excluded paths
       req.path === '/market-trends' || 
       req.path === '/saved-searches' || 
       req.path === '/history' || 
@@ -2203,7 +2247,26 @@ app.get('*', (req, res, next) => {
 // Update login/authentication route to include refresh token
 app.post('/auth/login', async (req, res) => {
   try {
-    // ... existing login logic ...
+    const { email, password, returnTo } = req.body;
+    
+    if (!email || !password) {
+      return res.status(400).json({ success: false, message: 'Email and password are required' });
+    }
+    
+    // Get user by email
+    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    
+    if (result.rows.length === 0) {
+      return res.status(401).json({ success: false, message: 'Invalid email or password' });
+    }
+    
+    const user = result.rows[0];
+    
+    // Verify password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ success: false, message: 'Invalid email or password' });
+    }
 
     const token = jwt.sign(
       { userId: user.id },
@@ -2216,17 +2279,38 @@ app.post('/auth/login', async (req, res) => {
       process.env.REFRESH_TOKEN_SECRET,
       { expiresIn: REFRESH_TOKEN_EXPIRY }
     );
-
+    
+    // Save user ID to session
+    req.session.userId = user.id;
+    
     // Set refresh token in HTTP-only cookie
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
     });
+    
+    // Set normal token cookie (accessible to JavaScript)
+    res.cookie('token', token, {
+      maxAge: 14 * 24 * 60 * 60 * 1000, // 14 days
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax'
+    });
+    
+    // Handle returnTo parameter for proper redirects
+    let redirectTo = '/marketplace2'; // Default fallback
+    if (returnTo) {
+      // Sanitize the returnTo URL to prevent open redirects
+      const sanitizedReturnTo = decodeURIComponent(returnTo);
+      if (sanitizedReturnTo.startsWith('/') && !sanitizedReturnTo.includes('login')) {
+        redirectTo = sanitizedReturnTo;
+      }
+    }
 
     res.json({
       success: true,
       token,
+      redirectTo: redirectTo,
       user: {
         id: user.id,
         email: user.email,
@@ -2260,12 +2344,10 @@ app.post('/auth/refresh-token', async (req, res) => {
       { userId: decoded.userId },
       process.env.REFRESH_TOKEN_SECRET,
       { expiresIn: REFRESH_TOKEN_EXPIRY }
-    );
-
-    res.cookie('refreshToken', newRefreshToken, {
+    );    res.cookie('refreshToken', newRefreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 7 * 24 * 60 * 60 * 1000
+      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
     });
 
     res.json({ token: newToken });
@@ -2434,7 +2516,6 @@ app.get('/homepage', (req, res) => {
     title: 'Welcome to Our Marketplace'
   });
 });
-
 
 
 // Add this debug info to explicitly check the middleware and routes
@@ -2780,10 +2861,9 @@ app.use(['/history', '/talk-to-arzani', '/profile'], async (req, res, next) => {
       }
       
       // Ensure token is in cookies
-      if (!cookieToken || cookieToken !== validToken) {
-        res.cookie('token', validToken, {
+      if (!cookieToken || cookieToken !== validToken) {        res.cookie('token', validToken, {
           httpOnly: false, // Allow JS access
-          maxAge: 4 * 60 * 60 * 1000, // 4 hours
+          maxAge: 14 * 24 * 60 * 60 * 1000, // 14 days
           secure: process.env.NODE_ENV === 'production',
           sameSite: 'lax'
         });
@@ -2982,11 +3062,10 @@ app.use((req, res, next) => {
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your-secret-key',
   resave: true, // Changed to true
-  saveUninitialized: false,
-  cookie: {
+  saveUninitialized: false,  cookie: {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    maxAge: 14 * 24 * 60 * 60 * 1000 // 14 days
   }
 }));
 
@@ -4255,6 +4334,18 @@ app.get('/arzani-ai', (req, res) => {
   }
 });
 
+// Add Arzani X route - new modern A2A-integrated interface with authentication protection
+app.get('/arzani-x', requireAuth, (req, res) => {
+  try {
+    res.render('Arzani-x', {
+      title: 'Arzani X- Where real AI experts build real businesses',
+      user: req.user || {}
+    });
+  } catch (error) {
+    console.error('Error rendering Arzani-x page:', error);
+    res.status(500).send('Error loading Arzani-x page');
+  }
+});
 
 app.get('/dashboard', (req, res) => {
   res.render('dashboard', {

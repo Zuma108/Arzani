@@ -17,7 +17,7 @@ const chatController = {
       const conversationsResult = await pool.query(`
         SELECT c.id, c.updated_at, c.is_group_chat, c.is_ai_chat, c.group_name, c.business_id,
                (SELECT COUNT(*) FROM messages m 
-                WHERE m.conversation_id = c.id 
+                WHERE m.session_id = c.id 
                 AND m.created_at > COALESCE(cp.last_read_at, '1970-01-01'::timestamp)
                 AND m.sender_id != $1) as unread_count
         FROM conversations c
@@ -56,7 +56,7 @@ const chatController = {
         const lastMessageResult = await pool.query(`
           SELECT id, sender_id, content, created_at, is_system_message
           FROM messages
-          WHERE conversation_id = $1
+          WHERE session_id = $1
           ORDER BY created_at DESC
           LIMIT 1
         `, [conversation.id]);
@@ -94,7 +94,7 @@ const chatController = {
       
       // Check if user is a participant
       const participantCheck = await pool.query(
-        'SELECT * FROM conversation_participants WHERE conversation_id = $1 AND user_id = $2',
+        'SELECT * FROM conversation_participants WHERE session_id = $1 AND user_id = $2',
         [conversationId, userId]
       );
       
@@ -122,7 +122,7 @@ const chatController = {
       const inquiryResult = await pool.query(`
         SELECT id, timeframe, created_at
         FROM business_inquiries
-        WHERE conversation_id = $1
+        WHERE session_id = $1
         LIMIT 1
       `, [conversationId]);
       
@@ -149,7 +149,7 @@ const chatController = {
                u.username as sender_name, u.profile_picture as sender_profile_pic
         FROM messages m
         LEFT JOIN users u ON m.sender_id = u.id
-        WHERE m.conversation_id = $1
+        WHERE m.session_id = $1
         ORDER BY m.created_at ASC
       `, [conversationId]);
       
@@ -178,7 +178,7 @@ const chatController = {
       await pool.query(`
         UPDATE conversation_participants 
         SET last_read_at = NOW() 
-        WHERE conversation_id = $1 AND user_id = $2
+        WHERE session_id = $1 AND user_id = $2
       `, [conversationId, userId]);
       
       // Return conversation with business context
@@ -212,10 +212,10 @@ const chatController = {
                u.username as other_user_name, u.id as other_user_id, u.profile_picture,
                bi.timeframe, bi.created_at as inquiry_date
         FROM conversations c
-        JOIN conversation_participants cp1 ON c.id = cp1.conversation_id AND cp1.user_id = $1
-        JOIN conversation_participants cp2 ON c.id = cp2.conversation_id AND cp2.user_id != $1
+        JOIN conversation_participants cp1 ON c.id = cp1.session_id AND cp1.user_id = $1
+        JOIN conversation_participants cp2 ON c.id = cp2.session_id AND cp2.user_id != $1
         JOIN users u ON cp2.user_id = u.id
-        JOIN business_inquiries bi ON bi.conversation_id = c.id
+        JOIN business_inquiries bi ON bi.session_id = c.id
         LEFT JOIN businesses b ON c.business_id = b.id
         ORDER BY c.updated_at DESC
       `, [userId]);
@@ -256,8 +256,8 @@ const chatController = {
       const existingConversationQuery = `
         SELECT c.id 
         FROM conversations c
-        JOIN conversation_participants cp1 ON c.id = cp1.conversation_id AND cp1.user_id = $1
-        JOIN conversation_participants cp2 ON c.id = cp2.conversation_id AND cp2.user_id = $2
+        JOIN conversation_participants cp1 ON c.id = cp1.session_id AND cp1.user_id = $1
+        JOIN conversation_participants cp2 ON c.id = cp2.session_id AND cp2.user_id = $2
         WHERE c.is_group_chat = FALSE
         ${businessId ? 'AND c.business_id = $3' : 'AND c.business_id IS NULL'}
       `;
@@ -278,7 +278,7 @@ const chatController = {
         } else {
           // Create new conversation
           const conversationResult = await client.query(`
-            INSERT INTO conversations (is_group_chat, business_id)
+            INSERT INTO a2a_chat_sessions (is_group_chat, business_id)
             VALUES (FALSE, $1)
             RETURNING id
           `, [businessId || null]);
@@ -287,7 +287,7 @@ const chatController = {
           
           // Add participants
           await client.query(`
-            INSERT INTO conversation_participants (conversation_id, user_id, is_admin)
+            INSERT INTO conversation_participants (session_id, user_id, is_admin)
             VALUES ($1, $2, TRUE), ($1, $3, FALSE)
           `, [conversationId, userId, otherUserId]);
         }
@@ -295,7 +295,7 @@ const chatController = {
         // Add initial message if provided
         if (initialMessage) {
           await client.query(`
-            INSERT INTO messages (conversation_id, sender_id, content)
+            INSERT INTO a2a_chat_messages (session_id, sender_id, content)
             VALUES ($1, $2, $3)
           `, [conversationId, userId, initialMessage]);
         }
@@ -304,7 +304,7 @@ const chatController = {
         if (formId) {
           await client.query(`
             UPDATE contact_forms 
-            SET conversation_id = $1, status = 'connected' 
+            SET session_id = $1, status = 'connected' 
             WHERE id = $2 AND user_id = $3
           `, [conversationId, formId, userId]);
         }
@@ -342,7 +342,7 @@ const chatController = {
       
       // Check if user is a participant
       const participantCheck = await pool.query(
-        'SELECT * FROM conversation_participants WHERE conversation_id = $1 AND user_id = $2',
+        'SELECT * FROM conversation_participants WHERE session_id = $1 AND user_id = $2',
         [conversationId, userId]
       );
       
@@ -352,7 +352,7 @@ const chatController = {
       
       // Add message
       const messageResult = await pool.query(`
-        INSERT INTO messages (conversation_id, sender_id, content, parent_message_id)
+        INSERT INTO a2a_chat_messages (session_id, sender_id, content, parent_message_id)
         VALUES ($1, $2, $3, $4)
         RETURNING id, created_at
       `, [conversationId, userId, content, replyTo || null]);
@@ -401,7 +401,7 @@ const chatController = {
       
       // Get conversation ID to check permissions
       const messageResult = await pool.query(
-        'SELECT conversation_id FROM messages WHERE id = $1',
+        'SELECT session_id FROM messages WHERE id = $1',
         [messageId]
       );
       
@@ -409,11 +409,11 @@ const chatController = {
         return res.status(404).json({ success: false, message: 'Message not found' });
       }
       
-      const conversationId = messageResult.rows[0].conversation_id;
+      const conversationId = messageResult.rows[0].session_id;
       
       // Check if user is a participant
       const participantCheck = await pool.query(
-        'SELECT * FROM conversation_participants WHERE conversation_id = $1 AND user_id = $2',
+        'SELECT * FROM conversation_participants WHERE session_id = $1 AND user_id = $2',
         [conversationId, userId]
       );
       
@@ -484,7 +484,7 @@ const chatController = {
       
       // Check if user is a participant
       const participantCheck = await pool.query(
-        'SELECT * FROM conversation_participants WHERE conversation_id = $1 AND user_id = $2',
+        'SELECT * FROM conversation_participants WHERE session_id = $1 AND user_id = $2',
         [conversationId, userId]
       );
       
@@ -498,7 +498,7 @@ const chatController = {
       
       // Create a message with the file attachment
       const messageResult = await pool.query(`
-        INSERT INTO messages (conversation_id, sender_id, content, is_system_message)
+        INSERT INTO a2a_chat_messages (session_id, sender_id, content, is_system_message)
         VALUES ($1, $2, $3, FALSE)
         RETURNING id, created_at
       `, [conversationId, userId, `[File: ${file.originalname}]`]);
@@ -562,7 +562,7 @@ const chatController = {
       
       // Check if user is a participant
       const participantCheck = await pool.query(
-        'SELECT * FROM conversation_participants WHERE conversation_id = $1 AND user_id = $2',
+        'SELECT * FROM conversation_participants WHERE session_id = $1 AND user_id = $2',
         [conversationId, userId]
       );
       
@@ -576,7 +576,7 @@ const chatController = {
       
       // Create a message with the voice attachment
       const messageResult = await pool.query(`
-        INSERT INTO messages (conversation_id, sender_id, content, is_system_message)
+        INSERT INTO a2a_chat_messages (session_id, sender_id, content, is_system_message)
         VALUES ($1, $2, $3, FALSE)
         RETURNING id, created_at
       `, [conversationId, userId, `[Voice Message]`]);
@@ -637,7 +637,7 @@ const chatController = {
       await pool.query(`
         UPDATE conversation_participants 
         SET last_read_at = NOW() 
-        WHERE conversation_id = $1 AND user_id = $2
+        WHERE session_id = $1 AND user_id = $2
       `, [conversationId, userId]);
       
       // Notify WebSocket service

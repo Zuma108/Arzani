@@ -1,8 +1,48 @@
 import jwt from 'jsonwebtoken';
 import pool from '../db.js';
 
+/**
+ * Check if development mode bypass should be applied
+ */
+function shouldBypassAdminAuth(req) {
+  // Only allow bypass in development mode
+  if (process.env.NODE_ENV !== 'development') {
+    return false;
+  }
+
+  // Check if dev mode bypass is enabled
+  if (process.env.DEV_MODE_AUTH_BYPASS !== 'true') {
+    return false;
+  }
+
+  // If auth bypass is enabled, grant admin access
+  console.log(`🔓 DEV MODE: Bypassing admin auth for ${req.path}`);
+  
+  // Create or enhance mock user object for bypassed requests
+  if (!req.user) {
+    const defaultUserId = process.env.BYPASS_AUTH_DEFAULT_USER_ID || '1';
+    req.user = {
+      id: parseInt(defaultUserId),
+      username: 'dev-admin',
+      email: 'admin@example.com',
+      role: 'admin',
+      isDevelopmentBypass: true
+    };
+  } else {
+    // Ensure existing user has admin role in dev mode
+    req.user.role = 'admin';
+  }
+  
+  return true;
+}
+
 export const adminAuth = async (req, res, next) => {
   try {
+    // ==== DEVELOPMENT MODE BYPASS ====
+    if (shouldBypassAdminAuth(req)) {
+      return next();
+    }
+
     // Check if this is an API request
     const isApiRequest = req.path.startsWith('/api/') || 
                          req.xhr || 

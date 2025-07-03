@@ -1,0 +1,20 @@
+{
+  "name": "business-valuation-rag",
+  "version": "1.0.0",
+  "description": "Business Valuation RAG MCP Server for AI Agents",
+  "type": "module",
+  "main": "business-valuation-rag.js",
+  "bin": {
+    "business-valuation-rag": "./business-valuation-rag.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.4.0",
+    "@pinecone-database/pinecone": "^1.1.0",
+    "openai": "^4.20.0",
+    "dotenv": "^16.0.0"
+  },
+  "scripts": {
+    "start": "node business-valuation-rag.js",
+    "test": "node ../scripts/test-rag-integration.js test"
+  }
+}

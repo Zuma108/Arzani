@@ -520,14 +520,64 @@ router.get('/conversations', authenticateToken, async (req, res) => {
         recipient: participantResult.rows[0] || null
       };
     }));
-    
-    res.json({
+      res.json({
       success: true,
       conversations
     });
   } catch (error) {
     console.error('Error fetching conversations:', error);
     res.status(500).json({ success: false, error: 'Failed to fetch conversations' });
+  }
+});
+
+// Create a new conversation (specifically for Arzani-x.ejs)
+router.post('/conversations', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { group_name, business_id, is_ai_chat = true } = req.body;
+    
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
+
+    console.log(`Creating new conversation for user: ${userId}`);
+
+    // Create new conversation with Arzani AI chat settings
+    const createQuery = `
+      INSERT INTO conversations (is_group_chat, is_ai_chat, group_name, business_id, created_at, updated_at)
+      VALUES (false, $1, $2, $3, NOW(), NOW())
+      RETURNING id, created_at, updated_at
+    `;
+    
+    const conversationResult = await pool.query(createQuery, [
+      is_ai_chat,
+      group_name || `Arzani Chat ${new Date().toLocaleString()}`,
+      business_id || null
+    ]);
+    
+    const conversation = conversationResult.rows[0];
+    
+    // Add the user as a participant
+    await pool.query(
+      `INSERT INTO conversation_participants (conversation_id, user_id, joined_at, is_admin)
+       VALUES ($1, $2, NOW(), true)`,
+      [conversation.id, userId]
+    );
+    
+    console.log(`New conversation created: ${conversation.id}`);
+    
+    res.json({
+      success: true,
+      id: conversation.id,
+      conversation_id: conversation.id,
+      group_name: group_name || `Arzani Chat ${new Date().toLocaleString()}`,
+      created_at: conversation.created_at,
+      updated_at: conversation.updated_at,
+      is_ai_chat: true
+    });
+  } catch (error) {
+    console.error('Error creating conversation:', error);
+    res.status(500).json({ success: false, error: 'Failed to create conversation' });
   }
 });
 

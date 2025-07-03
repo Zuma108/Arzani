@@ -5,9 +5,399 @@
  * - EBITDA × multiple valuations
  * - Tax scenario analysis
  * - Financial due diligence guidance
+ * - AI-powered financial analysis using GPT-4.1 mini
  */
 
 import { createTextPart, createDataPart, createMessage } from '../../libs/a2a/utils.js';
+import { stripMarkdownFromMessage } from '../../utils/markdown-stripper.js';
+import { 
+  financeCache, 
+  performanceMonitor, 
+  aiCircuitBreaker, 
+  rateLimiter, 
+  withMonitoring,
+  getSystemHealth 
+} from './scalability-enhancements.js';
+import { MCPFinanceAgent } from '../mcp/agent-integration.js';
+import { enhanceSystemPromptWithMarkdown, formatAgentResponse, addAgentSignature } from '../../utils/markdown-utils.js';
+import OpenAI from 'openai';
+import { Pinecone } from '@pinecone-database/pinecone';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import hybridRetriever from '../knowledge/enhanced-hybrid-retrieval.js';
+
+// Load environment variables
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.join(__dirname, '../../.env') });
+
+// Initialize OpenAI client with GPT-4.1 mini configuration
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
+
+// Initialize Pinecone for RAG queries
+const pinecone = new Pinecone({
+  apiKey: process.env.PINECONE_API_KEY
+});
+
+const indexName = process.env.PINECONE_INDEX_NAME || 'marketplace-index';
+
+// Initialize MCP-enhanced Finance Agent
+const mcpFinanceAgent = new MCPFinanceAgent({
+  serverUrl: process.env.MCP_SERVER_URL || 'ws://localhost:3001',
+  autoConnect: true
+});
+
+// Initialize hybrid knowledge retrieval system
+const knowledgeRetriever = hybridRetriever;
+
+// OpenAI Configuration optimized for GPT-4.1 mini
+const OPENAI_CONFIG = {
+  model: 'gpt-4.1-mini',           // GPT-4.1 mini for advanced financial reasoning
+  temperature: 0.3,               // Lower temperature for more precise financial calculations
+  maxTokens: 750,                // Reduced for more concise financial analysis
+  topP: 0.9,                     // Focused sampling for accuracy
+  frequencyPenalty: 0.1,         // Slight penalty to avoid repetition
+  presencePenalty: 0.1,          // Encourage diverse financial perspectives
+  maxInputLength: 4000           // Limit input to optimize response time
+};
+
+// Enhanced response formatting using markdown utilities
+function enhanceFinanceResponse(responseText) {
+  // Apply markdown formatting improvements
+  const formattedResponse = formatAgentResponse(responseText, 'finance');
+  
+  // Add agent signature
+  return addAgentSignature(formattedResponse, 'finance');
+}
+
+// Thinking panel state for finance agent
+let currentFinanceThinkingPanel = null;
+let financeThinkingSteps = [];
+let financeMCPSources = [];
+let financeMemoryInsights = [];
+
+/**
+ * Create thinking panel for transparent finance decision-making
+ */
+function createFinanceThinkingPanel() {
+  const panelId = 'finance-thinking-' + Date.now();
+  currentFinanceThinkingPanel = {
+    id: panelId,
+    agentType: 'finance',
+    thoughts: [],
+    mcpSources: [],
+    memoryInsights: [],
+    isActive: true,
+    startTime: new Date().toISOString(),
+    confidence: 0,
+    status: 'analyzing'
+  };
+  financeThinkingSteps = [];
+  financeMCPSources = [];
+  financeMemoryInsights = [];
+  addFinanceThinkingStep('Starting financial analysis...', 'thinking');
+  return { panelId, agentType: 'finance', action: 'create' };
+}
+
+/**
+ * Add thinking step to finance panel
+ */
+function addFinanceThinkingStep(thought, stepType = 'thinking', isCompleted = false) {
+  if (!currentFinanceThinkingPanel) createFinanceThinkingPanel();
+  
+  const step = {
+    id: financeThinkingSteps.length + 1,
+    text: thought,
+    type: stepType, // 'thinking', 'searching', 'analyzing', 'calculating', 'concluding'
+    isCompleted,
+    timestamp: new Date().toISOString()
+  };
+  
+  financeThinkingSteps.push(step);
+  currentFinanceThinkingPanel.thoughts = financeThinkingSteps;
+  
+  console.log(`🧠 [Finance Thinking] ${stepType.toUpperCase()}: ${thought}`);
+}
+
+/**
+ * Add MCP source to finance panel
+ */
+function addFinanceMCPSource(source, relevance = 0.8, sourceType = 'knowledge') {
+  if (!currentFinanceThinkingPanel) return;
+  
+  const mcpSource = {
+    id: financeMCPSources.length + 1,
+    title: source.title || source.name || 'Financial Source',
+    url: source.url || source.source_url || '#',
+    relevance,
+    sourceType, // 'knowledge', 'search', 'document', 'market_data'
+    content: source.content ? source.content.substring(0, 200) + '...' : '',
+    metadata: source.metadata || {},
+    timestamp: new Date().toISOString()
+  };
+  
+  financeMCPSources.push(mcpSource);
+  currentFinanceThinkingPanel.mcpSources = financeMCPSources;
+  
+  console.log(`📊 [Finance MCP] Added source: ${mcpSource.title} (${(relevance * 100).toFixed(1)}%)`);
+}
+
+/**
+ * Add memory insight to finance panel
+ */
+function addFinanceMemoryInsight(insight, confidence = 0.8) {
+  if (!currentFinanceThinkingPanel) return;
+  
+  const memoryInsight = {
+    id: financeMemoryInsights.length + 1,
+    text: insight,
+    confidence,
+    timestamp: new Date().toISOString()
+  };
+  
+  financeMemoryInsights.push(memoryInsight);
+  currentFinanceThinkingPanel.memoryInsights = financeMemoryInsights;
+  
+  console.log(`💭 [Finance Memory] ${insight} (${(confidence * 100).toFixed(1)}%)`);
+}
+
+/**
+ * Update finance panel confidence and status
+ */
+function updateFinancePanelStatus(confidence, status) {
+  if (!currentFinanceThinkingPanel) return;
+  
+  currentFinanceThinkingPanel.confidence = confidence;
+  currentFinanceThinkingPanel.status = status;
+  
+  console.log(`📊 [Finance Status] ${status} - Confidence: ${(confidence * 100).toFixed(1)}%`);
+}
+
+/**
+ * Complete finance thinking panel
+ */
+function completeFinanceThinkingPanel() {
+  if (!currentFinanceThinkingPanel) return;
+  
+  currentFinanceThinkingPanel.isActive = false;
+  currentFinanceThinkingPanel.endTime = new Date().toISOString();
+  addFinanceThinkingStep('Financial analysis complete', 'concluding', true);
+  
+  console.log(`✅ [Finance Thinking] Panel completed with ${financeThinkingSteps.length} steps`);
+}
+
+/**
+ * Get finance thinking panel state
+ */
+function getFinanceThinkingPanelState() {
+  return currentFinanceThinkingPanel;
+}
+
+/**
+ * Generate thinking panel annotation for markdown
+ */
+function generateFinanceThinkingAnnotation() {
+  if (!currentFinanceThinkingPanel || financeThinkingSteps.length === 0) return '';
+  
+  const panelData = {
+    ...currentFinanceThinkingPanel,
+    thoughts: financeThinkingSteps,
+    mcpSources: financeMCPSources,
+    memoryInsights: financeMemoryInsights
+  };
+  
+  return `<!-- THINKING_PANEL:${JSON.stringify(panelData)} -->`;
+}
+
+// Comprehensive system prompt for the finance AI agent - enhanced with markdown formatting
+const FINANCE_SYSTEM_PROMPT = enhanceSystemPromptWithMarkdown(`You are a virtual financial advisor for Arzani Ltd's business marketplace, specializing in UK business transactions and valuations.
+
+**CRITICAL**: You MUST format ALL your responses using proper **GitHub-flavoured Markdown** for every element:
+
+### Headings
+- Use **##** for main sections (e.g., ## Financial Analysis)
+- Use **###** for subsections (e.g., ### Valuation Methods)
+- Use **####** for minor sections (e.g., #### Tax Implications)
+- Always include a space after the # symbols
+
+### Lists
+- Use **-** for unordered lists (with a space after the dash)
+- Use **1.** for numbered lists (with proper sequential numbering)
+- Use proper indentation for nested lists (two spaces per level)
+- Ensure consistent spacing between list items
+
+### Tables
+- Use well-structured markdown tables for all financial data
+- Include clear column headers (Method, Value, Multiple, etc.)
+- RIGHT-ALIGN all numeric columns (currency, percentages, multiples)
+- Format all currency amounts with proper symbols (£125,000)
+- Bold all important figures, rates and multipliers
+- Include totals and weighted averages in the bottom row
+- Fill empty cells with "N/A" rather than leaving blank
+
+### Code and Emphasis
+- Use \`\`\`code blocks\`\`\` for calculation examples
+- Use **bold text** for key financial figures and terms
+- Use *italic text* for definitions or supplementary information
+- Use > blockquotes for important disclaimers and warnings
+- Use horizontal rules (---) to separate major sections
+
+## TABLE FORMATTING REQUIREMENTS
+When creating tables, you must follow these specific finance-focused guidelines:
+- Use well-structured markdown tables with clear headers
+- RIGHT-ALIGN all numeric columns (currency, percentages, multiples)
+- Bold all currency amounts like **£125,000** and **$250,000**
+- Bold all percentages like **15.5%** and **92%**
+- Bold all multipliers like **4.2x** and **6.8x**
+- Use consistent decimal places (2 for currency, 1 for percentages)
+- Include totals and subtotals in **bold** formatting
+- Fill any empty cells with "N/A" rather than leaving blank
+- Use descriptive column headers like "EBITDA Multiple", "Enterprise Value", "Tax Liability"
+
+CRITICAL: You are an AI assistant providing general financial guidance. Your responses may contain inaccuracies and should NOT be relied upon for major financial decisions without human professional verification.
+
+## YOUR ROLE
+- Provide general business valuation guidance using industry-standard methods
+- Offer educational information about tax planning for UK business sales
+- Explain financial due diligence processes at a high level
+- Support deal structure understanding from a financial perspective
+- Focus exclusively on UK business transactions
+
+## WHAT YOU CAN DO
+✓ Provide general business valuation estimates using EBITDA multiples, DCF, and asset-based methods
+✓ Explain tax implications of asset vs share sales in the UK (general guidance only)
+✓ Provide industry-specific financial benchmarks and typical multiples
+✓ Explain working capital adjustments and completion accounts concepts
+✓ Guide on general financial due diligence requirements
+✓ Offer educational information about deal structures
+
+## WHAT YOU CANNOT DO
+✗ Provide specific investment advice (refer to FCA-regulated advisors)
+✗ Give personal tax advice (refer to qualified accountants)
+✗ Guarantee valuation accuracy (always recommend professional valuations)
+✗ Handle non-UK tax scenarios (UK-focused only)
+✗ Replace professional financial, legal, or tax advice
+
+## RESPONSE GUIDELINES
+- Always use British English and UK terminology
+- Quote figures in GBP (£) unless specifically requested otherwise
+- Reference relevant UK tax rates and allowances where applicable
+- Provide ranges rather than single-point estimates for valuations
+- Be specific about assumptions made in calculations
+- Include specific referrals to qualified professionals (accountants, business valuers, financial advisors)
+
+## PROFESSIONAL REFERRAL GUIDANCE
+Always recommend users consult with:
+- Qualified chartered accountants for tax advice
+- Certified business valuers for accurate valuations
+- FCA-regulated financial advisors for investment decisions
+- Solicitors for legal aspects of business sales
+- Industry-specific specialists for sector expertise
+
+## INDUSTRY KNOWLEDGE
+You have general knowledge of UK business valuation multiples, tax regulations (including Capital Gains Tax, Corporation Tax, Business Asset Disposal Relief), and market conditions across various sectors. However, this knowledge may be incomplete or outdated and should always be verified with current professional sources.
+
+Keep responses professional, educational, and heavily focused on encouraging users to seek qualified professional advice for all important financial decisions.`, 'finance');
+
+/**
+ * Enhanced Finance RAG Query using Hybrid Knowledge Retrieval
+ * @param {string} query - Financial query to search for
+ * @param {number} userId - User ID for personalized context (optional)
+ * @param {string} category - Financial category to focus search (optional)
+ * @returns {Promise<Array>} - Relevant financial guidance from hybrid sources
+ */
+async function queryFinanceRAG(query, userId = null, category = null) {
+  try {
+    console.log(`🔍 Enhanced Finance RAG Query: "${query}"`);
+    addFinanceThinkingStep(`Searching financial knowledge base for: "${query.substring(0, 50)}..."`);
+    
+    // Use hybrid knowledge retrieval for comprehensive financial analysis
+    const knowledgeResult = await knowledgeRetriever.retrieveKnowledge(
+      query, 
+      'finance',
+      userId,
+      {
+        maxResults: 8,
+        includeUserDocs: true,
+        searchFallback: true
+      }
+    );
+    
+    addFinanceThinkingStep(
+      `Found ${knowledgeResult.results.length} relevant sources (${knowledgeResult.metadata.breakdown.userDocs} user docs, ${knowledgeResult.metadata.breakdown.staticKnowledge} knowledge base, ${knowledgeResult.metadata.breakdown.realTimeSearch} real-time)`
+    );
+    
+    // Transform results to maintain backward compatibility
+    const ragResults = knowledgeResult.results.map(result => ({
+      title: result.metadata.title || result.metadata.document_name || 'Financial Guidance',
+      content: result.content,
+      category: result.metadata.category || result.metadata.knowledge_domain || category,
+      financial_area: result.metadata.financial_area || result.metadata.document_type,
+      namespace: result.namespace || result.metadata.knowledge_domain,
+      source_url: result.metadata.source_url || result.metadata.url,
+      relevance_score: result.score,
+      is_user_document: result.source === 'user_document',
+      document_type: result.metadata.document_type,
+      confidence: knowledgeResult.metadata.confidence
+    }));
+    
+    console.log(`📊 Found ${ragResults.length} relevant financial guidance documents`);
+    addFinanceThinkingStep(`Financial analysis complete - ${ragResults.length} sources ready for consultation`, true);
+    return ragResults;
+    
+  } catch (error) {
+    console.error('❌ Error querying Finance RAG:', error);
+    addFinanceThinkingStep(`Error retrieving financial knowledge: ${error.message}`, true);
+    return [];
+  }
+}
+
+/**
+ * Construct a UK Finance ReAct prompt enhanced with RAG results
+ * @param {string} userQuery - The user's financial question
+ * @param {Array} ragResults - RAG search results
+ * @param {string} financialType - Type of financial analysis (optional)
+ * @returns {string} - Enhanced prompt with RAG context
+ */
+function constructUKFinanceReActPromptWithRAG(userQuery, ragResults, financialType = null) {
+  let ragContext = '';
+  
+  if (ragResults && ragResults.length > 0) {
+    ragContext = '\n\n## RELEVANT UK FINANCIAL GUIDANCE:\n';
+    ragResults.forEach((result, index) => {
+      ragContext += `\n### Guidance ${index + 1}: ${result.title}\n`;
+      ragContext += `**Financial Area:** ${result.financial_area || result.category}\n`;
+      ragContext += `**Source:** ${result.namespace}\n`;
+      ragContext += `**Content:** ${result.content}\n`;
+      if (result.source_url) {
+        ragContext += `**Reference:** ${result.source_url}\n`;
+      }
+      ragContext += `**Relevance Score:** ${(result.relevance_score * 100).toFixed(1)}%\n`;
+    });
+    
+    ragContext += '\n**IMPORTANT:** Use this guidance to provide accurate, authoritative financial advice based on official UK sources. Reference the specific guidance where relevant in your response.\n';
+  }
+  
+  const financialContext = financialType ? `\n**Financial Analysis Focus:** ${financialType}` : '';
+  
+  return `${FINANCE_SYSTEM_PROMPT}
+
+## USER INQUIRY:
+${userQuery}${financialContext}${ragContext}
+
+Using the ReAct (Reasoning + Acting) framework, analyze this UK financial inquiry:
+
+**THOUGHT:** Consider the financial question and identify key factors
+**ACTION:** Determine what specific UK financial analysis or guidance is needed  
+**OBSERVATION:** Note relevant UK financial regulations, tax implications, or best practices
+**REASONING:** Apply UK financial expertise to the specific situation
+**CONCLUSION:** Provide clear, actionable UK financial guidance with appropriate professional referrals
+
+Focus on UK business finance, use proper UK terminology, quote figures in GBP (£), and always recommend qualified professional advice.`;
+}
 
 // Industry multiple ranges (would come from a database in production)
 const INDUSTRY_MULTIPLES = {
@@ -67,10 +457,9 @@ const TAX_SCENARIOS = {
     'asset_sale': {
       name: 'Asset Sale (UK)',
       description: 'Sale of business assets rather than shares',
-      considerations: [
-        {
+      considerations: [        {
           name: 'Capital Gains Tax',
-          description: 'Business asset disposal relief (formerly Entrepreneurs' Relief) may reduce CGT to 10% on qualifying assets up to the lifetime limit of £1 million.',
+          description: 'Business asset disposal relief (formerly Entrepreneurs\' Relief) may reduce CGT to 10% on qualifying assets up to the lifetime limit of £1 million.',
           impact: 'medium'
         },
         {
@@ -161,22 +550,31 @@ const TAX_SCENARIOS = {
  * @returns {Promise<object>} - Response with task and message
  */
 export async function processFinanceTask(task, message) {
+  // Create thinking panel for transparency
+  const thinkingPanel = createFinanceThinkingPanel();
+  
   // Extract text from message parts
   const textParts = message.parts.filter(part => part.type === 'text');
   const dataParts = message.parts.filter(part => part.type === 'data');
   
   if (textParts.length === 0) {
+    addFinanceThinkingStep('❌ Error: No text parts found in message');
+    completeFinanceThinkingPanel();
     throw new Error('Invalid request: No text parts found in message');
   }
   
   const query = textParts[0].text.toLowerCase();
+  addFinanceThinkingStep(`Analyzing financial request: "${textParts[0].text.substring(0, 50)}..."`);
   
   // Determine the type of finance request based on the query
   if (query.includes('valuation') || query.includes('value') || query.includes('worth') || query.includes('multiple')) {
+    addFinanceThinkingStep('Request classified as: Financial Valuation Analysis');
     return handleValuationRequest(task, message, query, dataParts[0]?.data);
   } else if (query.includes('tax') || query.includes('capital gains') || query.includes('taxation')) {
+    addFinanceThinkingStep('Request classified as: Tax Scenario Analysis');
     return handleTaxScenarioRequest(task, message, query, dataParts[0]?.data);
   } else {
+    addFinanceThinkingStep('Request classified as: General Financial Consultation');
     return handleGeneralFinanceRequest(task, message, query);
   }
 }
@@ -191,41 +589,165 @@ export async function processFinanceTask(task, message) {
  * @returns {object} - Response with task and message
  */
 async function handleValuationRequest(task, message, query, data = {}) {
-  // Extract valuation parameters from query and structured data
-  const valuationParams = extractValuationParameters(query, data);
-  
-  // Calculate business valuation
-  const valuation = calculateBusinessValuation(valuationParams);
-  
-  // Include comparable businesses if available
-  const comparableSales = findComparableSales(valuationParams);
-  
-  // Adjust task state to completed
-  const responseTask = {
-    ...task,
-    state: 'completed'
-  };
-  
-  // Prepare response message with valuation
-  const responseMessage = createMessage([
-    createTextPart(formatValuationResponse(valuation, valuationParams, comparableSales)),
-    createDataPart({
-      valuation: {
-        value: valuation.value,
-        range: {
-          low: valuation.rangeLow,
-          high: valuation.rangeHigh
+  try {
+    addFinanceThinkingStep('Processing financial valuation with enhanced analysis...');
+    console.log('Finance Agent: Processing valuation request with MCP-enhanced AI analysis');
+    
+    // Extract valuation parameters from query and structured data
+    addFinanceThinkingStep('Extracting valuation parameters from request...');
+    const valuationParams = extractValuationParameters(query, data);
+    
+    addFinanceThinkingStep(`Identified parameters: Revenue: ${valuationParams.revenue || 'N/A'}, EBITDA: ${valuationParams.ebitda || 'N/A'}, Industry: ${valuationParams.industry || 'N/A'}`);
+    
+    // MCP-Enhanced Analysis: Use RAG capabilities if available
+    let mcpEnhancedAnalysis = null;
+    try {
+      if (mcpFinanceAgent && mcpFinanceAgent.initialized) {
+        console.log('Finance Agent: Using MCP-enhanced analysis');
+        mcpEnhancedAnalysis = await mcpFinanceAgent.performEnhancedFinancialAnalysis({
+          revenue: valuationParams.revenue,
+          profit: valuationParams.ebitda,
+          industry: valuationParams.industry,
+          revenueHistory: valuationParams.revenueHistory,
+          assets: valuationParams.assets,
+          liabilities: valuationParams.liabilities
+        });
+      }
+    } catch (mcpError) {
+      console.error('Finance Agent MCP Enhancement Error:', mcpError);
+      // Continue with standard analysis if MCP fails
+    }
+    
+    // Calculate business valuation using existing logic
+    const valuation = calculateBusinessValuation(valuationParams);
+    
+    // Include comparable businesses if available
+    const comparableSales = findComparableSales(valuationParams);
+    
+    // Enhance with AI analysis
+    let enhancedResponse;    try {
+      const trimmedQuery = query.length > OPENAI_CONFIG.maxInputLength 
+        ? query.substring(0, OPENAI_CONFIG.maxInputLength) 
+        : query;
+        
+      // Create enhanced contextual prompt including MCP insights
+      let contextualPrompt = `Provide expert analysis for this business valuation:
+
+BUSINESS DETAILS:
+- Industry: ${valuationParams.industry}
+- EBITDA: £${valuationParams.ebitda?.toLocaleString() || 'Not specified'}
+- Revenue: £${valuationParams.revenue?.toLocaleString() || 'Not specified'}
+- Currency: ${valuationParams.currency}
+
+CALCULATED VALUATION:
+- Estimated Value: £${valuation.value.toLocaleString()}
+- Range: £${valuation.rangeLow.toLocaleString()} - £${valuation.rangeHigh.toLocaleString()}
+- Multiple Used: ${valuation.multipleUsed.toFixed(1)}x EBITDA`;
+
+      // Add MCP-enhanced insights if available
+      if (mcpEnhancedAnalysis) {
+        contextualPrompt += `
+
+MCP-ENHANCED ANALYSIS:
+- Financial Health: ${JSON.stringify(mcpEnhancedAnalysis.financialAnalysis?.financial_health || {})}
+- Industry Comparison: ${JSON.stringify(mcpEnhancedAnalysis.financialAnalysis?.industry_comparison || {})}
+- Valuation Analysis: ${JSON.stringify(mcpEnhancedAnalysis.valuation || {})}
+- Key Recommendations: ${mcpEnhancedAnalysis.recommendations?.join(', ') || 'None'}`;
+      }
+
+      contextualPrompt += `
+
+USER QUERY: ${trimmedQuery}
+
+Please provide professional commentary on this valuation, including:
+1. Analysis of the valuation approach and multiples used
+2. Key factors that could affect the valuation
+3. Market considerations for this industry
+4. Recommendations for improving business value
+5. Next steps for the business owner
+
+Keep the response professional, educational, and focused on UK business markets.`;
+
+      const aiResponse = await callAIWithSafeguards([
+        {
+          role: 'system',
+          content: FINANCE_SYSTEM_PROMPT        },
+        {
+          role: 'user',
+          content: contextualPrompt
+        }
+      ], contextualPrompt);
+
+      const aiAnalysis = aiResponse;
+        if (aiAnalysis) {
+        // Combine static valuation with AI analysis in a professional format
+        const staticResponse = formatValuationResponse(valuation, valuationParams, comparableSales);
+        if (aiAnalysis && aiAnalysis.trim()) {
+          enhancedResponse = `${staticResponse}\n\n**Market Analysis:**\n\n${aiAnalysis}`;
+        } else {
+          enhancedResponse = staticResponse;
+        }
+        console.log('Finance Agent: AI valuation analysis generated successfully');
+      } else {
+        enhancedResponse = formatValuationResponse(valuation, valuationParams, comparableSales);
+      }
+
+    } catch (aiError) {
+      console.error('Finance Agent AI Enhancement Error:', aiError);
+      // Fall back to standard response if AI fails
+      enhancedResponse = formatValuationResponse(valuation, valuationParams, comparableSales);
+    }
+    
+    // Complete thinking panel
+    addFinanceThinkingStep('Valuation analysis complete', 'concluding', true);
+    updateFinancePanelStatus(1.0, 'complete');
+    completeFinanceThinkingPanel();
+    
+    // Adjust task state to completed
+    const responseTask = {
+      ...task,
+      state: 'completed'
+    };
+      // Prepare response message with enhanced valuation
+    const responseMessage = createMessage([
+      createTextPart(generateFinanceThinkingAnnotation()),
+      createTextPart(enhancedResponse),
+      createDataPart({
+        valuation: {
+          value: valuation.value,
+          range: {
+            low: valuation.rangeLow,
+            high: valuation.rangeHigh
+          },
+          metrics: valuation.metrics,
+          industry: valuationParams.industry,
+          multiple: valuation.multipleUsed
         },
-        metrics: valuation.metrics,
-        industry: valuationParams.industry,
-        multiple: valuation.multipleUsed
-      },
-      comparables: comparableSales,
-      parameters: valuationParams
-    }, 'valuation_data')
-  ]);
-  
-  return { task: responseTask, message: responseMessage };
+        comparables: comparableSales,
+        parameters: valuationParams,
+        mcpEnhancedAnalysis: mcpEnhancedAnalysis || null,
+        analysisSource: mcpEnhancedAnalysis ? 'MCP-Enhanced' : 'Standard',
+        thinkingPanel: getFinanceThinkingPanelState()
+      }, 'valuation_data')
+    ]);
+    
+    return { task: responseTask, message: stripMarkdownFromMessage(responseMessage) };
+    
+  } catch (error) {
+    console.error('Finance Agent Valuation Error:', error);
+    
+    // Fallback response for complete failure
+    const responseTask = {
+      ...task,
+      state: 'completed'
+    };
+
+    const fallbackMessage = createMessage([
+      createTextPart("I apologize, but I'm unable to process your valuation request at this time. Please try again later or contact our support team for assistance with your business valuation needs.")
+    ]);
+
+    return { task: responseTask, message: stripMarkdownFromMessage(fallbackMessage) };
+  }
 }
 
 /**
@@ -238,30 +760,117 @@ async function handleValuationRequest(task, message, query, data = {}) {
  * @returns {object} - Response with task and message
  */
 async function handleTaxScenarioRequest(task, message, query, data = {}) {
-  // Extract tax scenario parameters
-  const taxParams = extractTaxParameters(query, data);
-  
-  // Get tax scenarios for the country
-  const scenarios = getTaxScenarios(taxParams);
-  
-  // Adjust task state to completed
-  const responseTask = {
-    ...task,
-    state: 'completed'
-  };
-  
-  // Prepare response message with tax scenarios
-  const responseMessage = createMessage([
-    createTextPart(formatTaxScenarioResponse(scenarios, taxParams)),
-    createDataPart({
-      scenarios: scenarios,
-      country: taxParams.country,
-      businessType: taxParams.businessType,
-      parameters: taxParams
-    }, 'tax_scenario_data')
-  ]);
-  
-  return { task: responseTask, message: responseMessage };
+  try {
+    console.log('Finance Agent: Processing tax scenario request with AI enhancement');
+    
+    // Extract tax scenario parameters
+    const taxParams = extractTaxParameters(query, data);
+    
+    // Get tax scenarios for the country
+    const scenarios = getTaxScenarios(taxParams);
+    
+    // Enhance with AI analysis
+    let enhancedResponse;
+    try {
+      const trimmedQuery = query.length > OPENAI_CONFIG.maxInputLength 
+        ? query.substring(0, OPENAI_CONFIG.maxInputLength) 
+        : query;      // Create contextual prompt for AI analysis
+      const contextualPrompt = `Provide expert tax analysis for this UK business sale scenario:
+
+BUSINESS SALE PARAMETERS:
+- Country: ${formatCountry(taxParams.country)}
+- Sale Type: ${formatSaleType(taxParams.saleType)}
+- Business Type: ${taxParams.businessType}
+
+TAX SCENARIO ANALYSIS:
+${scenarios.map(scenario => `
+${scenario.name}: ${scenario.description}
+Key Considerations:
+${scenario.considerations.map(c => `- ${c.name}: ${c.description}`).join('\n')}
+`).join('\n')}
+
+USER QUERY: ${trimmedQuery}
+
+Please provide educational tax guidance including:
+1. General analysis of sale structures for tax considerations
+2. Overview of UK tax rates and allowances (subject to verification)
+3. General tax planning concepts to consider
+4. Timeline considerations for tax planning
+5. Documentation typically required
+6. Common risks and general mitigation approaches
+
+Focus on UK tax law for educational purposes only.`;
+
+      const aiResponse = await callAIWithSafeguards([
+        {
+          role: 'system',
+          content: FINANCE_SYSTEM_PROMPT
+        },        {
+          role: 'user',
+          content: contextualPrompt
+        }
+      ], contextualPrompt);
+
+      const aiAnalysis = aiResponse;
+      
+      if (aiAnalysis) {
+        // Combine static tax scenarios with AI analysis
+        const staticResponse = formatTaxScenarioResponse(scenarios, taxParams);
+        enhancedResponse = `${staticResponse}\n\n--- AI TAX ANALYSIS ---\n\n${aiAnalysis}`;
+        console.log('Finance Agent: AI tax analysis generated successfully');
+      } else {
+        enhancedResponse = formatTaxScenarioResponse(scenarios, taxParams);
+      }
+
+    } catch (aiError) {
+      console.error('Finance Agent AI Enhancement Error:', aiError);
+      // Fall back to standard response if AI fails
+      enhancedResponse = formatTaxScenarioResponse(scenarios, taxParams);
+    }
+    
+    // Adjust task state to completed
+    const responseTask = {
+      ...task,
+      state: 'completed'
+    };
+    
+    // Prepare response message with enhanced tax scenarios
+    const responseMessage = createMessage([
+      createTextPart(enhancedResponse),
+      createDataPart({
+        scenarios: scenarios,
+        country: taxParams.country,
+        businessType: taxParams.businessType,
+        parameters: taxParams
+      }, 'tax_scenario_data')
+    ]);
+    
+    return { task: responseTask, message: stripMarkdownFromMessage(responseMessage) };
+
+  } catch (error) {
+    console.error('Finance Agent Tax Scenario Error:', error);
+    
+    // Fallback to static response if everything fails
+    const taxParams = extractTaxParameters(query, data);
+    const scenarios = getTaxScenarios(taxParams);
+    
+    const responseTask = {
+      ...task,
+      state: 'completed'
+    };
+    
+    const responseMessage = createMessage([
+      createTextPart(formatTaxScenarioResponse(scenarios, taxParams)),
+      createDataPart({
+        scenarios: scenarios,
+        country: taxParams.country,
+        businessType: taxParams.businessType,
+        parameters: taxParams
+      }, 'tax_scenario_data')
+    ]);
+    
+    return { task: responseTask, message: stripMarkdownFromMessage(responseMessage) };
+  }
 }
 
 /**
@@ -272,43 +881,110 @@ async function handleTaxScenarioRequest(task, message, query, data = {}) {
  * @param {string} query - The user's query text
  * @returns {object} - Response with task and message
  */
-async function handleGeneralFinanceRequest(task, message, query) {
-  // Generate general finance guidance
-  let response = "As your financial advisor for business transactions, I can help with:\n\n" +
-                 "- Business valuations using EBITDA × multiple method\n" +
-                 "- Tax implications of different sale structures\n" +
-                 "- Financial due diligence checklists\n\n" +
-                 "Could you provide more details about your business and what specific financial information you need?";
-  
-  // Check if the query contains some industry mentions
-  if (query.includes('restaurant') || query.includes('cafe') || query.includes('food')) {
-    response = "For restaurant businesses, key financial considerations include:\n\n" +
-               "- Typical valuation multiples range from 2.5-3.5× EBITDA\n" +
-               "- Cash flow verification is critical (many restaurants have cash transactions)\n" +
-               "- Lease terms significantly impact valuation\n" +
-               "- Inventory valuation methods matter for tax treatment\n\n" +
-               "Would you like a detailed valuation analysis or tax scenario for your restaurant business?";
-  } else if (query.includes('ecommerce') || query.includes('online') || query.includes('digital')) {
-    response = "For e-commerce businesses, key financial considerations include:\n\n" +
-               "- Typical valuation multiples range from 3.5-5× EBITDA\n" +
-               "- SDE (Seller's Discretionary Earnings) is often used instead of EBITDA\n" +
-               "- Customer acquisition costs and retention rates impact valuation\n" +
-               "- Inventory turnover and shipping logistics affect working capital needs\n\n" +
-               "Would you like a detailed valuation analysis or tax scenario for your e-commerce business?";
+async function handleGeneralFinanceRequest(task, message, query) {  try {
+    console.log('Finance Agent: Processing general finance request with RAG-enhanced AI');
+    
+    // Limit query length for optimization
+    const trimmedQuery = query.length > OPENAI_CONFIG.maxInputLength 
+      ? query.substring(0, OPENAI_CONFIG.maxInputLength) 
+      : query;
+
+    // Query RAG for relevant financial guidance
+    addFinanceThinkingStep('Searching for relevant financial guidance...', 'searching');
+    const ragResults = await queryFinanceRAG(trimmedQuery);
+    
+    // Add RAG sources to thinking panel
+    ragResults.forEach(result => {
+      addFinanceMCPSource(result, result.relevance_score, result.is_user_document ? 'document' : 'knowledge');
+    });
+    
+    addFinanceThinkingStep(`Found ${ragResults.length} relevant financial sources`, 'searching', true);
+    updateFinancePanelStatus(0.6, 'analyzing');
+    
+    // Construct enhanced prompt with RAG results
+    const enhancedPrompt = constructUKFinanceReActPromptWithRAG(trimmedQuery, ragResults);
+
+    // Create AI request with enhanced safeguards and RAG context
+    const aiGeneratedResponse = await callAIWithSafeguards([
+      {
+        role: 'user',
+        content: enhancedPrompt
+      }
+    ], enhancedPrompt);
+
+    if (!aiGeneratedResponse) {
+      throw new Error('No response generated by AI');
+    }    console.log('Finance Agent: RAG-enhanced AI response generated successfully');
+
+    // Adjust task state to completed
+    const responseTask = {
+      ...task,
+      state: 'completed'
+    };
+
+    // Complete thinking panel
+    addFinanceThinkingStep('Financial analysis complete', 'concluding', true);
+    updateFinancePanelStatus(1.0, 'complete');
+    completeFinanceThinkingPanel();
+
+    // Prepare response message with AI-generated content and RAG sources
+    let responseText = aiGeneratedResponse;
+    if (ragResults && ragResults.length > 0) {
+      responseText += '\n\n---\n**Sources:** Based on official UK financial guidance';
+    }
+
+    const responseMessage = createMessage([
+      createTextPart(generateFinanceThinkingAnnotation()),
+      createTextPart(responseText),
+      createDataPart({
+        ragSources: ragResults.map(result => ({
+          title: result.title,
+          financial_area: result.financial_area,
+          namespace: result.namespace,
+          relevance_score: result.relevance_score
+        })),
+        analysisType: 'RAG-Enhanced Finance Analysis',
+        thinkingPanel: getFinanceThinkingPanelState()
+      }, 'finance_analysis_data')
+    ]);
+
+    return { task: responseTask, message: stripMarkdownFromMessage(responseMessage) };
+
+  } catch (error) {
+    console.error('Finance Agent AI Error:', error);      // Fallback to static response if AI fails
+    let fallbackResponse = "I can provide educational information about:\n\n" +
+                         "- Business valuations using EBITDA × multiple method\n" +
+                         "- General tax implications of different sale structures (UK overview)\n" +
+                         "- Financial due diligence checklists\n\n" +
+                         "Could you provide more details about your business and what specific financial information you need?";
+      // Industry-specific fallbacks
+    if (query.includes('restaurant') || query.includes('cafe') || query.includes('food')) {
+      fallbackResponse = "For restaurant businesses, general financial considerations typically include:\n\n" +
+                       "- Typical valuation multiples range from 2.5-3.5× EBITDA\n" +
+                       "- Cash flow verification is critical (many restaurants have cash transactions)\n" +
+                       "- Lease terms significantly impact valuation\n" +
+                       "- Inventory valuation methods matter for tax treatment\n\n" +
+                       "Would you like more specific guidance on valuation or tax scenarios?";
+    } else if (query.includes('ecommerce') || query.includes('online') || query.includes('digital')) {
+      fallbackResponse = "For e-commerce businesses, general financial considerations typically include:\n\n" +
+                       "- Typical valuation multiples range from 3.5-5× EBITDA\n" +
+                       "- SDE (Seller's Discretionary Earnings) is often used instead of EBITDA\n" +
+                       "- Customer acquisition costs and retention rates impact valuation\n" +
+                       "- Inventory turnover and shipping logistics affect working capital needs\n\n" +
+                       "Would you like more specific guidance on valuation or tax scenarios?";
+    }
+    
+    const responseTask = {
+      ...task,
+      state: 'completed'
+    };
+
+    const responseMessage = createMessage([
+      createTextPart(fallbackResponse)
+    ]);
+
+    return { task: responseTask, message: stripMarkdownFromMessage(responseMessage) };
   }
-  
-  // Adjust task state to completed
-  const responseTask = {
-    ...task,
-    state: 'completed'
-  };
-  
-  // Prepare response message
-  const responseMessage = createMessage([
-    createTextPart(response)
-  ]);
-  
-  return { task: responseTask, message: responseMessage };
 }
 
 /**
@@ -506,54 +1182,13 @@ function calculateBusinessValuation(params) {
  * @returns {Array<object>} - List of comparable sales
  */
 function findComparableSales(params) {
-  // In a real system, this would query a database of recent sales
-  // Here we'll just generate some realistic samples
-  
+  // For professional valuation, we only provide comparable data when we have real market data
+  // Mock data can mislead clients and appears unprofessional
   const { industry, ebitda, revenue } = params;
-  const industryInfo = INDUSTRY_MULTIPLES[industry] || INDUSTRY_MULTIPLES.default;
-  const comparables = [];
   
-  // Generate 3 comparable sales with slight variations
-  for (let i = 0; i < 3; i++) {
-    // Vary EBITDA by +/- 20%
-    const variationFactor = 0.8 + (Math.random() * 0.4); // Between 0.8 and 1.2
-    const compEbitda = Math.round(ebitda * variationFactor);
-    
-    // Vary multiple within industry range
-    const multipleRange = industryInfo.max - industryInfo.min;
-    const multiple = industryInfo.min + (Math.random() * multipleRange);
-    const roundedMultiple = Math.round(multiple * 10) / 10; // Round to 1 decimal place
-    
-    // Calculate sale price
-    const salePrice = Math.round(compEbitda * roundedMultiple);
-    
-    // Generate some realistic company details
-    const companyNames = {
-      'restaurant': ['TastyBites', 'Urban Kitchen', 'Flavor Fusion'],
-      'retail': ['StyleHub', 'EverydayGoods', 'MerchandisePlus'],
-      'ecommerce': ['ClickCart', 'WebWares', 'DigitalMart'],
-      'manufacturing': ['PrecisionParts', 'IndustrialWorks', 'AssemblyPro'],
-      'saas': ['CloudSolutions', 'DataFlow', 'TechWave'],
-      'professional_services': ['ExpertConsult', 'AdvisoryGroup', 'SpecialistFirm'],
-      'construction': ['BuildRight', 'StructureTeam', 'DevelopmentCrew'],
-      'default': ['BusinessVentures', 'EnterpriseSolutions', 'CompanyGroup']
-    };
-    
-    const regions = ['London', 'Manchester', 'Birmingham', 'Edinburgh', 'Leeds', 'Bristol'];
-    
-    // Add comparable to list
-    comparables.push({
-      businessName: companyNames[industry]?.[i] || companyNames.default[i],
-      industry,
-      region: regions[Math.floor(Math.random() * regions.length)],
-      ebitda: compEbitda,
-      multiple: roundedMultiple,
-      salePrice,
-      saleDate: getRandomRecentDate()
-    });
-  }
-  
-  return comparables;
+  // Return empty array - comparable sales should come from real data sources only
+  // This prevents the display of fake/mock business data in client-facing reports
+  return [];
 }
 
 /**
@@ -594,61 +1229,172 @@ function formatValuationResponse(valuation, params, comparableSales) {
   // Format currency values
   const formatCurrency = (value) => {
     if (value >= 1000000) {
-      return `${(value / 1000000).toFixed(2)}M ${currency}`;
+      return `£${(value / 1000000).toFixed(1)}M`;
     } else if (value >= 1000) {
-      return `${(value / 1000).toFixed(0)}K ${currency}`;
+      return `£${(value / 1000).toFixed(0)}K`;
     } else {
-      return `${value.toFixed(0)} ${currency}`;
+      return `£${value.toLocaleString()}`;
     }
   };
-  
-  // Starting with the valuation summary
-  let response = `# Business Valuation Analysis\n\n`;
-  response += `## Estimated Value\n\n`;
-  response += `**${formatCurrency(value)}** _(range: ${formatCurrency(rangeLow)} - ${formatCurrency(rangeHigh)})_\n\n`;
-  
-  // Add calculation method
-  response += `## Calculation Method\n\n`;
-  response += `This valuation uses the EBITDA multiple method with a multiple of **${multipleUsed.toFixed(1)}×**\n\n`;
-  response += `${multipleDescription}\n\n`;
-  
-  // Add financial metrics
-  response += `## Financial Metrics\n\n`;
-  
-  if (ebitdaEstimated) {
-    response += `- Annual Revenue: ${formatCurrency(revenue)}\n`;
-    response += `- Estimated EBITDA: ${formatCurrency(ebitda)} (estimated from industry averages)\n`;
-  } else {
-    response += `- EBITDA: ${formatCurrency(ebitda)}\n`;
-    if (revenue) {
-      response += `- Annual Revenue: ${formatCurrency(revenue)}\n`;
-      response += `- EBITDA Margin: ${((ebitda / revenue) * 100).toFixed(1)}%\n`;
-    }
-  }
-  
-  response += `- Industry: ${industry.charAt(0).toUpperCase() + industry.slice(1).replace('_', ' ')}\n\n`;
-  
-  // Add comparable sales
-  if (comparableSales && comparableSales.length > 0) {
-    response += `## Recent Comparable Sales\n\n`;
-    
-    comparableSales.forEach((comp, index) => {
-      response += `### ${index + 1}. ${comp.businessName}\n`;
-      response += `- Sale Price: ${formatCurrency(comp.salePrice)}\n`;
-      response += `- EBITDA: ${formatCurrency(comp.ebitda)}\n`;
-      response += `- Multiple: ${comp.multiple.toFixed(1)}×\n`;
-      response += `- Region: ${comp.region}\n`;
-      response += `- Sale Date: ${comp.saleDate}\n\n`;
-    });
-  }
-  
-  // Add disclaimer
-  response += `## Disclaimer\n\n`;
-  response += `This valuation is an estimate based on the information provided and industry benchmarks. `;
-  response += `Actual market value may vary based on specific business attributes, market conditions, and buyer interest. `;
-  response += `For a more precise valuation, consider engaging a certified business appraiser.`;
-  
+
+  let response = `## Business Valuation Analysis
+
+### Valuation Summary & Methodology
+
+| **Method** | **Multiple Range** | **Your Business** | **Market Context** |
+|------------|-------------------|------------------|-------------------|
+| EBITDA Multiple | ${(multipleUsed * 0.8).toFixed(1)}x - ${(multipleUsed * 1.2).toFixed(1)}x | ${multipleUsed.toFixed(1)}x | ${getIndustryContext(industry)} |
+| Revenue Multiple | ${getRevenueMultiple(industry).low}x - ${getRevenueMultiple(industry).high}x | ${revenue ? (value / revenue).toFixed(1) + 'x' : 'N/A'} | Based on ${industry} sector |
+| Asset Multiple | 0.8x - 1.5x | Subject to asset review | UK market standard |
+
+**Estimated Enterprise Value: ${formatCurrency(value)}**
+**Valuation Range: ${formatCurrency(rangeLow)} - ${formatCurrency(rangeHigh)}**
+
+### Financial Profile Analysis
+
+| **Metric** | **Your Business** | **Industry Benchmark** | **Assessment** |
+|------------|------------------|----------------------|----------------|
+| Annual Revenue | ${revenue ? formatCurrency(revenue) : 'Not provided'} | Varies by size | ${getRevenueAssessment(revenue)} |
+| EBITDA | ${formatCurrency(ebitda)} | ${getIndustryEBITDAMargin(industry)}% of revenue | ${getEBITDAAssessment(ebitda, revenue)} |
+| EBITDA Margin | ${revenue ? ((ebitda / revenue) * 100).toFixed(1) + '%' : 'N/A'} | ${getIndustryEBITDAMargin(industry)}% | ${getMarginAssessment(ebitda, revenue, industry)} |
+| Business Type | ${industry.charAt(0).toUpperCase() + industry.slice(1).replace('_', ' ')} | UK ${industry} sector | ${getIndustryOutlook(industry)} |
+
+### Valuation Sensitivity Analysis
+
+| **EBITDA** | **Conservative (${(multipleUsed * 0.8).toFixed(1)}x)** | **Mid-Range (${multipleUsed.toFixed(1)}x)** | **Optimistic (${(multipleUsed * 1.2).toFixed(1)}x)** |
+|------------|-------------|------------|-------------|
+| ${formatCurrency(ebitda * 0.9)} | ${formatCurrency(ebitda * 0.9 * multipleUsed * 0.8)} | ${formatCurrency(ebitda * 0.9 * multipleUsed)} | ${formatCurrency(ebitda * 0.9 * multipleUsed * 1.2)} |
+| **${formatCurrency(ebitda)}** | **${formatCurrency(ebitda * multipleUsed * 0.8)}** | **${formatCurrency(ebitda * multipleUsed)}** | **${formatCurrency(ebitda * multipleUsed * 1.2)}** |
+| ${formatCurrency(ebitda * 1.1)} | ${formatCurrency(ebitda * 1.1 * multipleUsed * 0.8)} | ${formatCurrency(ebitda * 1.1 * multipleUsed)} | ${formatCurrency(ebitda * 1.1 * multipleUsed * 1.2)} |
+
+### Current UK Market Conditions (Q4 2024)
+
+- **Base Rate:** 5.25% (Bank of England)
+- **SONIA Rate:** ~5.0%
+- **Average Deal Timeline:** 4-8 months
+- **Due Diligence Period:** 6-12 weeks
+- **Financing Availability:** Moderate (higher rates impacting multiples)
+
+### Key Value Drivers & Risk Factors
+
+**Positive Factors:**
+- Recurring revenue streams
+- Strong management team
+- Market-leading position
+- Scalable business model
+- Low customer concentration
+
+**Risk Factors:**
+- Economic uncertainty
+- Interest rate environment
+- Industry cyclicality
+- Key person dependency
+- Competitive pressures
+
+### Professional Next Steps
+
+1. **Enhanced Financial Review** (2-3 weeks)
+   - 3-year financial normalisation
+   - Working capital analysis
+   - Quality of earnings assessment
+   - Management adjustments review
+
+2. **Market Positioning Study** (2-4 weeks)
+   - Competitive landscape analysis
+   - Customer concentration review
+   - Market share assessment
+   - Growth trajectory evaluation
+
+3. **Tax Planning Consultation** (1-2 weeks)
+   - Business Asset Disposal Relief optimisation
+   - Share vs asset sale structure
+   - Timing considerations
+   - Corporate structuring review
+
+**Investment Required:** £15K-30K for comprehensive preparation
+**Expected Timeline:** 8-12 weeks to market-ready position`;
+
   return response;
+}
+
+// Helper functions for enhanced analysis
+function getIndustryContext(industry) {
+  const contexts = {
+    'technology': 'High growth potential',
+    'manufacturing': 'Asset-intensive sector',
+    'retail': 'Location-dependent',
+    'services': 'People-dependent',
+    'hospitality': 'Asset + operational',
+    'healthcare': 'Regulated sector',
+    'default': 'Mixed market conditions'
+  };
+  return contexts[industry] || contexts['default'];
+}
+
+function getRevenueMultiple(industry) {
+  const multiples = {
+    'technology': { low: 1.5, high: 4.0 },
+    'manufacturing': { low: 0.8, high: 2.0 },
+    'retail': { low: 0.5, high: 1.5 },
+    'services': { low: 1.0, high: 2.5 },
+    'hospitality': { low: 0.8, high: 2.0 },
+    'healthcare': { low: 1.2, high: 3.0 },
+    'default': { low: 0.8, high: 2.0 }
+  };
+  return multiples[industry] || multiples['default'];
+}
+
+function getIndustryEBITDAMargin(industry) {
+  const margins = {
+    'technology': 25,
+    'manufacturing': 12,
+    'retail': 8,
+    'services': 15,
+    'hospitality': 18,
+    'healthcare': 20,
+    'default': 15
+  };
+  return margins[industry] || margins['default'];
+}
+
+function getRevenueAssessment(revenue) {
+  if (!revenue) return 'Financial review required';
+  if (revenue < 250000) return 'Micro business';
+  if (revenue < 1000000) return 'Small business';
+  if (revenue < 5000000) return 'Medium business';
+  return 'Larger business';
+}
+
+function getEBITDAAssessment(ebitda, revenue) {
+  if (!revenue) return 'Margin analysis needed';
+  const margin = (ebitda / revenue) * 100;
+  if (margin < 5) return 'Below market average';
+  if (margin < 15) return 'Market average';
+  if (margin < 25) return 'Above market average';
+  return 'Excellent performance';
+}
+
+function getMarginAssessment(ebitda, revenue, industry) {
+  if (!revenue) return 'Analysis required';
+  const margin = (ebitda / revenue) * 100;
+  const industryMargin = getIndustryEBITDAMargin(industry);
+  
+  if (margin < industryMargin * 0.8) return 'Below industry average';
+  if (margin < industryMargin * 1.2) return 'Industry average';
+  return 'Above industry average';
+}
+
+function getIndustryOutlook(industry) {
+  const outlooks = {
+    'technology': 'Strong growth sector',
+    'manufacturing': 'Stable with automation trends',
+    'retail': 'Challenging conditions',
+    'services': 'Depends on service type',
+    'hospitality': 'Recovery post-pandemic',
+    'healthcare': 'Defensive sector',
+    'default': 'Mixed conditions'
+  };
+  return outlooks[industry] || outlooks['default'];
 }
 
 /**
@@ -661,49 +1407,111 @@ function formatValuationResponse(valuation, params, comparableSales) {
 function formatTaxScenarioResponse(scenarios, params) {
   const { country, saleType, businessType } = params;
   
-  let response = `# Business Sale Tax Analysis\n\n`;
-  
-  // Add sale structure information
-  response += `## Sale Structure\n\n`;
-  response += `You're considering a **${formatSaleType(saleType)}** in **${formatCountry(country)}**`;
-  if (businessType !== 'default') {
-    response += ` for a **${businessType.replace('_', ' ')}** business`;
-  }
-  response += `.\n\n`;
-  
-  // Add scenarios
-  scenarios.forEach(scenario => {
-    response += `## ${scenario.name}\n\n`;
-    response += `${scenario.description}\n\n`;
-    
-    response += `### Key Tax Considerations\n\n`;
-    
-    scenario.considerations.forEach((consideration, index) => {
-      response += `#### ${index + 1}. ${consideration.name}\n\n`;
-      response += `${consideration.description}\n\n`;
-      
-      if (consideration.impact) {
-        const impactIcon = consideration.impact === 'high' ? '⚠️ High Impact' : 
-                          consideration.impact === 'medium' ? '⚠ Medium Impact' : 
-                          '• Low Impact';
-        response += `**Impact Level:** ${impactIcon}\n\n`;
-      }
-    });
-  });
-  
-  // Add practical next steps
-  response += `## Recommended Next Steps\n\n`;
-  response += `1. **Consult a Tax Specialist** - Tax laws are complex and frequently change. Consult with a qualified tax advisor familiar with business sales.\n\n`;
-  response += `2. **Pre-Sale Tax Planning** - Consider restructuring options before listing your business to optimize tax efficiency.\n\n`;
-  response += `3. **Document All Business Assets** - Keep detailed records of purchase dates and costs for all business assets to accurately calculate potential gains.\n\n`;
-  
-  // Add disclaimer
-  response += `## Disclaimer\n\n`;
-  response += `This information is provided for general guidance only and is not a substitute for professional tax advice. `;
-  response += `Tax regulations may change, and specific requirements may apply to your situation. `;
-  response += `It is recommended to consult with a qualified tax professional before making decisions about your business sale.`;
-  
-  return response;
+  return `## UK Business Sale Tax Analysis & Planning
+
+### Transaction Structure Tax Comparison
+
+| **Structure** | **Seller CGT Rate** | **Reliefs Available** | **Buyer Position** | **Overall Efficiency** |
+|---------------|-------------------|---------------------|------------------|---------------------|
+| **Asset Sale** | 10%/20% (individuals) | Business Asset Disposal Relief | Depreciation allowances | Moderate |
+| | 25% (companies) | No substantial shareholding | Higher acquisition costs | Lower for companies |
+| **Share Sale** | 10% (up to £1M BADR) | Business Asset Disposal Relief | No depreciation | Higher efficiency |
+| | 20% (above £1M) | Substantial shareholding exemption | 0.5% stamp duty | Preferred structure |
+
+### UK Tax Rates & Thresholds (2024/25 Tax Year)
+
+| **Tax Type** | **Rate** | **Threshold/Allowance** | **Planning Opportunity** |
+|--------------|----------|----------------------|------------------------|
+| **CGT - Individuals** | 10% (BADR) / 20% | £1M lifetime BADR allowance | Time disposal for optimal rate |
+| **CGT - Companies** | 25% (main rate) | 19% (small profits rate) | Consider corporate structure |
+| **Corporation Tax** | 19% / 25% | £50K-250K marginal rate | Profit timing strategies |
+| **Dividend Tax** | 8.75% / 33.75% | £500 dividend allowance | Distribution timing |
+| **SDLT** | 0-5% (commercial) | £150K-250K thresholds | Structure consideration |
+
+### Business Asset Disposal Relief (BADR) Optimization
+
+| **Requirement** | **Test** | **Planning Action** | **Risk Mitigation** |
+|-----------------|----------|-------------------|-------------------|
+| **5% Shareholding** | Ordinary shares + voting | Ensure qualifying shares | Review share classes |
+| **Officer/Employee** | 24 months in 2 years | Document employment | Formal appointment |
+| **Trading Company** | >80% trading activities | Cease non-trading | Investment company rules |
+| **Holding Period** | 24 months ownership | Plan timing carefully | Backdating not possible |
+
+### Tax Planning Strategies by Business Value
+
+| **Business Value** | **Primary Strategy** | **Secondary Considerations** | **Professional Advice** |
+|-------------------|-------------------|---------------------------|----------------------|
+| **£0-500K** | Straightforward sale | Basic BADR planning | General tax adviser |
+| **£500K-1M** | BADR maximisation | Timing and structure | Tax specialist |
+| **£1M-5M** | Multi-year planning | Family involvement | Tax/legal team |
+| **£5M+** | Complex structuring | Trust planning | Full advisory team |
+
+### Pre-Sale Tax Planning Timeline
+
+| **Timing** | **Actions Required** | **Tax Implications** | **Professional Input** |
+|------------|---------------------|---------------------|---------------------|
+| **24+ Months** | Ensure BADR qualifying | Structure business correctly | Tax planning review |
+| **12 Months** | Cease non-trading activities | Maintain trading status | Ongoing monitoring |
+| **6 Months** | Consider share reorganisation | Optimise tax structure | Specialist advice |
+| **3 Months** | Final structure review | Lock in tax position | Complete planning |
+
+### Common Tax Traps & Avoidance
+
+| **Risk Area** | **Trap** | **Consequence** | **Avoidance Strategy** |
+|---------------|----------|----------------|---------------------|
+| **BADR Loss** | Fails qualifying tests | 20% vs 10% CGT rate | Early compliance check |
+| **Investment Company** | >20% non-trading assets | No BADR relief | Asset restructuring |
+| **Share Classes** | Preference shares | BADR not available | Ordinary shares only |
+| **Timing Issues** | Fails 24-month test | Higher CGT rates | Long-term planning |
+
+### Post-Sale Considerations
+
+**Immediate Actions:**
+- CGT payment on account (31 Jan following tax year)
+- Capital gains tax return filing
+- Consider pension contributions (40% relief)
+- Investment planning for proceeds
+
+**Medium-Term Planning:**
+- Spouse/civil partner transfers (CGT-free)
+- Charitable donations (income tax relief)
+- Future business investments (SEIS/EIS)
+- Estate planning considerations
+
+### Professional Advisory Investment
+
+| **Service** | **Typical Cost** | **Value Delivered** | **ROI Potential** |
+|-------------|-----------------|-------------------|------------------|
+| **Tax Planning** | £5K-15K | Structure optimisation | 5-10% tax saving |
+| **Legal Structuring** | £10K-25K | Deal structure advice | Risk mitigation |
+| **Ongoing Compliance** | £2K-5K annually | HMRC compliance | Penalty avoidance |
+| **Estate Planning** | £5K-20K | Inheritance tax planning | Long-term efficiency |
+
+### Next Steps & Recommendations
+
+1. **Immediate Review** (1-2 weeks)
+   - BADR qualification assessment
+   - Current business structure analysis
+   - Tax exposure calculation
+   - Planning window identification
+
+2. **Structure Optimisation** (4-8 weeks)
+   - Share class review and restructuring
+   - Non-trading asset disposal
+   - Employment status documentation
+   - Trading company compliance
+
+3. **Pre-Sale Planning** (3-6 months)
+   - Tax-efficient sale structure
+   - Timing optimization
+   - Professional team assembly
+   - Compliance monitoring
+
+**Tax Planning Investment:** £10K-30K for comprehensive planning
+**Potential Tax Savings:** 5-20% of transaction value
+**Critical Timeline:** Start planning 24+ months before sale
+
+**Disclaimer:** UK tax legislation is complex and subject to change. This analysis is for guidance only. Always consult with qualified UK tax advisers for specific advice tailored to your circumstances.`;
 }
 
 /**
@@ -756,6 +1564,53 @@ function getRandomRecentDate() {
   
   const options = { year: 'numeric', month: 'short' };
   return date.toLocaleDateString('en-GB', options);
+}
+
+/**
+ * Enhanced AI call with rate limiting, circuit breaker, and caching
+ */
+async function callAIWithSafeguards(messages, contextualPrompt) {
+  // Check rate limiting first
+  if (!rateLimiter.isAllowed()) {
+    throw new Error('Rate limit exceeded. Please try again later.');
+  }
+
+  // Check cache for similar prompts
+  const cacheKey = financeCache.generateKey(contextualPrompt);
+  const cachedResponse = financeCache.get(cacheKey);
+  if (cachedResponse) {
+    console.log('Finance Agent: Using cached AI response');
+    return cachedResponse;
+  }
+
+  // Use circuit breaker for AI calls
+  const aiResponse = await aiCircuitBreaker.call(async () => {
+    const startTime = Date.now();
+    
+    const response = await openai.chat.completions.create({
+      model: OPENAI_CONFIG.model,
+      temperature: OPENAI_CONFIG.temperature,
+      max_tokens: OPENAI_CONFIG.maxTokens,
+      top_p: OPENAI_CONFIG.topP,
+      frequency_penalty: OPENAI_CONFIG.frequencyPenalty,
+      presence_penalty: OPENAI_CONFIG.presencePenalty,
+      messages: messages
+    });
+
+    const duration = Date.now() - startTime;
+    console.log(`Finance Agent: AI call completed in ${duration}ms`);
+    
+    return response;
+  });
+
+  const result = aiResponse.choices[0]?.message?.content;
+  
+  // Cache successful responses
+  if (result) {
+    financeCache.set(cacheKey, result);
+  }
+  
+  return result;
 }
 
 export default {

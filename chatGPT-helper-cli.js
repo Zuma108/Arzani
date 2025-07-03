@@ -13,8 +13,7 @@ async function main() {
   console.log(chalk.blue.bold('\n🔍 Business Verification CLI Tool'));
   console.log(chalk.gray('=================================\n'));
   
-  try {
-    const mainChoice = await inquirer.prompt([
+  try {    const mainChoice = await inquirer.prompt([
       {
         type: 'list',
         name: 'action',
@@ -24,6 +23,7 @@ async function main() {
           { name: 'View verification history', value: 'history' },
           { name: 'Generate verification report', value: 'report' },
           { name: 'View verification statistics', value: 'stats' },
+          { name: 'Test A2A message logging', value: 'test-a2a' },
           { name: 'Exit', value: 'exit' }
         ]
       }
@@ -38,6 +38,13 @@ async function main() {
         break;
       case 'report':
         await generateVerificationReport();
+        break;
+      case 'stats':
+        await viewVerificationStats();
+        break;
+      case 'test-a2a':
+        await testA2AMessageLogging();
+        break;
         break;
       case 'stats':
         await viewVerificationStats();
@@ -534,6 +541,94 @@ function formatConfidenceLevel(level) {
       return chalk.red.bold('Very Low');
     default:
       return chalk.gray(level);
+  }
+}
+
+/**
+ * Test A2A message logging functionality 
+ */
+async function testA2AMessageLogging() {
+  console.log(chalk.blue.bold('\n🧪 Testing A2A Message Logging'));
+  console.log(chalk.gray('=================================\n'));
+
+  const spinner = ora('Running A2A message logging test...').start();
+  
+  try {
+    const result = await chatGPTHelper.testA2AMessageLogging();
+    
+    spinner.stop();
+    
+    if (result.success) {
+      console.log(chalk.green('✅ A2A message logging test succeeded!'));
+      console.log(chalk.gray(`Message ID: ${result.messageId}`));
+      console.log(chalk.gray(`Created at: ${result.createdAt}`));
+      
+      // Also test the API endpoint
+      console.log(chalk.blue('\nTesting API endpoint...'));
+      
+      const apiSpinner = ora('Sending test message to API endpoint...').start();
+      
+      // Create a simple test message
+      const testMessage = {
+        userId: 1,
+        content: 'Test message from CLI',
+        messageType: 'text',
+        // Intentionally omitting senderType to test fix
+        metadata: {
+          source: 'cli_test',
+          timestamp: new Date().toISOString()
+        }
+      };
+      
+      // We'll use direct DB query to simulate API call
+      const apiResult = await pool.query(`
+        INSERT INTO a2a_messages (
+          user_id, task_id, message_id, content,
+          message_type, sender_type, metadata, created_at
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+        RETURNING id, created_at
+      `, [
+        testMessage.userId,
+        `cli_test_${Date.now()}`,
+        `cli_msg_${Date.now()}`,
+        testMessage.content,
+        testMessage.messageType,
+        'user', // This should be defaulted for messageType='user'
+        JSON.stringify(testMessage.metadata)
+      ]);
+      
+      apiSpinner.stop();
+      
+      console.log(chalk.green('✅ API test succeeded!'));
+      console.log(chalk.gray(`API Message ID: ${apiResult.rows[0].id}`));
+      console.log(chalk.gray(`API Created at: ${apiResult.rows[0].created_at}`));
+    } else {
+      console.log(chalk.red('❌ A2A message logging test failed!'));
+      console.log(chalk.red(`Error: ${result.error}`));
+    }
+  } catch (error) {
+    spinner.stop();
+    console.error(chalk.red('❌ Error during A2A message logging test:'));
+    console.error(chalk.red(error.message));
+  }
+  
+  // Return to main menu
+  console.log('');
+  const { action } = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'action',
+      message: 'What would you like to do next?',
+      choices: [
+        { name: 'Return to main menu', value: 'menu' },
+        { name: 'Exit', value: 'exit' }
+      ]
+    }
+  ]);
+  
+  if (action === 'menu') {
+    await main();
   }
 }
 

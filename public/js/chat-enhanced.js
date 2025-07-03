@@ -218,10 +218,9 @@
     
     const typingEl = document.createElement('div');
     typingEl.className = 'ai-message ai-typing-indicator';
-    
-    const avatarEl = document.createElement('div');
+      const avatarEl = document.createElement('div');
     avatarEl.className = 'ai-avatar';
-    avatarEl.innerHTML = '<i class="fas fa-robot"></i>';
+    avatarEl.innerHTML = '<img src="/figma design exports/images.webp/arzani-icon-nobackground.png" alt="Arzani AI" style="width: 24px; height: 24px; object-fit: contain;" onerror="this.onerror=null; this.src=\'https://cdn-icons-png.flaticon.com/512/4616/4616734.png\';">';
     
     const contentEl = document.createElement('div');
     contentEl.className = 'ai-message-content';

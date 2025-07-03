@@ -1,0 +1,183 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown Table Rendering Test</title>
+    <link rel="stylesheet" href="./public/css/arzani-x.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js/lib/core.js"></script>
+    <script src="./public/js/markdown-renderer.js" defer></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-container {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .test-section {
+            margin-bottom: 30px;
+        }
+        h2 {
+            border-bottom: 1px solid #e5e7eb;
+            padding-bottom: 8px;
+            margin-top: 30px;
+        }
+        .raw-markdown {
+            background: #f9fafb;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            border: 1px solid #e5e7eb;
+        }
+        .output-container {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 16px;
+            background: white;
+        }
+        .debug-info {
+            margin-top: 30px;
+            padding: 16px;
+            background: #f3f4f6;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Markdown Table Rendering Test</h1>
+    
+    <div class="test-container">
+        <div class="test-section">
+            <h2>Raw Markdown</h2>
+            <div class="raw-markdown">
+# Business Valuation Analysis
+
+## Valuation Summary & Methodology
+
+| Method | Multiple Range | Your Business | Market Context |
+|------------|-------------------|------------------|-------------------|
+| EBITDA Multiple | 3.4x - 5.0x | 4.2x | Mixed market conditions |
+| Revenue Multiple | 0.8x - 2x | N/A | Based on ecommerce sector |
+| Asset Multiple | 0.8x - 1.5x | Subject to asset review | UK market standard |
+
+Estimated Enterprise Value: £0
+Valuation Range: £0 - £0
+
+## Financial Profile Analysis
+
+| Metric | Your Business | Industry Benchmark | Assessment |
+|------------|------------------|----------------------|----------------|
+| Annual Revenue | Not provided | Varies by size | Financial review required |
+| EBITDA | £0 | 15% of revenue | Margin analysis needed |
+| EBITDA Margin | N/A | 15% | Analysis required |
+| Business Type | Ecommerce | UK ecommerce sector | Mixed conditions |
+
+## Valuation Sensitivity Analysis
+
+| EBITDA | Conservative (3.4x) | Mid-Range (4.2x) | Optimistic (5.0x) |
+|------------|-------------|------------|-------------|
+| £0 | £0 | £0 | £0 |
+| £0 | £0 | £0 | £0 |
+| £0 | £0 | £0 | £0 |
+</div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Standard Marked.js Rendering</h2>
+            <div class="output-container" id="standardOutput"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Arzani Enhanced Rendering</h2>
+            <div class="output-container" id="arzaniOutput"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Debug Information</h2>
+            <div class="debug-info" id="debugInfo"></div>
+        </div>
+    </div>
+
+    <script>
+        // Global variable to store debug info
+        let debugLogs = [];
+        
+        // Override console.log to capture debug info
+        const originalConsoleLog = console.log;
+        console.log = function() {
+            debugLogs.push(Array.from(arguments).join(' '));
+            originalConsoleLog.apply(console, arguments);
+        };
+        
+        // Function to render markdown in different ways
+        function renderMarkdown() {
+            try {
+                const markdown = document.querySelector('.raw-markdown').textContent;
+                
+                // Standard marked rendering
+                document.getElementById('standardOutput').innerHTML = 
+                    DOMPurify.sanitize(marked.parse(markdown));
+                
+                // Arzani enhanced rendering
+                if (window.arzaniRenderer) {
+                    const renderer = window.arzaniRenderer;
+                    // Force a log of the renderer for debugging
+                    console.log('Arzani renderer version:', renderer.constructor.name);
+                    
+                    const renderedHtml = renderer.renderToHtml(markdown, 'finance');
+                    document.getElementById('arzaniOutput').innerHTML = renderedHtml;
+                    console.log('Arzani rendering complete');
+                } else {
+                    console.error('Error: Arzani renderer not found');
+                    document.getElementById('arzaniOutput').innerHTML = 
+                        '<div style="color: red;">Error: Arzani renderer not found</div>';
+                }
+                
+                // Update debug info
+                document.getElementById('debugInfo').textContent = debugLogs.join('\n');
+            } catch (error) {
+                console.error('Rendering error:', error);
+                document.getElementById('debugInfo').textContent += 
+                    '\nERROR: ' + error.message + '\n' + error.stack;
+            }
+        }
+        
+        // Wait for all resources to load
+        window.addEventListener('load', () => {
+            console.log('Window loaded, renderer script status:', 
+                        typeof window.arzaniRenderer !== 'undefined' ? 'available' : 'not loaded');
+            
+            // Delay to ensure all scripts are fully loaded
+            setTimeout(renderMarkdown, 1000);
+            
+            // Add button to force re-render for debugging
+            const reRenderButton = document.createElement('button');
+            reRenderButton.textContent = 'Force Re-render';
+            reRenderButton.style.marginTop = '20px';
+            reRenderButton.style.padding = '8px 16px';
+            reRenderButton.onclick = renderMarkdown;
+            document.body.appendChild(reRenderButton);
+        });
+    </script>
+</body>
+</html>
+    

@@ -3,8 +3,8 @@
   "description": "A generalist orchestration agent that routes queries to specialist agents in the Arzani Marketplace ecosystem",
   "version": "1.0.0",
   "contact": {
-    "url": "https://arzani-marketplace.com",
-    "email": "support@arzani-marketplace.com"
+    "url": "https://arzani.co.uk",
+    "email": "hello@arzani.co.uk"
   },
   "capabilities": {
     "tasks/send": {
@@ -31,8 +31,8 @@
   },
   "human_support": {
     "available": true,
-    "email": "brokers@arzani-marketplace.com",
-    "escalation_description": "If you need additional help beyond what our AI can provide, a human broker can be contacted at brokers@arzani-marketplace.com"
+    "email": "hello@arzani.co.uk",
+    "escalation_description": "If you need additional help beyond what our AI can provide, a human specialist can be contacted at hello@arzani.co.uk"
   },
   "domain_specialties": [
     "business brokerage",

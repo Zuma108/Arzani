@@ -12,8 +12,8 @@ import pool from '../db.js';
 dotenv.config();
 
 // Constants
-const TOKEN_EXPIRY = process.env.TOKEN_EXPIRY || '4h';
-const REFRESH_TOKEN_EXPIRY = process.env.REFRESH_TOKEN_EXPIRY || '7d';
+const TOKEN_EXPIRY = process.env.TOKEN_EXPIRY || '14d';
+const REFRESH_TOKEN_EXPIRY = process.env.REFRESH_TOKEN_EXPIRY || '30d';
 const JWT_SECRET = process.env.JWT_SECRET;
 const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;
 const EMAIL_SECRET = process.env.EMAIL_SECRET;
@@ -288,6 +288,84 @@ export const authenticateUser = async (email, password) => {
   }
 };
 
+/**
+ * Generate a random 6-digit verification code
+ * @returns {string} 6-digit code
+ */
+export const generateVerificationCode = () => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
+
+/**
+ * Store verification code in database
+ * @param {number} userId - User ID
+ * @param {string} code - 6-digit verification code
+ * @returns {Promise<string>} The verification code
+ */
+export const storeVerificationCode = async (userId, code) => {
+  try {
+    const hashedCode = await bcrypt.hash(code, 10);
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
+    
+    await pool.query(
+      'UPDATE users_auth SET verification_token = $1, verification_expires = $2 WHERE user_id = $3',
+      [hashedCode, expiresAt, userId]
+    );
+    
+    return code;
+  } catch (error) {
+    console.error('Error storing verification code:', error);
+    throw error;
+  }
+};
+
+/**
+ * Verify the entered verification code
+ * @param {number} userId - User ID
+ * @param {string} code - Verification code entered by user
+ * @returns {Promise<Object>} Result of verification
+ */
+export const verifyCode = async (userId, code) => {
+  try {
+    const result = await pool.query(
+      'SELECT verification_token, verification_expires FROM users_auth WHERE user_id = $1',
+      [userId]
+    );
+    
+    if (result.rows.length === 0) {
+      return { valid: false, message: 'User not found' };
+    }
+    
+    const { verification_token, verification_expires } = result.rows[0];
+    
+    if (!verification_token || !verification_expires) {
+      return { valid: false, message: 'No verification code found' };
+    }
+    
+    // Check if code has expired
+    if (new Date() > new Date(verification_expires)) {
+      return { valid: false, message: 'Verification code has expired' };
+    }
+    
+    // Verify the code
+    const isValid = await bcrypt.compare(code, verification_token);
+    
+    if (isValid) {
+      // Mark user as verified
+      await pool.query(
+        'UPDATE users_auth SET verified = true WHERE user_id = $1',
+        [userId]
+      );
+      return { valid: true };
+    }
+    
+    return { valid: false, message: 'Invalid verification code' };
+  } catch (error) {
+    console.error('Error verifying code:', error);
+    return { valid: false, message: 'Verification failed due to server error' };
+  }
+};
+
 // Export all functions as a module
 export default {
   generateToken,
@@ -303,5 +381,8 @@ export default {
   storeRefreshToken,
   validateStoredRefreshToken,
   deleteRefreshToken,
-  authenticateUser
+  authenticateUser,
+  generateVerificationCode,
+  storeVerificationCode,
+  verifyCode
 };

@@ -113,7 +113,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const text = element.getAttribute('data-text') || "Buyers focus on consistent revenue growth (22%), customer retention rates (18%), scalable operations (15%), profit margins (14%), and market positioning (12%). Having proper documentation and proven growth strategies significantly increases valuation multiples.";
             
             let i = 0;
-            const typingSpeed = 30; // Speed in milliseconds
+            const typingSpeed = 15; // Speed in milliseconds (2x faster)
             
             function typeWriter() {
                 if (i < text.length) {

@@ -1238,9 +1238,9 @@ function addMessageToUI(message) {
       messageContent.appendChild(attachmentsContainer);
     }
   }
-  
-  // Find the messages container
+    // Find the messages container
   const messagesContainer = document.getElementById('messages-list') || 
+                           document.getElementById('messagesContainer') ||
                            document.getElementById('chatMessages') ||
                            document.querySelector('.chat-body');
   
@@ -1392,9 +1392,10 @@ function formatTime(timestamp) {
   /**
    * Load a specific conversation
    */
-  function loadConversation(conversationId, isNewConversation = false) {
-    // Find the chat messages container or create one if it doesn't exist
-    const chatMessagesEl = document.getElementById('chatMessages') || document.getElementById('messages-list');
+  function loadConversation(conversationId, isNewConversation = false) {    // Find the chat messages container or create one if it doesn't exist
+    const chatMessagesEl = document.getElementById('chatMessages') || 
+                          document.getElementById('messages-list') || 
+                          document.getElementById('messagesContainer');
     
     // Check if element exists before trying to modify it
     if (!chatMessagesEl) {
@@ -1504,10 +1505,10 @@ function formatTime(timestamp) {
    * @param {Object} conversation - The conversation object to render
    * @param {boolean} isNewConversation - Whether this is a new conversation
    */
-  function displayConversation(conversation, isNewConversation = false) {
-    // Find the container for messages
+  function displayConversation(conversation, isNewConversation = false) {    // Find the container for messages
     const messagesContainer = document.getElementById('chatMessages') || 
                              document.getElementById('messages-list') ||
+                             document.getElementById('messagesContainer') ||
                              document.querySelector('.chat-body');
     
     if (!messagesContainer) {

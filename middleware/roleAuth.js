@@ -6,6 +6,45 @@
 import pool from '../db.js';
 
 /**
+ * Check if development mode bypass should be applied for role-based auth
+ */
+function shouldBypassRoleAuth(req, allowedRoles) {
+  // Only allow bypass in development mode
+  if (process.env.NODE_ENV !== 'development') {
+    return false;
+  }
+
+  // Check if dev mode bypass is enabled
+  if (process.env.DEV_MODE_AUTH_BYPASS !== 'true') {
+    return false;
+  }
+
+  console.log(`🔓 DEV MODE: Bypassing role auth for ${req.path}, required roles: ${allowedRoles.join(', ')}`);
+  
+  // Create or enhance mock user object for bypassed requests
+  if (!req.user) {
+    const defaultUserId = process.env.BYPASS_AUTH_DEFAULT_USER_ID || '1';
+    req.user = {
+      id: parseInt(defaultUserId),
+      userId: parseInt(defaultUserId),
+      username: 'dev-user',
+      email: 'dev@example.com',
+      role: 'admin',
+      primary_role: 'admin',
+      roles: { admin: true, buyer: true, seller: true },
+      isDevelopmentBypass: true
+    };
+  } else {
+    // Ensure existing user has all required roles in dev mode
+    req.user.role = 'admin';
+    req.user.primary_role = 'admin';
+    req.user.roles = { admin: true, buyer: true, seller: true };
+  }
+  
+  return true;
+}
+
+/**
  * Middleware to restrict access to specific roles
  * @param {Array} allowedRoles - Array of role names that are allowed to access the route
  * @returns {Function} Middleware function
@@ -13,6 +52,11 @@ import pool from '../db.js';
 export const requireRole = (allowedRoles) => {
   return async (req, res, next) => {
     try {
+      // ==== DEVELOPMENT MODE BYPASS ====
+      if (shouldBypassRoleAuth(req, allowedRoles)) {
+        return next();
+      }
+
       // Check if user exists in request (should be set by authenticateToken)
       if (!req.user || !req.user.userId) {
         return res.status(401).json({ 

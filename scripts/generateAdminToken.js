@@ -9,7 +9,7 @@ dotenv.config({ path: path.join(__dirname, '..', '.env') });
 // Create an admin token with extended privileges
 const adminToken = jwt.sign(
   { 
-    userId: 'admin',
+    userId: 1, // Use numeric ID instead of string
     role: 'admin',
     isAdmin: true
   },

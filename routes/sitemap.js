@@ -62,6 +62,8 @@ async function generateXmlSitemap() {
     
     // Add main product pages from sitemap.xml
     const mainPages = [
+      { url: 'homepage', changefreq: 'monthly', priority: '0.9' },
+      { url: 'marketplace-landing', changefreq: 'monthly', priority: '0.9' },
       { url: 'seller-questionnaire', changefreq: 'monthly', priority: '0.9' },
       { url: 'marketplace2', changefreq: 'daily', priority: '0.9' },
       { url: 'faq', changefreq: 'monthly', priority: '0.7' },

@@ -255,3 +255,73 @@ export const updatePreferences = async (req, res) => {
     res.status(500).json({ error: 'Failed to update preferences' });
   }
 };
+
+/**
+ * Complete user onboarding
+ */
+export const completeOnboarding = async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    
+    const { discoverySource, onboardingData } = req.body;
+    
+    // Basic validation
+    if (!discoverySource) {
+      return res.status(400).json({ error: 'Discovery source is required' });
+    }
+    
+    // Update user onboarding status
+    await pool.query(
+      `UPDATE users SET 
+        onboarding_completed = TRUE, 
+        discovery_source = $1, 
+        onboarding_completed_at = NOW(),
+        onboarding_data = $2,
+        updated_at = NOW() 
+      WHERE id = $3`,
+      [discoverySource, JSON.stringify(onboardingData || {}), userId]
+    );
+    
+    res.json({ 
+      success: true, 
+      message: 'Onboarding completed successfully' 
+    });
+  } catch (error) {
+    console.error('Error completing onboarding:', error);
+    res.status(500).json({ error: 'Failed to complete onboarding' });
+  }
+};
+
+/**
+ * Get user onboarding status
+ */
+export const getOnboardingStatus = async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    
+    const result = await pool.query(
+      'SELECT onboarding_completed, discovery_source, onboarding_completed_at FROM users WHERE id = $1',
+      [userId]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    res.json({
+      success: true,
+      onboarding: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Error fetching onboarding status:', error);
+    res.status(500).json({ error: 'Failed to fetch onboarding status' });
+  }
+};

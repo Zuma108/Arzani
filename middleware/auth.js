@@ -15,8 +15,8 @@ dotenv.config();
 // Constants
 const JWT_SECRET = process.env.JWT_SECRET;
 const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET || crypto.randomBytes(64).toString('hex');
-const TOKEN_EXPIRY = process.env.TOKEN_EXPIRY || '4h';
-const REFRESH_TOKEN_EXPIRY = process.env.REFRESH_TOKEN_EXPIRY || '7d';
+const TOKEN_EXPIRY = process.env.TOKEN_EXPIRY || '14d';
+const REFRESH_TOKEN_EXPIRY = process.env.REFRESH_TOKEN_EXPIRY || '30d';
 
 // Make sure JWT secrets are set
 if (!JWT_SECRET) {
@@ -39,14 +39,18 @@ function sanitizeRedirectUrl(url) {
       url.includes('/auth/signup')) {
     
     console.log('Prevented redirect loop to:', url);
-    
-    // Check for deep path to preserve post-login destination
+      // Check for deep path to preserve post-login destination
     // Example: /login?returnTo=/dashboard -> Extract /dashboard
     const match = url.match(/[?&](returnTo|returnUrl|redirect)=([^&]+)/);
     if (match && match[2]) {
       const deepReturnUrl = decodeURIComponent(match[2]);
       // Recursively sanitize the deeper URL
       return sanitizeRedirectUrl(deepReturnUrl);
+    }
+    
+    // If URL originally had arzani-x in it, default to arzani-x
+    if (url.includes('/arzani-x')) {
+      return '/arzani-x';
     }
     
     return '/marketplace2'; // Default to marketplace if no deeper path
@@ -124,6 +128,12 @@ function extractTokenFromRequest(req) {
  * Used to protect routes that require authentication
  */
 const authenticateToken = (req, res, next) => {
+  // ==== DEVELOPMENT MODE BYPASS ====
+  // Check for development mode bypass first
+  if (shouldBypassAuth(req)) {
+    return next();
+  }
+
   // Debug auth bypass analysis
   console.log('Auth check debug:', {
     path: req.path,
@@ -256,12 +266,11 @@ const authenticateToken = (req, res, next) => {
         if (err) console.error('Error saving session:', err);
       });
     }
-    
-    // 2. Set/refresh the cookie if token not in cookie or different
+      // 2. Set/refresh the cookie if token not in cookie or different
     if (!cookieToken || cookieToken !== validToken) {
       res.cookie('token', validToken, {
         httpOnly: false, // Allow JS access for client-side auth
-        maxAge: 4 * 60 * 60 * 1000, // 4 hours
+        maxAge: 14 * 24 * 60 * 60 * 1000, // 14 days
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax'
       });
@@ -339,15 +348,24 @@ const validateToken = async (req, res, next) => {
 const requireAuth = (req, res, next) => {
   // If this is an auth page, check if the user is already authenticated
   const isAuthPage = req.path.match(/^\/(login2|signup|logout|login|auth\/login|auth\/signup)/i);
-  
-  if (isAuthPage) {
+    if (isAuthPage) {
     // Extract token and verify
     const token = extractTokenFromRequest(req);
     if (token) {
       try {
         const decoded = jwt.verify(token, JWT_SECRET);
-        // User is already authenticated, redirect to marketplace instead of auth page
-        console.log('User already authenticated, redirecting from auth page to marketplace');
+        // User is already authenticated, redirect appropriately
+        console.log('User already authenticated, redirecting from auth page');
+        
+        // Check for returnTo parameter first
+        const returnTo = req.query.returnTo;
+        if (returnTo) {
+          const safeReturnUrl = sanitizeRedirectUrl(returnTo);
+          console.log('Redirecting authenticated user to returnTo:', safeReturnUrl);
+          return res.redirect(safeReturnUrl);
+        }
+        
+        // Default redirect to marketplace
         return res.redirect('/marketplace2');
       } catch (error) {
         // Token invalid, continue to auth page
@@ -832,6 +850,48 @@ const auth = (req, res, next) => {
   }
 };
 
+/**
+ * Development mode authentication bypass
+ * WARNING: Only use in development! Never enable in production.
+ */
+function shouldBypassAuth(req) {
+  // Only allow bypass in development mode
+  if (process.env.NODE_ENV !== 'development') {
+    return false;
+  }
+
+  // Check if dev mode bypass is enabled
+  if (process.env.DEV_MODE_AUTH_BYPASS !== 'true') {
+    return false;
+  }
+
+  // Parse bypass paths from environment
+  const bypassPaths = process.env.BYPASS_AUTH_FOR_PATHS?.split(',') || [];
+  
+  // Check if current path should bypass auth
+  const shouldBypass = bypassPaths.some(path => 
+    req.path.startsWith(path.trim())
+  );
+
+  if (shouldBypass) {
+    console.log(`🔓 DEV MODE: Bypassing auth for ${req.path}`);
+    
+    // Create a mock user object for bypassed requests
+    const defaultUserId = process.env.BYPASS_AUTH_DEFAULT_USER_ID || '1';
+    req.user = {
+      id: parseInt(defaultUserId),
+      username: 'dev-user',
+      email: 'dev@example.com',
+      role: 'admin',
+      isDevelopmentBypass: true
+    };
+    
+    return true;
+  }
+
+  return false;
+}
+
 // Export all functions for use in other modules
 export {
   authenticateToken, // Make sure this is the updated one
@@ -844,7 +904,8 @@ export {
   logAuthAttempt,
   authenticateUser,
   extractTokenFromRequest,
-  auth
+  auth,
+  shouldBypassAuth
 };
 
 // Default export for compatibility

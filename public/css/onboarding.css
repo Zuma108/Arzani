@@ -1,0 +1,356 @@
+/* Onboarding Modal Styles */
+.onboarding-modal {
+  border: none;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.onboarding-modal .modal-header {
+  background: linear-gradient(135deg, #1A237E 0%, #3949AB 100%);
+  color: white;
+  padding: 2rem 1.5rem 1rem;
+}
+
+.onboarding-modal .modal-title {
+  font-weight: 600;
+  font-size: 1.5rem;
+}
+
+.onboarding-modal .modal-body {
+  min-height: 450px;
+  position: relative;
+}
+
+/* Progress Indicator */
+.progress-container .progress {
+  border-radius: 10px;
+  background-color: #e9ecef;
+}
+
+.progress-container .progress-bar {
+  border-radius: 10px;
+  transition: width 0.4s ease;
+  background: linear-gradient(90deg, #1A237E 0%, #3949AB 100%);
+}
+
+/* Onboarding Slides */
+.onboarding-slide {
+  display: none;
+  opacity: 0;
+  transform: translateX(50px);
+  transition: all 0.3s ease;
+}
+
+.onboarding-slide.active {
+  display: block;
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.onboarding-slide.exiting {
+  transform: translateX(-50px);
+  opacity: 0;
+}
+
+/* Discovery Source Options */
+.discovery-options .btn-check:checked + .btn {
+  background-color: #1A237E;
+  border-color: #1A237E;
+  color: white;
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(26, 35, 126, 0.3);
+}
+
+.discovery-options .btn {
+  border: 2px solid #dee2e6;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  height: auto;
+  min-height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+}
+
+.discovery-options .btn:hover {
+  border-color: #1A237E;
+  background-color: rgba(26, 35, 126, 0.05);
+  transform: translateY(-2px);
+}
+
+.discovery-options .btn i {
+  font-size: 1.2rem;
+}
+
+/* Feature Highlights */
+.feature-highlights .feature-card {
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: white;
+}
+
+.feature-highlights .feature-card:hover {
+  border-color: #1A237E;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.feature-highlights .feature-card h6 {
+  color: #333;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+/* Navigation Features */
+.nav-features .feature-item {
+  border: 1px solid #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.nav-features .feature-item:hover {
+  border-color: #1A237E;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transform: translateX(5px);
+}
+
+.nav-features .feature-item h6 {
+  color: #333;
+  font-weight: 600;
+}
+
+/* AI Features */
+.ai-features .ai-demo-card {
+  border: 1px solid #e9ecef;
+  position: relative;
+}
+
+.ai-features .ai-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1A237E 0%, #3949AB 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.ai-features .ai-message {
+  position: relative;
+  max-width: 80%;
+}
+
+.ai-features .ai-message::before {
+  content: '';
+  position: absolute;
+  left: -10px;
+  top: 15px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 10px 10px 0;
+  border-color: transparent white transparent transparent;
+}
+
+.ai-capabilities .capability-item {
+  padding: 0.5rem 0;
+}
+
+.ai-capabilities .capability-item i {
+  flex-shrink: 0;
+  width: 20px;
+}
+
+.ai-location {
+  border: 1px solid rgba(26, 35, 126, 0.2);
+}
+
+/* Exploration Guide */
+.exploration-guide .guide-section h6 {
+  font-weight: 600;
+  border-bottom: 2px solid #1A237E;
+  padding-bottom: 0.5rem;
+  display: inline-block;
+}
+
+.exploration-guide .filter-demo {
+  border: 1px solid #dee2e6;
+  text-align: center;
+  margin-bottom: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.exploration-guide .filter-demo:hover {
+  border-color: #1A237E;
+  background-color: rgba(26, 35, 126, 0.05) !important;
+}
+
+.exploration-guide .action-item {
+  padding: 0.5rem 0;
+}
+
+.exploration-guide .action-item i {
+  flex-shrink: 0;
+  width: 20px;
+}
+
+/* Modal Footer */
+.onboarding-modal .modal-footer {
+  padding: 1.5rem 2rem 2rem;
+  background-color: #f8f9fa;
+}
+
+.onboarding-modal .modal-footer .btn {
+  border-radius: 10px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.onboarding-modal .modal-footer .btn-primary {
+  background: linear-gradient(135deg, #1A237E 0%, #3949AB 100%);
+  border: none;
+}
+
+.onboarding-modal .modal-footer .btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(26, 35, 126, 0.3);
+}
+
+.onboarding-modal .modal-footer .btn-success {
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+  border: none;
+}
+
+.onboarding-modal .modal-footer .btn-success:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.onboarding-modal .modal-footer .btn-outline-secondary {
+  border-color: #6c757d;
+  color: #6c757d;
+}
+
+.onboarding-modal .modal-footer .btn-outline-secondary:hover {
+  background-color: #6c757d;
+  border-color: #6c757d;
+  color: white;
+  transform: translateY(-2px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .onboarding-modal .modal-dialog {
+    margin: 1rem;
+    max-width: calc(100% - 2rem);
+  }
+  
+  .onboarding-modal .modal-body {
+    min-height: 400px;
+    padding: 1.5rem !important;
+  }
+  
+  .discovery-options .btn {
+    min-height: 60px;
+    font-size: 0.9rem;
+  }
+  
+  .feature-highlights .feature-card {
+    height: 100px;
+  }
+  
+  .feature-highlights .feature-card i {
+    font-size: 1.5rem !important;
+  }
+  
+  .nav-features .feature-item {
+    margin-bottom: 1rem !important;
+  }
+  
+  .onboarding-modal .modal-footer {
+    padding: 1rem 1.5rem 1.5rem;
+  }
+}
+
+/* Animation for slide transitions */
+@keyframes slideInRight {
+  from {
+    transform: translateX(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutLeft {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-50px);
+    opacity: 0;
+  }
+}
+
+.onboarding-slide.slide-in {
+  animation: slideInRight 0.3s ease forwards;
+}
+
+.onboarding-slide.slide-out {
+  animation: slideOutLeft 0.3s ease forwards;
+}
+
+/* Icon animations */
+.onboarding-slide i.fa-3x {
+  animation: fadeInScale 0.6s ease;
+}
+
+@keyframes fadeInScale {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Hover effects for interactive elements */
+.discovery-options .btn,
+.feature-highlights .feature-card,
+.nav-features .feature-item {
+  position: relative;
+  overflow: hidden;
+}
+
+.discovery-options .btn::before,
+.feature-highlights .feature-card::before,
+.nav-features .feature-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(26, 35, 126, 0.1), transparent);
+  transition: left 0.5s;
+}
+
+.discovery-options .btn:hover::before,
+.feature-highlights .feature-card:hover::before,
+.nav-features .feature-item:hover::before {
+  left: 100%;
+}

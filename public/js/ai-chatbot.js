@@ -256,10 +256,9 @@
       
       const messageEl = document.createElement('div');
       messageEl.className = 'dmo-mt-16 system-message';
-      
-      messageEl.innerHTML = `
+        messageEl.innerHTML = `
         <span class="profile-icon system-icon">
-          <img src="/images/ai-assistant.png" alt="AI" class="assistant-logo" 
+          <img src="/figma design exports/images.webp/arzani-icon-nobackground.png" alt="Arzani AI" class="assistant-logo" 
                onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/4616/4616734.png';">
         </span>
         <div class="message-content">

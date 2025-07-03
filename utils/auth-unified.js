@@ -12,8 +12,8 @@ dotenv.config();
 
 // Constants
 const JWT_SECRET = process.env.JWT_SECRET;
-const TOKEN_EXPIRY = process.env.TOKEN_EXPIRY || '4h';
-const REFRESH_TOKEN_EXPIRY = process.env.REFRESH_TOKEN_EXPIRY || '7d';
+const TOKEN_EXPIRY = process.env.TOKEN_EXPIRY || '14d';
+const REFRESH_TOKEN_EXPIRY = process.env.REFRESH_TOKEN_EXPIRY || '30d';
 
 /**
  * Unified authentication check utility

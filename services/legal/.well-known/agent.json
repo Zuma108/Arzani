@@ -3,8 +3,8 @@
   "description": "A specialist agent that provides legal expertise for business transactions, NDAs, and compliance matters in the Arzani Marketplace",
   "version": "1.0.0",
   "contact": {
-    "url": "https://arzani-marketplace.com/legal",
-    "email": "legal-agent@arzani-marketplace.com"
+    "url": "https://arzani.co.uk/legal",
+    "email": "hello@arzani.co.uk"
   },
   "capabilities": {
     "tasks/send": {
@@ -55,8 +55,8 @@
   },
   "human_support": {
     "available": true,
-    "email": "legal-team@arzani-marketplace.com",
-    "escalation_description": "For complex legal matters, licensing issues, or regulatory concerns, a human legal advisor can be contacted at legal-team@arzani-marketplace.com"
+    "email": "hello@arzani.co.uk",
+    "escalation_description": "For complex legal matters, licensing issues, or regulatory concerns, a human legal advisor can be contacted at hello@arzani.co.uk"
   },
   "domain_specialties": [
     "non-disclosure agreements",

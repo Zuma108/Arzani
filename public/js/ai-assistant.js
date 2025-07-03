@@ -403,10 +403,9 @@ if (typeof window.AIAssistant === 'undefined') {
       messageDiv.style.marginBottom = '16px';
       messageDiv.style.position = 'relative';
       messageDiv.style.paddingLeft = '40px';
-      
-      messageDiv.innerHTML = `
+        messageDiv.innerHTML = `
         <div class="profile-icon" style="width: 32px; height: 32px; position: absolute; left: 0; top: 0; background: linear-gradient(93deg, #4F8CFF 0%, #010545 100%); border-radius: 6px; display: flex; align-items: center; justify-content: center;">
-          <img src="/images/ai-assistant.png" alt="AI" style="width: 22px; height: 22px;">
+          <img src="/figma design exports/images.webp/arzani-icon-nobackground.png" alt="Arzani AI" style="width: 22px; height: 22px;">
         </div>
         <div style="background-color: #f5f5f5; padding: 10px 14px; border-radius: 18px 18px 18px 4px; max-width: 80%;">
           ${this.formatMessageWithLinks(text)}

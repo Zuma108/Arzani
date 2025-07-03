@@ -8,14 +8,38 @@ let isConnectedToSocket = false;
 let socketConnectAttempts = 0;
 let typingTimeout = null;
 
+// Helper functions to get DOM elements with fallbacks for different naming conventions
+function getMessagesContainer() {
+  return document.getElementById('messages-list') || document.getElementById('messagesContainer');
+}
+
+function getMessageInput() {
+  return document.getElementById('message-input') || 
+         document.getElementById('mainChatInput') || 
+         document.getElementById('bottomChatInput');
+}
+
+function getMessageForm() {
+  return document.getElementById('message-form');
+}
+
 // Initialize the chat functionality
 window.initChat = function() {
   console.log('Initializing chat functionality');
   
-  // Get DOM elements
-  const messagesList = document.getElementById('messages-list');
-  const messageForm = document.getElementById('message-form');
-  const messageInput = document.getElementById('message-input');
+  // Get DOM elements - handle both chat.ejs and Arzani-x.ejs conventions
+  const messagesList = getMessagesContainer();
+  const messageForm = getMessageForm();
+  const messageInput = getMessageInput();
+  
+  // Check if we have the required elements
+  if (!messagesList) {
+    console.warn('Messages container not found - chat functionality may be limited');
+  }
+  
+  if (!messageInput) {
+    console.warn('Message input not found - chat functionality may be limited');
+  }
   
   // Get conversation ID from the form if available
   if (messageForm) {
@@ -90,7 +114,8 @@ function loadMessages() {
     return;
   }
   
-  const messagesList = document.getElementById('messages-list');
+  // Handle both chat.ejs and Arzani-x.ejs element conventions
+  const messagesList = getMessagesContainer();
   if (!messagesList) {
     console.error('Messages list element not found');
     return;
@@ -208,9 +233,8 @@ function loadMessages() {
     data.messages.forEach(message => {
       addMessageToUI(message);
     });
-    
-    // Scroll to bottom
-    const messagesContainer = document.getElementById('messages-list');
+      // Scroll to bottom
+    const messagesContainer = getMessagesContainer();
     if (messagesContainer) {
       messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
@@ -225,7 +249,7 @@ function loadMessages() {
           <div class="flex">
             <div class="flex-shrink-0">
               <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zm-1 8a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
               </svg>
             </div>
             <div class="ml-3">
@@ -347,7 +371,7 @@ function fetchWithRetry(url, options, maxRetries = 3) {
 
 // Helper function to scroll to the bottom of the messages container
 function scrollToBottom() {
-  const messagesContainer = document.getElementById('messages-list');
+  const messagesContainer = getMessagesContainer();
   if (messagesContainer) {
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
   }
@@ -510,9 +534,8 @@ function addMessageToUI(message) {
       ${isCurrentUser ? `<div class="message-sender text-right">${userLabel}</div>` : ''}
     </div>
   `;
-  
-  // Find the messages container
-  const messagesContainer = document.getElementById('messages-list');
+    // Find the messages container
+  const messagesContainer = getMessagesContainer();
   if (!messagesContainer) {
     console.error('Messages container not found');
     return;
@@ -621,7 +644,7 @@ function formatTimestamp(timestamp) {
 
 // Display messages in the UI
 function displayMessages(messages) {
-  const messagesList = document.getElementById('messages-list');
+  const messagesList = getMessagesContainer();
   if (!messagesList) return;
   
   if (messages.length === 0) {
@@ -643,7 +666,7 @@ function displayMessages(messages) {
 
 // Send a message
 function sendMessage() {
-  const messageInput = document.getElementById('message-input');
+  const messageInput = getMessageInput();
   if (!messageInput || !currentConversationId) return;
   
   const content = messageInput.value.trim();
@@ -700,9 +723,8 @@ function sendMessageViaAPI(content) {
     }
   })
   .catch(error => {
-    console.error('Error sending message:', error);
-    // Show error in UI
-    const messagesList = document.getElementById('messages-list');
+    console.error('Error sending message:', error);    // Show error in UI
+    const messagesList = getMessagesContainer();
     if (messagesList) {
       const errorElement = document.createElement('div');
       errorElement.classList.add('error-message', 'text-center', 'p-2', 'text-red-500', 'text-sm');
@@ -734,10 +756,9 @@ function handleTypingIndicator(data, isTyping) {
   
   const typingIndicator = document.querySelector('.typing-indicator');
   
-  if (isTyping) {
-    // Create typing indicator if it doesn't exist
+  if (isTyping) {    // Create typing indicator if it doesn't exist
     if (!typingIndicator) {
-      const messagesList = document.getElementById('messages-list');
+      const messagesList = getMessagesContainer();
       if (!messagesList) return;
       
       const indicatorElement = document.createElement('div');
@@ -968,10 +989,9 @@ window.uploadFile = function(file, conversationId) {
 window.testUpload = function() {
   // Create a test file
   const testFile = new File(['test file content'], 'test.txt', { type: 'text/plain' });
-  
-  // Show a status message
+    // Show a status message
   console.log('Starting test upload...');
-  const messagesList = document.getElementById('messages-list');
+  const messagesList = getMessagesContainer();
   if (messagesList) {
     const statusElement = document.createElement('div');
     statusElement.classList.add('text-center', 'p-2', 'bg-blue-50', 'text-blue-700', 'rounded', 'my-2');

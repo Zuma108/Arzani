@@ -40,13 +40,12 @@ router.post('/login', async (req, res) => {
       userAgent
     );
     
-    if (authResult.success) {
-      // Set cookies for added security
+    if (authResult.success) {      // Set cookies for added security
       res.cookie('token', authResult.token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
-        maxAge: 4 * 60 * 60 * 1000 // 4 hours
+        maxAge: 14 * 24 * 60 * 60 * 1000 // 14 days
       });
       
       if (authResult.refreshToken) {
@@ -55,7 +54,7 @@ router.post('/login', async (req, res) => {
           secure: process.env.NODE_ENV === 'production',
           sameSite: 'strict',
           path: '/api/auth/refresh',
-          maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+          maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
         });
       }
       
@@ -133,13 +132,12 @@ router.post('/register', async (req, res) => {
     
     // Store refresh token
     await authService.storeRefreshToken(newUser.id, refreshToken);
-    
-    // Set cookies
+      // Set cookies
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 4 * 60 * 60 * 1000 // 4 hours
+      maxAge: 14 * 24 * 60 * 60 * 1000 // 14 days
     });
     
     res.cookie('refreshToken', refreshToken, {
@@ -147,7 +145,7 @@ router.post('/register', async (req, res) => {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       path: '/api/auth/refresh',
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
     });
     
     // Log auth attempt
@@ -253,15 +251,14 @@ router.post('/refresh', async (req, res) => {
     const newToken = authService.generateToken(user);
     const newRefreshToken = authService.generateRefreshToken(user);
     
-    // Update refresh token in database
-    await authService.storeRefreshToken(user.id, newRefreshToken);
+    // Update refresh token in database    await authService.storeRefreshToken(user.id, newRefreshToken);
     
     // Set new cookies
     res.cookie('token', newToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 4 * 60 * 60 * 1000 // 4 hours
+      maxAge: 14 * 24 * 60 * 60 * 1000 // 14 days
     });
     
     res.cookie('refreshToken', newRefreshToken, {
@@ -269,7 +266,7 @@ router.post('/refresh', async (req, res) => {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       path: '/api/auth/refresh',
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
     });
     
     return res.status(200).json({
@@ -500,13 +497,12 @@ router.put('/password', async (req, res) => {
     
     // Store new refresh token
     await authService.storeRefreshToken(decoded.userId, newRefreshToken);
-    
-    // Set new cookies
+      // Set new cookies
     res.cookie('token', newToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 4 * 60 * 60 * 1000 // 4 hours
+      maxAge: 14 * 24 * 60 * 60 * 1000 // 14 days
     });
     
     res.cookie('refreshToken', newRefreshToken, {
@@ -514,7 +510,7 @@ router.put('/password', async (req, res) => {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       path: '/api/auth/refresh',
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
     });
     
     return res.status(200).json({

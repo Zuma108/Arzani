@@ -1,0 +1,270 @@
+<!-- Onboarding Modal Component -->
+<div class="modal fade" id="onboardingModal" tabindex="-1" aria-labelledby="onboardingModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content onboarding-modal">
+      <div class="modal-header border-0">
+        <div class="w-100 text-center">
+          <img src="/figma design exports/images.webp/arzani-icon-nobackground.png" alt="Arzani Logo" height="40" class="mb-2">
+          <h5 class="modal-title" id="onboardingModalLabel">Welcome to Arzani!</h5>
+        </div>
+      </div>
+      <div class="modal-body p-4">
+        <!-- Progress Indicator -->
+        <div class="progress-container mb-4">
+          <div class="progress" style="height: 6px;">
+            <div class="progress-bar bg-primary" role="progressbar" style="width: 20%" id="onboardingProgress"></div>
+          </div>
+          <div class="d-flex justify-content-between mt-2">
+            <small class="text-muted">Step <span id="currentStep">1</span> of 5</small>
+            <small class="text-muted"><span id="progressPercentage">20</span>% Complete</small>
+          </div>
+        </div>
+
+        <!-- Slide 1: Discovery Source -->
+        <div class="onboarding-slide active" id="slide-1">
+          <div class="text-center mb-4">
+            <i class="fas fa-search fa-3x text-primary mb-3"></i>
+            <h4>How did you discover Arzani?</h4>
+            <p class="text-muted">Help us understand how you found our platform</p>
+          </div>
+          <div class="discovery-options">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <input type="radio" class="btn-check" name="discoverySource" value="google" id="source-google">
+                <label class="btn btn-outline-primary w-100 p-3" for="source-google">
+                  <i class="fab fa-google me-2"></i>Google Search
+                </label>
+              </div>
+              <div class="col-md-6">
+                <input type="radio" class="btn-check" name="discoverySource" value="reddit" id="source-reddit">
+                <label class="btn btn-outline-primary w-100 p-3" for="source-reddit">
+                  <i class="fab fa-reddit me-2"></i>Reddit
+                </label>
+              </div>
+              <div class="col-md-6">
+                <input type="radio" class="btn-check" name="discoverySource" value="chatgpt" id="source-chatgpt">
+                <label class="btn btn-outline-primary w-100 p-3" for="source-chatgpt">
+                  <i class="fas fa-robot me-2"></i>ChatGPT/AI Assistant
+                </label>
+              </div>
+              <div class="col-md-6">
+                <input type="radio" class="btn-check" name="discoverySource" value="social-media" id="source-social">
+                <label class="btn btn-outline-primary w-100 p-3" for="source-social">
+                  <i class="fab fa-facebook me-2"></i>Social Media
+                </label>
+              </div>
+              <div class="col-md-6">
+                <input type="radio" class="btn-check" name="discoverySource" value="word-of-mouth" id="source-word">
+                <label class="btn btn-outline-primary w-100 p-3" for="source-word">
+                  <i class="fas fa-users me-2"></i>Word of Mouth
+                </label>
+              </div>
+              <div class="col-md-6">
+                <input type="radio" class="btn-check" name="discoverySource" value="other" id="source-other">
+                <label class="btn btn-outline-primary w-100 p-3" for="source-other">
+                  <i class="fas fa-ellipsis-h me-2"></i>Other
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 2: Welcome Overview -->
+        <div class="onboarding-slide" id="slide-2">
+          <div class="text-center mb-4">
+            <i class="fas fa-handshake fa-3x text-primary mb-3"></i>
+            <h4>Welcome to Your Business Marketplace</h4>
+            <p class="text-muted">Discover, connect, and grow with the UK's premier business marketplace</p>
+          </div>
+          <div class="feature-highlights">
+            <div class="row g-3">
+              <div class="col-md-4 text-center">
+                <div class="feature-card p-3">
+                  <i class="fas fa-store fa-2x text-primary mb-2"></i>
+                  <h6>Browse Businesses</h6>
+                  <small class="text-muted">Discover thousands of businesses for sale across various industries</small>
+                </div>
+              </div>
+              <div class="col-md-4 text-center">
+                <div class="feature-card p-3">
+                  <i class="fas fa-chart-line fa-2x text-primary mb-2"></i>
+                  <h6>Market Insights</h6>
+                  <small class="text-muted">Access real-time market trends and valuation data</small>
+                </div>
+              </div>
+              <div class="col-md-4 text-center">
+                <div class="feature-card p-3">
+                  <i class="fas fa-robot fa-2x text-primary mb-2"></i>
+                  <h6>AI Assistant</h6>
+                  <small class="text-muted">Get personalized recommendations and instant support</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 3: Navigation Features -->
+        <div class="onboarding-slide" id="slide-3">
+          <div class="text-center mb-4">
+            <i class="fas fa-compass fa-3x text-primary mb-3"></i>
+            <h4>Navigate Like a Pro</h4>
+            <p class="text-muted">Master the platform with these essential features</p>
+          </div>
+          <div class="nav-features">
+            <div class="feature-item d-flex align-items-center mb-3 p-3 bg-light rounded">
+              <i class="fas fa-store fa-2x text-primary me-3"></i>
+              <div>
+                <h6 class="mb-1">Marketplace</h6>
+                <small class="text-muted">Browse and filter businesses by location, industry, price, and revenue</small>
+              </div>
+            </div>
+            <div class="feature-item d-flex align-items-center mb-3 p-3 bg-light rounded">
+              <i class="fas fa-chart-line fa-2x text-primary me-3"></i>
+              <div>
+                <h6 class="mb-1">Market Trends</h6>
+                <small class="text-muted">Analyze market data and track industry performance</small>
+              </div>
+            </div>
+            <div class="feature-item d-flex align-items-center mb-3 p-3 bg-light rounded">
+              <i class="fas fa-bookmark fa-2x text-primary me-3"></i>
+              <div>
+                <h6 class="mb-1">Saved Searches & History</h6>
+                <small class="text-muted">Save your searches and track viewed businesses</small>
+              </div>
+            </div>
+            <div class="feature-item d-flex align-items-center mb-3 p-3 bg-light rounded">
+              <i class="fas fa-user-check fa-2x text-primary me-3"></i>
+              <div>
+                <h6 class="mb-1">Professional Verification</h6>
+                <small class="text-muted">Get verified as a professional for enhanced credibility</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 4: AI Assistant -->
+        <div class="onboarding-slide" id="slide-4">
+          <div class="text-center mb-4">
+            <i class="fas fa-robot fa-3x text-primary mb-3"></i>
+            <h4>Meet Your AI Assistant</h4>
+            <p class="text-muted">Your intelligent companion for business discovery</p>
+          </div>
+          <div class="ai-features">
+            <div class="ai-demo-card bg-light p-4 rounded mb-3">
+              <div class="d-flex align-items-start">
+                <div class="ai-avatar me-3">
+                  <i class="fas fa-robot fa-2x text-primary"></i>
+                </div>
+                <div class="ai-message bg-white p-3 rounded shadow-sm">
+                  <p class="mb-2">"I can help you find the perfect business match based on your criteria, answer questions about listings, and provide market insights."</p>
+                  <small class="text-muted">- Your AI Assistant</small>
+                </div>
+              </div>
+            </div>
+            <div class="ai-capabilities">
+              <h6 class="mb-3">What I can help you with:</h6>
+              <div class="row g-2">
+                <div class="col-md-6">
+                  <div class="capability-item d-flex align-items-center">
+                    <i class="fas fa-search text-primary me-2"></i>
+                    <small>Find businesses matching your criteria</small>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="capability-item d-flex align-items-center">
+                    <i class="fas fa-calculator text-primary me-2"></i>
+                    <small>Business valuation insights</small>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="capability-item d-flex align-items-center">
+                    <i class="fas fa-chart-bar text-primary me-2"></i>
+                    <small>Market trend analysis</small>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="capability-item d-flex align-items-center">
+                    <i class="fas fa-lightbulb text-primary me-2"></i>
+                    <small>Investment recommendations</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="ai-location mt-3 p-3 bg-primary bg-opacity-10 rounded">
+              <div class="d-flex align-items-center">
+                <i class="fas fa-map-marker-alt text-primary me-2"></i>
+                <small><strong>Find the AI button:</strong> Look for the floating AI assistant button on the bottom right of any page</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 5: Start Exploring -->
+        <div class="onboarding-slide" id="slide-5">
+          <div class="text-center mb-4">
+            <i class="fas fa-rocket fa-3x text-primary mb-3"></i>
+            <h4>Start Exploring</h4>
+            <p class="text-muted">Master the marketplace tools to find your perfect business opportunity</p>
+          </div>
+          <div class="exploration-guide">
+            <div class="guide-section mb-4">
+              <h6 class="text-primary mb-3"><i class="fas fa-filter me-2"></i>Smart Filtering</h6>
+              <div class="row g-2">
+                <div class="col-md-6">
+                  <div class="filter-demo p-2 bg-light rounded">
+                    <small><strong>Location:</strong> Search by city or region</small>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="filter-demo p-2 bg-light rounded">
+                    <small><strong>Industry:</strong> Filter by business type</small>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="filter-demo p-2 bg-light rounded">
+                    <small><strong>Price Range:</strong> Set your budget</small>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="filter-demo p-2 bg-light rounded">
+                    <small><strong>Revenue:</strong> Target profitable businesses</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="guide-section">
+              <h6 class="text-primary mb-3"><i class="fas fa-mouse-pointer me-2"></i>Quick Actions</h6>
+              <div class="quick-actions">
+                <div class="action-item d-flex align-items-center mb-2">
+                  <i class="fas fa-eye text-success me-2"></i>
+                  <small>Click any business card to view detailed information</small>
+                </div>
+                <div class="action-item d-flex align-items-center mb-2">
+                  <i class="fas fa-heart text-danger me-2"></i>
+                  <small>Save interesting businesses to your favorites</small>
+                </div>
+                <div class="action-item d-flex align-items-center mb-2">
+                  <i class="fas fa-envelope text-primary me-2"></i>
+                  <small>Contact sellers directly through our messaging system</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer border-0 d-flex justify-content-between">
+        <button type="button" class="btn btn-outline-secondary" id="onboardingPrev" style="display: none;">
+          <i class="fas fa-arrow-left me-2"></i>Previous
+        </button>
+        <div class="flex-grow-1"></div>
+        <button type="button" class="btn btn-primary" id="onboardingNext">
+          Next<i class="fas fa-arrow-right ms-2"></i>
+        </button>
+        <button type="button" class="btn btn-success" id="onboardingComplete" style="display: none;">
+          Get Started<i class="fas fa-check ms-2"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

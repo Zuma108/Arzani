@@ -1,4 +1,5 @@
 import express from 'express';
+import dotenv from 'dotenv';
 import voiceRoutes from './routes/voiceRoutes.js';
 import chatRoutes from './routes/chatRoutes.js';
 import authRoutes from './routes/auth.js';
@@ -8,6 +9,7 @@ import http from 'http';
 import { authMiddleware } from './utils/auth-unified.js';
 import authDebug from './middleware/authDebug.js';
 import bodyParser from 'body-parser';
+import { setupScheduledTasks } from './scheduled-tasks.js';
 dotenv.config();
 
 const app = express();
@@ -65,6 +67,8 @@ import sitemapRoutes from './routes/sitemap.js';
 // Import our new API routes
 import businessApiRoutes from './routes/api/businessApi.js';
 import debugApiRoutes from './routes/api/debug.js';
+import aiApiRoutes from './routes/api/ai.js';
+import analyticsApiRoutes from './routes/api/analytics.js';
 
 // Import the verification routes
 const verificationRoutes = require('./routes/verificationRoutes');
@@ -195,6 +199,21 @@ app.use('/api/business', businessListingsRoutes);
 
 app.use('/api/debug', debugApiRoutes);
 
+// Register AI routes
+app.use('/api/ai', aiApiRoutes);
+
+// Register analytics routes (admin only)
+app.use('/api/analytics', (req, res, next) => {
+  // Add admin check middleware
+  if (!req.user || !req.user.isAdmin) {
+    return res.status(403).json({
+      success: false,
+      message: 'Admin access required'
+    });
+  }
+  next();
+}, analyticsApiRoutes);
+
 // Register verification routes
 app.use('/api/verification', verificationRoutes);
 
@@ -269,6 +288,9 @@ const server = http.createServer(app);
 
 // Set up WebSocket server
 setupWebSocketServer(app, server);
+
+// Set up scheduled tasks (e.g., analytics reports)
+setupScheduledTasks();
 
 // Start server
 const PORT = process.env.PORT || 3000;

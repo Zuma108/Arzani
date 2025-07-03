@@ -59,14 +59,9 @@ app.use((req, res, next) => {
 // Agent discovery middleware
 app.use(createDiscoveryMiddleware({ servicePath }));
 
-// A2A protocol endpoint for tasks/send
-app.post('/a2a/tasks/send', (req, res) => {
-  // Placeholder for finance agent's task handling logic
-  // This will be implemented in the next step with valuation formulas and tax analysis
-  res.status(501).json(
-    createErrorResponse(req.body?.id || 'not-implemented', -32501, 'Finance agent tasks not implemented yet')
-  );
-});
+// Register finance agent routes
+import { registerFinanceRoutes } from './routes.js';
+registerFinanceRoutes(app);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

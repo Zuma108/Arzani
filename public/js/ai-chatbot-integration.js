@@ -211,9 +211,8 @@
       } else {
         avatarEl.innerHTML = '<div class="avatar-placeholder"><i class="fas fa-user"></i></div>';
       }
-    } else {
-      // AI avatar
-      avatarEl.innerHTML = '<div class="ai-avatar"><i class="fas fa-robot"></i></div>';
+    } else {      // AI avatar with Arzani icon
+      avatarEl.innerHTML = '<div class="ai-avatar"><img src="/figma design exports/images.webp/arzani-icon-nobackground.png" alt="Arzani AI" style="width: 24px; height: 24px; object-fit: contain;" onerror="this.onerror=null; this.src=\'https://cdn-icons-png.flaticon.com/512/4616/4616734.png\';"></div>';
     }
     
     // Create message content

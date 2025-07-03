@@ -1,0 +1,145 @@
+/* Add additional animation classes */
+.animate-pulse-slow {
+    animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animation-delay-2000 {
+    animation-delay: 2s;
+}
+
+/* Testimonial section background elements */
+.testimonial-bg-element {
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    top: -150px;
+    right: -150px;
+    background: radial-gradient(circle, rgba(49,111,212,0.1) 0%, rgba(49,111,212,0) 70%);
+    border-radius: 50%;
+    z-index: 0;
+    transition: all 0.5s ease;
+}
+
+.testimonial-bg-element-2 {
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    bottom: -100px;
+    left: -100px;
+    background: radial-gradient(circle, rgba(76,29,149,0.1) 0%, rgba(76,29,149,0) 70%);
+    border-radius: 50%;
+    z-index: 0;
+}
+
+.grid-pattern {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+/* Enhanced testimonial cards */
+.testimonial-card {
+    border-top: 3px solid transparent;
+    transition: all 0.4s ease;
+}
+
+.testimonial-card:hover {
+    border-top-color: rgba(49,111,212,0.7);
+}
+
+/* Star rating styles */
+.star-rating {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 10px;
+}
+
+.star-rating svg {
+    color: #F59E0B;
+    width: 16px;
+    height: 16px;
+}
+
+/* Badge styles for metrics */
+.metric-badge {
+    display: inline-block;
+    margin-bottom: 12px;
+    padding: 5px 10px;
+    background: linear-gradient(90deg, rgba(49,111,212,0.2) 0%, rgba(49,111,212,0.05) 100%);
+    border-radius: 20px;
+    font-size: 14px;
+    color: #8BB5F7;
+    border: 1px solid rgba(49,111,212,0.2);
+}
+
+.metric-badge span {
+    font-weight: 700;
+    color: white;
+}
+
+/* Text gradient animation */
+.text-gradient-animated {
+    background: linear-gradient(to right, #4F46E5, #3B82F6, #60A5FA);
+    background-size: 200% auto;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: gradient 3s ease infinite;
+}
+
+@keyframes gradient {
+    0% {background-position: 0% center;}
+    50% {background-position: 100% center;}
+    100% {background-position: 0% center;}
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 0.5;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.2;
+        transform: scale(1.05);
+    }
+}
+
+/* Stat item styles */
+.stat-item {
+    position: relative;
+    padding: 20px;
+    background: rgba(30,30,30,0.3);
+    border-radius: 12px;
+    border: 1px solid rgba(49,111,212,0.1);
+    transition: all 0.3s ease;
+}
+
+.stat-item:hover {
+    transform: translateY(-5px);
+    border-color: rgba(49,111,212,0.3);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+
+/* Floating elements animation */
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.float-animation {
+    animation: float 5s ease-in-out infinite;
+}
+
+.float-animation-delay {
+    animation: float 5s ease-in-out 2.5s infinite;
+}

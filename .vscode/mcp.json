@@ -12,6 +12,12 @@
       "id": "firecrawl_api_key",
       "description": "Firecrawl API Key",
       "password": true
+    },
+    {
+      "type": "promptString",
+      "id": "pinecone_api_key", 
+      "description": "Pinecone API Key",
+      "password": true
     }
   ],
 
@@ -55,7 +61,17 @@
       }
     },
 
-    // 5. Knowledge-Graph Memory MCP Server 
+    // 5. Pinecone MCP Server 
+    "pinecone": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@pinecone-database/mcp"],
+      "env": {
+        "PINECONE_API_KEY": "${input:pinecone_api_key}"
+      }
+    },
+
+    // 6. Knowledge-Graph Memory MCP Server 
     "knowledgeGraphMemory": {
       "type": "stdio",
       "command": "npx",

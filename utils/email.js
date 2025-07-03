@@ -41,15 +41,15 @@ const getTransporter = () => {
   return null; // Will use SendGrid directly
 };
 
-export async function sendVerificationEmail(email, verificationToken) {
-  if (!email || !verificationToken) {
-    throw new Error('Email and verification token are required');
+export async function sendVerificationEmail(email, verificationCode) {
+  if (!email || !verificationCode) {
+    throw new Error('Email and verification code are required');
   }
 
   const SERVER_URL = process.env.NODE_ENV === 'production' ? 'https://www.arzani.co.uk' : 'http://localhost:5000';
   console.log('Sending verification email to:', email);
 
-  // Email content
+  // Email content with 6-digit code
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <div style="background-color: #c0816f; color: white; padding: 20px; text-align: center;">
@@ -57,15 +57,13 @@ export async function sendVerificationEmail(email, verificationToken) {
       </div>
       <div style="padding: 20px; border: 1px solid #ddd; border-top: none;">
         <p>Hello,</p>
-        <p>Thank you for signing up for Arzani Marketplace! Please verify your email address by clicking the button below:</p>
+        <p>Thank you for signing up for Arzani Marketplace! Please use the verification code below to verify your email address:</p>
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${SERVER_URL}/auth/verify-email?token=${verificationToken}" style="background-color: #c0816f; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">
-            Verify Email Address
-          </a>
+          <div style="font-size: 32px; letter-spacing: 5px; font-weight: bold; color: #333; padding: 15px; background-color: #f5f5f5; border-radius: 4px; display: inline-block;">
+            ${verificationCode}
+          </div>
         </div>
-        <p>If the button doesn't work, please copy and paste this link into your browser:</p>
-        <p><a href="${SERVER_URL}/auth/verify-email?token=${verificationToken}">${SERVER_URL}/auth/verify-email?token=${verificationToken}</a></p>
-        <p>This verification link is valid for 24 hours.</p>
+        <p>This verification code is valid for 10 minutes.</p>
         <p>If you did not create an account, please ignore this email.</p>
         <p>Best regards,<br>The Arzani Marketplace Team</p>
       </div>
@@ -236,7 +234,7 @@ export async function sendWelcomeEmail(email, username) {
           <li><a href="${SERVER_URL}/dashboard" style="color: #041b76; font-weight: bold;">/dashboard</a> - View all your activities, listings and communications in one place.</li>
         </ul>
         
-        <p style="margin-top: 25px;">If you have any questions or need assistance, please don't hesitate to contact our support team at <a href="mailto:support@arzani.co.uk" style="color: #041b76;">support@arzani.co.uk</a>.</p>
+        <p style="margin-top: 25px;">If you have any questions or need assistance, please don't hesitate to contact our support team at <a href="mailto:hello@arzani.co.uk" style="color: #041b76;">hello@arzani.co.uk</a>.</p>
         
         <div style="text-align: center; margin: 30px 0;">
           <a href="${SERVER_URL}/marketplace2" style="background-color: #041b76; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">
@@ -545,4 +543,361 @@ export async function sendVerificationStatusEmail(email, username, status, profe
   }
 }
 
-export default { sendVerificationEmail, sendPasswordResetEmail, sendWelcomeEmail, sendContactEmail, sendVerificationStatusEmail };
+export async function sendSignupAnalyticsEmail(userEmail, userId, timestamp = new Date().toISOString()) {
+  console.log('Sending signup analytics email for user:', userId);
+
+  // Email content with analytics data
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background-color: #041b76; color: white; padding: 20px; text-align: center;">
+        <h2>New User Signup Analytics</h2>
+      </div>
+      <div style="padding: 20px; border: 1px solid #ddd; border-top: none;">
+        <p><strong>A new user has signed up to Arzani Marketplace!</strong></p>
+        
+        <div style="background-color: #f9f9f9; padding: 15px; margin: 20px 0; border-left: 4px solid #041b76;">
+          <h3 style="margin-top: 0; color: #333;">Signup Details</h3>
+          <p><strong>User ID:</strong> ${userId}</p>
+          <p><strong>Email:</strong> ${userEmail}</p>
+          <p><strong>Signup Time:</strong> ${timestamp}</p>
+          <p><strong>Status:</strong> Verification pending</p>
+        </div>
+        
+        <p>This is an automated notification for analytics purposes.</p>
+      </div>
+    </div>
+  `;
+
+  try {
+    if (useSendGrid) {
+      // Use SendGrid
+      const msg = {
+        to: 'hello@arzani.co.uk',
+        from: {
+          email: 'analytics@arzani.co.uk',
+          name: 'Arzani Analytics'
+        },
+        subject: 'New User Signup Analytics',
+        html: htmlContent,
+      };
+
+      const response = await sgMail.send(msg);
+      console.log('Signup analytics email sent successfully via SendGrid');
+      return response;
+    } else {
+      // Use Nodemailer
+      const transporter = getTransporter();
+      const info = await transporter.sendMail({
+        from: '"Arzani Analytics" <analytics@arzani.co.uk>',
+        to: 'hello@arzani.co.uk',
+        subject: 'New User Signup Analytics',
+        html: htmlContent
+      });
+      
+      console.log('Signup analytics email sent successfully via Nodemailer:', info.messageId);
+      
+      // For development, log preview URL
+      if (process.env.NODE_ENV === 'development' && info.previewUrl) {
+        console.log('Preview URL:', info.previewUrl);
+      }
+      
+      return info;
+    }
+  } catch (error) {
+    console.error('Failed to send signup analytics email:', error);
+    if (error.response) {
+      console.error(error.response.body);
+    }
+    // Just log the error without throwing, so it doesn't block the signup process
+    return null;
+  }
+}
+
+export async function sendVerificationSuccessAnalyticsEmail(userEmail, userId, username, timestamp = new Date().toISOString()) {
+  console.log('Sending verification success analytics email for user:', userId);
+
+  // Email content with verification success analytics data
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background-color: #041b76; color: white; padding: 20px; text-align: center;">
+        <h2>User Verification Success</h2>
+      </div>
+      <div style="padding: 20px; border: 1px solid #ddd; border-top: none;">
+        <p><strong>A user has successfully verified their account!</strong></p>
+        
+        <div style="background-color: #f9f9f9; padding: 15px; margin: 20px 0; border-left: 4px solid #097969;">
+          <h3 style="margin-top: 0; color: #333;">Verification Details</h3>
+          <p><strong>User ID:</strong> ${userId}</p>
+          <p><strong>Email:</strong> ${userEmail}</p>
+          <p><strong>Username:</strong> ${username || 'N/A'}</p>
+          <p><strong>Verification Time:</strong> ${timestamp}</p>
+          <p><strong>Status:</strong> <span style="color: #097969; font-weight: bold;">Verified Successfully</span></p>
+        </div>
+        
+        <p>This is an automated notification for analytics purposes.</p>
+      </div>
+    </div>
+  `;
+
+  try {
+    if (useSendGrid) {
+      // Use SendGrid
+      const msg = {
+        to: 'hello@arzani.co.uk',
+        from: {
+          email: 'analytics@arzani.co.uk',
+          name: 'Arzani Analytics'
+        },
+        subject: 'User Verification Success Analytics',
+        html: htmlContent,
+      };
+
+      const response = await sgMail.send(msg);
+      console.log('Verification success analytics email sent successfully via SendGrid');
+      return response;
+    } else {
+      // Use Nodemailer
+      const transporter = getTransporter();
+      const info = await transporter.sendMail({
+        from: '"Arzani Analytics" <analytics@arzani.co.uk>',
+        to: 'hello@arzani.co.uk',
+        subject: 'User Verification Success Analytics',
+        html: htmlContent
+      });
+      
+      console.log('Verification success analytics email sent successfully via Nodemailer:', info.messageId);
+      
+      // For development, log preview URL
+      if (process.env.NODE_ENV === 'development' && info.previewUrl) {
+        console.log('Preview URL:', info.previewUrl);
+      }
+      
+      return info;
+    }
+  } catch (error) {
+    console.error('Failed to send verification success analytics email:', error);
+    if (error.response) {
+      console.error(error.response.body);
+    }
+    // Just log the error without throwing, so it doesn't block the verification process
+    return null;
+  }
+}
+
+export async function sendVerificationFailureAnalyticsEmail(userEmail, userId, reason, attemptCount, timestamp = new Date().toISOString()) {
+  console.log('Sending verification failure analytics email for user:', userId);
+
+  // Email content with verification failure analytics data
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background-color: #041b76; color: white; padding: 20px; text-align: center;">
+        <h2>User Verification Failure</h2>
+      </div>
+      <div style="padding: 20px; border: 1px solid #ddd; border-top: none;">
+        <p><strong>A user has failed to verify their account.</strong></p>
+        
+        <div style="background-color: #f9f9f9; padding: 15px; margin: 20px 0; border-left: 4px solid #dc3545;">
+          <h3 style="margin-top: 0; color: #333;">Verification Failure Details</h3>
+          <p><strong>User ID:</strong> ${userId}</p>
+          <p><strong>Email:</strong> ${userEmail}</p>
+          <p><strong>Failed Attempt Time:</strong> ${timestamp}</p>
+          <p><strong>Attempt Count:</strong> ${attemptCount}</p>
+          <p><strong>Failure Reason:</strong> <span style="color: #dc3545; font-weight: bold;">${reason}</span></p>
+          <p><strong>Status:</strong> <span style="color: #dc3545; font-weight: bold;">Verification Failed</span></p>
+        </div>
+        
+        <p>This is an automated notification for analytics purposes.</p>
+      </div>
+    </div>
+  `;
+
+  try {
+    if (useSendGrid) {
+      // Use SendGrid
+      const msg = {
+        to: 'hello@arzani.co.uk',
+        from: {
+          email: 'analytics@arzani.co.uk',
+          name: 'Arzani Analytics'
+        },
+        subject: 'User Verification Failure Analytics',
+        html: htmlContent,
+      };
+
+      const response = await sgMail.send(msg);
+      console.log('Verification failure analytics email sent successfully via SendGrid');
+      return response;
+    } else {
+      // Use Nodemailer
+      const transporter = getTransporter();
+      const info = await transporter.sendMail({
+        from: '"Arzani Analytics" <analytics@arzani.co.uk>',
+        to: 'hello@arzani.co.uk',
+        subject: 'User Verification Failure Analytics',
+        html: htmlContent
+      });
+      
+      console.log('Verification failure analytics email sent successfully via Nodemailer:', info.messageId);
+      
+      // For development, log preview URL
+      if (process.env.NODE_ENV === 'development' && info.previewUrl) {
+        console.log('Preview URL:', info.previewUrl);
+      }
+      
+      return info;
+    }
+  } catch (error) {
+    console.error('Failed to send verification failure analytics email:', error);
+    if (error.response) {
+      console.error(error.response.body);
+    }
+    // Just log the error without throwing, so it doesn't block the process
+    return null;
+  }
+}
+
+export async function sendWeeklyAnalyticsSummaryEmail(stats) {
+  console.log('Sending weekly analytics summary email');
+
+  const {
+    signupCount = 0,
+    verificationSuccessCount = 0, 
+    verificationFailureCount = 0,
+    totalUsers = 0,
+    conversionRate = 0,
+    weekStart,
+    weekEnd,
+    topFailureReasons = []
+  } = stats;
+
+  // Format date ranges
+  const formattedStartDate = new Date(weekStart).toLocaleDateString('en-GB', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+  
+  const formattedEndDate = new Date(weekEnd).toLocaleDateString('en-GB', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long', 
+    day: 'numeric'
+  });
+
+  // Generate failure reasons HTML if available
+  let failureReasonsHtml = '';
+  if (topFailureReasons && topFailureReasons.length > 0) {
+    failureReasonsHtml = `
+      <div style="margin-top: 20px;">
+        <h4 style="margin-bottom: 10px; color: #333;">Top Verification Failure Reasons:</h4>
+        <ul style="margin: 0; padding: 0 0 0 20px;">
+          ${topFailureReasons.map(reason => `<li style="margin-bottom: 5px;">${reason.reason} (${reason.count} occurrences)</li>`).join('')}
+        </ul>
+      </div>
+    `;
+  }
+
+  // Email content with weekly analytics summary
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background-color: #041b76; color: white; padding: 20px; text-align: center;">
+        <h2>Weekly User Analytics Summary</h2>
+        <p style="margin: 5px 0;">${formattedStartDate} - ${formattedEndDate}</p>
+      </div>
+      <div style="padding: 20px; border: 1px solid #ddd; border-top: none;">
+        <p><strong>Here's your weekly user verification analytics summary:</strong></p>
+        
+        <div style="background-color: #f9f9f9; padding: 15px; margin: 20px 0; border-left: 4px solid #041b76;">
+          <h3 style="margin-top: 0; color: #333;">Overview</h3>
+          
+          <div style="display: flex; justify-content: space-between; flex-wrap: wrap; margin-bottom: 15px;">
+            <div style="flex: 0 0 48%; background-color: #e6f7ff; padding: 15px; margin-bottom: 10px; border-radius: 4px;">
+              <h4 style="margin: 0 0 10px 0; color: #0366d6;">New Signups</h4>
+              <p style="font-size: 24px; margin: 0; font-weight: bold;">${signupCount}</p>
+            </div>
+            
+            <div style="flex: 0 0 48%; background-color: #e6ffed; padding: 15px; margin-bottom: 10px; border-radius: 4px;">
+              <h4 style="margin: 0 0 10px 0; color: #28a745;">Successful Verifications</h4>
+              <p style="font-size: 24px; margin: 0; font-weight: bold;">${verificationSuccessCount}</p>
+            </div>
+            
+            <div style="flex: 0 0 48%; background-color: #fff5e6; padding: 15px; margin-bottom: 10px; border-radius: 4px;">
+              <h4 style="margin: 0 0 10px 0; color: #f66a0a;">Failed Verifications</h4>
+              <p style="font-size: 24px; margin: 0; font-weight: bold;">${verificationFailureCount}</p>
+            </div>
+            
+            <div style="flex: 0 0 48%; background-color: #f6f8fa; padding: 15px; margin-bottom: 10px; border-radius: 4px;">
+              <h4 style="margin: 0 0 10px 0; color: #586069;">Conversion Rate</h4>
+              <p style="font-size: 24px; margin: 0; font-weight: bold;">${conversionRate}%</p>
+            </div>
+          </div>
+          
+          <p><strong>Total Users:</strong> ${totalUsers}</p>
+          ${failureReasonsHtml}
+        </div>
+        
+        <div style="margin-top: 25px;">
+          <h3>Recommendations:</h3>
+          <ul style="padding-left: 20px; line-height: 1.6;">
+            ${conversionRate < 70 ? 
+              '<li>Consider simplifying the verification process as the conversion rate is below 70%.</li>' : ''}
+            ${verificationFailureCount > 10 ? 
+              '<li>Review the top failure reasons to identify and address common verification issues.</li>' : ''}
+            ${verificationSuccessCount < signupCount / 2 ? 
+              '<li>Send reminder emails to users who signed up but haven\'t completed verification.</li>' : ''}
+          </ul>
+        </div>
+        
+        <p style="margin-top: 25px;">For detailed analytics, please visit the <a href="${process.env.NODE_ENV === 'production' ? 'https://www.arzani.co.uk' : 'http://localhost:5000'}/admin/analytics" style="color: #041b76;">Analytics Dashboard</a>.</p>
+        
+        <p>This is an automated analytics report.</p>
+      </div>
+    </div>
+  `;
+
+  try {
+    if (useSendGrid) {
+      // Use SendGrid
+      const msg = {
+        to: 'hello@arzani.co.uk',
+        from: {
+          email: 'analytics@arzani.co.uk',
+          name: 'Arzani Analytics'
+        },
+        subject: `Weekly User Analytics: ${formattedStartDate} - ${formattedEndDate}`,
+        html: htmlContent,
+      };
+
+      const response = await sgMail.send(msg);
+      console.log('Weekly analytics summary email sent successfully via SendGrid');
+      return response;
+    } else {
+      // Use Nodemailer
+      const transporter = getTransporter();
+      const info = await transporter.sendMail({
+        from: '"Arzani Analytics" <analytics@arzani.co.uk>',
+        to: 'hello@arzani.co.uk',
+        subject: `Weekly User Analytics: ${formattedStartDate} - ${formattedEndDate}`,
+        html: htmlContent
+      });
+      
+      console.log('Weekly analytics summary email sent successfully via Nodemailer:', info.messageId);
+      
+      // For development, log preview URL
+      if (process.env.NODE_ENV === 'development' && info.previewUrl) {
+        console.log('Preview URL:', info.previewUrl);
+      }
+      
+      return info;
+    }
+  } catch (error) {
+    console.error('Failed to send weekly analytics summary email:', error);
+    if (error.response) {
+      console.error(error.response.body);
+    }
+    return null;
+  }
+}
+
+export default { sendVerificationEmail, sendPasswordResetEmail, sendWelcomeEmail, sendContactEmail, sendVerificationStatusEmail, sendSignupAnalyticsEmail, sendVerificationSuccessAnalyticsEmail, sendVerificationFailureAnalyticsEmail, sendWeeklyAnalyticsSummaryEmail };

@@ -5,11 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login</title>
   <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">
-
   <meta name="google-client-id" content="<%= process.env.GOOGLE_CLIENT_ID %>">
   <!-- Add meta tags for environment detection -->
   <meta name="site-environment" content="<%= process.env.NODE_ENV === 'production' ? 'production' : 'development' %>">
   <meta name="production-domain" content="www.arzani.co.uk">
+  <!-- Add returnTo parameter for login redirect -->
+  <meta name="login-return-to" content="<%= typeof returnTo !== 'undefined' ? returnTo : '/marketplace2' %>">
   <!-- Add CSRF token if implemented -->
   <% if (typeof csrfToken !== 'undefined') { %>
   <meta name="csrf-token" content="<%= csrfToken %>">

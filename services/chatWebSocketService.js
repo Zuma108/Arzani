@@ -64,12 +64,12 @@ class ChatWebSocketService {
           
           // Get user's conversations and join those rooms
           const conversationsResult = await pool.query(
-            'SELECT conversation_id FROM conversation_participants WHERE user_id = $1',
+            'SELECT session_id FROM conversation_participants WHERE user_id = $1',
             [userId]
           );
           
           for (const row of conversationsResult.rows) {
-            socket.join(`conversation:${row.conversation_id}`);
+            socket.join(`conversation:${row.session_id}`);
           }
           
           // Update user's online status
@@ -104,7 +104,7 @@ class ChatWebSocketService {
         
         // Verify user has access to this conversation
         const accessCheck = await pool.query(
-          'SELECT 1 FROM conversation_participants WHERE conversation_id = $1 AND user_id = $2',
+          'SELECT 1 FROM conversation_participants WHERE session_id = $1 AND user_id = $2',
           [conversationId, socket.userId]
         );
         
@@ -134,7 +134,7 @@ class ChatWebSocketService {
         try {
           // Insert message into database
           const messageResult = await pool.query(
-            `INSERT INTO messages (conversation_id, sender_id, content, created_at)
+            `INSERT INTO a2a_chat_messages (session_id, sender_id, content, created_at)
              VALUES ($1, $2, $3, NOW())
              RETURNING id, content, created_at`,
             [conversationId, socket.userId, content]
@@ -201,7 +201,7 @@ class ChatWebSocketService {
           await pool.query(
             `UPDATE conversation_participants 
              SET last_read_at = NOW() 
-             WHERE conversation_id = $1 AND user_id = $2`,
+             WHERE session_id = $1 AND user_id = $2`,
             [data.conversationId, socket.userId]
           );
           

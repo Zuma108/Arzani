@@ -81,15 +81,14 @@ function initTypingAnimation() {
         const textToType = "Buyers typically look for businesses with consistent revenue growth of at least 15% year-over-year, strong profit margins exceeding 20%, and a high percentage of recurring revenue, ideally making up 60% or more of total earnings. They also prioritize companies with low customer concentration, ensuring no single client contributes more than 15% of revenue, and scalable operations with well-documented processes. Additionally, maintaining a minimum of 12% revenue retention growth while keeping customer churn below 3% is essential for long-term sustainability and attractiveness to investors.";
         let displayedText = "";
         let charIndex = 0;
-        
-        function typeNextChar() {
+          function typeNextChar() {
             if (charIndex < textToType.length) {
                 displayedText += textToType.charAt(charIndex);
                 element.textContent = displayedText;
                 charIndex++;
                 
-                // Random typing speed for realistic effect
-                const typingSpeed = Math.floor(Math.random() * 30) + 20; // 20-50ms
+                // Random typing speed for realistic effect (4x faster)
+                const typingSpeed = Math.floor(Math.random() * 10) + 6; // 6-16ms
                 setTimeout(typeNextChar, typingSpeed);
             }
         }
@@ -186,12 +185,11 @@ function showInsightBox(text) {
     insightBox.parentElement.style.opacity = '1';
     
     // Type the text character by character
-    let charIndex = 0;
-    function typeChar() {
+    let charIndex = 0;    function typeChar() {
         if (charIndex < text.length) {
             typingTextSpan.textContent += text.charAt(charIndex);
             charIndex++;
-            setTimeout(typeChar, Math.random() * 30 + 20); // Random typing speed
+            setTimeout(typeChar, Math.random() * 10 + 6); // Random typing speed (4x faster)
         }
     }
     

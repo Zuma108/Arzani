@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arzani-X Markdown Test</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    typography: {
+                        DEFAULT: {
+                            css: {
+                                maxWidth: 'none',
+                            }
+                        }
+                    }
+                }
+            },
+            plugins: [
+                // We need to define the typography plugin for CDN
+            ]
+        }
+    </script>
+    
+    <!-- Markdown rendering libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.7/dist/purify.min.js"></script>
+    
+    <!-- Syntax highlighting for code blocks -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    
+    <!-- Enhanced markdown styling -->
+    <link rel="stylesheet" href="/css/markdown-styles.css">
+    
+    <style>
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .test-section {
+            margin-bottom: 3rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            background: white;
+        }
+        
+        .test-header {
+            background: #f3f4f6;
+            padding: 1rem;
+            margin: -1.5rem -1.5rem 1.5rem -1.5rem;
+            border-radius: 0.5rem 0.5rem 0 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .diagnostic-info {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 0.25rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            font-family: monospace;
+            font-size: 0.875rem;
+        }
+        
+        .error-info {
+            background: #fef2f2;
+            border: 1px solid #ef4444;
+            color: #dc2626;
+        }
+        
+        .success-info {
+            background: #f0fdf4;
+            border: 1px solid #22c55e;
+            color: #166534;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="test-container">
+        <h1 class="text-3xl font-bold text-gray-900 mb-8">Arzani-X Markdown Rendering Test</h1>
+        
+        <!-- Diagnostic Section -->
+        <div class="test-section">
+            <div class="test-header">
+                <h2 class="text-xl font-semibold text-gray-800">🔍 Diagnostic Information</h2>
+            </div>
+            <div id="diagnostic-info" class="diagnostic-info">
+                Loading diagnostic information...
+            </div>
+        </div>
+        
+        <!-- Finance Agent Test -->
+        <div class="test-section">
+            <div class="test-header">
+                <h2 class="text-xl font-semibold text-gray-800">💰 Finance Agent Response</h2>
+            </div>
+            <div id="finance-test" class="markdown-output">
+                Loading...
+            </div>
+        </div>
+        
+        <!-- Legal Agent Test -->
+        <div class="test-section">
+            <div class="test-header">
+                <h2 class="text-xl font-semibold text-gray-800">⚖️ Legal Agent Response</h2>
+            </div>
+            <div id="legal-test" class="markdown-output">
+                Loading...
+            </div>
+        </div>
+        
+        <!-- Broker Agent Test -->
+        <div class="test-section">
+            <div class="test-header">
+                <h2 class="text-xl font-semibold text-gray-800">🏢 Broker Agent Response</h2>
+            </div>
+            <div id="broker-test" class="markdown-output">
+                Loading...
+            </div>
+        </div>
+        
+        <!-- Raw HTML Test -->
+        <div class="test-section">
+            <div class="test-header">
+                <h2 class="text-xl font-semibold text-gray-800">🔧 Raw HTML Output</h2>
+            </div>
+            <details>
+                <summary class="cursor-pointer text-blue-600 hover:text-blue-800">Show Raw HTML</summary>
+                <pre id="raw-html" class="bg-gray-100 p-4 rounded mt-2 text-sm overflow-x-auto"></pre>
+            </details>
+        </div>
+    </div>
+
+    <!-- Load our markdown renderer -->
+    <script src="/js/markdown-renderer.js"></script>
+    <script src="/js/markdown-test.js"></script>
+    
+    <script>
+        // Comprehensive test suite
+        function runDiagnostics() {
+            const diagnosticDiv = document.getElementById('diagnostic-info');
+            let diagnosticInfo = [];
+            
+            // Check if required libraries are loaded
+            diagnosticInfo.push('🔍 Library Availability:');
+            diagnosticInfo.push(`- marked: ${typeof marked !== 'undefined' ? '✅ Available' : '❌ Missing'}`);
+            diagnosticInfo.push(`- DOMPurify: ${typeof DOMPurify !== 'undefined' ? '✅ Available' : '❌ Missing'}`);
+            diagnosticInfo.push(`- hljs: ${typeof hljs !== 'undefined' ? '✅ Available' : '❌ Missing'}`);
+            diagnosticInfo.push(`- arzaniRenderer: ${typeof window.arzaniRenderer !== 'undefined' ? '✅ Available' : '❌ Missing'}`);
+            
+            // Check CSS availability
+            const cssLink = document.querySelector('link[href*="markdown-styles.css"]');
+            diagnosticInfo.push(`- markdown-styles.css: ${cssLink ? '✅ Linked' : '❌ Not Found'}`);
+            
+            // Check Tailwind
+            const computedStyle = getComputedStyle(document.body);
+            const hasTailwind = computedStyle.fontFamily.includes('system-ui') || document.querySelector('script[src*="tailwindcss"]');
+            diagnosticInfo.push(`- Tailwind CSS: ${hasTailwind ? '✅ Available' : '❌ Missing'}`);
+            
+            // Test basic markdown parsing
+            if (typeof marked !== 'undefined') {
+                try {
+                    const testMarkdown = '# Test\n**Bold text**';
+                    const result = marked.parse(testMarkdown);
+                    diagnosticInfo.push(`- Markdown parsing: ✅ Working`);
+                } catch (error) {
+                    diagnosticInfo.push(`- Markdown parsing: ❌ Error: ${error.message}`);
+                }
+            }
+            
+            // Update diagnostic display
+            diagnosticDiv.innerHTML = diagnosticInfo.join('<br>');
+            diagnosticDiv.className = diagnosticInfo.some(line => line.includes('❌')) 
+                ? 'diagnostic-info error-info' 
+                : 'diagnostic-info success-info';
+        }
+        
+        function testMarkdownRendering() {
+            if (!window.sampleMarkdownResponses || !window.arzaniRenderer) {
+                console.error('Required test data or renderer not available');
+                return;
+            }
+            
+            // Test each agent type
+            const agents = ['finance', 'legal', 'broker'];
+            
+            agents.forEach(agentType => {
+                const testDiv = document.getElementById(`${agentType}-test`);
+                const markdown = window.sampleMarkdownResponses[agentType];
+                
+                if (markdown && testDiv) {
+                    try {
+                        const html = window.arzaniRenderer.renderToHtml(markdown, agentType);
+                        testDiv.innerHTML = html;
+                        
+                        // Store raw HTML for inspection
+                        if (agentType === 'finance') {
+                            document.getElementById('raw-html').textContent = html;
+                        }
+                    } catch (error) {
+                        testDiv.innerHTML = `<div class="text-red-600 bg-red-50 p-4 rounded">
+                            Error rendering ${agentType} markdown: ${error.message}
+                        </div>`;
+                    }
+                } else {
+                    testDiv.innerHTML = `<div class="text-yellow-600 bg-yellow-50 p-4 rounded">
+                        No test data available for ${agentType} agent
+                    </div>`;
+                }
+            });
+        }
+        
+        // Run tests when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🧪 Starting Arzani-X Markdown Test Suite...');
+            
+            // Wait a bit for all scripts to load
+            setTimeout(() => {
+                runDiagnostics();
+                testMarkdownRendering();
+                console.log('✅ Test suite complete');
+            }, 500);
+        });
+        
+        // Add test controls
+        document.addEventListener('DOMContentLoaded', function() {
+            const testButtons = document.createElement('div');
+            testButtons.className = 'fixed bottom-4 right-4 space-x-2';
+            testButtons.innerHTML = `
+                <button onclick="runDiagnostics()" 
+                        class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded shadow">
+                    🔍 Re-run Diagnostics
+                </button>
+                <button onclick="testMarkdownRendering()" 
+                        class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded shadow">
+                    🧪 Re-test Rendering
+                </button>
+                <button onclick="window.testMarkdownFeatures && window.testMarkdownFeatures()" 
+                        class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded shadow">
+                    🎨 All Features
+                </button>
+            `;
+            document.body.appendChild(testButtons);
+        });
+    </script>
+</body>
+</html>

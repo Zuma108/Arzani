@@ -145,94 +145,86 @@ document.addEventListener('DOMContentLoaded', function() {
       // Clear any previous error messages
       if (errorElement) {
         errorElement.style.display = 'none';
-        errorElement.textContent = '';
       }
-
-      // Get form fields
-      const username = usernameInput?.value?.trim();
-      const email = emailInput?.value?.trim();
-      const password = passwordInput?.value;
       
-      // Validate inputs
-      if (!username || username.length < 3) {
-        showError('Username must be at least 3 characters long');
-        document.getElementById('username-error').style.display = 'flex';
+      // Basic validation
+      const username = usernameInput.value.trim();
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+      const acceptTerms = termsCheckbox ? termsCheckbox.checked : true;
+      
+      if (!username) {
+        showError('Username is required');
         return;
       }
       
       if (!email || !isValidEmail(email)) {
         showError('Please enter a valid email address');
-        document.getElementById('email-error').style.display = 'flex';
         return;
       }
       
-      if (!password || password.length < 6) {
-        showError('Password must be at least 6 characters long');
-        document.getElementById('password-error').style.display = 'flex';
+      if (!password) {
+        showError('Password is required');
         return;
       }
       
-      if (termsCheckbox && !termsCheckbox.checked) {
-        showError('You must agree to the Terms & Conditions');
-        document.getElementById('terms-error').style.display = 'flex';
+      if (termsCheckbox && !acceptTerms) {
+        showError('You must accept the terms and conditions');
         return;
       }
+      
+      // Save the button text for restoring later
+      const originalButtonText = submitButton.textContent;
+      submitButton.disabled = true;
+      submitButton.textContent = 'Creating Account...';
       
       try {
-        // Show loading state
-        const originalButtonText = submitButton.textContent;
-        submitButton.disabled = true;
-        submitButton.textContent = 'Creating Account...';
-        
-        // Send signup request
         const response = await fetch('/auth/signup', {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
+            'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ username, email, password })
+          body: JSON.stringify({
+            username,
+            email,
+            password,
+            acceptTerms
+          })
         });
         
-        // Parse response
         const data = await response.json();
         
-        if (!response.ok || !data.success) {
+        if (!response.ok) {
           throw new Error(data.message || 'Failed to create account');
         }
         
-        // Success - show message
-        errorElement.className = 'alert alert-success';
-        errorElement.innerHTML = `
-          <strong>Account Created Successfully!</strong>
-          <p>${data.message || 'Please check your email to verify your account.'}</p>
-        `;
-        errorElement.style.display = 'block';
-        
-        // Show the resend container
-        document.getElementById('resend-container').style.display = 'block';
-        
-        // Store email temporarily for verification resend functionality
-        sessionStorage.setItem('signupEmail', email);
-        
-        // Clear form
-        signupForm.reset();
-        strengthBar.style.width = '0%';
-        strengthText.textContent = '';
-        feedbackContainer.innerHTML = '';
-        
-        // Redirect after a delay
-        setTimeout(() => {
-          window.location.href = getBaseUrl() + '/auth/login?registered=true&email=' + encodeURIComponent(email);
-        }, 3000);
-        
+        // Success - check if verification is required
+        if (data.requiresVerification && data.userId) {
+          // Store email temporarily to use for resending verification if needed
+          localStorage.setItem('pendingVerificationEmail', email);
+          
+          // Redirect to verification page with userId parameter
+          window.location.href = `/verify.html?userId=${data.userId}`;
+        } else {
+          // For backward compatibility with old flow
+          // This is the old success path where verification might not be required
+          errorElement.className = 'alert alert-success';
+          errorElement.innerHTML = '<strong>Account Created Successfully!</strong><p>Please check your email to verify your account.</p>';
+          errorElement.style.display = 'block';
+          
+          // Reset form
+          signupForm.reset();
+          
+          // Append a registered=true parameter to the URL
+          const url = new URL(window.location.href);
+          url.searchParams.set('registered', 'true');
+          window.history.replaceState({}, '', url);
+        }
       } catch (error) {
-        console.error('Signup error:', error);
-        showError(error.message || 'Failed to create account. Please try again.');
+        showError(error.message || 'Failed to create account');
       } finally {
-        // Restore button state
         submitButton.disabled = false;
-        submitButton.textContent = 'Create Account';
+        submitButton.textContent = originalButtonText;
       }
     });
     
@@ -322,9 +314,6 @@ document.addEventListener('DOMContentLoaded', function() {
       errorElement.className = 'alert alert-danger';
       errorElement.textContent = message;
       errorElement.style.display = 'block';
-      
-      // Scroll to error message
-      errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
     } else {
       alert(message);
     }

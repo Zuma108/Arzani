@@ -12,6 +12,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { createDiscoveryMiddleware, getServicePath } from '../../libs/a2a/discovery-middleware.js';
 import { createErrorResponse, ERROR_CODES } from '../../libs/a2a/utils.js';
+import { registerOrchestratorRoutes } from './routes.js';
 
 // Load environment variables
 dotenv.config();
@@ -56,26 +57,21 @@ app.use((req, res, next) => {
   next();
 });
 
-// Agent discovery middleware
-app.use(createDiscoveryMiddleware({ servicePath }));
-
-// A2A protocol endpoint for tasks/send
-app.post('/a2a/tasks/send', (req, res) => {
-  // Placeholder for task handling logic
-  // This will be implemented in the next step
-  res.status(501).json(
-    createErrorResponse(req.body?.id || 'not-implemented', -32501, 'Not implemented yet')
-  );
-});
-
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'ok',
+  res.status(200).json({ 
+    status: 'healthy', 
     service: 'orchestrator-agent',
+    port: PORT,
     timestamp: new Date().toISOString()
   });
 });
+
+// Agent discovery middleware
+app.use(createDiscoveryMiddleware({ servicePath }));
+
+// Register A2A protocol routes
+registerOrchestratorRoutes(app);
 
 // Start the server
 app.listen(PORT, () => {

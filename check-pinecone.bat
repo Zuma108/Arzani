@@ -1,0 +1,6 @@
+@echo off
+echo Running Pinecone Connection Checker...
+node check-pinecone-connection.js
+echo.
+echo Press any key to exit...
+pause > nul

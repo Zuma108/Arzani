@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Your Email</title>
+    <!-- Add meta tag for site environment -->
+    <meta name="site-environment" content="production">
+    <meta name="production-domain" content="www.arzani.co.uk">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px 0;
+        }
+
+        .verification-wrapper {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .title-wrapper {
+            margin-bottom: 20px;
+        }
+
+        .title {
+            font-size: 28px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .form-container {
+            text-align: center;
+        }
+
+        .code-inputs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .code-input {
+            width: 40px;
+            height: 50px;
+            text-align: center;
+            font-size: 24px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+
+        .code-input:focus {
+            border-color: #c0816f;
+            outline: none;
+            background-color: #fff;
+        }
+
+        .verify-button {
+            width: 100%;
+            padding: 12px;
+            background-color: #c0816f;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .verify-button:hover {
+            background-color: #a46854;
+        }
+
+        .verify-button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+        }
+        
+        .alert-danger {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+        
+        .alert-success {
+            color: #155724;
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+
+        .resend-container {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .resend-btn {
+            background: none;
+            border: none;
+            color: #c0816f;
+            cursor: pointer;
+            text-decoration: underline;
+            padding: 0;
+            font-size: 14px;
+        }
+
+        .resend-btn:hover {
+            color: #a46854;
+        }
+
+        .resend-btn:disabled {
+            color: #999;
+            cursor: not-allowed;
+            text-decoration: none;
+        }
+
+        .login-link {
+            display: block;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .login-link a {
+            color: #c0816f;
+            text-decoration: none;
+        }
+
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-W50GKB6F3M"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-W50GKB6F3M');
+    </script>
+</head>
+<body>
+    <section class="verification-wrapper">
+        <div class="title-wrapper">
+            <h1 class="title">Verify Your Email</h1>
+            <p class="subtitle">We've sent a 6-digit verification code to your email address</p>
+        </div>
+
+        <div class="form-container">
+            <div id="verification-error" class="alert alert-danger" style="display: none;"></div>
+            <div id="verification-success" class="alert alert-success" style="display: none;"></div>
+            
+            <form id="verification-form">
+                <div class="code-inputs">
+                    <input type="text" maxlength="1" class="code-input" pattern="[0-9]" inputmode="numeric" autofocus>
+                    <input type="text" maxlength="1" class="code-input" pattern="[0-9]" inputmode="numeric">
+                    <input type="text" maxlength="1" class="code-input" pattern="[0-9]" inputmode="numeric">
+                    <input type="text" maxlength="1" class="code-input" pattern="[0-9]" inputmode="numeric">
+                    <input type="text" maxlength="1" class="code-input" pattern="[0-9]" inputmode="numeric">
+                    <input type="text" maxlength="1" class="code-input" pattern="[0-9]" inputmode="numeric">
+                </div>
+                
+                <button type="submit" class="verify-button">Verify Email</button>
+            </form>
+            
+            <div class="resend-container">
+                Didn't receive the code? 
+                <button id="resend-code" class="resend-btn">Resend Code</button>
+                <span id="resend-timer" style="margin-left: 5px;"></span>
+            </div>
+
+            <div class="login-link">
+                Already verified? <a href="/auth/login" id="login-link">Log in here</a>
+            </div>
+        </div>
+    </section>
+
+    <script src="/js/verification-handler.js"></script>
+</body>
+</html>
