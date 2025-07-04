@@ -2,132 +2,132 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">    <title>Login Page</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
     <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">
     
     <!-- Load the simple login handler script -->
     <script src="/js/simple-login-handler.js" defer></script>
 
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-blue': '#316FD4',
+                        'primary': {
+                            DEFAULT: '#3B82F6',
+                            light: '#93C5FD',
+                            dark: '#1D4ED8',
+                        },
+                        'secondary': {
+                            DEFAULT: '#10B981',
+                            light: '#6EE7B7',
+                            dark: '#047857',
+                        }
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'Segoe UI', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #f9f9f9;
-            margin: 0;
+        /* Custom clip path for the sculpted image panel with circular notch */
+        .image-panel-clippath {
+            clip-path: polygon(
+                0% 0%, 
+                calc(100% - 50px) 0%, 
+                calc(100% - 35px) 5px, 
+                calc(100% - 25px) 15px, 
+                calc(100% - 20px) 25px, 
+                calc(100% - 15px) 35px, 
+                calc(100% - 5px) 50px, 
+                100% 65px, 
+                100% calc(100% - 35px), 
+                calc(100% - 15px) calc(100% - 15px),
+                calc(100% - 35px) 100%, 
+                0% 100%
+            );
         }
-
-        .content-wrapper {
-            width: 100%;
-            max-width: 400px;
-            background-color: white;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.1);
-            text-align: center;
+        
+        /* Mobile version of clip path */
+        @media (max-width: 768px) {
+            .image-panel-clippath {
+                clip-path: polygon(
+                    0% 0%, 
+                    calc(100% - 50px) 0%, 
+                    calc(100% - 35px) 5px, 
+                    calc(100% - 25px) 15px, 
+                    calc(100% - 20px) 25px, 
+                    calc(100% - 15px) 35px, 
+                    calc(100% - 5px) 50px, 
+                    100% 65px, 
+                    100% 100%, 
+                    0% 100%
+                );
+            }
         }
-
-        .title-wrapper {
-            text-align: center;
-            margin-bottom: 20px;
+        
+        /* Custom gradient backgrounds */
+        .bg-login-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
-
-        .title {
-            font-size: 32px;
-            font-weight: bold;
-            color: #363309;
+        
+        .bg-button-gradient {
+            background: linear-gradient(135deg, #316FD4 0%, #4A90E2 100%);
         }
-
-        .form-container {
-            text-align: left;
-        }
-
-        .input-wrapper {
-            margin-bottom: 20px;
-            position: relative;
-        }
-
-        .input-field {
-            width: 93.4%;
-            padding: 12px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 14px;
-            outline: none;
-        }
-
-        .label-field {
-            position: absolute;
-            top: -10px;
-            left: 15px;
-            font-size: 12px;
-            background-color: white;
-            padding: 0 5px;
-            color: #666;
-        }
-
-        .error-message {
-            font-size: 12px;
-            color: red;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            margin-top: 5px;
-        }
-
-        .error-icon {
-            width: 14px;
-            height: 14px;
-        }
-
-        .login-button {
-            width: 100%;
-            padding: 12px;
-            background-color: #c0816f;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-
-        .login-button:hover {
-            background-color: #a46854;
-        }
-
-        .other-page {
-            text-align: center;
-            font-size: 14px;
-        }        .other-page-link {
-            color: #007bff;
-            text-decoration: none;
+        
+        .bg-button-gradient:hover {
+            background: linear-gradient(135deg, #2859b8 0%, #3d7bc8 100%);
         }
     </style>
 </head>
-
-<body>
-<section class="content-wrapper">
-    <div class="title-wrapper">
-        <h1 class="title">Login</h1>
-    </div>
-    <div class="form-container">
-        <form id="login-form" action="/auth/login2" method="GET">
-            <div class="input-wrapper">
-                <input class="input-field" type="email" id="email" name="email" required>
-                <label class="label-field" for="email">Email*</label>
-                <div class="error-message" id="email-error" style="display: none;">
-                    <img class="error-icon" src="/images/error_icon.svg" alt="Error Icon">Email is not valid.
-                </div>
+<body class="font-sans m-0 p-0 bg-gray-100 text-gray-800 min-h-screen flex justify-center items-center">
+    <!-- Outer cream border frame -->
+    <div class="bg-amber-50 rounded-3xl p-6 shadow-2xl max-w-7xl m-5 relative flex md:flex-row flex-col min-h-[700px] md:min-h-auto">
+        
+        <!-- White form container (left side only) -->
+        <section class="bg-white rounded-2xl p-8 md:w-[400px] md:flex-shrink-0 w-full flex flex-col justify-center md:px-8 px-6 md:mr-6 mb-6 md:mb-0 shadow-sm">
+            <div class="mb-6">
+                <h1 class="text-3xl text-gray-900 mb-6 font-semibold">Login</h1>
             </div>
 
-            <button type="submit" class="login-button">Continue</button>
-        </form>
-    </div>    <p class="other-page">Don't have an account? 
-        <a class="other-page-link" href="/signup">Sign Up</a>    </p>
-</section>
+            <div class="text-left">
+                <div id="login-error" class="px-5 py-4 mb-5 border border-transparent rounded-2xl shadow-sm text-red-800 bg-red-100 border-red-200 hidden"></div>
+                
+                <!-- OAuth buttons container -->
+                <div id="oauth-buttons-container"></div>
+                
+                <form id="login-form" action="/auth/login2" method="GET">
+                    <div class="mb-4 relative">
+                        <input class="w-full py-3 px-5 border border-gray-200 rounded-full text-base box-border transition-all duration-200 bg-gray-50 shadow-inner focus:border-primary-blue focus:outline-none focus:ring-4 focus:ring-primary-blue/10 focus:bg-white focus:-translate-y-0.5" type="email" id="email" name="email" required autocomplete="email" placeholder="Email">
+                        <label class="absolute -top-2.5 left-4 text-xs bg-white px-2 text-gray-600 font-medium rounded-xl" for="email">Email</label>
+                        <div class="text-xs text-red-500 flex items-center gap-1 mt-1 pl-1 hidden" id="email-error">
+                            <img class="w-3.5 h-3.5" src="/images/error_icon.svg" alt="Error Icon">Email is not valid
+                        </div>
+                    </div>
 
-<%- include('partials/footer') %>
+                    <button type="submit" class="w-full py-3 px-5 bg-button-gradient text-white border-0 rounded-full cursor-pointer text-sm font-semibold transition-all duration-300 mb-4 shadow-lg shadow-primary-blue/30 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary-blue/40 disabled:bg-gray-300 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none">Continue</button>
+                </form>
+                
+                <div class="text-center mt-4 text-sm text-gray-600">
+                    Don't have an account? <a href="/signup" class="text-primary-blue no-underline transition-colors duration-200 hover:text-blue-700 hover:underline">Sign Up</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Image panel extends to border edge -->
+        <div class="md:flex-1 md:min-w-[600px] w-full bg-gray-50 bg-cover bg-center bg-no-repeat relative rounded-2xl md:order-none order-first md:h-auto h-64 image-panel-clippath min-h-[650px]" style="background-image: url('/figma design exports/images/login-login.webp'); background-size: cover; background-position: center;">
+        </div>
+    </div>
+
+    <script src="/js/oauth-handler.js"></script>
+    
+    <!-- Add Google Client ID meta tag -->
+    <meta name="google-client-id" content="1089717985687-94dcvpkpjp7s1m4eo8t5ifrjlhf80g8c.apps.googleusercontent.com">
 </body>
 </html>

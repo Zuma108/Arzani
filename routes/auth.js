@@ -1,6 +1,7 @@
 import express from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { OAuth2Client } from 'google-auth-library';
 import dotenv from 'dotenv';
 import pool from '../db.js';
@@ -32,7 +33,19 @@ dotenv.config();
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET;
 const EMAIL_SECRET = process.env.EMAIL_SECRET || process.env.JWT_SECRET;
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+// Debug environment variables
+console.log('OAuth Environment Check:', {
+  googleClientId: process.env.GOOGLE_CLIENT_ID ? 'SET' : 'NOT_SET',
+  googleClientSecret: process.env.GOOGLE_CLIENT_SECRET ? 'SET' : 'NOT_SET',
+  nodeEnv: process.env.NODE_ENV
+});
+
+const googleClient = new OAuth2Client(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+  `${process.env.NODE_ENV === 'production' ? 'https://www.arzani.co.uk' : 'http://localhost:5000'}/auth/google/callback`
+);
 
 // Add this helper function near the top of your file
 function sanitizeRedirectUrl(url) {
@@ -575,6 +588,14 @@ router.get('/google/callback', async (req, res) => {
     if (!code) {
       return res.redirect('/login2?error=no_code');
     }
+
+    // Debug OAuth client configuration
+    console.log('OAuth Client Debug:', {
+      clientId: process.env.GOOGLE_CLIENT_ID?.substring(0, 20) + '...',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET ? 'SET' : 'NOT_SET',
+      redirectUri: `${process.env.NODE_ENV === 'production' ? 'https://www.arzani.co.uk' : 'http://localhost:5000'}/auth/google/callback`,
+      codeReceived: !!code
+    });
 
     // Get the tokens
     const { tokens } = await googleClient.getToken(code);
@@ -1204,6 +1225,34 @@ router.post('/resend-code', async (req, res) => {
       success: false,
       message: 'An error occurred while sending verification code'
     });
+  }
+});
+
+// Google OAuth initiation (traditional flow fallback)
+router.get('/google', async (req, res) => {
+  try {
+    const returnTo = req.query.returnTo || '/marketplace2';
+    
+    // Store returnTo in session for the callback
+    req.session.returnTo = returnTo;
+    await new Promise(resolve => req.session.save(resolve));
+
+    // Generate OAuth URL
+    const authUrl = googleClient.generateAuthUrl({
+      access_type: 'offline',
+      scope: [
+        'https://www.googleapis.com/auth/userinfo.profile',
+        'https://www.googleapis.com/auth/userinfo.email'
+      ],
+      state: crypto.randomBytes(32).toString('hex'),
+      prompt: 'select_account',
+      include_granted_scopes: true
+    });
+
+    res.redirect(authUrl);
+  } catch (error) {
+    console.error('Google OAuth initiation error:', error);
+    res.redirect('/login2?error=google_oauth_init_failed');
   }
 });
 

@@ -157,6 +157,9 @@ import roleRoutes from './routes/roleRoutes.js';
 // Add this with other route imports
 import roleSelectionRoutes from './routes/roleSelectionRoutes.js';
 
+// Import OAuth routes
+import oauthRoutes from './routes/oauth.js';
+
 // Import verification upload routes
 import verificationUploadRoutes from './routes/verificationUploadRoutes.js';
 
@@ -640,20 +643,44 @@ if (!process.env.REFRESH_TOKEN_SECRET) {
 
 // Update CORS configuration - remove the duplicate corsOptions and merge all options
 const corsOptions = {
-  origin: ['http://localhost:3000', 'http://localhost:5000'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // List of allowed origins
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'http://localhost:5000',
+      'https://accounts.google.com',
+      'https://oauth.live.com',
+      'https://login.microsoftonline.com'
+    ];
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      // For development, allow any localhost origin
+      if (origin && origin.includes('localhost')) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: [
     'Content-Type',
     'Authorization',
     'X-Requested-With',
     'Accept',
     'Origin',
-    'stripe-signature' // Add this
+    'X-CSRF-Token',
+    'stripe-signature'
   ],
   credentials: true,
   maxAge: 86400, // 24 hours
   preflightContinue: false,
-  optionsSuccessStatus: 204
+  optionsSuccessStatus: 200
 };
 
 // Register valuation payment routes
@@ -725,7 +752,24 @@ app.use('/api/auth', apiAuthRoutes); // Add API auth routes
 // app.use('/api/chat', chatApiRoutes); // Use chatApiRoutes instead of chatRouter
 app.use('/api/threads', threadsApiRoutes); // Add threads API for conversation management
 app.use('/payment', paymentRoutes);
+// Add specific CORS middleware for OAuth routes
+app.use('/auth', (req, res, next) => {
+  // Set CORS headers specifically for OAuth endpoints
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-CSRF-Token');
+  res.header('Access-Control-Expose-Headers', 'Authorization');
+  
+  // Handle preflight requests for OAuth
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  next();
+});
+
 app.use('/auth', authRoutes); // Update this line to register auth routes
+app.use('/auth', oauthRoutes); // Add OAuth routes
 app.use('/api/market', marketTrendsRoutes);
 app.use('/api/drive', googleDriveRoutes);
 app.use('/api/test', testRoutes); // Add the new test routes
@@ -1207,10 +1251,11 @@ const router = express.Router();
         }
     }
 }));
-  // Serve the marketplace2.ejs file
+  // Serve the homepage as a secondary landing page for business valuation
   app.get('/homepage', (req, res) => {
+    res.locals.isChatPage = false;
     res.render('homepage', {
-      title: 'Welcome to Our Marketplace'
+      title: 'Evaluate Your Business Value | Arzani Marketplace'
     });
   });
 
@@ -1418,9 +1463,13 @@ app.post('/create-valuation-checkout', async (req, res) => {
 });
 
 
+  // This route will be overridden by the root-route-fix.js handler with higher priority
+  // It's left here as a fallback but won't normally be used
   app.get('/', (req, res) => {
-    // Redirect the root URL to the homepage
-    res.redirect('/homepage');
+    // Render the marketplace landing page - this is now the main landing page
+    res.render('marketplace-landing', {
+      title: 'Buy & Sell Businesses | Arzani Marketplace'
+    });
   });
 
   app.get('/homepage', (req, res) => {
@@ -1496,26 +1545,17 @@ app.get('/marketplace', authDebug.enforceNonChatPage, (req, res) => {
   res.redirect('/marketplace2');
 });
 
-// Route for the new marketplace landing page - accessible to everyone without auth
+// Redirect old marketplace landing URL to the root path (now primary landing page)
 app.get('/marketplace-landing', (req, res) => {
   res.locals.isChatPage = false;
-  
-  // Render the template with error handling
-  try {
-    res.render('marketplace-landing', {
-      user: null,
-      isAuthenticated: false
-    });
-  } catch (error) {
-    console.error('Error rendering marketplace-landing template:', error);
-    res.status(500).send('An error occurred while loading the marketplace landing page.');
-  }
+  // Redirect to root since marketplace-landing is now the homepage
+  res.redirect('/');
 });
   
-  app.get('/marketplace2', async (req, res) => {
-    try {
-      // Explicitly mark as NOT a chat page - this is crucial
-      res.locals.isChatPage = false;
+app.get('/marketplace2', async (req, res) => {
+  try {
+    // Explicitly mark as NOT a chat page - this is crucial
+    res.locals.isChatPage = false;
       
       // Pass user data if authenticated
       let userData = null;
@@ -2499,14 +2539,15 @@ app.get('/homepage', async (req, res) => {
   }
 });
 
-// Remove or comment out the root redirect
+// This route handler is now replaced by the higher priority one in root-route-fix.js
+// It's kept here only for reference but has been updated to match the new page structure
 // app.get('/', (req, res) => {
 //   res.redirect('/homepage');
 // });
 
-// Add root route that renders homepage directly
+// This route definition will be overridden by the higher priority handler in root-route-fix.js
 app.get('/', (req, res) => {
-  res.render('homepage', {
+  res.render('marketplace-landing', {
     title: 'Welcome to Arzani Marketplace'
   });
 });

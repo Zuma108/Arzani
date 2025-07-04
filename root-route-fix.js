@@ -94,8 +94,8 @@ export function attachRootRoute(app) {
   // Create our root route handler
   const rootHandler = (req, res, next) => {
     if (req.path === '/') {
-      return res.render('homepage', { 
-        title: 'Welcome to Arzani Marketplace'
+      return res.render('marketplace-landing', { 
+        title: 'Buy & Sell Businesses | Arzani Marketplace'
       });
     }
     next();

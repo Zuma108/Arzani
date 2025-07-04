@@ -387,7 +387,9 @@ async function createOrUpdateOAuthUser({
   email, 
   username, 
   provider, 
-  providerId 
+  providerId,
+  profile_picture = null,
+  tokens = null
 }) {
   const client = await pool.connect();
   try {
@@ -397,35 +399,62 @@ async function createOrUpdateOAuthUser({
     let user = await getUserByEmail(email);
 
     if (user) {
-      // Update existing user with provider ID
+      // Update existing user with provider ID and tokens
+      const updateFields = [`${provider}_id = $1`, 'auth_provider = $2', 'last_login = NOW()'];
+      const updateValues = [providerId, provider];
+      let paramCount = 2;
+
+      if (profile_picture) {
+        paramCount++;
+        updateFields.push(`profile_picture = $${paramCount}`);
+        updateValues.push(profile_picture);
+      }
+
+      if (tokens && provider === 'google') {
+        paramCount++;
+        updateFields.push(`google_tokens = $${paramCount}`);
+        updateValues.push(JSON.stringify(tokens));
+      }
+
+      paramCount++;
+      updateValues.push(email);
+
       const updateQuery = `
         UPDATE users 
-        SET 
-          ${provider}_id = $1,
-          auth_provider = COALESCE(auth_provider, $2)
-        WHERE email = $3
+        SET ${updateFields.join(', ')}
+        WHERE email = $${paramCount}
         RETURNING *;
       `;
-      const result = await client.query(updateQuery, [providerId, provider, email]);
+      
+      const result = await client.query(updateQuery, updateValues);
       user = result.rows[0];
     } else {
       // Create new user
+      const insertFields = ['username', 'email', `${provider}_id`, 'auth_provider'];
+      const insertValues = [username, email, providerId, provider];
+      let paramCount = 4;
+
+      if (profile_picture) {
+        paramCount++;
+        insertFields.push('profile_picture');
+        insertValues.push(profile_picture);
+      }
+
+      if (tokens && provider === 'google') {
+        paramCount++;
+        insertFields.push('google_tokens');
+        insertValues.push(JSON.stringify(tokens));
+      }
+
+      const placeholders = insertValues.map((_, index) => `$${index + 1}`).join(', ');
+      
       const insertQuery = `
-        INSERT INTO users (
-          username, 
-          email, 
-          ${provider}_id,
-          auth_provider
-        ) 
-        VALUES ($1, $2, $3, $4)
+        INSERT INTO users (${insertFields.join(', ')}) 
+        VALUES (${placeholders})
         RETURNING *;
       `;
-      const result = await client.query(insertQuery, [
-        username,
-        email,
-        providerId,
-        provider
-      ]);
+      
+      const result = await client.query(insertQuery, insertValues);
       user = result.rows[0];
 
       // Create auth record with verified=true for OAuth users
@@ -436,7 +465,7 @@ async function createOrUpdateOAuthUser({
           verified
         ) 
         VALUES ($1, $2, true)
-      `, [user.id, '']);
+      `, [user.id, 'OAUTH_USER']);
     }
 
     await client.query('COMMIT');

@@ -61,6 +61,21 @@ const config = {
     apiKey: process.env.OPENAI_API_KEY
   },
   
+  // OAuth providers
+  oauth: {
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      redirectUri: `${process.env.NODE_ENV === 'production' ? 'https://www.arzani.co.uk' : 'http://localhost:5000'}/auth/google/callback`
+    },
+    microsoft: {
+      clientId: process.env.MICROSOFT_CLIENT_ID,
+      clientSecret: process.env.MICROSOFT_CLIENT_SECRET,
+      redirectUri: `${process.env.NODE_ENV === 'production' ? 'https://www.arzani.co.uk' : 'http://localhost:5000'}/auth/microsoft/callback`,
+      tenant: process.env.MICROSOFT_TENANT || 'common'
+    }
+  },
+  
   // Session
   session: {
     cookie: {

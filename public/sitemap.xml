@@ -4,15 +4,23 @@
   <!-- Homepage -->
   <url>
     <loc>https://www.arzani.co.uk/</loc>
-    <lastmod>2025-04-07</lastmod>
+    <lastmod>2025-07-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
 
+  <!-- Business Valuation Page -->
+  <url>
+    <loc>https://www.arzani.co.uk/homepage</loc>
+    <lastmod>2025-07-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
   <!-- Main Product Pages -->
   <url>
     <loc>https://www.arzani.co.uk/seller-questionnaire</loc>
-    <lastmod>2025-04-07</lastmod>
+    <lastmod>2025-07-03</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
