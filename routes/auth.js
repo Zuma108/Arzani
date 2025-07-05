@@ -99,7 +99,9 @@ router.get('/check-db', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-    console.log('Login attempt for:', email);
+    console.log('Auth route login attempt for:', email);
+    console.log('Request headers:', req.headers);
+    console.log('Request origin:', req.headers.origin);
 
     if (!email || !password) {
       return res.status(400).json({ 
@@ -247,11 +249,13 @@ router.post('/login', async (req, res) => {
     }
 
     // Response
+    console.log('Login successful for user:', user.id, 'sending response');
     res.status(200).json({
       success: true,
       message: 'Login successful',
       token,
       refreshToken,
+      redirectTo: '/marketplace2', // Add redirectTo for frontend compatibility
       user: {
         id: user.id,
         email: user.email,

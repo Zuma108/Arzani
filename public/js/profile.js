@@ -12,6 +12,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Load user profile data
     loadUserProfile();
+    
+    // Load buyer status
+    loadBuyerStatus();
 });
 
 /**
@@ -175,6 +178,422 @@ function loadUserProfile() {
         if (error.message === 'AUTH_FAILED') {
             window.location.href = '/login2?returnTo=' + encodeURIComponent(window.location.pathname);
         }
+    });
+}
+
+/**
+ * Show toast notification
+ * @param {string} message - Message to display
+ * @param {string} type - Toast type (success, error, info, warning)
+ */
+function showToast(message, type = 'info') {
+    const toastContainer = document.querySelector('.toast-container') || createToastContainer();
+    
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center text-white bg-${type === 'error' ? 'danger' : type} border-0`;
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+    toast.setAttribute('aria-atomic', 'true');
+    
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">${message}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    `;
+    
+    toastContainer.appendChild(toast);
+    
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+    
+    toast.addEventListener('hidden.bs.toast', () => {
+        toast.remove();
+    });
+}
+
+/**
+ * Create toast container if it doesn't exist
+ */
+function createToastContainer() {
+    const container = document.createElement('div');
+    container.className = 'toast-container position-fixed top-0 end-0 p-3';
+    document.body.appendChild(container);
+    return container;
+}
+
+/**
+ * Load buyer status from API
+ */
+function loadBuyerStatus() {
+    const token = getAuthToken();
+    
+    if (!token) {
+        console.warn('No auth token found, skipping buyer status fetch');
+        updateBuyerStatusUI(null);
+        return;
+    }
+    
+    console.log('Loading buyer status with token:', token.substring(0, 20) + '...');
+    
+    // First test if the buyer API is reachable
+    fetch('/api/buyer/test', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        console.log('Buyer API test response:', response.status);
+        if (response.ok) {
+            console.log('Buyer API is reachable, proceeding with status fetch');
+            return fetchBuyerStatus(token);
+        } else {
+            throw new Error('Buyer API test failed');
+        }
+    })
+    .catch(error => {
+        console.error('Buyer API test failed:', error);
+        updateBuyerStatusUI(null);
+        showToast('Buyer API is not available. Please contact support.', 'error');
+    });
+}
+
+/**
+ * Fetch buyer status (separated for easier testing)
+ */
+function fetchBuyerStatus(token) {
+    fetch('/api/buyer/status', {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        console.log('Buyer status response status:', response.status);
+        if (!response.ok) {
+            return response.text().then(text => {
+                console.error('Buyer status error response:', text);
+                throw new Error(`Failed to fetch buyer status: ${response.status} - ${text}`);
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Buyer status data received:', data);
+        updateBuyerStatusUI(data);
+    })
+    .catch(error => {
+        console.error('Error fetching buyer status:', error);
+        updateBuyerStatusUI(null);
+        
+        // Show user-friendly error message
+        showToast('Unable to load buyer status. Please refresh the page.', 'error');
+    });
+}
+
+/**
+ * Update UI with buyer status
+ * @param {Object|null} status - Buyer status data
+ */
+function updateBuyerStatusUI(status) {
+    const buyerStatusBadge = document.getElementById('buyer-status-badge');
+    const buyerStatusContent = document.getElementById('buyer-status-content');
+    
+    if (!buyerStatusBadge || !buyerStatusContent) {
+        console.warn('Buyer status elements not found in DOM');
+        return;
+    }
+    
+    if (!status) {
+        // Error state or not authenticated
+        buyerStatusBadge.textContent = 'Error';
+        buyerStatusBadge.className = 'badge bg-danger';
+        buyerStatusContent.innerHTML = `
+            <div class="text-center py-3">
+                <div class="text-muted">
+                    <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                    <p>Unable to load buyer status. Please refresh the page.</p>
+                </div>
+            </div>
+        `;
+        return;
+    }
+    
+    // Update badge
+    if (status.isPremium) {
+        buyerStatusBadge.textContent = 'Premium Buyer';
+        buyerStatusBadge.className = 'badge bg-warning text-dark';
+    } else {
+        buyerStatusBadge.textContent = 'Free Buyer';
+        buyerStatusBadge.className = 'badge bg-secondary';
+    }
+    
+    // Update content based on status
+    if (status.isPremium) {
+        buyerStatusContent.innerHTML = createPremiumBuyerContent(status);
+    } else {
+        buyerStatusContent.innerHTML = createFreeBuyerContent(status);
+    }
+    
+    // Setup event listeners for buyer actions
+    setupBuyerEventListeners(status);
+}
+
+/**
+ * Create premium buyer content HTML
+ * @param {Object} status - Buyer status data
+ */
+function createPremiumBuyerContent(status) {
+    const planEndDate = status.planEnd ? new Date(status.planEnd).toLocaleDateString() : 'N/A';
+    
+    return `
+        <div class="buyer-plan-card premium">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0">
+                    <i class="fas fa-crown text-warning me-2"></i>
+                    Premium Buyer Plan
+                </h6>
+                <span class="badge bg-success">Active</span>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <small class="text-muted">Plan expires:</small>
+                    <div class="fw-medium">${planEndDate}</div>
+                </div>
+                <div class="col-md-6">
+                    <small class="text-muted">Reports used:</small>
+                    <div class="fw-medium">${status.usage?.dueDiligenceReportsUsed || 0}/10</div>
+                </div>
+            </div>
+            
+            <h6 class="mb-2">Premium Features:</h6>
+            <ul class="feature-list mb-3">
+                <li>
+                    <i class="fas fa-check-circle"></i>
+                    Access to exclusive off-market listings
+                </li>
+                <li>
+                    <i class="fas fa-check-circle"></i>
+                    24-72 hour early access to new listings
+                </li>
+                <li>
+                    <i class="fas fa-check-circle"></i>
+                    Unlimited AI deal advisor
+                </li>
+                <li>
+                    <i class="fas fa-check-circle"></i>
+                    Priority customer support
+                </li>
+                <li>
+                    <i class="fas fa-check-circle"></i>
+                    Advanced due diligence reports
+                </li>
+            </ul>
+            
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-primary flex-fill" onclick="window.open('/buyer-dashboard', '_blank')">
+                    <i class="fas fa-tachometer-alt me-2"></i>
+                    Dashboard
+                </button>
+                <button class="btn btn-outline-secondary flex-fill" id="manage-subscription-btn">
+                    <i class="fas fa-cog me-2"></i>
+                    Manage Plan
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Create free buyer content HTML
+ * @param {Object} status - Buyer status data
+ */
+function createFreeBuyerContent(status) {
+    return `
+        <div class="buyer-plan-card basic">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0">
+                    <i class="fas fa-user text-primary me-2"></i>
+                    Free Buyer Plan
+                </h6>
+                <span class="badge bg-primary">Current Plan</span>
+            </div>
+            
+            <div class="mb-3">
+                <h6 class="mb-2">Current Features:</h6>
+                <ul class="feature-list mb-3">
+                    <li>
+                        <i class="fas fa-check-circle text-success"></i>
+                        Browse public business listings
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle text-success"></i>
+                        Basic search and filters
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle text-success"></i>
+                        Contact sellers directly
+                    </li>
+                    <li>
+                        <i class="fas fa-times-circle text-muted"></i>
+                        <span class="text-muted">Access to exclusive listings</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-times-circle text-muted"></i>
+                        <span class="text-muted">Early access to new listings</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="premium-upgrade-section">
+            <div class="text-center mb-3">
+                <h5 class="mb-2">
+                    <i class="fas fa-star me-2"></i>
+                    Upgrade to Premium
+                </h5>
+                <p class="mb-0 opacity-75">
+                    Unlock exclusive listings and advanced features
+                </p>
+            </div>
+            
+            <div class="row text-center mb-3">
+                <div class="col-4">
+                    <div class="h4 mb-1">500+</div>
+                    <small class="opacity-75">Exclusive Listings</small>
+                </div>
+                <div class="col-4">
+                    <div class="h4 mb-1">72hr</div>
+                    <small class="opacity-75">Early Access</small>
+                </div>
+                <div class="col-4">
+                    <div class="h4 mb-1">24/7</div>
+                    <small class="opacity-75">AI Advisor</small>
+                </div>
+            </div>
+            
+            <div class="text-center mb-3">
+                <div class="h3 mb-1">£35<small>/month</small></div>
+                <small class="opacity-75">Cancel anytime</small>
+            </div>
+            
+            <button class="btn btn-premium w-100" id="upgrade-to-premium-btn">
+                <i class="fas fa-crown me-2"></i>
+                Upgrade to Premium
+            </button>
+        </div>
+    `;
+}
+
+/**
+ * Setup event listeners for buyer actions
+ * @param {Object} status - Buyer status data
+ */
+function setupBuyerEventListeners(status) {
+    // Upgrade to premium button
+    const upgradeBtn = document.getElementById('upgrade-to-premium-btn');
+    if (upgradeBtn) {
+        upgradeBtn.addEventListener('click', handlePremiumUpgrade);
+    }
+    
+    // Manage subscription button
+    const manageBtn = document.getElementById('manage-subscription-btn');
+    if (manageBtn) {
+        manageBtn.addEventListener('click', handleManageSubscription);
+    }
+}
+
+/**
+ * Handle premium upgrade process
+ */
+function handlePremiumUpgrade() {
+    const token = getAuthToken();
+    
+    if (!token) {
+        showToast('Please log in to upgrade your plan', 'error');
+        return;
+    }
+    
+    // Show loading state
+    const upgradeBtn = document.getElementById('upgrade-to-premium-btn');
+    if (upgradeBtn) {
+        upgradeBtn.disabled = true;
+        upgradeBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+    }
+    
+    fetch('/api/buyer/upgrade', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            plan: 'premium'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (data.checkoutUrl) {
+                // Redirect to Stripe checkout
+                window.location.href = data.checkoutUrl;
+            } else {
+                showToast('Upgrade initiated successfully!', 'success');
+                // Reload buyer status
+                setTimeout(() => {
+                    loadBuyerStatus();
+                }, 2000);
+            }
+        } else {
+            throw new Error(data.error || 'Upgrade failed');
+        }
+    })
+    .catch(error => {
+        console.error('Upgrade error:', error);
+        showToast('Failed to initiate upgrade: ' + error.message, 'error');
+    })
+    .finally(() => {
+        // Reset button state
+        if (upgradeBtn) {
+            upgradeBtn.disabled = false;
+            upgradeBtn.innerHTML = '<i class="fas fa-crown me-2"></i>Upgrade to Premium';
+        }
+    });
+}
+
+/**
+ * Handle subscription management
+ */
+function handleManageSubscription() {
+    // Open subscription management portal
+    const token = getAuthToken();
+    
+    if (!token) {
+        showToast('Please log in to manage your subscription', 'error');
+        return;
+    }
+    
+    fetch('/api/buyer/billing-portal', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.portalUrl) {
+            window.open(data.portalUrl, '_blank');
+        } else {
+            throw new Error(data.error || 'Failed to open billing portal');
+        }
+    })
+    .catch(error => {
+        console.error('Billing portal error:', error);
+        showToast('Unable to open billing portal at this time', 'error');
     });
 }
 
@@ -460,52 +879,4 @@ function getAuthToken() {
     
     // Try localStorage
     return localStorage.getItem('token');
-}
-
-/**
- * Show toast notification
- * @param {string} message - Message to display
- * @param {string} type - Toast type (success, error, info, warning)
- */
-function showToast(message, type = 'info') {
-    // Create toast container if it doesn't exist
-    let toastContainer = document.querySelector('.toast-container');
-    if (!toastContainer) {
-        toastContainer = document.createElement('div');
-        toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
-        document.body.appendChild(toastContainer);
-    }
-    
-    // Set toast color based on type
-    let bgColor = 'bg-primary';
-    if (type === 'success') bgColor = 'bg-success';
-    if (type === 'error') bgColor = 'bg-danger';
-    if (type === 'warning') bgColor = 'bg-warning';
-    
-    // Create toast element
-    const toastId = 'toast-' + Date.now();
-    const toastHtml = `
-        <div id="${toastId}" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-            <div class="toast-header ${bgColor} text-white">
-                <strong class="me-auto">${type.charAt(0).toUpperCase() + type.slice(1)}</strong>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
-            </div>
-            <div class="toast-body">
-                ${message}
-            </div>
-        </div>
-    `;
-    
-    // Add toast to container
-    toastContainer.insertAdjacentHTML('beforeend', toastHtml);
-    
-    // Initialize and show toast
-    const toastElement = document.getElementById(toastId);
-    const toast = new bootstrap.Toast(toastElement, { autohide: true, delay: 5000 });
-    toast.show();
-    
-    // Remove toast after it's hidden
-    toastElement.addEventListener('hidden.bs.toast', function() {
-        toastElement.remove();
-    });
 }

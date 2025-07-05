@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,38 +7,279 @@
     <!-- Add user ID meta tag for JavaScript usage -->
     <meta name="user-id" content="<%= locals.userId || '' %>">
     <title><%= (conversation && conversation.recipient) ? conversation.recipient.name : 'Chat' %> | Arzani Marketplace</title>
-    <%- include('partials/tailwind-setup') %>
-    <!-- Core Stylesheets -->
     <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">
-
-    <link rel="stylesheet" href="/css/modern.css">
-    <link rel="stylesheet" href="/css/chat-interface.css">
-    <link rel="stylesheet" href="/css/chat-additional.css">
-    
-    <!-- Third-party Dependencies -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#041b76',
+                        secondary: '#f7f5f2',
+                        accent: '#064fa3',
+                        'text-primary': '#363309',
+                        'gray-850': '#1f2937',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-in-out',
+                        'slide-up': 'slideUp 0.3s ease-out',
+                        'pulse-slow': 'pulse 3s infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .logo-img {
+            width: 140px;
+            height: auto;
+            border-radius: 8px;
+            object-fit: contain;
+        }
+        
+        /* Custom animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Custom scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+        
+        /* Dark mode scrollbar */
+        .dark .custom-scrollbar::-webkit-scrollbar-track {
+            background: #374151;
+        }
+        
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #6B7280;
+        }
+        
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #9CA3AF;
+        }
+        
+        /* Sidebar transition styles */
+        .sidebar-transition {
+            transition: width 0.3s ease, transform 0.3s ease;
+        }
+        
+        .content-transition {
+            transition: margin-left 0.3s ease, width 0.3s ease;
+        }
+        
+        /* Mobile responsive sidebar */
+        @media (max-width: 768px) {
+            #sidebar {
+                transform: translateX(-100%);
+            }
+            
+            #sidebar.translate-x-0 {
+                transform: translateX(0);
+            }
+            
+            #content {
+                margin-left: 0 !important;
+            }
+        }
+        
+        /* Animation initialization */
+        .animate-fade-in, .animate-slide-up {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        
+        /* Dark mode enhancements */
+        .dark {
+            color-scheme: dark;
+        }
+        
+        .dark .bg-white {
+            background-color: #1F2937;
+        }
+        
+        .dark .text-gray-800 {
+            color: #F9FAFB;
+        }
+        
+        .dark .text-gray-700 {
+            color: #E5E7EB;
+        }
+        
+        .dark .text-gray-600 {
+            color: #D1D5DB;
+        }
+        
+        .dark .text-gray-500 {
+            color: #9CA3AF;
+        }
+        
+        .dark .border-gray-300 {
+            border-color: #4B5563;
+        }
+        
+        .dark .border-gray-200 {
+            border-color: #374151;
+        }
+        
+        .dark .hover\:bg-gray-100:hover {
+            background-color: #374151;
+        }
+        
+        .dark .shadow-lg {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.15);
+        }
+        /* Chat-specific styles */
+        .message {
+            margin-bottom: 12px;
+            display: flex;
+            align-items: flex-start;
+            max-width: 85%;
+            clear: both;
+            position: relative;
+        }
+        
+        .message.incoming {
+            float: left;
+            margin-right: auto;
+        }
+        
+        .message.outgoing {
+            float: right;
+            margin-left: auto;
+            flex-direction: row-reverse;
+        }
+        
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            overflow: hidden;
+            flex-shrink: 0;
+            margin: 0 8px;
+        }
+        
+        .message-wrapper {
+            background-color: #f0f0f0;
+            border-radius: 12px;
+            padding: 8px 12px;
+            position: relative;
+        }
+        
+        .message.incoming .message-wrapper {
+            background-color: #f0f0f0;
+            border-bottom-left-radius: 4px;
+        }
+        
+        .message.outgoing .message-wrapper {
+            background-color: #e1f0ff;
+            border-bottom-right-radius: 4px;
+        }
+        
+        .dark .message.incoming .message-wrapper {
+            background-color: #374151;
+        }
+        
+        .dark .message.outgoing .message-wrapper {
+            background-color: #1e40af;
+        }
+        
+        .message-content {
+            word-break: break-word;
+            color: #333;
+        }
+        
+        .dark .message-content {
+            color: #f3f4f6;
+        }
+        
+        .message-time {
+            font-size: 0.75rem;
+            color: #888;
+            margin-top: 4px;
+        }
+        
+        .dark .message-time {
+            color: #9ca3af;
+        }
+        
+        .message-sender {
+            font-size: 0.75rem;
+            color: #666;
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+        
+        .dark .message-sender {
+            color: #d1d5db;
+        }
+        
+        #messages-list {
+            overflow-y: auto;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            min-height: 200px;
+        }
+        
+        #messages-list::after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+        
+        .message.system-message {
+            float: none;
+            margin: 10px auto;
+            text-align: center;
+        }
+    </style>
+
+    <!-- Third-party Dependencies -->
     <link rel="stylesheet" href="https://cdn.quilljs.com/1.3.6/quill.snow.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/perfect-scrollbar/1.5.5/css/perfect-scrollbar.min.css">
     
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- ENSURE SOCKET.IO LOADS CORRECTLY - REPLACE PREVIOUS SOCKET.IO LOADING CODE -->
-    <!-- Load Socket.io client and our wrapper -->
+    <!-- ENSURE SOCKET.IO LOADS CORRECTLY -->
     <script src="/socket.io/socket.io.js"></script>
     <script src="/js/socket-io-config.js"></script>
     <script src="/js/socket-io.js"></script>
 
     <!-- Verify Socket.io was properly loaded, use CDN if needed -->
     <script>
-        // Initialize script status
         window.scriptStatus = window.scriptStatus || {};
         
-        // Check if Socket.io is available
         if (typeof io !== 'function') {
             console.warn('Server Socket.io not correctly loaded, using CDN version');
             
-            // Create a fresh script element
             var socketIoScript = document.createElement('script');
             socketIoScript.src = 'https://cdn.socket.io/4.6.1/socket.io.min.js';
             socketIoScript.crossOrigin = 'anonymous';
@@ -46,13 +287,11 @@
                 console.log('CDN Socket.io loaded successfully ✓');
                 window.scriptStatus.socketIo = true;
                 
-                // Load our configuration after Socket.io is available
                 var configScript = document.createElement('script');
                 configScript.src = '/js/socket-io-config.js';
                 configScript.onload = function() {
                     console.log('Socket.io config loaded successfully ✓');
                     
-                    // Now load our wrapper
                     var wrapperScript = document.createElement('script');
                     wrapperScript.src = '/js/socket-io.js';
                     wrapperScript.onload = function() {
@@ -70,442 +309,362 @@
         }
     </script>
 
-    <!-- Core dependencies must load first -->
+    <!-- Core dependencies -->
     <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/perfect-scrollbar/1.5.5/perfect-scrollbar.min.js"></script>
     
-    <!-- Add image handler script before other scripts -->
+    <!-- Chat-specific scripts -->
     <script src="/js/image-handler.js"></script>
-
-    <!-- Add chat socket script before chat interface script -->
     <script src="/js/chat-socket.js"></script>
-    <!-- Add chat interface script -->
     <script src="/js/chat-interface.js"></script>
-
-    <!-- Custom styles to move message input up and improve message display -->
-    <style>
-      /* Move message form up by 50px */
-      #message-form,
-      .message-form,
-      .chat-input-container {
-        transform: translateY(-33px); /* Moves the element up */
-        position: relative; /* Ensures the transform works properly */
-        z-index: 10; /* Keep it above other elements */
-      }
-      
-      /* Adjust the messages container to fill the new space */
-      .messages-container,
-      .chat-body,
-      #messages-list {
-        padding-bottom: 50px; /* Add padding to prevent messages from being hidden behind input */
-      }
-      
-      /* Style conversation list */
-      .conversation-list {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-      }
-      
-      .conversation-item {
-        display: flex;
-        padding: 12px;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: background-color 0.2s;
-      }
-      
-      .conversation-item:hover {
-        background-color: rgba(0, 0, 0, 0.05);
-      }
-      
-      .conversation-item.active {
-        background-color: rgba(59, 130, 246, 0.1);
-      }
-      
-      .avatar {
-        width: 48px;
-        height: 48px;
-        margin-right: 12px;
-      }
-      
-      .avatar-image {
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        object-fit: cover;
-        background-color: #f0f0f0;
-      }
-      
-      .conversation-details {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-      }
-      
-      .conversation-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 4px;
-      }
-      
-      .conversation-name {
-        font-weight: 600;
-        font-size: 16px;
-        margin: 0;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-      
-      .conversation-time {
-        font-size: 12px;
-        color: #666;
-        white-space: nowrap;
-      }
-      
-      .conversation-snippet {
-        font-size: 14px;
-        color: #666;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-      
-      .unread-badge {
-        background-color: #3b82f6;
-        color: white;
-        font-size: 12px;
-        font-weight: 600;
-        min-width: 18px;
-        height: 18px;
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-top: 4px;
-        align-self: flex-start;
-        padding: 0 6px;
-      }
-      
-      /* Debug outline to see if container exists */
-      #messages-list {
-        min-height: 200px;
-        border: 1px solid rgba(0,0,0,0.1);
-      }
-      
-      /* Enhanced message display styles */
-      .message {
-        margin-bottom: 12px;
-        display: flex;
-        align-items: flex-start;
-        max-width: 85%;
-        clear: both;
-        position: relative;
-      }
-      
-      .message.incoming {
-        float: left;
-        margin-right: auto;
-      }
-      
-      .message.outgoing {
-        float: right;
-        margin-left: auto;
-        flex-direction: row-reverse;
-      }
-      
-      .message-avatar {
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        overflow: hidden;
-        flex-shrink: 0;
-        margin: 0 8px;
-      }
-      
-      .message-wrapper {
-        background-color: #f0f0f0;
-        border-radius: 12px;
-        padding: 8px 12px;
-        position: relative;
-      }
-      
-      .message.incoming .message-wrapper {
-        background-color: #f0f0f0;
-        border-bottom-left-radius: 4px;
-      }
-      
-      .message.outgoing .message-wrapper {
-        background-color: #e1f0ff;
-        border-bottom-right-radius: 4px;
-      }
-      
-      .message-content {
-        word-break: break-word;
-        color: #333; /* Ensure readable text color */
-      }
-      
-      .message-time {
-        font-size: 0.75rem;
-        color: #888;
-        margin-top: 4px;
-      }
-      
-      .message-sender {
-        font-size: 0.75rem;
-        color: #666;
-        font-weight: 500;
-        margin-bottom: 2px;
-      }
-      
-      /* Fix message list container to properly clear float elements */
-      #messages-list {
-        overflow-y: auto;
-        padding: 15px;
-        display: flex;
-        flex-direction: column;
-        min-height: 200px;
-        border: 1px solid rgba(0,0,0,0.1);
-      }
-      
-      #messages-list::after {
-        content: "";
-        display: table;
-        clear: both;
-      }
-      
-      /* Ensure system messages are centered */
-      .message.system-message {
-        float: none;
-        margin: 10px auto;
-        text-align: center;
-      }
-      
-      /* Fix scroll container to handle floated elements correctly */
-      .messages-container {
-        overflow-y: auto;
-        display: flex;
-        flex-direction: column;
-      }
-      
-      /* Add debug mode toggle button (hidden by default) */
-      #debug-toggle {
-        position: fixed;
-        bottom: 10px;
-        right: 10px;
-        background: rgba(0,0,0,0.5);
-        color: white;
-        padding: 5px 10px;
-        border-radius: 4px;
-        font-size: 12px;
-        cursor: pointer;
-        z-index: 1000;
-        display: none;
-      }
-    </style>
 </head>
-<body class="bg-secondary-light font-sans h-screen overflow-hidden flex flex-col">
-    
-    <!-- Mobile overlay for sidebar -->
-    <div id="sidebarOverlay" class="fixed inset-0 bg-gray-900 bg-opacity-50 z-30 hidden lg:hidden"></div>
-
-    <div class="chat-container flex-1 flex overflow-hidden">
-        <!-- Conversation Sidebar - With toggle functionality -->
-        <div id="chatSidebar" class="chat-sidebar w-full lg:w-80 bg-white flex-shrink-0 flex flex-col border-r border-gray-200 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out fixed lg:relative left-0 top-0 h-full z-40">
-            <!-- Sidebar Header with close button for mobile -->
-            <div class="sidebar-header flex justify-between items-center px-4 py-3 border-b border-gray-200 bg-gray-50">
-                <h2 class="text-lg font-semibold text-gray-800">Conversations</h2>
-                <!-- Remove the close button that was here -->
-            </div>
-            
-            <div class="user-info p-4 border-b border-gray-200">
-                <% if (locals.userId) { %>
-                    <div class="flex items-center" id="profile-container">
-                        <div class="user-avatar w-10 h-10 rounded-full overflow-hidden mr-3">
-                            <img src="<%= user?.profile_picture || '/images/default-profile.png' %>" 
-                                 alt="Profile" 
-                                 id="sidebar-profile-picture"
-                                 class="w-full h-full object-cover" 
-                                 onerror="this.src='/images/default-profile.png'"/>
-                        </div>
-                        <div>
-                            <div id="sidebar-username" class="user-name font-medium"><%= user?.username || 'Loading...' %></div>
-                            <div id="user-status" class="text-xs text-gray-500">
-                                <span class="status-indicator inline-block w-2 h-2 rounded-full bg-gray-400 mr-1"></span>
-                                <span class="status-text">Offline</span>
-                            </div>
-                        </div>
-                    </div>
-                <% } else { %>
-                    <div class="auth-notice text-center">
-                        <a href="/login2?returnTo=<%= encodeURIComponent('/chat' + (activeConversationId ? '?conversation=' + activeConversationId : '')) %>" class="login-btn bg-primary text-white px-4 py-2 rounded hover:bg-primary-dark transition">
-                            Log in to chat
-                        </a>
-                    </div>
-                <% } %>
-            </div>
-            
-            <div class="flex items-center justify-between px-4 py-2 border-b border-gray-200">
-                <h3 class="text-sm font-semibold text-gray-600">Recent</h3>
-                <button id="new-conversation-btn" class="bg-primary text-white text-sm px-3 py-1 rounded-md hover:bg-primary-dark transition">
-                    <i class="fas fa-plus mr-1"></i> New
-                </button>
-            </div>
-            
-            <div class="conversations-list flex-1 overflow-y-auto py-2 px-1">
-                <% if (conversations && conversations.length > 0) { %>
-                    <% conversations.forEach(function(conversation) { %>
-                        <div class="conversation-item <%= conversation.id === activeConversationId ? 'active' : '' %> 
-                                 hover:bg-gray-100 p-3 rounded-md mb-1 cursor-pointer transition" 
-                             data-conversation-id="<%= conversation.id %>">
-                            <div class="flex items-start">
-                                <div class="conversation-avatar bg-gray-200 w-10 h-10 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
-                                    <% if (conversation.is_group_chat) { %>
-                                        <i class="fas fa-users text-gray-500"></i>                                    <% } else if (conversation.is_ai_chat) { %>
-                                        <img src="/figma design exports/images.webp/arzani-icon-nobackground.png" alt="Arzani AI" style="width: 16px; height: 16px; object-fit: contain;" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/4616/4616734.png';">
-                                    <% } else { %>
-                                        <i class="fas fa-user text-gray-500"></i>
-                                    <% } %>
-                                </div>
-                                <div class="conversation-details flex-1 min-w-0">
-                                    <div class="conversation-name font-medium text-gray-800 truncate">
-                                        <%= conversation.group_name || 'Conversation ' + conversation.id %>
-                                    </div>
-                                    <div class="conversation-last-message flex justify-between items-center mt-1 text-xs">
-                                        <% if (conversation.unread_count > 0) { %>
-                                            <span class="unread-badge bg-primary text-white rounded-full min-w-5 h-5 flex items-center justify-center px-1.5">
-                                                <%= conversation.unread_count %>
-                                            </span>
-                                        <% } %>
-                                        <span class="last-updated text-gray-500 ml-auto">
-                                            <%= formatTime(conversation.updated_at) %>
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    <% }); %>
-                <% } else { %>
-                    <div class="no-conversations p-4 text-center text-gray-500">
-                        <p>No conversations yet.</p>
-                        <% if (locals.userId) { %>
-                            <p class="mt-2">Start a new conversation to chat!</p>
-                        <% } else { %>
-                            <p class="mt-2">Log in to start chatting.</p>
-                        <% } %>
-                    </div>
-                <% } %>
-            </div>
-        </div>
-        
-        <!-- Main Chat Area with toggle button -->
-        <div class="chat-main flex-1 flex flex-col">
-            <!-- Chat header with sidebar toggle for mobile -->
-            <% if (activeConversationId) { %>
-                <div class="chat-header flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200">
-                    <div class="flex items-center min-w-0 mr-1">
-                        <button id="toggleSidebarBtn" class="lg:hidden mr-2 flex-shrink-0 text-gray-600 hover:bg-gray-100 p-2 rounded-full">
-                            <i class="fas fa-bars"></i>
-                        </button>
-                        <h2 id="conversation-title" class="font-semibold text-gray-800 truncate text-sm sm:text-base max-w-[120px] sm:max-w-xs md:max-w-sm">
-                            <%= conversations.find(c => c.id === activeConversationId)?.group_name || 'Conversation ' + activeConversationId %>
-                        </h2>
-                    </div>
-                    <div class="flex items-center space-x-1 md:space-x-2">
-                        <a href="/marketplace2" class="text-gray-600 hover:bg-gray-100 px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium transition-colors flex items-center">
-                            <i class="fas fa-store mr-1 md:mr-1.5"></i>
-                            <span class="hidden sm:inline">Marketplace</span>
-                        </a>
-                        <a href="/profile" class="text-gray-600 hover:bg-gray-100 px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium transition-colors flex items-center">
-                            <i class="fas fa-user mr-1 md:mr-1.5"></i>
-                            <span class="hidden sm:inline">Profile</span>
-                        </a>
-                        <button class="text-gray-600 hover:bg-gray-100 p-2 rounded-full" title="More options">
-                            <i class="fas fa-ellipsis-v"></i>
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- ...existing messages container and input form... -->
-                <div class="messages-container flex-1 overflow-y-auto bg-gray-50">
-                    <div class="messages-list" id="messages-list">
-                        <!-- Messages will be loaded here by JavaScript -->
-                        <div class="loading text-center p-4 text-gray-500">Loading messages...</div>
-                    </div>
-                </div>
-                
-                <!-- Add file upload progress container after the message form -->
-                <div id="upload-progress-container" class="hidden fixed bottom-20 right-4 bg-white shadow-lg rounded-lg p-3 w-72 z-50">
-                  <div class="flex justify-between items-center mb-2">
-                    <div class="upload-filename text-sm font-medium truncate max-w-[180px]">File.jpg</div>
-                    <button class="cancel-upload-btn text-gray-500 hover:text-gray-700">
-                      <i class="fas fa-times"></i>
+<body class="bg-gray-50 font-sans antialiased dark:bg-gray-900 transition-colors duration-300">
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <div id="sidebar" class="bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 h-screen sidebar-transition fixed z-40 w-64 md:w-20 xl:w-64 shadow-lg">
+            <div class="flex flex-col h-full">
+                <!-- Logo -->
+                <div class="flex items-center justify-center h-16 border-b border-gray-200 dark:border-gray-700 px-4">
+                    <a href="/" class="flex items-center justify-center">
+                        <img src="/figma design exports/logos/Arzani-logo.png" alt="Arzani.co.uk" class="logo-img">
+                    </a>
+                    <button id="sidebarCollapse" class="md:hidden xl:flex ml-auto text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                        </svg>
                     </button>
-                  </div>
-                  <div class="bg-gray-200 rounded-full h-2 overflow-hidden">
-                    <div class="upload-progress-bar bg-blue-500 h-2 rounded-full" style="width: 0%"></div>
-                  </div>
-                </div>
-
-                <!-- Add hidden file upload input -->
-                <input type="file" id="file-upload" class="hidden" multiple>
-
-                <div class="message-input-container bg-white border-t border-gray-200 p-3">
-                    <form id="message-form" data-conversation-id="<%= activeConversationId %>" class="flex items-center">
-                        <button type="button" id="attachBtn" class="text-gray-500 hover:text-gray-700 mr-2">
-                          <i class="fas fa-paperclip"></i>
-                        </button>
-                        <input type="text" id="message-input" class="form-control flex-1 border border-gray-300 rounded-l-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" 
-                               placeholder="Type your message..." 
-                               <%= !locals.userId ? 'disabled' : '' %>>
-                        <button type="submit" class="btn btn-primary bg-primary text-white px-4 py-2 rounded-r-md hover:bg-primary-dark transition" 
-                                <%= !locals.userId ? 'disabled' : '' %>>
-                            <i class="fas fa-paper-plane"></i>
-                        </button>
-                    </form>
-                </div>
-            <% } else { %>
-                <div class="chat-header flex items-center px-4 py-3 bg-white border-b border-gray-200">
-                    <button id="toggleSidebarBtn" class="lg:hidden mr-2 flex-shrink-0 text-gray-600 hover:bg-gray-100 p-2 rounded-full">
-                        <i class="fas fa-bars"></i>
-                    </button>
-                    <h2 class="font-semibold text-gray-800 text-sm sm:text-base truncate max-w-[120px] sm:max-w-xs">Select a conversation</h2>
-                    <div class="ml-auto flex items-center space-x-1 md:space-x-2">
-                        <a href="/marketplace2" class="text-gray-600 hover:bg-gray-100 px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium transition-colors flex items-center">
-                            <i class="fas fa-store mr-1 md:mr-1.5"></i>
-                            <span class="hidden sm:inline">Marketplace</span>
-                        </a>
-                        <a href="/profile" class="text-gray-600 hover:bg-gray-100 px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium transition-colors flex items-center">
-                            <i class="fas fa-user mr-1 md:mr-1.5"></i>
-                            <span class="hidden sm:inline">Profile</span>
-                        </a>
-                    </div>
                 </div>
                 
-                <div class="no-active-conversation flex-1 flex items-center justify-center bg-gray-50">
-                    <div class="placeholder-message text-center p-6">
-                        <i class="fas fa-comments text-gray-300 text-5xl mb-4"></i>
-                        <h3 class="text-xl font-medium text-gray-700 mb-2">Select a conversation to start chatting</h3>
-                        <% if (!locals.userId) { %>
-                            <p class="text-gray-500 mb-4">Log in to view your conversations</p>
-                            <a href="/login2?returnTo=<%= encodeURIComponent('/chat') %>" class="bg-primary text-white px-4 py-2 rounded hover:bg-primary-dark transition">
-                                Log in
+                <!-- Navigation Menu -->
+                <nav class="flex-grow py-6 px-4 overflow-y-auto custom-scrollbar">
+                    <ul class="space-y-2">
+                        <li>
+                            <a href="/marketplace2" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                <i class="fas fa-store h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
+                                <span class="hidden md:hidden xl:block">Marketplace</span>
                             </a>
+                        </li>
+                        <li>
+                            <a href="/market-trends" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                <i class="fas fa-chart-line h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
+                                <span class="hidden md:hidden xl:block">Market Trends</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/chat" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors bg-blue-50 dark:bg-blue-900/20">
+                                <i class="fas fa-comments h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
+                                <span class="hidden md:hidden xl:block">Chat</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/profile" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                <i class="fas fa-user-circle h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
+                                <span class="hidden md:hidden xl:block">My Profile</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/saved-searches" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                <i class="fas fa-bookmark h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
+                                <span class="hidden md:hidden xl:block">Saved Searches</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/history" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                <i class="fas fa-history h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
+                                <span class="hidden md:hidden xl:block">History</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/professional-verification" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                <i class="fas fa-user-check h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
+                                <span class="hidden md:hidden xl:block">Professional Verification</span>
+                            </a>
+                        </li>
+                        <% if (locals.user && locals.user.is_verified_professional) { %>
+                        <li>
+                            <a href="/professional-dashboard" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                <i class="fas fa-tachometer-alt h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
+                                <span class="hidden md:hidden xl:block">Professional Dashboard</span>
+                            </a>
+                        </li>
+                        <% } %>
+                        <% if (locals.user && locals.user.role === 'admin') { %>
+                        <li>
+                            <a href="/admin/verification-review" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                <i class="fas fa-user-shield h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
+                                <span class="hidden md:hidden xl:block">Admin Verification</span>
+                            </a>
+                        </li>
+                        <% } %>
+                    </ul>
+                    
+                    <div class="pt-6 mt-6 border-t border-gray-200 dark:border-gray-700">
+                        <ul class="space-y-2">
+                            <li>
+                                <a href="/pricing" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                    <i class="fas fa-crown h-6 w-6 mr-3 text-gray-500 dark:text-gray-400"></i>
+                                    <span class="hidden md:hidden xl:block">Upgrade</span>
+                                </a>
+                            </li>
+                            <li>
+                                <button id="themeToggle" class="w-full flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                    <i id="lightIcon" class="fas fa-sun h-6 w-6 mr-3 text-gray-500 dark:text-gray-400"></i>
+                                    <i id="darkIcon" class="fas fa-moon h-6 w-6 mr-3 text-gray-500 dark:text-gray-400 hidden"></i>
+                                    <span class="hidden md:hidden xl:block">Toggle Theme</span>
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+                
+                <!-- User Profile Section -->
+                <div class="border-t border-gray-200 dark:border-gray-700 p-4">
+                    <div class="flex items-center">
+                        <div class="h-10 w-10 rounded-full bg-gradient-to-r from-primary to-secondary flex items-center justify-center text-white font-medium">
+                            <%= (locals.user && locals.user.username) ? locals.user.username.charAt(0).toUpperCase() : 'U' %>
+                        </div>
+                        <div class="ml-3 hidden md:hidden xl:block">
+                            <p class="text-sm font-medium text-gray-700 dark:text-gray-300"><%= (locals.user && locals.user.username) ? locals.user.username : 'User' %></p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400"><%= (locals.user && locals.user.subscription) ? locals.user.subscription : 'Free' %> Plan</p>
+                        </div>
+                        <button id="signOutBtn" class="ml-auto hidden md:hidden xl:block text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div id="content" class="flex-1 overflow-y-auto content-transition ml-0 md:ml-20 xl:ml-64">
+            <!-- Top Navbar -->
+            <nav class="bg-white dark:bg-gray-800 shadow-md sticky top-0 z-30">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="flex items-center justify-between h-16">
+                        <!-- Left side - Hamburger and Page Title -->
+                        <div class="flex items-center">
+                            <button id="sidebarToggle" class="md:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 mr-4">
+                                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                                </svg>
+                            </button>
+                            <h1 class="text-xl font-semibold text-gray-800 dark:text-white">Chat</h1>
+                        </div>
+                        
+                        <!-- Right side - Breadcrumb -->
+                        <nav class="hidden md:flex" aria-label="Breadcrumb">
+                            <ol class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
+                                <li><a href="/marketplace2" class="hover:text-gray-700 dark:hover:text-gray-200">Home</a></li>
+                                <li><i class="fas fa-chevron-right text-xs"></i></li>
+                                <li class="text-gray-700 dark:text-gray-300">Chat</li>
+                            </ol>
+                        </nav>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Page Content -->
+            <div class="flex h-full">
+                <!-- Chat Sidebar -->
+                <div id="chatSidebar" class="w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex-shrink-0 flex flex-col transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out fixed lg:relative left-0 top-0 h-full z-30">
+                    <!-- Sidebar Header -->
+                    <div class="sidebar-header flex justify-between items-center px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+                        <h2 class="text-lg font-semibold text-gray-800 dark:text-white">Conversations</h2>
+                    </div>
+                    
+                    <!-- User Info Section -->
+                    <div class="user-info p-4 border-b border-gray-200 dark:border-gray-700">
+                        <% if (locals.userId) { %>
+                            <div class="flex items-center" id="profile-container">
+                                <div class="user-avatar w-10 h-10 rounded-full overflow-hidden mr-3">
+                                    <img src="<%= user?.profile_picture || '/images/default-profile.png' %>" 
+                                         alt="Profile" 
+                                         id="sidebar-profile-picture"
+                                         class="w-full h-full object-cover" 
+                                         onerror="this.src='/images/default-profile.png'"/>
+                                </div>
+                                <div>
+                                    <div id="sidebar-username" class="user-name font-medium text-gray-800 dark:text-white"><%= user?.username || 'Loading...' %></div>
+                                    <div id="user-status" class="text-xs text-gray-500 dark:text-gray-400">
+                                        <span class="status-indicator inline-block w-2 h-2 rounded-full bg-gray-400 mr-1"></span>
+                                        <span class="status-text">Offline</span>
+                                    </div>
+                                </div>
+                            </div>
+                        <% } else { %>
+                            <div class="auth-notice text-center">
+                                <a href="/login2?returnTo=<%= encodeURIComponent('/chat' + (activeConversationId ? '?conversation=' + activeConversationId : '')) %>" class="login-btn bg-primary text-white px-4 py-2 rounded hover:bg-primary-dark transition">
+                                    Log in to chat
+                                </a>
+                            </div>
+                        <% } %>
+                    </div>
+                    
+                    <!-- New Conversation Button -->
+                    <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                        <h3 class="text-sm font-semibold text-gray-600 dark:text-gray-300">Recent</h3>
+                        <button id="new-conversation-btn" class="bg-primary text-white text-sm px-3 py-1 rounded-md hover:bg-primary-dark transition">
+                            <i class="fas fa-plus mr-1"></i> New
+                        </button>
+                    </div>
+                    
+                    <!-- Conversations List -->
+                    <div class="conversations-list flex-1 overflow-y-auto py-2 px-2 custom-scrollbar">
+                        <% if (conversations && conversations.length > 0) { %>
+                            <% conversations.forEach(function(conversation) { %>
+                                <div class="conversation-item <%= conversation.id === activeConversationId ? 'active bg-blue-50 dark:bg-blue-900/20' : '' %> 
+                                         hover:bg-gray-100 dark:hover:bg-gray-700 p-3 rounded-lg mb-2 cursor-pointer transition-colors" 
+                                     data-conversation-id="<%= conversation.id %>">
+                                    <div class="flex items-start">
+                                        <div class="conversation-avatar bg-gray-200 dark:bg-gray-600 w-10 h-10 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                                            <% if (conversation.is_group_chat) { %>
+                                                <i class="fas fa-users text-gray-500 dark:text-gray-400"></i>
+                                            <% } else if (conversation.is_ai_chat) { %>
+                                                <img src="/figma design exports/images.webp/arzani-icon-nobackground.png" alt="Arzani AI" class="w-4 h-4 object-contain" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/4616/4616734.png';">
+                                            <% } else { %>
+                                                <i class="fas fa-user text-gray-500 dark:text-gray-400"></i>
+                                            <% } %>
+                                        </div>
+                                        <div class="conversation-details flex-1 min-w-0">
+                                            <div class="conversation-name font-medium text-gray-800 dark:text-white truncate">
+                                                <%= conversation.group_name || 'Conversation ' + conversation.id %>
+                                            </div>
+                                            <div class="conversation-last-message flex justify-between items-center mt-1 text-xs">
+                                                <% if (conversation.unread_count > 0) { %>
+                                                    <span class="unread-badge bg-primary text-white rounded-full min-w-5 h-5 flex items-center justify-center px-1.5 text-xs font-medium">
+                                                        <%= conversation.unread_count %>
+                                                    </span>
+                                                <% } %>
+                                                <span class="last-updated text-gray-500 dark:text-gray-400 ml-auto">
+                                                    <%= formatTime(conversation.updated_at) %>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        <% } else { %>
+                            <div class="no-conversations p-4 text-center text-gray-500 dark:text-gray-400">
+                                <p>No conversations yet.</p>
+                                <% if (locals.userId) { %>
+                                    <p class="mt-2">Start a new conversation to chat!</p>
+                                <% } else { %>
+                                    <p class="mt-2">Log in to start chatting.</p>
+                                <% } %>
+                            </div>
                         <% } %>
                     </div>
                 </div>
-            <% } %>
+                
+                <!-- Main Chat Area -->
+                <div class="flex-1 flex flex-col bg-gray-50 dark:bg-gray-900">
+                    <% if (activeConversationId) { %>
+                        <!-- Chat Header -->
+                        <div class="flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center min-w-0 mr-1">
+                                <button id="toggleSidebarBtn" class="lg:hidden mr-2 flex-shrink-0 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 p-2 rounded-full" title="Toggle Conversations">
+                                    <i class="fas fa-comments"></i>
+                                </button>
+                                <h2 id="conversation-title" class="font-semibold text-gray-800 dark:text-white truncate text-sm sm:text-base max-w-[120px] sm:max-w-xs md:max-w-sm">
+                                    <%= conversations.find(c => c.id === activeConversationId)?.group_name || 'Conversation ' + activeConversationId %>
+                                </h2>
+                            </div>
+                            <div class="flex items-center space-x-1 md:space-x-2">
+                                <a href="/marketplace2" class="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium transition-colors flex items-center">
+                                    <i class="fas fa-store mr-1 md:mr-1.5"></i>
+                                    <span class="hidden sm:inline">Marketplace</span>
+                                </a>
+                                <a href="/profile" class="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium transition-colors flex items-center">
+                                    <i class="fas fa-user mr-1 md:mr-1.5"></i>
+                                    <span class="hidden sm:inline">Profile</span>
+                                </a>
+                                <button class="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 p-2 rounded-full" title="More options">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Messages Container -->
+                        <div class="messages-container flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 custom-scrollbar">
+                            <div class="messages-list p-4" id="messages-list">
+                                <!-- Messages will be loaded here by JavaScript -->
+                                <div class="loading text-center p-4 text-gray-500 dark:text-gray-400">Loading messages...</div>
+                            </div>
+                        </div>
+                        
+                        <!-- File Upload Progress -->
+                        <div id="upload-progress-container" class="hidden fixed bottom-20 right-4 bg-white dark:bg-gray-800 shadow-lg rounded-lg p-3 w-72 z-50 border border-gray-200 dark:border-gray-700">
+                            <div class="flex justify-between items-center mb-2">
+                                <div class="upload-filename text-sm font-medium text-gray-800 dark:text-white truncate max-w-[180px]">File.jpg</div>
+                                <button class="cancel-upload-btn text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+                                <div class="upload-progress-bar bg-blue-500 h-2 rounded-full" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Hidden File Upload Input -->
+                        <input type="file" id="file-upload" class="hidden" multiple>
+
+                        <!-- Message Input -->
+                        <div class="message-input-container bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
+                            <form id="message-form" data-conversation-id="<%= activeConversationId %>" class="flex items-center space-x-2">
+                                <button type="button" id="attachBtn" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                    <i class="fas fa-paperclip"></i>
+                                </button>
+                                <input type="text" 
+                                       id="message-input" 
+                                       class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-800 dark:text-white placeholder-gray-500 dark:placeholder-gray-400" 
+                                       placeholder="Type your message..." 
+                                       <%= !locals.userId ? 'disabled' : '' %>>
+                                <button type="submit" 
+                                        class="bg-primary hover:bg-accent text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center" 
+                                        <%= !locals.userId ? 'disabled' : '' %>>
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </form>
+                        </div>
+                    <% } else { %>
+                        <!-- No Conversation Selected -->
+                        <div class="flex items-center px-4 py-3 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                            <button id="toggleSidebarBtn2" class="lg:hidden mr-2 flex-shrink-0 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 p-2 rounded-full" title="Toggle Conversations">
+                                <i class="fas fa-comments"></i>
+                            </button>
+                            <h2 class="font-semibold text-gray-800 dark:text-white text-sm sm:text-base truncate max-w-[120px] sm:max-w-xs">Select a conversation</h2>
+                            <div class="ml-auto flex items-center space-x-1 md:space-x-2">
+                                <a href="/marketplace2" class="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium transition-colors flex items-center">
+                                    <i class="fas fa-store mr-1 md:mr-1.5"></i>
+                                    <span class="hidden sm:inline">Marketplace</span>
+                                </a>
+                                <a href="/profile" class="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium transition-colors flex items-center">
+                                    <i class="fas fa-user mr-1 md:mr-1.5"></i>
+                                    <span class="hidden sm:inline">Profile</span>
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <!-- Empty State -->
+                        <div class="no-active-conversation flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+                            <div class="placeholder-message text-center p-8">
+                                <i class="fas fa-comments text-gray-300 dark:text-gray-600 text-6xl mb-6"></i>
+                                <h3 class="text-xl font-medium text-gray-700 dark:text-gray-300 mb-3">Select a conversation to start chatting</h3>
+                                <% if (!locals.userId) { %>
+                                    <p class="text-gray-500 dark:text-gray-400 mb-6">Log in to view your conversations</p>
+                                    <a href="/login2?returnTo=<%= encodeURIComponent('/chat') %>" class="bg-primary text-white px-6 py-3 rounded-lg hover:bg-accent transition-colors font-medium">
+                                        Log in
+                                    </a>
+                                <% } %>
+                            </div>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
         </div>
-    </div>
 
     <!-- Add hidden user ID element for easier access in JavaScript -->
     <div id="current-user-data" data-user-id="<%= locals.userId || '' %>" style="display:none;"></div>
-    
-    <!-- Hidden debug toggle (can be enabled for troubleshooting) -->
-    <div id="debug-toggle" onclick="toggleDebugMode()">Debug: OFF</div>
 
     <script>
     // Helper function to format time
@@ -690,45 +849,91 @@
     <!-- Add Sidebar Toggle Script -->
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Get DOM elements
-        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        // Get DOM elements for main sidebar
+        const mainSidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        
+        // Get DOM elements for chat sidebar
         const chatSidebar = document.getElementById('chatSidebar');
         const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
-        const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+        const toggleSidebarBtn2 = document.getElementById('toggleSidebarBtn2');
         
-        // Toggle sidebar on mobile
-        if (toggleSidebarBtn) {
-            toggleSidebarBtn.addEventListener('click', function() {
+        // Toggle main navigation sidebar
+        function toggleMainSidebar() {
+            if (mainSidebar) {
+                mainSidebar.classList.toggle('-translate-x-full');
+            }
+        }
+        
+        // Toggle chat sidebar
+        function toggleChatSidebar() {
+            if (chatSidebar) {
                 chatSidebar.classList.toggle('-translate-x-full');
-                sidebarOverlay.classList.toggle('hidden');
-                document.body.classList.toggle('overflow-hidden');
+            }
+        }
+        
+        // Event listeners for main sidebar toggles
+        if (sidebarToggle) {
+            sidebarToggle.addEventListener('click', toggleMainSidebar);
+        }
+        
+        // Event listeners for chat sidebar toggles
+        if (toggleSidebarBtn) {
+            toggleSidebarBtn.addEventListener('click', toggleChatSidebar);
+        }
+        if (toggleSidebarBtn2) {
+            toggleSidebarBtn2.addEventListener('click', toggleChatSidebar);
+        }
+        
+        // Sign out functionality
+        const signOutBtn = document.getElementById('signOutBtn');
+        if (signOutBtn) {
+            signOutBtn.addEventListener('click', function() {
+                localStorage.removeItem('token');
+                window.location.href = '/login2';
             });
         }
         
-        // Close sidebar when clicking the close button
-        if (closeSidebarBtn) {
-            closeSidebarBtn.addEventListener('click', function() {
-                chatSidebar.classList.add('-translate-x-full');
-                sidebarOverlay.classList.add('hidden');
-                document.body.classList.remove('overflow-hidden');
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('themeToggle');
+        const lightIcon = document.getElementById('lightIcon');
+        const darkIcon = document.getElementById('darkIcon');
+        
+        if (themeToggle && lightIcon && darkIcon) {
+            // Check for saved theme preference or default to light mode
+            const currentTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.className = currentTheme;
+            
+            // Update icon visibility based on current theme
+            if (currentTheme === 'dark') {
+                lightIcon.classList.add('hidden');
+                darkIcon.classList.remove('hidden');
+            } else {
+                lightIcon.classList.remove('hidden');
+                darkIcon.classList.add('hidden');
+            }
+            
+            themeToggle.addEventListener('click', function() {
+                const newTheme = document.documentElement.className === 'dark' ? 'light' : 'dark';
+                document.documentElement.className = newTheme;
+                localStorage.setItem('theme', newTheme);
+                
+                // Update icon visibility
+                if (newTheme === 'dark') {
+                    lightIcon.classList.add('hidden');
+                    darkIcon.classList.remove('hidden');
+                } else {
+                    lightIcon.classList.remove('hidden');
+                    darkIcon.classList.add('hidden');
+                }
             });
         }
         
-        // Close sidebar when clicking the overlay
-        if (sidebarOverlay) {
-            sidebarOverlay.addEventListener('click', function() {
-                chatSidebar.classList.add('-translate-x-full');
-                sidebarOverlay.classList.add('hidden');
-                document.body.classList.remove('overflow-hidden');
-            });
-        }
-        
-        // Handle window resize to reset mobile sidebar state
+        // Handle window resize to reset mobile sidebar states
         window.addEventListener('resize', function() {
             if (window.innerWidth >= 1024) { // lg breakpoint
-                chatSidebar.classList.remove('-translate-x-full');
-                sidebarOverlay.classList.add('hidden');
-                document.body.classList.remove('overflow-hidden');
+                if (mainSidebar) mainSidebar.classList.remove('-translate-x-full');
+                if (chatSidebar) chatSidebar.classList.remove('-translate-x-full');
             }
         });
     });
@@ -743,40 +948,8 @@
       window.failedImages.add('http://localhost:5000/images/default_profile5.png');
     </script>
 
-    <script>
-    function toggleDebugMode() {
-        const debug = !window.chatDebug;
-        window.chatDebug = debug;
-        document.getElementById('debug-toggle').textContent = 'Debug: ' + (debug ? 'ON' : 'OFF');
-        
-        // Toggle debug class on message containers
-        document.querySelectorAll('.message').forEach(msg => {
-            if (debug) {
-                msg.classList.add('debug');
-                // Add data attributes for debugging
-                const senderId = msg.getAttribute('data-sender-id');
-                const currentUserId = getCurrentUserId();
-                msg.setAttribute('data-current-user', currentUserId);
-                msg.setAttribute('data-is-current', String(senderId) === String(currentUserId) ? 'yes' : 'no');
-            } else {
-                msg.classList.remove('debug');
-            }
-        });
-        
-        // Log useful debug info
-        if (debug) {
-            console.log('Current user ID:', getCurrentUserId());
-            console.log('Messages:', document.querySelectorAll('.message').length);
-            console.log('Incoming:', document.querySelectorAll('.message.incoming').length);
-            console.log('Outgoing:', document.querySelectorAll('.message.outgoing').length);
-        }
-    }
-    </script>
-
     <!-- Add a small script to initialize profile data fetching after DOM loads -->
     <script>
-    // ...existing script code...
-
     // Initialize profile data when DOM is ready
     document.addEventListener('DOMContentLoaded', function() {
         if (typeof fetchUserProfileData === 'function') {
@@ -785,6 +958,5 @@
     });
     </script>
 
-    <%- include('partials/footer') %>
 </body>
 </html>

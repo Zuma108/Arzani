@@ -210,6 +210,164 @@ async function updateDashboard() {
     }
 }
 
+// Function to populate the data table with market trends
+function populateTable(data) {
+    const tableBody = document.getElementById('trendsTableBody');
+    
+    if (!tableBody) {
+        console.warn('Table body element not found');
+        return;
+    }
+    
+    if (!data || !Array.isArray(data) || data.length === 0) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="6" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                    <div class="flex flex-col items-center">
+                        <i class="fas fa-chart-bar text-4xl mb-2 text-gray-300 dark:text-gray-600"></i>
+                        <p class="text-lg font-medium">No data available</p>
+                        <p class="text-sm">Try adjusting your filters to see market trends data.</p>
+                    </div>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    // Clear existing content
+    tableBody.innerHTML = '';
+    
+    // Process and sort data by date (most recent first)
+    const sortedData = data.sort((a, b) => {
+        const dateA = new Date(getPropertyValue(a, ['date', 'created_at', 'timestamp', 'period'], '1970-01-01'));
+        const dateB = new Date(getPropertyValue(b, ['date', 'created_at', 'timestamp', 'period'], '1970-01-01'));
+        return dateB - dateA;
+    });
+    
+    // Populate table rows
+    sortedData.forEach((item, index) => {
+        const row = document.createElement('tr');
+        row.className = `${index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-750'} hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200`;
+        
+        // Format date
+        const date = getPropertyValue(item, ['date', 'created_at', 'timestamp', 'period'], '');
+        const formattedDate = date ? new Date(date).toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+        }) : 'N/A';
+        
+        // Get industry, handle both direct property and nested business object
+        const industry = getPropertyValue(item, ['industry', 'sector'], '') || 
+                         getPropertyValue(item, ['business_industry', 'business_sector'], '') ||
+                         (item.business ? getPropertyValue(item.business, ['industry', 'sector'], '') : '') ||
+                         'Other';
+        
+        // Get location
+        const location = getPropertyValue(item, ['location', 'region', 'city', 'area'], '') ||
+                        getPropertyValue(item, ['business_location', 'business_region'], '') ||
+                        (item.business ? getPropertyValue(item.business, ['location', 'region', 'city'], '') : '') ||
+                        'UK';
+        
+        // Get price - handle different possible formats
+        const price = getPropertyValue(item, ['price', 'asking_price', 'avg_price', 'average_price', 'sale_price'], 0);
+        const formattedPrice = price ? `£${Number(price).toLocaleString()}` : 'N/A';
+        
+        // Get count of listings
+        const listingsCount = getPropertyValue(item, ['listings_count', 'count', 'total_listings', 'businesses_count'], 1);
+        
+        // Get multiple - could be price/revenue, price/ebitda, etc.
+        const multiple = getPropertyValue(item, ['multiple', 'revenue_multiple', 'ebitda_multiple', 'price_multiple'], 0);
+        const formattedMultiple = multiple ? `${Number(multiple).toFixed(1)}x` : 'N/A';
+        
+        row.innerHTML = `
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 font-medium">
+                ${formattedDate}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                    ${industry}
+                </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                <div class="flex items-center">
+                    <i class="fas fa-map-marker-alt text-gray-400 mr-1"></i>
+                    ${location}
+                </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 font-semibold">
+                ${formattedPrice}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+                    ${listingsCount} ${listingsCount === 1 ? 'listing' : 'listings'}
+                </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 font-medium">
+                ${formattedMultiple}
+            </td>
+        `;
+        
+        tableBody.appendChild(row);
+    });
+    
+    // Add table search functionality if it doesn't exist
+    setupTableSearch();
+}
+
+// Function to set up table search functionality
+function setupTableSearch() {
+    const searchInput = document.getElementById('tableSearch');
+    const tableBody = document.getElementById('trendsTableBody');
+    
+    if (!searchInput || !tableBody || searchInput.hasEventListener) {
+        return;
+    }
+    
+    // Mark that we've added the event listener
+    searchInput.hasEventListener = true;
+    
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase().trim();
+        const rows = tableBody.querySelectorAll('tr');
+        
+        rows.forEach(row => {
+            if (row.children.length < 6) return; // Skip empty state rows
+            
+            const text = row.textContent.toLowerCase();
+            const isMatch = text.includes(searchTerm);
+            
+            row.style.display = isMatch ? '' : 'none';
+        });
+        
+        // Show "no results" message if no rows are visible
+        const visibleRows = Array.from(rows).filter(row => row.style.display !== 'none' && row.children.length >= 6);
+        
+        if (visibleRows.length === 0 && searchTerm) {
+            if (!tableBody.querySelector('.no-search-results')) {
+                const noResultsRow = document.createElement('tr');
+                noResultsRow.className = 'no-search-results';
+                noResultsRow.innerHTML = `
+                    <td colspan="6" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                        <div class="flex flex-col items-center">
+                            <i class="fas fa-search text-3xl mb-2 text-gray-300 dark:text-gray-600"></i>
+                            <p class="text-lg font-medium">No results found</p>
+                            <p class="text-sm">Try a different search term.</p>
+                        </div>
+                    </td>
+                `;
+                tableBody.appendChild(noResultsRow);
+            }
+        } else {
+            // Remove no results message
+            const noResultsRow = tableBody.querySelector('.no-search-results');
+            if (noResultsRow) {
+                noResultsRow.remove();
+            }
+        }
+    });
+}
+
 // Helper function to safely access properties that might have different column names
 function getPropertyValue(item, possibleProps, defaultValue = 0) {
     for (const prop of possibleProps) {

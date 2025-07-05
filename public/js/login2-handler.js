@@ -95,6 +95,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         console.log('Sending login request for:', email);
+        console.log('Request URL:', '/auth/login');
+        console.log('Request method:', 'POST');
+        console.log('Environment:', window.location.hostname);
         
         // Use the standard /auth/login endpoint
         const response = await fetch('/auth/login', {
@@ -113,6 +116,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         console.log('Login response status:', response.status);
+        console.log('Login response headers:', Object.fromEntries(response.headers.entries()));
         
         // Parse response
         const contentType = response.headers.get('content-type');
@@ -120,10 +124,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (contentType && contentType.includes('application/json')) {
           data = await response.json();
-          console.log('Response data received');
+          console.log('Response data received:', data);
         } else {
           const text = await response.text();
-          console.error('Non-JSON response:', text.substring(0, 200) + '...'); // Log only first part
+          console.error('Non-JSON response content type:', contentType);
+          console.error('Non-JSON response text:', text.substring(0, 500) + '...'); // Log more content
           throw new Error('Server returned invalid response format');
         }
         

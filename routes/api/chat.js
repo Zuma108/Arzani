@@ -450,11 +450,12 @@ const chatController = {
 // Get user's conversations
 router.get('/conversations', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.userId;
-    
-    if (!userId) {
+    // Check if user is authenticated
+    if (!req.user || !req.user.userId) {
       return res.status(401).json({ success: false, error: 'Authentication required' });
     }
+    
+    const userId = req.user.userId;
 
     console.log(`Fetching conversations for user: ${userId}`);
 

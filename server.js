@@ -25,6 +25,8 @@ import s3UploadRoutes from './routes/api/s3-upload.js';
 
 // Import threads API routes
 import threadsApiRoutes from './routes/api/threads.js';
+import buyerRoutes from './routes/api/buyer.js';
+import trustRoutes from './routes/api/trust.js';
 
 // Add a simple RateLimiter class implementation
 class RateLimiter {
@@ -134,8 +136,8 @@ import { Server as SocketIOServer } from 'socket.io';
 import { initializeChatSocket } from './socket/chatSocket.js';
 import publicValuationRouter from './api/public-valuation.js';
 
-// Import chat API routes - REMOVED: Legacy chat API routes, using threads API instead
-// import chatApiRoutes from './routes/api/chat.js';
+// Import chat API routes
+import chatApiRoutes from './routes/api/chat.js';
 
 import chatDebugRouter from './routes/chat-debug.js';
 
@@ -536,6 +538,14 @@ app.get('/valuation-confirmation', (req, res) => {
   });
 });
 
+// Add buyer dashboard route
+app.get('/buyer-dashboard', (req, res) => {
+  res.render('buyer-dashboard', {
+    title: 'Buyer Dashboard - Arzani',
+    user: req.user || null
+  });
+});
+
 // Make sure cookie parser runs early (before session middleware)
 app.use(cookieParser());
 
@@ -644,13 +654,15 @@ if (!process.env.REFRESH_TOKEN_SECRET) {
 // Update CORS configuration - remove the duplicate corsOptions and merge all options
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
+    // Allow requests with no origin (like mobile apps, curl requests, or same-origin requests)
     if (!origin) return callback(null, true);
     
     // List of allowed origins
     const allowedOrigins = [
       'http://localhost:3000',
       'http://localhost:5000',
+      'https://arzani.co.uk',
+      'https://www.arzani.co.uk',
       'https://accounts.google.com',
       'https://oauth.live.com',
       'https://login.microsoftonline.com'
@@ -663,7 +675,18 @@ const corsOptions = {
       if (origin && origin.includes('localhost')) {
         callback(null, true);
       } else {
-        callback(new Error('Not allowed by CORS'));
+        console.log('CORS rejected origin:', origin);
+        console.log('Environment:', process.env.NODE_ENV);
+        console.log('Allowed origins:', allowedOrigins);
+        
+        // In production, be more lenient for requests from the same domain
+        if (process.env.NODE_ENV === 'production' && origin && 
+            (origin.includes('arzani.co.uk') || origin.endsWith('arzani.co.uk'))) {
+          console.log('Allowing production origin:', origin);
+          callback(null, true);
+        } else {
+          callback(new Error('Not allowed by CORS'));
+        }
       }
     }
   },
@@ -688,7 +711,21 @@ app.use('/', valuationPaymentRoutes);
 
 // Add specific CORS headers for API routes
 app.use('/api', (req, res, next) => {
-  res.header('Access-Control-Allow-Origin', req.headers.origin);
+  const allowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:5000',
+    'https://arzani.co.uk',
+    'https://www.arzani.co.uk',
+    'https://accounts.google.com',
+    'https://oauth.live.com',
+    'https://login.microsoftonline.com'
+  ];
+  
+  const origin = req.headers.origin;
+  if (!origin || allowedOrigins.includes(origin) || (origin && origin.includes('localhost'))) {
+    res.header('Access-Control-Allow-Origin', origin || '*');
+  }
+  
   res.header('Access-Control-Allow-Credentials', 'true');
   res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
@@ -700,18 +737,17 @@ app.use('/api', (req, res, next) => {
   next();
 });
 
-// Middleware
-app.use(express.json());
+// Middleware - Apply CORS first before any other middleware
+app.use(cors(corsOptions));
+
+// Then apply other middleware
+app.use(express.json({ limit: '25mb' }));
+app.use(express.urlencoded({ extended: true, limit: '25mb' }));
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(compression());
-app.use(bodyParser.json({ limit: '25mb' }));
-app.use(bodyParser.urlencoded({ extended: true, limit: '25  mb' }));
 app.use(morgan('dev'));
 app.use(express.static(path.join(__dirname, '../frontend/public')));
 
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(cors(corsOptions));
-app.use(bodyParser.json());
 app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
@@ -748,14 +784,43 @@ app.use('/api', historyRoutes);
 app.use('/api/public', publicValuationRouter);
 app.use('/api/public-valuation', publicValuationRouter);
 app.use('/api/auth', apiAuthRoutes); // Add API auth routes
-// REMOVED: Legacy chat API - using threads API instead
-// app.use('/api/chat', chatApiRoutes); // Use chatApiRoutes instead of chatRouter
+app.use('/api/chat', chatApiRoutes); // Use chatApiRoutes instead of chatRouter
 app.use('/api/threads', threadsApiRoutes); // Add threads API for conversation management
+app.use('/api/buyer', buyerRoutes);
+app.use('/api/trust', trustRoutes);
 app.use('/payment', paymentRoutes);
 // Add specific CORS middleware for OAuth routes
 app.use('/auth', (req, res, next) => {
-  // Set CORS headers specifically for OAuth endpoints
-  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  const allowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:5000',
+    'https://arzani.co.uk',
+    'https://www.arzani.co.uk',
+    'https://accounts.google.com',
+    'https://oauth.live.com',
+    'https://login.microsoftonline.com'
+  ];
+  
+  const origin = req.headers.origin;
+  console.log('Auth middleware - Origin:', origin);
+  console.log('Auth middleware - Environment:', process.env.NODE_ENV);
+  
+  // Allow requests with no origin (same-origin requests)
+  if (!origin) {
+    res.header('Access-Control-Allow-Origin', '*');
+  } else if (allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  } else if (origin && origin.includes('localhost')) {
+    res.header('Access-Control-Allow-Origin', origin);
+  } else if (process.env.NODE_ENV === 'production' && origin && origin.includes('arzani.co.uk')) {
+    // In production, be more lenient for arzani.co.uk domains
+    console.log('Auth middleware - Allowing production origin:', origin);
+    res.header('Access-Control-Allow-Origin', origin);
+  } else {
+    console.log('Auth middleware - Rejecting origin:', origin);
+    res.header('Access-Control-Allow-Origin', 'null');
+  }
+  
   res.header('Access-Control-Allow-Credentials', 'true');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-CSRF-Token');
@@ -765,6 +830,15 @@ app.use('/auth', (req, res, next) => {
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
+  next();
+});
+
+// Add debugging middleware for auth routes
+app.use('/auth', (req, res, next) => {
+  console.log(`Auth route accessed: ${req.method} ${req.path}`);
+  console.log(`Request origin: ${req.headers.origin}`);
+  console.log(`Request content-type: ${req.headers['content-type']}`);
+  console.log(`Request accept: ${req.headers.accept}`);
   next();
 });
 
@@ -1989,7 +2063,17 @@ app.post('/api/business/track', authenticateToken, async (req, res) => {
 // Update the business history endpoint
 app.get('/api/business/history', authenticateToken, async (req, res) => {
     // Add CORS headers for API routes
-    res.header('Access-Control-Allow-Origin', 'http://localhost:5000');
+    const allowedOrigins = [
+        'http://localhost:3000',
+        'http://localhost:5000',
+        'https://arzani.co.uk',
+        'https://www.arzani.co.uk'
+    ];
+    
+    const origin = req.headers.origin;
+    if (!origin || allowedOrigins.includes(origin) || (origin && origin.includes('localhost'))) {
+        res.header('Access-Control-Allow-Origin', origin || '*');
+    }
     res.header('Access-Control-Allow-Credentials', 'true');
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
 
@@ -2284,118 +2368,9 @@ app.get('*', (req, res, next) => {  // Don't redirect specific server-rendered p
 });
 
 
-// Update login/authentication route to include refresh token
-app.post('/auth/login', async (req, res) => {
-  try {
-    const { email, password, returnTo } = req.body;
-    
-    if (!email || !password) {
-      return res.status(400).json({ success: false, message: 'Email and password are required' });
-    }
-    
-    // Get user by email
-    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-    
-    if (result.rows.length === 0) {
-      return res.status(401).json({ success: false, message: 'Invalid email or password' });
-    }
-    
-    const user = result.rows[0];
-    
-    // Verify password
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      return res.status(401).json({ success: false, message: 'Invalid email or password' });
-    }
+// REMOVED: Duplicate login handler - handled by auth routes now
 
-    const token = jwt.sign(
-      { userId: user.id },
-      process.env.JWT_SECRET,
-      { expiresIn: TOKEN_EXPIRY }
-    );
-
-    const refreshToken = jwt.sign(
-      { userId: user.id },
-      process.env.REFRESH_TOKEN_SECRET,
-      { expiresIn: REFRESH_TOKEN_EXPIRY }
-    );
-    
-    // Save user ID to session
-    req.session.userId = user.id;
-    
-    // Set refresh token in HTTP-only cookie
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
-    });
-    
-    // Set normal token cookie (accessible to JavaScript)
-    res.cookie('token', token, {
-      maxAge: 14 * 24 * 60 * 60 * 1000, // 14 days
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax'
-    });
-    
-    // Handle returnTo parameter for proper redirects
-    let redirectTo = '/marketplace2'; // Default fallback
-    if (returnTo) {
-      // Sanitize the returnTo URL to prevent open redirects
-      const sanitizedReturnTo = decodeURIComponent(returnTo);
-      if (sanitizedReturnTo.startsWith('/') && !sanitizedReturnTo.includes('login')) {
-        redirectTo = sanitizedReturnTo;
-      }
-    }
-
-    res.json({
-      success: true,
-      token,
-      redirectTo: redirectTo,
-      user: {
-        id: user.id,
-        email: user.email,
-        username: user.username
-      }
-    });
-  } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ success: false, message: 'Login failed' });
-  }
-});
-
-// Add refresh token endpoint
-app.post('/auth/refresh-token', async (req, res) => {
-  const refreshToken = req.cookies['refreshToken'];
-  
-  if (!refreshToken) {
-    return res.status(401).json({ message: 'Refresh token not found' });
-  }
-
-  try {
-    const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
-    
-    const newToken = jwt.sign(
-      { userId: decoded.userId },
-      process.env.JWT_SECRET,
-      { expiresIn: TOKEN_EXPIRY }
-    );
-
-    const newRefreshToken = jwt.sign(
-      { userId: decoded.userId },
-      process.env.REFRESH_TOKEN_SECRET,
-      { expiresIn: REFRESH_TOKEN_EXPIRY }
-    );    res.cookie('refreshToken', newRefreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
-    });
-
-    res.json({ token: newToken });
-  } catch (error) {
-    console.error('Token refresh error:', error);
-    res.status(401).json({ message: 'Invalid refresh token' });
-  }
-});
+// REMOVED: Duplicate refresh token handler - handled by auth routes now
 
 
 
@@ -2929,30 +2904,27 @@ printRoutes(app);
 })();
 
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).send('Something broke!');
-});
-
-// Add this after your routes
-app.use((err, req, res, next) => {
-  console.error('Global error handler:', err);
+  console.error('Error handler triggered:', err.stack);
+  console.log('Request path:', req.path);
+  console.log('Request headers accept:', req.headers.accept);
+  console.log('Request content-type:', req.headers['content-type']);
   
-  // If it's an API route, return JSON error
-  if (req.path.startsWith('/api/')) {
+  // If it's an API route, auth route, or expects JSON, return JSON error
+  if (req.path.startsWith('/api/') || 
+      req.path.startsWith('/auth/') ||
+      req.headers.accept?.includes('application/json') || 
+      req.headers['content-type']?.includes('application/json')) {
     return res.status(500).json({
-      error: 'Internal server error',
-      message: process.env.NODE_ENV === 'development' ? err.message : undefined
+      success: false,
+      message: 'Internal server error',
+      error: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
     });
   }
-
-  // For non-API routes, render error page with properly formatted error data
+  
+  // For regular page requests, render error page
   res.status(500).render('error', { 
-    message: err.message || 'Something went wrong',
-    error: process.env.NODE_ENV === 'development' ? {
-      stack: err.stack,
-      name: err.name,
-      message: err.message
-    } : {}
+    message: 'Something went wrong',
+    error: process.env.NODE_ENV === 'development' ? err : {}
   });
 });
 

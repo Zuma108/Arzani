@@ -1145,7 +1145,7 @@ function generateImageCarousel(business, images, isVisible) {
         // Only load immediately if it's the first image AND the card is visible
         const shouldLoad = index === 0 && isVisible;
         const loadingAttr = shouldLoad ? "" : "loading=\"lazy\"";
-        const imgSrc = shouldLoad ? imageUrl : "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+        const imgSrc = shouldLoad ? imageUrl : "data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAAIBRAA7";
         const dataSrc = shouldLoad ? "" : `data-src="${imageUrl}"`;
         const lazyClass = shouldLoad ? "" : "lazy-load";
         
@@ -1268,12 +1268,12 @@ function initMultiRegionImageLoading() {
       });
       
       img.addEventListener('error', function() {
-        // Failed to load, try alternate region
+        // Failed to load, try other region
         debugLog('Lazy-loaded image failed to load, trying alternate region:', this.src);
         
         if (this.src.includes('s3.eu-west-2.amazonaws.com')) {
           this.src = this.src.replace('s3.eu-west-2', 's3.eu-north-1');
-        } else if (this.src.includes('s3.eu-north-1')) {
+        } else if (this.src.includes('s3.eu-north-1.amazonaws.com')) {
           this.src = this.src.replace('s3.eu-north-1', 's3.eu-west-2');
         } else {
           // Last resort - default image
@@ -1304,7 +1304,7 @@ function initMultiRegionImageLoading() {
       img.onerror = function() {
         if (this.src.includes('s3.eu-west-2.amazonaws.com')) {
           this.src = this.src.replace('s3.eu-west-2', 's3.eu-north-1');
-        } else if (this.src.includes('s3.eu-north-1')) {
+        } else if (this.src.includes('s3.eu-north-1.amazonaws.com')) {
           this.src = this.src.replace('s3.eu-north-1', 's3.eu-west-2');
         } else {
           this.src = '/images/default-business.jpg';
@@ -1322,8 +1322,6 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initialize multi-region image loading
   initMultiRegionImageLoading();
 });
-
-// ...existing code...
 
 /**
  * Region fallback handler to extend to existing image handling
@@ -1602,14 +1600,16 @@ function createBusinessCard(business, images, index) {
       ${imageHtml}
       <div class="card-body d-flex flex-column">
         <h5 class="card-title">${business.business_name}</h5>
+        
+        <!-- Trust Badges -->
+        <div class="trust-badges mb-2">
+          ${createTrustBadges(business)}
+        </div>
+        
         <p class="card-location">${business.location || 'Location not specified'}</p>
         <p class="card-price">£${formatPrice(business.price || 0)}</p>
         <div class="d-flex justify-content-between gap-2 mt-auto">
-          <button class="btn btn-primary flex-grow-1 view-details-btn" 
-                  data-business-id="${business.id}"
-                  onclick="viewBusinessDetails(${business.id})">
-              View Details
-          </button>
+          ${createViewDetailsButton(business)}
           <button class="btn btn-outline-secondary flex-grow-1 contact-btn"
                  data-business-id="${business.id}"
                  data-user-id="${business.user_id || ''}">
@@ -1622,229 +1622,144 @@ function createBusinessCard(business, images, index) {
 }
 
 /**
- * Create image carousel with progressive loading support
- * @param {Object} business - Business object 
- * @param {Array} images - Processed image URLs
- * @param {Boolean} shouldLoadImmediately - Whether to load immediately
- * @returns {String} - HTML string for image carousel
+ * Create view details button with premium access control
+ * @param {Object} business - Business object
+ * @returns {String} - HTML string for view details button
  */
-function createImageCarousel(business, images, shouldLoadImmediately) {
-  if (!images || images.length === 0) {
-    return `<div class="image-container">
-      <div class="image-placeholder skeleton-loader"></div>
-      <img src="/images/default-business.jpg" class="card-img-top" alt="Default image">
-    </div>`;
+function createViewDetailsButton(business) {
+  const isPremiumRequired = business.price && business.price >= 50000; // High-value listings
+  const isRecentListing = business.created_at && 
+    new Date(business.created_at) > new Date(Date.now() - 72 * 60 * 60 * 1000); // Last 72 hours
+  
+  // Check if premium access is required
+  if (isPremiumRequired || isRecentListing || business.is_premium_only) {
+    return `
+      <button class="btn btn-premium flex-grow-1 premium-locked-btn" 
+              data-business-id="${business.id}"
+              onclick="handlePremiumAccess(${business.id})">
+          <i class="bi bi-lock"></i>
+          Premium Only
+      </button>
+    `;
   }
   
+  // Regular view details button
   return `
-    <div class="card-image-carousel">
-      <button class="save-business-btn" data-business-id="${business.id}">
-        <i class="bi bi-bookmark"></i>
-      </button>
-      <div class="carousel-inner">
-        ${images.map((imageUrl, index) => {
-          // Set up loading attributes based on priority
-          const isFirst = index === 0;
-          const shouldLoad = isFirst && shouldLoadImmediately;
-          const loadingStrategy = shouldLoad ? 'eager' : 'lazy';
-          
-          // Create alternate region URLs for fallback
-          const fallbackUrl = imageUrl.includes('eu-west-2') 
-            ? imageUrl.replace('eu-west-2', 'eu-north-1') 
-            : imageUrl.replace('eu-north-1', 'eu-west-2');
-          
-          return `
-            <div class="carousel-item ${isFirst ? 'active' : ''}" data-index="${index}">
-              <div class="image-container">
-                <div class="image-placeholder skeleton-loader"></div>
-                <img src="${shouldLoad ? imageUrl : 'data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAA='}" 
-                     data-src="${shouldLoad ? '' : imageUrl}"
-                     data-fallback="${fallbackUrl}"
-                     class="card-img-top ${shouldLoad ? 'blur-up' : 'lazy-load blur-up'}"
-                     alt="${business.business_name}"
-                     loading="${loadingStrategy}"
-                     onerror="handleImageError(this)"
-                     onload="handleImageLoad(this)">
+    <button class="btn btn-primary flex-grow-1 view-details-btn" 
+            data-business-id="${business.id}"
+            onclick="viewBusinessDetails(${business.id})">
+        View Details
+    </button>
+  `;
+}
+
+/**
+ * Handle premium access requirement
+ * @param {Number} businessId - Business ID
+ */
+function handlePremiumAccess(businessId) {
+  // Check if user has premium access
+  const userPremium = getUserPremiumStatus();
+  
+  if (userPremium) {
+    // User has premium access, proceed to business details
+    viewBusinessDetails(businessId);
+  } else {
+    // Show premium upgrade modal
+    showPremiumUpgradeModal(businessId);
+  }
+}
+
+/**
+ * Check user's premium status
+ * @returns {Boolean} - Whether user has premium access
+ */
+function getUserPremiumStatus() {
+  // This would typically check with the server
+  // For now, check localStorage or session data
+  const userPlan = localStorage.getItem('userPlan');
+  return userPlan === 'premium' || userPlan === 'platinum';
+}
+
+/**
+ * Show premium upgrade modal
+ * @param {Number} businessId - Business ID
+ */
+function showPremiumUpgradeModal(businessId) {
+  const modal = `
+    <div class="modal fade" id="premiumModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Premium Buyer Access Required</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body text-center">
+            <div class="mb-4">
+              <i class="bi bi-star-fill text-warning" style="font-size: 3rem;"></i>
+            </div>
+            <h6 class="mb-3">Unlock Exclusive Access</h6>
+            <p class="text-muted mb-4">
+              This listing is available exclusively to Premium Buyers. 
+              Upgrade now to access high-value opportunities, early alerts, 
+              and AI deal advisory.
+            </p>
+            <div class="premium-benefits mb-4">
+              <div class="d-flex align-items-center mb-2">
+                <i class="bi bi-check-circle-fill text-success me-2"></i>
+                <span>Access to exclusive listings</span>
               </div>
-            </div>`;
-        }).join('')}
-      </div>
-      ${images.length > 1 ? createCarouselControls(images.length) : ''}
-    </div>
-  `;
-}
-
-/**
- * Format price with thousands separators
- * @param {Number} price - Price value
- * @returns {String} - Formatted price string
- */
-function formatPrice(price) {
-  return new Intl.NumberFormat('en-GB').format(price);
-}
-
-/**
- * Create carousel controls for multi-image listings
- * @param {Number} imageCount - Number of images
- * @returns {String} - HTML string for carousel controls
- */
-function createCarouselControls(imageCount) {
-  return `
-    <div class="carousel-controls">
-      <button class="carousel-control-prev" onclick="handleCarouselNav(this.closest('.card-image-carousel'), -1)">
-        <i class="bi bi-chevron-left"></i>
-      </button>
-      <button class="carousel-control-next" onclick="handleCarouselNav(this.closest('.card-image-carousel'), 1)">
-        <i class="bi bi-chevron-right"></i>
-      </button>
-      <div class="carousel-indicators">
-        ${Array(imageCount).fill().map((_, i) => 
-          `<button class="${i === 0 ? 'active' : ''}" 
-                  onclick="showSlide(this.closest('.card-image-carousel'), ${i})"></button>`
-        ).join('')}
+              <div class="d-flex align-items-center mb-2">
+                <i class="bi bi-check-circle-fill text-success me-2"></i>
+                <span>24-72 hour early access</span>
+              </div>
+              <div class="d-flex align-items-center mb-2">
+                <i class="bi bi-check-circle-fill text-success me-2"></i>
+                <span>AI deal advisor</span>
+              </div>
+              <div class="d-flex align-items-center">
+                <i class="bi bi-check-circle-fill text-success me-2"></i>
+                <span>Priority support</span>
+              </div>
+            </div>
+            <div class="premium-pricing mb-4">
+              <h4 class="text-primary">£35/month</h4>
+              <small class="text-muted">Cancel anytime</small>
+            </div>
+          </div>
+          <div class="modal-footer justify-content-center">
+            <a href="/pricing" class="btn btn-primary btn-lg px-4">
+              Upgrade to Premium
+            </a>
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+              Maybe Later
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   `;
-}
-
-/**
- * Initialize progressive image loading
- */
-function initProgressiveImageLoading() {
-  // Use Intersection Observer for lazy loading if available
-  if ('IntersectionObserver' in window) {
-    // Cleanup existing observer
-    if (window.imageObserver) {
-      window.imageObserver.disconnect();
-    }
-    
-    // Create new observer
-    window.imageObserver = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const img = entry.target;
-          if (img.dataset.src) {
-            // Set the actual image source
-            img.src = img.dataset.src;
-            img.removeAttribute('data-src');
-            window.imageObserver.unobserve(img);
-          }
-        }
-      });
-    }, {
-      rootMargin: '200px 0px', // Start loading when within 200px
-      threshold: 0.01 // Trigger when at least 1% is visible
-    });
-    
-    // Observe all lazy-load images
-    document.querySelectorAll('img.lazy-load').forEach(img => {
-      window.imageObserver.observe(img);
-    });
-  } else {
-    // Fallback for browsers without IntersectionObserver
-    document.querySelectorAll('img.lazy-load').forEach(img => {
-      if (img.dataset.src) {
-        img.src = img.dataset.src;
-        img.removeAttribute('data-src');
-      }
+  
+  // Remove existing modal if present
+  const existingModal = document.getElementById('premiumModal');
+  if (existingModal) {
+    existingModal.remove();
+  }
+  
+  // Add modal to page
+  document.body.insertAdjacentHTML('beforeend', modal);
+  
+  // Show modal
+  const bootstrapModal = new bootstrap.Modal(document.getElementById('premiumModal'));
+  bootstrapModal.show();
+  
+  // Track premium wall interaction
+  if (typeof gtag !== 'undefined') {
+    gtag('event', 'premium_wall_shown', {
+      'business_id': businessId,
+      'page': 'marketplace'
     });
   }
 }
-
-/**
- * Handle successful image load
- * @param {HTMLImageElement} img - Image element
- */
-window.handleImageLoad = function(img) {
-  // Add the loaded class to trigger the fade-in animation
-  img.classList.add('loaded');
-  
-  // Find and hide the placeholder
-  const placeholder = img.previousElementSibling;
-  if (placeholder && placeholder.classList.contains('image-placeholder')) {
-    placeholder.style.display = 'none';
-  }
-}
-
-/**
- * Handle image loading error with region fallback
- * @param {HTMLImageElement} img - Image element
- */
-window.handleImageError = function(img) {
-  // Only log in debug mode to avoid console spam
-  if (window.DEBUG_MODE) {
-    console.log('Image failed to load, trying fallback:', img.src);
-  }
-  
-  // Check if we've already tried the fallback
-  if (img.dataset.usedFallback === 'true') {
-    // If fallback already failed, show error state
-    const placeholder = img.previousElementSibling;
-    if (placeholder) {
-      placeholder.classList.remove('skeleton-loader');
-      placeholder.classList.add('image-error');
-      placeholder.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Image unavailable';
-    }
-    img.style.display = 'none';
-    return;
-  }
-  
-  // Try the fallback URL
-  img.dataset.usedFallback = 'true';
-  if (img.dataset.fallback) {
-    img.src = img.dataset.fallback;
-  } else if (img.src.includes('s3.eu-west-2.amazonaws.com')) {
-    // Try northern region as fallback
-    img.src = img.src.replace('s3.eu-west-2.amazonaws.com', 's3.eu-north-1.amazonaws.com');
-  } else if (img.src.includes('s3.eu-north-1.amazonaws.com')) {
-    // Try western region as fallback
-    img.src = img.src.replace('s3.eu-north-1.amazonaws.com', 's3.eu-west-2.amazonaws.com');
-  } else {
-    // Last resort - use default image
-    img.src = '/images/default-business.jpg';
-  }
-}
-
-/**
- * Initialize event handlers for the business cards
- */
-function initializeEventHandlers() {
-  // Initialize carousel navigation
-  document.querySelectorAll('.carousel-control-prev, .carousel-control-next').forEach(control => {
-    control.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      const carousel = control.closest('.card-image-carousel');
-      const direction = control.classList.contains('carousel-control-prev') ? -1 : 1;
-      
-      handleCarouselNav(carousel, direction);
-    });
-  });
-  
-  // Initialize save buttons
-  document.querySelectorAll('.save-business-btn').forEach(button => {
-    button.addEventListener('click', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      const businessId = this.dataset.businessId;
-      if (businessId) {
-        toggleSavedStatus(this, businessId);
-      }
-    });
-  });
-  
-  // Initialize contact buttons
-  initContactSellerButtons();
-}
-
-// Make our loadPage function available globally
-window.loadPage = loadPage;
-
-// Add these functions to the global scope for use in HTML
-window.handleCarouselNav = handleCarouselNav;
-window.showSlide = showSlide;
-window.viewBusinessDetails = viewBusinessDetails;
 
 // ...existing code...

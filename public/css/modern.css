@@ -1,6 +1,12 @@
-/* Base Styles */
+/* 
+ * Legacy CSS file - Now using Tailwind CSS for unified styling
+ * This file is kept for compatibility but styles have been moved to Tailwind
+ * All pages now use consistent Tailwind-based design from buyer-dashboard.ejs
+ */
+
+/* Only keeping non-conflicting utility styles */
 :root {
-    --primary-blue: #316FD4;
+    --primary-blue: #041b76;
     --primary-dark: #121212;
     --dark-light: #1a1a1a;
     --text-light: #f8f9fa;
@@ -9,45 +15,24 @@
     --border-color: #343a40;
 }
 
-body {
-    font-family: 'Inter', sans-serif;
-    background-color: var(--primary-dark);
-    color: var(--text-light);
-    overflow-x: hidden;
+/* Custom scrollbar for chat areas - non-conflicting with Tailwind */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
 }
 
-/* Header & Navigation */
-header {
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: #f1f1f1;
 }
 
-header.scrolled {
-    background-color: rgba(18, 18, 18, 0.85);
-    backdrop-filter: blur(10px);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
 }
 
-.nav-item a {
-    transition: color 0.2s ease;
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
 }
-
-.nav-item a:hover {
-    color: var(--primary-blue);
-}
-
-/* Buttons */
-.btn-primary {
-    background-color: var(--primary-blue);
-    color: white;
-    padding: 0.875rem 1.75rem;
-    border-radius: 0.5rem;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(49, 111, 212, 0.2);
-}
-
-.btn-primary:hover {
-    transform: translateY(-3px);
     box-shadow: 0 6px 20px rgba(49, 111, 212, 0.3);
 }
 
