@@ -306,6 +306,12 @@
                         
                         <!-- Right side - Actions -->
                         <div class="flex items-center space-x-4">
+                            <!-- Refresh Button -->
+                            <button data-action="refresh" class="hidden sm:flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+                                <i class="fas fa-sync h-4 w-4 mr-2"></i>
+                                Refresh
+                            </button>
+                            
                             <!-- Quick Actions -->
                             <button class="hidden sm:flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
                                 <i class="fas fa-plus h-4 w-4 mr-2"></i>
@@ -357,7 +363,7 @@
                             </div>
                             <div class="ml-4">
                                 <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Saved Searches</p>
-                                <p class="text-2xl font-semibold text-gray-900 dark:text-white">12</p>
+                                <p class="text-2xl font-semibold text-gray-900 dark:text-white" data-stat="saved-searches"><%= dashboardData?.stats?.savedSearches || 0 %></p>
                             </div>
                         </div>
                     </div>
@@ -369,7 +375,7 @@
                             </div>
                             <div class="ml-4">
                                 <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Active Alerts</p>
-                                <p class="text-2xl font-semibold text-gray-900 dark:text-white">8</p>
+                                <p class="text-2xl font-semibold text-gray-900 dark:text-white" data-stat="active-alerts"><%= dashboardData?.stats?.activeAlerts || 0 %></p>
                             </div>
                         </div>
                     </div>
@@ -381,7 +387,7 @@
                             </div>
                             <div class="ml-4">
                                 <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Meetings Booked</p>
-                                <p class="text-2xl font-semibold text-gray-900 dark:text-white">3</p>
+                                <p class="text-2xl font-semibold text-gray-900 dark:text-white" data-stat="meetings-booked"><%= dashboardData?.stats?.meetingsBooked || 0 %></p>
                             </div>
                         </div>
                     </div>
@@ -393,7 +399,7 @@
                             </div>
                             <div class="ml-4">
                                 <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Businesses Viewed</p>
-                                <p class="text-2xl font-semibold text-gray-900 dark:text-white">25</p>
+                                <p class="text-2xl font-semibold text-gray-900 dark:text-white" data-stat="businesses-viewed"><%= dashboardData?.stats?.businessesViewed || 0 %></p>
                             </div>
                         </div>
                     </div>
@@ -413,54 +419,40 @@
                                     </button>
                                 </div>
                             </div>
-                            <div class="p-6 space-y-4">
-                                <div class="alert-item flex items-start justify-between p-4 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                    <div class="flex-1">
-                                        <div class="flex items-center mb-2">
-                                            <div class="p-2 rounded-full warning-gradient mr-3">
-                                                <i class="fas fa-exclamation text-white text-sm"></i>
+                            <div class="p-6 space-y-4" data-section="alerts">
+                                <% if (dashboardData?.recentAlerts && dashboardData.recentAlerts.length > 0) { %>
+                                    <% dashboardData.recentAlerts.forEach(function(alert) { %>
+                                        <div class="alert-item flex items-start justify-between p-4 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                            <div class="flex-1">
+                                                <div class="flex items-center mb-2">
+                                                    <div class="p-2 rounded-full <%= alert.type === 'price_drop' ? 'warning-gradient' : (alert.type === 'new_listing' ? 'info-gradient' : 'premium-gradient') %> mr-3">
+                                                        <i class="<%= alert.icon %> text-white text-sm"></i>
+                                                    </div>
+                                                    <h4 class="font-medium text-gray-900 dark:text-white"><%= alert.title %></h4>
+                                                </div>
+                                                <p class="text-gray-600 dark:text-gray-400 text-sm mb-1"><%= alert.description %></p>
+                                                <p class="text-xs text-gray-500 dark:text-gray-500"><%= alert.timeAgo %></p>
                                             </div>
-                                            <h4 class="font-medium text-gray-900 dark:text-white">New Tech Startup Listed</h4>
+                                            <button class="px-4 py-2 bg-primary hover:bg-secondary text-white text-sm font-medium rounded-lg transition-colors">
+                                                View
+                                            </button>
                                         </div>
-                                        <p class="text-gray-600 dark:text-gray-400 text-sm mb-1">SaaS business in London, £250k asking price</p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-500">2 hours ago</p>
-                                    </div>
-                                    <button class="px-4 py-2 bg-primary hover:bg-secondary text-white text-sm font-medium rounded-lg transition-colors">
-                                        View
-                                    </button>
-                                </div>
-
-                                <div class="alert-item flex items-start justify-between p-4 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                    <div class="flex-1">
-                                        <div class="flex items-center mb-2">
-                                            <div class="p-2 rounded-full info-gradient mr-3">
-                                                <i class="fas fa-tag text-white text-sm"></i>
-                                            </div>
-                                            <h4 class="font-medium text-gray-900 dark:text-white">Price Drop Alert</h4>
+                                    <% }); %>
+                                <% } else { %>
+                                    <div class="text-center py-8">
+                                        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100 dark:bg-gray-700">
+                                            <i class="fas fa-bell text-gray-400 text-xl"></i>
                                         </div>
-                                        <p class="text-gray-600 dark:text-gray-400 text-sm mb-1">E-commerce business reduced by £25k</p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-500">5 hours ago</p>
-                                    </div>
-                                    <button class="px-4 py-2 bg-primary hover:bg-secondary text-white text-sm font-medium rounded-lg transition-colors">
-                                        View
-                                    </button>
-                                </div>
-
-                                <div class="alert-item flex items-start justify-between p-4 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                    <div class="flex-1">
-                                        <div class="flex items-center mb-2">
-                                            <div class="p-2 rounded-full premium-gradient mr-3">
-                                                <i class="fas fa-star text-white text-sm"></i>
-                                            </div>
-                                            <h4 class="font-medium text-gray-900 dark:text-white">Premium Early Access</h4>
+                                        <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">No recent alerts</h3>
+                                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Set up alerts to get notified about new opportunities.</p>
+                                        <div class="mt-6">
+                                            <a href="#alerts" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                                <i class="fas fa-plus -ml-1 mr-2 h-4 w-4"></i>
+                                                Create Alert
+                                            </a>
                                         </div>
-                                        <p class="text-gray-600 dark:text-gray-400 text-sm mb-1">Restaurant chain in Manchester, £500k</p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-500">1 day ago</p>
                                     </div>
-                                    <button class="px-4 py-2 bg-primary hover:bg-secondary text-white text-sm font-medium rounded-lg transition-colors">
-                                        View
-                                    </button>
-                                </div>
+                                <% } %>
                             </div>
                         </div>
 
@@ -475,42 +467,50 @@
                                     </button>
                                 </div>
                             </div>
-                            <div class="p-6 space-y-6">
-                                <div class="meeting-item flex items-center justify-between p-4 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200">
-                                    <div class="flex-1">
-                                        <h4 class="font-medium text-gray-900 dark:text-white mb-1">Digital Marketing Agency</h4>
-                                        <p class="text-gray-600 dark:text-gray-400 text-sm mb-2">Call with seller - John Smith</p>
-                                        <div class="flex items-center text-sm text-gray-500 dark:text-gray-500">
-                                            <i class="fas fa-calendar mr-2"></i>
-                                            <span>Tomorrow, 2:00 PM</span>
+                            <div class="p-6 space-y-6" data-section="meetings">
+                                <% if (dashboardData?.upcomingMeetings && dashboardData.upcomingMeetings.length > 0) { %>
+                                    <% dashboardData.upcomingMeetings.forEach(function(meeting) { %>
+                                        <div class="meeting-item flex items-center justify-between p-4 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200">
+                                            <div class="flex-1">
+                                                <h4 class="font-medium text-gray-900 dark:text-white mb-1"><%= meeting.businessName %></h4>
+                                                <p class="text-gray-600 dark:text-gray-400 text-sm mb-2">Meeting with <%= meeting.sellerName || 'seller' %></p>
+                                                <div class="flex items-center text-sm text-gray-500 dark:text-gray-500">
+                                                    <i class="fas fa-calendar mr-2"></i>
+                                                    <span><%= new Date(meeting.scheduledAt).toLocaleDateString('en-US', { weekday: 'long', hour: '2-digit', minute: '2-digit' }) %></span>
+                                                </div>
+                                            </div>
+                                            <div class="flex flex-col items-end space-y-2">
+                                                <% if (meeting.meetingType === 'video') { %>
+                                                    <button class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center">
+                                                        <i class="fas fa-video mr-2"></i>
+                                                        Join Call
+                                                    </button>
+                                                    <span class="text-xs text-gray-500 dark:text-gray-500">Video Call</span>
+                                                <% } else { %>
+                                                    <button class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm font-medium rounded-lg transition-colors flex items-center">
+                                                        <i class="fas fa-map-marker-alt mr-2"></i>
+                                                        View Location
+                                                    </button>
+                                                    <span class="text-xs text-gray-500 dark:text-gray-500">In-person</span>
+                                                <% } %>
+                                            </div>
+                                        </div>
+                                    <% }); %>
+                                <% } else { %>
+                                    <div class="text-center py-8">
+                                        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100 dark:bg-gray-700">
+                                            <i class="fas fa-calendar-alt text-gray-400 text-xl"></i>
+                                        </div>
+                                        <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">No upcoming meetings</h3>
+                                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Schedule meetings with sellers to discuss opportunities.</p>
+                                        <div class="mt-6">
+                                            <a href="/marketplace2" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                                <i class="fas fa-search -ml-1 mr-2 h-4 w-4"></i>
+                                                Browse Businesses
+                                            </a>
                                         </div>
                                     </div>
-                                    <div class="flex flex-col items-end space-y-2">
-                                        <button class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center">
-                                            <i class="fas fa-video mr-2"></i>
-                                            Join Call
-                                        </button>
-                                        <span class="text-xs text-gray-500 dark:text-gray-500">Google Meet</span>
-                                    </div>
-                                </div>
-
-                                <div class="meeting-item flex items-center justify-between p-4 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200">
-                                    <div class="flex-1">
-                                        <h4 class="font-medium text-gray-900 dark:text-white mb-1">E-commerce Store</h4>
-                                        <p class="text-gray-600 dark:text-gray-400 text-sm mb-2">Due diligence review - Sarah Johnson</p>
-                                        <div class="flex items-center text-sm text-gray-500 dark:text-gray-500">
-                                            <i class="fas fa-calendar mr-2"></i>
-                                            <span>Friday, 10:00 AM</span>
-                                        </div>
-                                    </div>
-                                    <div class="flex flex-col items-end space-y-2">
-                                        <button class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm font-medium rounded-lg transition-colors flex items-center">
-                                            <i class="fas fa-file-alt mr-2"></i>
-                                            View Docs
-                                        </button>
-                                        <span class="text-xs text-gray-500 dark:text-gray-500">In-person</span>
-                                    </div>
-                                </div>
+                                <% } %>
                             </div>
                         </div>
 
@@ -611,6 +611,49 @@
                                     <i class="fas fa-file-alt mr-3 text-blue-600 dark:text-blue-400"></i>
                                     <span class="text-gray-700 dark:text-gray-300">Due Diligence Reports</span>
                                 </button>
+                            </div>
+                        </div>
+
+                        <!-- Saved Searches -->
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden animate-slide-up">
+                            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Saved Searches</h3>
+                                    <button class="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
+                                        <i class="fas fa-plus mr-1"></i>
+                                        New
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="p-6" data-section="saved-searches">
+                                <% if (dashboardData?.savedSearches && dashboardData.savedSearches.length > 0) { %>
+                                    <div class="space-y-3">
+                                        <% dashboardData.savedSearches.forEach(function(search) { %>
+                                            <div class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                                <div class="flex-1 min-w-0">
+                                                    <h4 class="text-sm font-medium text-gray-900 dark:text-white truncate"><%= search.name %></h4>
+                                                    <div class="flex items-center text-xs text-gray-500 dark:text-gray-500 mt-1">
+                                                        <i class="fas fa-building mr-1"></i>
+                                                        <span><%= search.matchingBusinesses %> matches</span>
+                                                    </div>
+                                                </div>
+                                                <button class="ml-2 px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 transition-colors">
+                                                    View
+                                                </button>
+                                            </div>
+                                        <% }); %>
+                                    </div>
+                                <% } else { %>
+                                    <div class="text-center py-4">
+                                        <div class="mx-auto flex items-center justify-center h-10 w-10 rounded-full bg-gray-100 dark:bg-gray-700">
+                                            <i class="fas fa-bookmark text-gray-400"></i>
+                                        </div>
+                                        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">No saved searches yet</p>
+                                        <button class="mt-2 text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
+                                            Create your first search
+                                        </button>
+                                    </div>
+                                <% } %>
                             </div>
                         </div>
 
@@ -791,5 +834,8 @@
             }
         });
     </script>
+    
+    <!-- Buyer Dashboard JavaScript -->
+    <script src="/js/buyer-dashboard.js"></script>
 </body>
 </html>

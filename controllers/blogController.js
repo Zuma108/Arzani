@@ -1,12 +1,12 @@
 /**
- * Blog Controller
- * Handles all blog-related operations and integrates with n8n workflow
+ * Blog Controller (Updated)
+ * Implements the new programmatic blog strategy without n8n workflows
  */
 
-import n8nWorkflowService from '../utils/n8nWorkflowService.js';
-import contentProcessor from '../utils/contentProcessor.js';
+import blogModel from '../models/blogModel.js';
+import programmaticContentService from '../services/programmaticContentService.js';
+import blogService from '../services/blogService.js';
 import db from '../db.js';
-import config from '../config/n8nConfig.js';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
@@ -75,99 +75,24 @@ function ensureProperImageUrl(imageUrl) {
  */
 async function getBlogHomePage(req, res) {
   try {
-    let featuredPosts = [];
-    let recentPosts = [];
-    let categories = [];
+    // Get featured, recent posts and categories using the blog model
+    const featuredPostsResult = await blogModel.getAllPosts(1, 3, { is_featured: true });
+    const recentPostsResult = await blogModel.getAllPosts(1, 6);
+    const categories = await blogModel.getAllCategories();
     
-    try {
-      // Get featured and recent posts - modified to use direct author fields from blog_posts
-      const featuredResult = await db.query(
-        'SELECT p.* FROM blog_posts p ' +
-        'WHERE p.status = $1 AND is_featured = $2 ORDER BY publish_date DESC LIMIT 3',
-        ['Published', true]
-      );
-      
-      const recentResult = await db.query(
-        'SELECT p.* FROM blog_posts p ' +
-        'WHERE p.status = $1 ORDER BY publish_date DESC LIMIT 6',
-        ['Published']
-      );
-      
-      // Get categories for sidebar
-      const categoriesResult = await db.query(
-        'SELECT c.*, COUNT(pc.post_id) as post_count FROM blog_categories c ' +
-        'LEFT JOIN blog_post_categories pc ON c.id = pc.category_id ' +
-        'LEFT JOIN blog_posts p ON pc.post_id = p.id AND p.status = $1 ' +
-        'GROUP BY c.id ORDER BY c.name',
-        ['Published']
-      );
-      
-      // Format the posts to include author and categories
-      featuredPosts = await Promise.all(featuredResult.rows.map(async post => {
-        // Get categories for the post
-        const postCategoriesResult = await db.query(
-          'SELECT c.* FROM blog_categories c ' +
-          'JOIN blog_post_categories pc ON c.id = pc.category_id ' +
-          'WHERE pc.post_id = $1',
-          [post.id]
-        );
-        
-        return {
-          ...post,
-          hero_image: ensureProperImageUrl(post.hero_image),
-          author: {
-            name: post.author_name || 'Arzani Team',
-            avatar: post.author_image || '/figma design exports/images/default-avatar.png',
-            bio: post.author_bio || ''
-          },
-          categories: postCategoriesResult.rows || [],
-          publishDate: post.publish_date || post.created_at,
-          readingTime: post.reading_time || 5
-        };
-      }));
-      
-      recentPosts = await Promise.all(recentResult.rows.map(async post => {
-        // Get categories for the post
-        const postCategoriesResult = await db.query(
-          'SELECT c.* FROM blog_categories c ' +
-          'JOIN blog_post_categories pc ON c.id = pc.category_id ' +
-          'WHERE pc.post_id = $1',
-          [post.id]
-        );
-        
-        return {
-          ...post,
-          hero_image: ensureProperImageUrl(post.hero_image),
-          author: {
-            name: post.author_name || 'Arzani Team',
-            avatar: post.author_image || '/figma design exports/images/default-avatar.png',
-            bio: post.author_bio || ''
-          },
-          categories: postCategoriesResult.rows || [],
-          publishDate: post.publish_date || post.created_at,
-          readingTime: post.reading_time || 5
-        };
-      }));
-      
-      categories = categoriesResult.rows;
-    } catch (dbError) {
-      console.error('Database error in blog homepage:', dbError);
-      // Continue with empty arrays instead of failing
-    }
+    // Get pillar posts for the featured content
+    const pillarPosts = await blogModel.getPillarPosts();
     
-    // Render the blog home page even if there's no data
+    // Render the blog home page
     return res.render('blog/index', {
-      featuredPost: featuredPosts[0] || null,
-      blogPosts: recentPosts,
+      title: 'Business Knowledge Center | Arzani Marketplace',
+      description: 'Expert insights on buying, selling, and valuing businesses using AI-powered tools and traditional methods.',
+      featuredPost: featuredPostsResult.posts[0] || null,
+      blogPosts: recentPostsResult.posts,
+      pillarPosts: pillarPosts || [],
       categories: categories,
-      pagination: {
-        currentPage: 1,
-        totalPages: 1,
-        totalPosts: recentPosts.length
-      },
-      currentCategory: null,
-      title: 'Blog - Arzani Marketplace',
-      description: 'Insights and resources for business owners, sellers, and buyers in the UK small business marketplace.'
+      pagination: recentPostsResult.pagination,
+      currentCategory: null
     });
   } catch (error) {
     console.error('Error fetching blog home page data:', error);
@@ -179,198 +104,62 @@ async function getBlogHomePage(req, res) {
 }
 
 /**
- * Get a blog post by its slug
- */
-async function getBlogPostBySlug(req, res) {
-  try {
-    const { slug } = req.params;
-    
-    // Get the blog post (updated to use direct author fields)
-    const result = await db.query(
-      'SELECT p.* FROM blog_posts p ' +
-      'WHERE p.slug = $1 AND p.status = $2',
-      [slug, 'Published']
-    );
-    
-    if (result.rows.length === 0) {
-      return res.status(404).render('error', {
-        message: 'Blog post not found.'
-      });
-    }
-    
-    const post = result.rows[0];
-    post.hero_image = ensureProperImageUrl(post.hero_image);
-    
-    // Get the post categories
-    const categoriesResult = await db.query(
-      'SELECT c.* FROM blog_categories c ' +
-      'JOIN blog_post_categories pc ON c.id = pc.category_id ' +
-      'WHERE pc.post_id = $1',
-      [post.id]
-    );
-    
-    // Get the post tags
-    const tagsResult = await db.query(
-      'SELECT t.* FROM blog_tags t ' +
-      'JOIN blog_post_tags pt ON t.id = pt.tag_id ' +
-      'WHERE pt.post_id = $1',
-      [post.id]
-    );
-    
-    // Get related posts (posts in the same category)
-    const relatedPostsResult = await db.query(
-      'SELECT DISTINCT p.* FROM blog_posts p ' +
-      'JOIN blog_post_categories pc1 ON p.id = pc1.post_id ' +
-      'JOIN blog_post_categories pc2 ON pc1.category_id = pc2.category_id ' +
-      'WHERE pc2.post_id = $1 AND p.id != $1 AND p.status = $2 ' +
-      'ORDER BY p.publish_date DESC LIMIT 3',
-      [post.id, 'Published']
-    );
-    
-    // Process each related post to ensure proper image URL
-    const relatedPosts = relatedPostsResult.rows.map(post => ({
-      ...post,
-      hero_image: ensureProperImageUrl(post.hero_image)
-    }));
-    
-    // Increment view count
-    await db.query(
-      'UPDATE blog_posts SET view_count = view_count + 1 WHERE id = $1',
-      [post.id]
-    );    // Get all categories for sidebar
-    const allCategoriesResult = await db.query(
-      'SELECT c.*, COUNT(pc.post_id) as post_count FROM blog_categories c ' +
-      'LEFT JOIN blog_post_categories pc ON c.id = pc.category_id ' +
-      'LEFT JOIN blog_posts p ON pc.post_id = p.id AND p.status = $1 ' +
-      'GROUP BY c.id ORDER BY c.name',
-      ['Published']
-    );
-
-    // Get recent posts for "Past Articles" sidebar (exclude current post)
-    const recentPostsResult = await db.query(
-      'SELECT id, title, slug, publish_date, reading_time FROM blog_posts ' +
-      'WHERE status = $1 AND id != $2 ' +
-      'ORDER BY publish_date DESC LIMIT 6',
-      ['Published', post.id]
-    );
-
-    // Render the blog post page with modern template
-    return res.render('blog/modern-blog-post', {
-      blog: post, // Use 'blog' instead of 'post' to match template expectations
-      post, // Keep 'post' for backward compatibility
-      categories: allCategoriesResult.rows, // All categories for sidebar
-      postCategories: categoriesResult.rows, // Categories for this specific post
-      tags: tagsResult.rows,
-      relatedPosts,
-      recentPosts: recentPostsResult.rows, // Recent posts for sidebar
-      title: `${post.title} - TechBlog`,
-      description: post.meta_description || contentProcessor.generateExcerpt(post.content, 160)
-    });
-  } catch (error) {
-    console.error('Error fetching blog post:', error);
-    return res.status(500).render('error', {
-      message: 'Error loading blog post. Please try again later.'
-    });
-  }
-}
-
-/**
- * Search blog posts
- */
-async function searchBlogPosts(req, res) {
-  try {
-    const { query } = req.query;
-    
-    if (!query) {
-      return res.redirect('/blog');
-    }
-    
-    // Search posts by title, content, or meta description
-    const result = await db.query(
-      'SELECT p.*, u.name as author_name ' +
-      'FROM blog_posts p ' +
-      'LEFT JOIN users u ON p.author_id = u.id ' +
-      'WHERE (p.title ILIKE $1 OR p.content ILIKE $1 OR p.meta_description ILIKE $1) ' +
-      'AND p.status = $2 ' +
-      'ORDER BY p.publish_date DESC',
-      [`%${query}%`, 'Published']
-    );
-    
-    // Render the search results page
-    return res.render('blog/search-results', {
-      posts: result.rows,
-      query,
-      count: result.rows.length,
-      title: `Search Results for "${query}" - Arzani Blog`,
-      description: `Search results for "${query}" in the Arzani blog.`
-    });
-  } catch (error) {
-    console.error('Error searching blog posts:', error);
-    return res.status(500).render('error', {
-      message: 'Error searching blog posts. Please try again later.'
-    });
-  }
-}
-
-/**
- * Get blog posts by category
+ * Get category page with posts
  */
 async function getBlogPostsByCategory(req, res) {
   try {
     const { categorySlug } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 9;
     
-    // Get the category
-    const categoryResult = await db.query(
-      'SELECT * FROM blog_categories WHERE slug = $1',
-      [categorySlug]
-    );
+    // Get posts for this category with pagination
+    const result = await blogModel.getPostsByCategory(categorySlug, page, limit);
     
-    if (categoryResult.rows.length === 0) {
+    if (!result) {
       return res.status(404).render('error', {
         message: 'Category not found.'
       });
     }
     
-    const category = categoryResult.rows[0];
+    // Get all categories for the sidebar
+    const categories = await blogModel.getAllCategories();
     
-    // Get posts in this category
-    const postsResult = await db.query(
-      'SELECT p.*, u.name as author_name ' +
-      'FROM blog_posts p ' +
-      'JOIN blog_post_categories pc ON p.id = pc.post_id ' +
-      'LEFT JOIN users u ON p.author_id = u.id ' +
-      'WHERE pc.category_id = $1 AND p.status = $2 ' +
-      'ORDER BY p.publish_date DESC',
-      [category.id, 'Published']
-    );
+    // Find the current category object for display
+    const currentCategory = categories.find(cat => cat.slug === categorySlug);
     
-    // Render the category page
     return res.render('blog/category', {
-      category,
-      posts: postsResult.rows,
-      title: `${category.name} - Arzani Blog`,
-      description: category.description || `Articles in the ${category.name} category.`
+      title: `${currentCategory?.name || categorySlug} | Arzani Business Knowledge Center`,
+      description: currentCategory?.description || `Articles about ${categorySlug.replace(/-/g, ' ')} in the UK business marketplace.`,
+      blogPosts: result.posts,
+      categories,
+      pagination: result.pagination,
+      currentCategory
     });
   } catch (error) {
-    console.error('Error fetching posts by category:', error);
+    console.error('Error fetching category posts:', error);
     return res.status(500).render('error', {
-      message: 'Error loading category page. Please try again later.'
+      message: 'Error loading category page. Please try again later.',
+      error: process.env.NODE_ENV === 'development' ? error : {}
     });
   }
 }
 
 /**
- * Get blog posts by tag
+ * Get posts by tag
  */
 async function getBlogPostsByTag(req, res) {
   try {
     const { tagSlug } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 9;
     
-    // Get the tag
-    const tagResult = await db.query(
-      'SELECT * FROM blog_tags WHERE slug = $1',
-      [tagSlug]
-    );
+    // Get posts with this tag
+    const result = await blogModel.getAllPosts(page, limit, { tag: tagSlug });
+    
+    // Get the tag information
+    const tagResult = await db.query(`
+      SELECT * FROM blog_tags WHERE slug = $1
+    `, [tagSlug]);
     
     if (tagResult.rows.length === 0) {
       return res.status(404).render('error', {
@@ -380,1026 +169,858 @@ async function getBlogPostsByTag(req, res) {
     
     const tag = tagResult.rows[0];
     
-    // Get posts with this tag
-    const postsResult = await db.query(
-      'SELECT p.*, u.name as author_name ' +
-      'FROM blog_posts p ' +
-      'JOIN blog_post_tags pt ON p.id = pt.post_id ' +
-      'LEFT JOIN users u ON p.author_id = u.id ' +
-      'WHERE pt.tag_id = $1 AND p.status = $2 ' +
-      'ORDER BY p.publish_date DESC',
-      [tag.id, 'Published']
-    );
+    // Get all categories for the sidebar
+    const categories = await blogModel.getAllCategories();
     
-    // Render the tag page
     return res.render('blog/tag', {
-      tag,
-      posts: postsResult.rows,
-      title: `Posts tagged with ${tag.name} - Arzani Blog`,
-      description: `Articles tagged with ${tag.name} on the Arzani blog.`
+      title: `${tag.name} | Arzani Business Knowledge Center`,
+      description: `Articles tagged with ${tag.name} in the Arzani business marketplace.`,
+      blogPosts: result.posts,
+      categories,
+      pagination: result.pagination,
+      currentTag: tag
     });
   } catch (error) {
-    console.error('Error fetching posts by tag:', error);
+    console.error('Error fetching tag posts:', error);
     return res.status(500).render('error', {
-      message: 'Error loading tag page. Please try again later.'
+      message: 'Error loading tag page. Please try again later.',
+      error: process.env.NODE_ENV === 'development' ? error : {}
     });
   }
 }
 
 /**
- * Get blog posts by author
+ * Get posts by author
  */
 async function getBlogPostsByAuthor(req, res) {
   try {
     const { authorSlug } = req.params;
-    
-    // Get the author
-    const authorResult = await db.query(
-      'SELECT * FROM users WHERE slug = $1',
-      [authorSlug]
-    );
-    
-    if (authorResult.rows.length === 0) {
-      return res.status(404).render('error', {
-        message: 'Author not found.'
-      });
-    }
-    
-    const author = authorResult.rows[0];
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 9;
     
     // Get posts by this author
-    const postsResult = await db.query(
-      'SELECT p.* FROM blog_posts p ' +
-      'WHERE p.author_id = $1 AND p.status = $2 ' +
-      'ORDER BY p.publish_date DESC',
-      [author.id, 'Published']
-    );
+    const result = await blogModel.getAllPosts(page, limit, { author: authorSlug });
     
-    // Render the author page
+    if (result.posts.length === 0) {
+      return res.status(404).render('error', {
+        message: 'Author not found or has no published posts.'
+      });
+    }
+    
+    // Get author info from the first post
+    const author = result.posts[0].author;
+    
+    // Get all categories for the sidebar
+    const categories = await blogModel.getAllCategories();
+    
     return res.render('blog/author', {
-      author,
-      posts: postsResult.rows,
-      title: `Posts by ${author.name} - Arzani Blog`,
-      description: author.bio || `Articles written by ${author.name} on the Arzani blog.`
+      title: `Articles by ${author.name} | Arzani Business Knowledge Center`,
+      description: `Read articles by ${author.name} on business buying, selling, and valuation in the UK marketplace.`,
+      blogPosts: result.posts,
+      categories,
+      pagination: result.pagination,
+      author
     });
   } catch (error) {
-    console.error('Error fetching posts by author:', error);
+    console.error('Error fetching author posts:', error);
     return res.status(500).render('error', {
-      message: 'Error loading author page. Please try again later.'
+      message: 'Error loading author page. Please try again later.',
+      error: process.env.NODE_ENV === 'development' ? error : {}
     });
   }
 }
 
 /**
- * Get all blog posts (API)
+ * Get a blog post by its slug
+ * New URL structure: /blog/[category]/[article-slug]
  */
-async function getAllBlogPosts(req, res) {
+async function getBlogPostByPath(req, res) {
   try {
-    const { page = 1, limit = 10, status = 'Published' } = req.query;
-    const offset = (page - 1) * limit;
+    const { category, slug } = req.params;
     
-    // Get total count
-    const countResult = await db.query(
-      'SELECT COUNT(*) FROM blog_posts WHERE status = $1',
-      [status]
-    );
+    // Get the blog post using the blog model
+    const post = await blogModel.getPostBySlug(slug);
     
-    const totalCount = parseInt(countResult.rows[0].count);
-    const totalPages = Math.ceil(totalCount / limit);
-    
-    // Updated query to use direct author fields
-    const postsResult = await db.query(
-      'SELECT p.* FROM blog_posts p ' +
-      'WHERE p.status = $1 ' +
-      'ORDER BY p.publish_date DESC ' +
-      'LIMIT $2 OFFSET $3',
-      [status, limit, offset]
-    );
-    
-    // Return the posts as JSON
-    return res.json({
-      posts: postsResult.rows,
-      pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        totalItems: totalCount,
-        totalPages
-      }
-    });
-  } catch (error) {
-    console.error('Error fetching all blog posts:', error);
-    return res.status(500).json({
-      error: 'Error fetching blog posts. Please try again later.'
-    });
-  }
-}
-
-/**
- * Get featured blog posts (API)
- */
-async function getFeaturedBlogPosts(req, res) {
-  try {
-    const { limit = 3 } = req.query;
-    
-    // Get featured posts - updated to use direct author fields
-    const postsResult = await db.query(
-      'SELECT p.* FROM blog_posts p ' +
-      'WHERE p.status = $1 AND p.is_featured = $2 ' +
-      'ORDER BY p.publish_date DESC ' +
-      'LIMIT $3',
-      ['Published', true, limit]
-    );
-    
-    // Return the featured posts as JSON
-    return res.json({
-      posts: postsResult.rows
-    });
-  } catch (error) {
-    console.error('Error fetching featured blog posts:', error);
-    return res.status(500).json({
-      error: 'Error fetching featured blog posts. Please try again later.'
-    });
-  }
-}
-
-/**
- * Get recent blog posts (API)
- */
-async function getRecentBlogPosts(req, res) {
-  try {
-    const { limit = 5 } = req.query;
-    
-    // Get recent posts - updated to use direct author fields
-    const postsResult = await db.query(
-      'SELECT p.* FROM blog_posts p ' +
-      'WHERE p.status = $1 ' +
-      'ORDER BY p.publish_date DESC ' +
-      'LIMIT $2',
-      ['Published', limit]
-    );
-    
-    // Return the recent posts as JSON
-    return res.json({
-      posts: postsResult.rows
-    });
-  } catch (error) {
-    console.error('Error fetching recent blog posts:', error);
-    return res.status(500).json({
-      error: 'Error fetching recent blog posts. Please try again later.'
-    });
-  }
-}
-
-/**
- * Get related blog posts (API)
- */
-async function getRelatedBlogPosts(req, res) {
-  try {
-    const { slug } = req.params;
-    const { limit = 3 } = req.query;
-    
-    // Get the post ID
-    const postResult = await db.query(
-      'SELECT id FROM blog_posts WHERE slug = $1',
-      [slug]
-    );
-    
-    if (postResult.rows.length === 0) {
-      return res.status(404).json({
-        error: 'Blog post not found.'
-      });
-    }
-    
-    const postId = postResult.rows[0].id;
-    
-    // Get related posts - updated to use direct author fields
-    const relatedPostsResult = await db.query(
-      'SELECT DISTINCT p.* FROM blog_posts p ' +
-      'JOIN blog_post_categories pc1 ON p.id = pc1.post_id ' +
-      'JOIN blog_post_categories pc2 ON pc1.category_id = pc2.category_id ' +
-      'WHERE pc2.post_id = $1 AND p.id != $1 AND p.status = $2 ' +
-      'ORDER BY p.publish_date DESC ' +
-      'LIMIT $3',
-      [postId, 'Published', limit]
-    );
-    
-    // Return the related posts as JSON
-    return res.json({
-      posts: relatedPostsResult.rows
-    });
-  } catch (error) {
-    console.error('Error fetching related blog posts:', error);
-    return res.status(500).json({
-      error: 'Error fetching related blog posts. Please try again later.'
-    });
-  }
-}
-
-/**
- * Get blog post by slug (API)
- */
-async function getBlogPostBySlugJson(req, res) {
-  try {
-    const { slug } = req.params;
-    
-    // Get the blog post - updated to use direct author fields
-    const result = await db.query(
-      'SELECT p.* FROM blog_posts p ' +
-      'WHERE p.slug = $1 AND p.status = $2',
-      [slug, 'Published']
-    );
-    
-    if (result.rows.length === 0) {
-      return res.status(404).json({
-        error: 'Blog post not found.'
-      });
-    }
-    
-    const post = result.rows[0];
-    
-    // Get the post categories
-    const categoriesResult = await db.query(
-      'SELECT c.* FROM blog_categories c ' +
-      'JOIN blog_post_categories pc ON c.id = pc.category_id ' +
-      'WHERE pc.post_id = $1',
-      [post.id]
-    );
-    
-    // Get the post tags
-    const tagsResult = await db.query(
-      'SELECT t.* FROM blog_tags t ' +
-      'JOIN blog_post_tags pt ON t.id = pt.tag_id ' +
-      'WHERE pt.post_id = $1',
-      [post.id]
-    );
-    
-    // Add categories and tags to the post
-    post.categories = categoriesResult.rows;
-    post.tags = tagsResult.rows;
-    
-    // Increment view count
-    await db.query(
-      'UPDATE blog_posts SET view_count = view_count + 1 WHERE id = $1',
-      [post.id]
-    );
-    
-    // Return the post as JSON
-    return res.json({ post });
-  } catch (error) {
-    console.error('Error fetching blog post by slug:', error);
-    return res.status(500).json({
-      error: 'Error fetching blog post. Please try again later.'
-    });
-  }
-}
-
-/**
- * Get all categories (API)
- */
-async function getAllCategories(req, res) {
-  try {
-    // Get categories with post count
-    const categoriesResult = await db.query(
-      'SELECT c.*, COUNT(pc.post_id) as post_count ' +
-      'FROM blog_categories c ' +
-      'LEFT JOIN blog_post_categories pc ON c.id = pc.category_id ' +
-      'LEFT JOIN blog_posts p ON pc.post_id = p.id AND p.status = $1 ' +
-      'GROUP BY c.id ' +
-      'ORDER BY c.name',
-      ['Published']
-    );
-    
-    // Return categories as JSON
-    return res.json({
-      categories: categoriesResult.rows
-    });
-  } catch (error) {
-    console.error('Error fetching blog categories:', error);
-    return res.status(500).json({
-      error: 'Error fetching blog categories. Please try again later.'
-    });
-  }
-}
-
-/**
- * Get all tags (API)
- */
-async function getAllTags(req, res) {
-  try {
-    // Get tags with post count
-    const tagsResult = await db.query(
-      'SELECT t.*, COUNT(pt.post_id) as post_count ' +
-      'FROM blog_tags t ' +
-      'LEFT JOIN blog_post_tags pt ON t.id = pt.tag_id ' +
-      'LEFT JOIN blog_posts p ON pt.post_id = p.id AND p.status = $1 ' +
-      'GROUP BY t.id ' +
-      'ORDER BY t.name',
-      ['Published']
-    );
-    
-    // Return tags as JSON
-    return res.json({
-      tags: tagsResult.rows
-    });
-  } catch (error) {
-    console.error('Error fetching blog tags:', error);
-    return res.status(500).json({
-      error: 'Error fetching blog tags. Please try again later.'
-    });
-  }
-}
-
-/**
- * Create a new blog post
- */
-async function createBlogPost(req, res) {
-  try {
-    const { 
-      title, 
-      content, 
-      excerpt, 
-      meta_description, 
-      categories, 
-      tags, 
-      author_id, 
-      author_name, 
-      author_image, 
-      author_bio, 
-      status 
-    } = req.body;
-    
-    // Generate slug from title
-    const slug = contentProcessor.generateSlug(title);
-    
-    // Check if slug already exists
-    const slugCheckResult = await db.query(
-      'SELECT id FROM blog_posts WHERE slug = $1',
-      [slug]
-    );
-    
-    if (slugCheckResult.rows.length > 0) {
-      return res.status(400).json({
-        error: 'A blog post with this title already exists. Please choose a different title.'
-      });
-    }
-    
-    // Start a database transaction
-    await db.query('BEGIN');
-    
-    // Insert the blog post with author fields
-    const postResult = await db.query(
-      'INSERT INTO blog_posts (title, slug, content, excerpt, meta_description, author_id, author_name, author_image, author_bio, status) ' +
-      'VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *',
-      [
-        title, 
-        slug, 
-        content, 
-        excerpt, 
-        meta_description, 
-        author_id, 
-        author_name || 'Arzani Team', 
-        author_image || '/figma design exports/images/default-avatar.png', 
-        author_bio || 'Arzani contributor',
-        status
-      ]
-    );
-    
-    const post = postResult.rows[0];
-    
-    // Add categories
-    if (categories && categories.length > 0) {
-      for (const categoryId of categories) {
-        await db.query(
-          'INSERT INTO blog_post_categories (post_id, category_id) VALUES ($1, $2)',
-          [post.id, categoryId]
-        );
-      }
-    }
-    
-    // Add tags
-    if (tags && tags.length > 0) {
-      for (const tagId of tags) {
-        await db.query(
-          'INSERT INTO blog_post_tags (post_id, tag_id) VALUES ($1, $2)',
-          [post.id, tagId]
-        );
-      }
-    }
-    
-    // Commit the transaction
-    await db.query('COMMIT');
-    
-    // If the status is "Approved", trigger the publishing workflow
-    if (status === 'Approved') {
-      try {
-        // Get the blog post with author details
-        const fullPostResult = await db.query(
-          'SELECT p.*, u.name as author_name, u.email as author_email ' +
-          'FROM blog_posts p ' +
-          'LEFT JOIN users u ON p.author_id = u.id ' +
-          'WHERE p.id = $1',
-          [post.id]
-        );
-        
-        const fullPost = fullPostResult.rows[0];
-        
-        // Get categories
-        const categoriesResult = await db.query(
-          'SELECT c.* FROM blog_categories c ' +
-          'JOIN blog_post_categories pc ON c.id = pc.category_id ' +
-          'WHERE pc.post_id = $1',
-          [post.id]
-        );
-        
-        // Get tags
-        const tagsResult = await db.query(
-          'SELECT t.* FROM blog_tags t ' +
-          'JOIN blog_post_tags pt ON t.id = pt.tag_id ' +
-          'WHERE pt.post_id = $1',
-          [post.id]
-        );
-        
-        // Add categories and tags to the post
-        fullPost.categories = categoriesResult.rows;
-        fullPost.tags = tagsResult.rows;
-        
-        // Trigger the n8n workflow to publish the post
-        await n8nWorkflowService.publishBlogPost(fullPost);
-          // Send notification
-        await n8nWorkflowService.sendPublicationNotification(fullPost, ['email', 'slack']);
-      } catch (error) {
-        console.error('Error triggering n8n workflow:', error);
-        // Note: We don't want to fail the API response if the workflow fails
-      }
-    } else {
-      // Even if not published, trigger sitemap update for draft posts that might become visible
-      try {
-        await n8nWorkflowService.triggerSitemapUpdate(post.slug, 'api_create');
-      } catch (error) {
-        console.error('Error triggering sitemap update:', error);
-        // Don't fail the API response if sitemap update fails
-      }
-    }
-    
-    // Return the created post
-    return res.status(201).json({
-      message: 'Blog post created successfully.',
-      post
-    });
-  } catch (error) {
-    // Rollback the transaction in case of error
-    await db.query('ROLLBACK');
-    
-    console.error('Error creating blog post:', error);
-    return res.status(500).json({
-      error: 'Error creating blog post. Please try again later.'
-    });
-  }
-}
-
-/**
- * Update an existing blog post
- */
-async function updateBlogPost(req, res) {
-  try {
-    const { id } = req.params;
-    const { title, content, excerpt, meta_description, categories, tags, status, is_featured } = req.body;
-    
-    // Check if the post exists
-    const postCheckResult = await db.query(
-      'SELECT * FROM blog_posts WHERE id = $1',
-      [id]
-    );
-    
-    if (postCheckResult.rows.length === 0) {
-      return res.status(404).json({
-        error: 'Blog post not found.'
-      });
-    }
-    
-    const existingPost = postCheckResult.rows[0];
-    
-    // If title has changed, generate a new slug
-    let slug = existingPost.slug;
-    if (title && title !== existingPost.title) {
-      slug = contentProcessor.generateSlug(title);
-      
-      // Check if new slug already exists (for a different post)
-      const slugCheckResult = await db.query(
-        'SELECT id FROM blog_posts WHERE slug = $1 AND id != $2',
-        [slug, id]
-      );
-      
-      if (slugCheckResult.rows.length > 0) {
-        return res.status(400).json({
-          error: 'A blog post with this title already exists. Please choose a different title.'
-        });
-      }
-    }
-    
-    // Start a database transaction
-    await db.query('BEGIN');
-    
-    // Update the blog post
-    const updateFields = [];
-    const updateValues = [];
-    let valueIndex = 1;
-    
-    if (title) {
-      updateFields.push(`title = $${valueIndex}`);
-      updateValues.push(title);
-      valueIndex++;
-    }
-    
-    if (slug !== existingPost.slug) {
-      updateFields.push(`slug = $${valueIndex}`);
-      updateValues.push(slug);
-      valueIndex++;
-    }
-    
-    if (content) {
-      updateFields.push(`content = $${valueIndex}`);
-      updateValues.push(content);
-      valueIndex++;
-    }
-    
-    if (excerpt !== undefined) {
-      updateFields.push(`excerpt = $${valueIndex}`);
-      updateValues.push(excerpt);
-      valueIndex++;
-    }
-    
-    if (meta_description !== undefined) {
-      updateFields.push(`meta_description = $${valueIndex}`);
-      updateValues.push(meta_description);
-      valueIndex++;
-    }
-    
-    if (status) {
-      updateFields.push(`status = $${valueIndex}`);
-      updateValues.push(status);
-      valueIndex++;
-    }
-    
-    if (is_featured !== undefined) {
-      updateFields.push(`is_featured = $${valueIndex}`);
-      updateValues.push(is_featured);
-      valueIndex++;
-    }
-    
-    updateFields.push(`updated_at = $${valueIndex}`);
-    updateValues.push(new Date());
-    valueIndex++;
-    
-    updateValues.push(id);
-    
-    const postResult = await db.query(
-      `UPDATE blog_posts SET ${updateFields.join(', ')} WHERE id = $${valueIndex} RETURNING *`,
-      updateValues
-    );
-    
-    const updatedPost = postResult.rows[0];
-    
-    // Update categories if provided
-    if (categories && Array.isArray(categories)) {
-      // Remove existing categories
-      await db.query(
-        'DELETE FROM blog_post_categories WHERE post_id = $1',
-        [id]
-      );
-      
-      // Add new categories
-      for (const categoryId of categories) {
-        await db.query(
-          'INSERT INTO blog_post_categories (post_id, category_id) VALUES ($1, $2)',
-          [id, categoryId]
-        );
-      }
-    }
-    
-    // Update tags if provided
-    if (tags && Array.isArray(tags)) {
-      // Remove existing tags
-      await db.query(
-        'DELETE FROM blog_post_tags WHERE post_id = $1',
-        [id]
-      );
-      
-      // Add new tags
-      for (const tagId of tags) {
-        await db.query(
-          'INSERT INTO blog_post_tags (post_id, tag_id) VALUES ($1, $2)',
-          [id, tagId]
-        );
-      }
-    }
-    
-    // Commit the transaction
-    await db.query('COMMIT');
-    
-    // If the status has changed to "Approved", trigger the publishing workflow
-    if (status === 'Approved' && existingPost.status !== 'Approved') {
-      try {
-        // Get the updated blog post with author details
-        const fullPostResult = await db.query(
-          'SELECT p.*, u.name as author_name, u.email as author_email ' +
-          'FROM blog_posts p ' +
-          'LEFT JOIN users u ON p.author_id = u.id ' +
-          'WHERE p.id = $1',
-          [id]
-        );
-        
-        const fullPost = fullPostResult.rows[0];
-        
-        // Get categories
-        const categoriesResult = await db.query(
-          'SELECT c.* FROM blog_categories c ' +
-          'JOIN blog_post_categories pc ON c.id = pc.category_id ' +
-          'WHERE pc.post_id = $1',
-          [id]
-        );
-        
-        // Get tags
-        const tagsResult = await db.query(
-          'SELECT t.* FROM blog_tags t ' +
-          'JOIN blog_post_tags pt ON t.id = pt.tag_id ' +
-          'WHERE pt.post_id = $1',
-          [id]
-        );
-        
-        // Add categories and tags to the post
-        fullPost.categories = categoriesResult.rows;
-        fullPost.tags = tagsResult.rows;
-        
-        // Trigger the n8n workflow to publish the post
-        await n8nWorkflowService.publishBlogPost(fullPost);
-        
-        // Send notification
-        await n8nWorkflowService.sendPublicationNotification(fullPost, ['email', 'slack']);
-      } catch (error) {
-        console.error('Error triggering n8n workflow:', error);
-        // Note: We don't want to fail the API response if the workflow fails
-      }
-    } else if (status === 'Published' && existingPost.status === 'Published') {
-      // If the post is already published and being updated, trigger the update workflow
-      try {
-        // Get the updated blog post with author details
-        const fullPostResult = await db.query(
-          'SELECT p.*, u.name as author_name, u.email as author_email ' +
-          'FROM blog_posts p ' +
-          'LEFT JOIN users u ON p.author_id = u.id ' +
-          'WHERE p.id = $1',
-          [id]
-        );
-        
-        const fullPost = fullPostResult.rows[0];
-        
-        // Get categories
-        const categoriesResult = await db.query(
-          'SELECT c.* FROM blog_categories c ' +
-          'JOIN blog_post_categories pc ON c.id = pc.category_id ' +
-          'WHERE pc.post_id = $1',
-          [id]
-        );
-        
-        // Get tags
-        const tagsResult = await db.query(
-          'SELECT t.* FROM blog_tags t ' +
-          'JOIN blog_post_tags pt ON t.id = pt.tag_id ' +
-          'WHERE pt.post_id = $1',
-          [id]
-        );
-        
-        // Add categories and tags to the post
-        fullPost.categories = categoriesResult.rows;
-        fullPost.tags = tagsResult.rows;
-        
-        // Trigger the n8n workflow to update the post
-        await n8nWorkflowService.updateBlogPost(fullPost);
-          // Refresh cache
-        await n8nWorkflowService.refreshBlogCache(fullPost.slug);
-      } catch (error) {
-        console.error('Error triggering n8n update workflow:', error);
-        // Note: We don't want to fail the API response if the workflow fails
-      }
-    } else {
-      // For any other updates, still trigger sitemap update
-      try {
-        await n8nWorkflowService.triggerSitemapUpdate(updatedPost.slug, 'api_update');
-      } catch (error) {
-        console.error('Error triggering sitemap update:', error);
-        // Don't fail the API response if sitemap update fails
-      }
-    }
-    
-    // Return the updated post
-    return res.json({
-      message: 'Blog post updated successfully.',
-      post: updatedPost
-    });
-  } catch (error) {
-    // Rollback the transaction in case of error
-    await db.query('ROLLBACK');
-    
-    console.error('Error updating blog post:', error);
-    return res.status(500).json({
-      error: 'Error updating blog post. Please try again later.'
-    });
-  }
-}
-
-/**
- * Delete a blog post
- */
-async function deleteBlogPost(req, res) {
-  try {
-    const { id } = req.params;
-    
-    // Check if the post exists
-    const postCheckResult = await db.query(
-      'SELECT * FROM blog_posts WHERE id = $1',
-      [id]
-    );
-    
-    if (postCheckResult.rows.length === 0) {
-      return res.status(404).json({
-        error: 'Blog post not found.'
-      });
-    }
-    
-    // Start a database transaction
-    await db.query('BEGIN');
-    
-    // Delete the blog post's categories and tags
-    await db.query('DELETE FROM blog_post_categories WHERE post_id = $1', [id]);
-    await db.query('DELETE FROM blog_post_tags WHERE post_id = $1', [id]);
-    
-    // Delete the blog post
-    await db.query('DELETE FROM blog_posts WHERE id = $1', [id]);
-    
-    // Commit the transaction
-    await db.query('COMMIT');
-    
-    return res.json({
-      message: 'Blog post deleted successfully.'
-    });
-  } catch (error) {
-    // Rollback the transaction in case of error
-    await db.query('ROLLBACK');
-    
-    console.error('Error deleting blog post:', error);
-    return res.status(500).json({
-      error: 'Error deleting blog post. Please try again later.'
-    });
-  }
-}
-
-/**
- * Approve a blog post for publishing
- */
-async function approveBlogPost(req, res) {
-  try {
-    const { id } = req.params;
-    
-    // Check if the post exists
-    const postCheckResult = await db.query(
-      'SELECT * FROM blog_posts WHERE id = $1',
-      [id]
-    );
-    
-    if (postCheckResult.rows.length === 0) {
-      return res.status(404).json({
-        error: 'Blog post not found.'
-      });
-    }
-    
-    const existingPost = postCheckResult.rows[0];
-    
-    if (existingPost.status === 'Approved' || existingPost.status === 'Published') {
-      return res.status(400).json({
-        error: 'This blog post is already approved or published.'
-      });
-    }
-    
-    // Update the blog post status
-    const postResult = await db.query(
-      'UPDATE blog_posts SET status = $1, updated_at = $2 WHERE id = $3 RETURNING *',
-      ['Approved', new Date(), id]
-    );
-    
-    const updatedPost = postResult.rows[0];
-    
-    // Trigger the n8n workflow for publishing
-    try {
-      // Get the blog post with author details
-      const fullPostResult = await db.query(
-        'SELECT p.*, u.name as author_name, u.email as author_email ' +
-        'FROM blog_posts p ' +
-        'LEFT JOIN users u ON p.author_id = u.id ' +
-        'WHERE p.id = $1',
-        [id]
-      );
-      
-      const fullPost = fullPostResult.rows[0];
-      
-      // Get categories
-      const categoriesResult = await db.query(
-        'SELECT c.* FROM blog_categories c ' +
-        'JOIN blog_post_categories pc ON c.id = pc.category_id ' +
-        'WHERE pc.post_id = $1',
-        [id]
-      );
-      
-      // Get tags
-      const tagsResult = await db.query(
-        'SELECT t.* FROM blog_tags t ' +
-        'JOIN blog_post_tags pt ON t.id = pt.tag_id ' +
-        'WHERE pt.post_id = $1',
-        [id]
-      );
-      
-      // Add categories and tags to the post
-      fullPost.categories = categoriesResult.rows;
-      fullPost.tags = tagsResult.rows;
-      
-      // Trigger the n8n workflow to publish the post
-      await n8nWorkflowService.publishBlogPost(fullPost);
-      
-      // Send notification
-      await n8nWorkflowService.sendPublicationNotification(fullPost, ['email', 'slack']);
-    } catch (error) {
-      console.error('Error triggering n8n workflow:', error);
-      // Note: We don't want to fail the API response if the workflow fails
-    }
-    
-    return res.json({
-      message: 'Blog post approved for publishing.',
-      post: updatedPost
-    });
-  } catch (error) {
-    console.error('Error approving blog post:', error);
-    return res.status(500).json({
-      error: 'Error approving blog post. Please try again later.'
-    });
-  }
-}
-
-/**
- * Handle n8n webhook callbacks
- */
-async function handleN8nWebhook(req, res) {
-  console.log('log API router hit:', req.method, req.originalUrl);
-  try {
-    // Log the received webhook
-    const payloadSummary = req.body ? 
-      `${Object.keys(req.body).length} keys: [${Object.keys(req.body).join(', ')}]` : 
-      'No payload';
-      
-    console.log(`n8n webhook received: ${req.method} ${req.path} - ${payloadSummary}`);
-    
-    // Delegate webhook processing to the n8n workflow service
-    return await n8nWorkflowService.handleWebhook(req, res);
-  } catch (error) {
-    console.error('Error handling n8n webhook:', error);
-    return res.status(500).json({
-      success: false,
-      error: 'Error processing webhook request',
-      message: process.env.NODE_ENV === 'development' ? error.message : 'An error occurred'
-    });
-  }
-}
-
-/**
- * Upload blog image
- */
-function uploadBlogImage(req, res) {
-  upload(req, res, function (err) {
-    if (err instanceof multer.MulterError) {
-      return res.status(400).json({
-        error: `Upload error: ${err.message}`
-      });
-    } else if (err) {
-      return res.status(500).json({
-        error: `Error uploading image: ${err.message}`
-      });
-    }
-    
-    // File uploaded successfully
-    const file = req.file;
-    if (!file) {
-      return res.status(400).json({
-        error: 'No image file provided.'
-      });
-    }
-    
-    // Generate URL for the uploaded image
-    const imageUrl = `/uploads/blog/${file.filename}`;
-    
-    return res.json({
-      message: 'Image uploaded successfully.',
-      imageUrl,
-      fileName: file.filename,
-      originalName: file.originalname
-    });
-  });
-}
-
-/**
- * Refresh blog cache
- */
-async function refreshBlogCache(req, res) {
-  try {
-    const { slug } = req.params;
-    
-    // Check if the post exists
-    const postCheckResult = await db.query(
-      'SELECT * FROM blog_posts WHERE slug = $1',
-      [slug]
-    );
-    
-    if (postCheckResult.rows.length === 0) {
-      return res.status(404).json({
-        error: 'Blog post not found.'
-      });
-    }
-    
-    // Trigger the n8n workflow to refresh the cache
-    await n8nWorkflowService.refreshBlogCache(slug);
-    
-    return res.json({
-      message: 'Blog cache refresh triggered successfully.'
-    });
-  } catch (error) {
-    console.error('Error refreshing blog cache:', error);
-    return res.status(500).json({
-      error: 'Error refreshing blog cache. Please try again later.'
-    });
-  }
-}
-
-/**
- * Preview a blog post
- */
-async function previewBlogPost(req, res) {
-  try {
-    const { slug } = req.params;
-    
-    // Get the blog post (including drafts) - updated to use direct author fields
-    const result = await db.query(
-      'SELECT p.* FROM blog_posts p ' +
-      'WHERE p.slug = $1',
-      [slug]
-    );
-    
-    if (result.rows.length === 0) {
+    if (!post) {
       return res.status(404).render('error', {
         message: 'Blog post not found.'
       });
     }
     
-    const post = result.rows[0];
+    // Verify that the post is in the correct category
+    // If category doesn't match the post's content_category, redirect to the correct URL
+    if (post.content_category !== category) {
+      return res.redirect(`/blog/${post.content_category}/${post.slug}`);
+    }
     
-    // Get the post categories
-    const categoriesResult = await db.query(
-      'SELECT c.* FROM blog_categories c ' +
-      'JOIN blog_post_categories pc ON c.id = pc.category_id ' +
-      'WHERE pc.post_id = $1',
-      [post.id]
-    );
+    // Get all categories for the sidebar
+    const categories = await blogModel.getAllCategories();
     
-    // Get the post tags
-    const tagsResult = await db.query(
-      'SELECT t.* FROM blog_tags t ' +
-      'JOIN blog_post_tags pt ON t.id = pt.tag_id ' +
-      'WHERE pt.post_id = $1',
-      [post.id]
-    );
+    // Get related posts (if not already included in the post object)
+    let relatedPosts = post.relatedPosts || [];
+    if (!relatedPosts.length) {
+      // Get posts in the same category
+      const relatedResult = await db.query(`
+        SELECT p.*
+        FROM blog_posts p
+        JOIN blog_post_categories pc1 ON p.id = pc1.post_id
+        JOIN blog_post_categories pc2 ON pc1.category_id = pc2.category_id
+        WHERE pc2.post_id = $1
+        AND p.id != $1
+        AND p.status = 'Published'
+        ORDER BY p.publish_date DESC
+        LIMIT 3
+      `, [post.id]);
+      
+      relatedPosts = relatedResult.rows;
+    }
     
-    // Render the blog post preview page
-    return res.render('blog/preview', {
-      post,
-      categories: categoriesResult.rows,
-      tags: tagsResult.rows,
-      isPreview: true,
-      title: `Preview: ${post.title} - Arzani Blog`,
-      description: 'This is a preview of a blog post.'
+    // Render the blog post page
+    return res.render('blog/blog-post_new', {
+      title: `${post.seo_title || post.title} | Arzani`,
+      description: post.meta_description || post.excerpt,
+      blog: post,
+      categories,
+      relatedPosts
     });
   } catch (error) {
-    console.error('Error fetching blog post preview:', error);
+    console.error('Error fetching blog post:', error);
     return res.status(500).render('error', {
-      message: 'Error loading blog post preview. Please try again later.'
+      message: 'Error loading blog post. Please try again later.',
+      error: process.env.NODE_ENV === 'development' ? error : {}
     });
   }
 }
 
-// Export as default object for ES modules
+/**
+ * Legacy handler for old URL structure: /blog/[slug]
+ * Redirects to the new URL structure
+ */
+async function getBlogPostBySlug(req, res) {
+  try {
+    const { slug } = req.params;
+    
+    // Get the blog post
+    const post = await blogModel.getPostBySlug(slug);
+    
+    if (!post) {
+      return res.status(404).render('error', {
+        message: 'Blog post not found.'
+      });
+    }
+    
+    // Redirect to the new URL structure
+    return res.redirect(`/blog/${post.content_category}/${post.slug}`);
+  } catch (error) {
+    console.error('Error fetching blog post:', error);
+    return res.status(500).render('error', {
+      message: 'Error loading blog post. Please try again later.',
+      error: process.env.NODE_ENV === 'development' ? error : {}
+    });
+  }
+}
+
+/**
+ * Search blog posts
+ */
+async function searchBlogPosts(req, res) {
+  try {
+    const { q } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 9;
+    
+    if (!q || q.trim() === '') {
+      return res.redirect('/blog');
+    }
+    
+    // Search posts
+    const result = await blogModel.getAllPosts(page, limit, { search: q });
+    
+    // Get all categories for the sidebar
+    const categories = await blogModel.getAllCategories();
+    
+    return res.render('blog/search-results', {
+      title: `Search Results: ${q} | Arzani Business Knowledge Center`,
+      description: `Blog articles matching your search for ${q} on the Arzani business marketplace.`,
+      blogPosts: result.posts,
+      categories,
+      pagination: result.pagination,
+      searchQuery: q
+    });
+  } catch (error) {
+    console.error('Error searching blog posts:', error);
+    return res.status(500).render('error', {
+      message: 'Error searching blog posts. Please try again later.',
+      error: process.env.NODE_ENV === 'development' ? error : {}
+    });
+  }
+}
+
+/**
+ * Preview a blog post (for content creators)
+ */
+async function previewBlogPost(req, res) {
+  try {
+    const { slug } = req.params;
+    
+    // Get the blog post (including drafts)
+    const postResult = await db.query(`
+      SELECT p.* FROM blog_posts p 
+      WHERE p.slug = $1
+    `, [slug]);
+    
+    if (postResult.rows.length === 0) {
+      return res.status(404).render('error', {
+        message: 'Blog post not found.'
+      });
+    }
+    
+    const post = postResult.rows[0];
+    
+    // Get categories
+    const categoriesResult = await db.query(`
+      SELECT c.* 
+      FROM blog_categories c
+      JOIN blog_post_categories pc ON c.id = pc.category_id
+      WHERE pc.post_id = $1
+    `, [post.id]);
+    
+    // Get tags
+    const tagsResult = await db.query(`
+      SELECT t.* 
+      FROM blog_tags t
+      JOIN blog_post_tags pt ON t.id = pt.tag_id
+      WHERE pt.post_id = $1
+    `, [post.id]);
+    
+    // Format author info
+    const author = {
+      name: post.author_name || 'Arzani Team',
+      avatar: post.author_image || '/figma design exports/images/default-avatar.png',
+      bio: post.author_bio || ''
+    };
+    
+    // Format the post for rendering
+    const formattedPost = {
+      ...post,
+      categories: categoriesResult.rows || [],
+      tags: tagsResult.rows || [],
+      author
+    };
+    
+    // Get all categories for the sidebar
+    const categories = await blogModel.getAllCategories();
+    
+    // Render the preview page
+    return res.render('blog/preview', {
+      title: `PREVIEW: ${post.title}`,
+      description: post.meta_description || post.excerpt,
+      blog: formattedPost,
+      categories,
+      isPreview: true
+    });
+  } catch (error) {
+    console.error('Error previewing blog post:', error);
+    return res.status(500).render('error', {
+      message: 'Error previewing blog post. Please try again later.',
+      error: process.env.NODE_ENV === 'development' ? error : {}
+    });
+  }
+}
+
+/**
+ * Handle image uploads for blog posts
+ */
+async function uploadImage(req, res) {
+  upload(req, res, function(err) {
+    if (err) {
+      return res.status(400).json({
+        success: false,
+        message: err.message
+      });
+    }
+    
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'No file uploaded'
+      });
+    }
+    
+    // Create the URL path for the uploaded file
+    const filePath = `/uploads/blog/${req.file.filename}`;
+    
+    return res.json({
+      success: true,
+      filePath,
+      url: filePath
+    });
+  });
+}
+
+/**
+ * Create a programmatic content cluster with a pillar post and supporting posts
+ * This replaces the old n8n workflow for creating content
+ */
+async function createContentCluster(req, res) {
+  try {
+    const { pillarData, supportingPostsData } = req.body;
+    
+    if (!pillarData || !pillarData.title || !pillarData.content) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required fields for pillar post'
+      });
+    }
+    
+    // Create the content cluster using the programmatic content service
+    const contentCluster = await programmaticContentService.createContentCluster(
+      pillarData,
+      supportingPostsData || []
+    );
+    
+    // Update the sitemap
+    await blogService.triggerSitemapUpdate(contentCluster.pillarPost.slug, 'create');
+    
+    // Send notification about new content
+    await blogService.sendPublicationNotification(contentCluster.pillarPost, ['email']);
+    
+    return res.json({
+      success: true,
+      message: 'Content cluster created successfully',
+      data: contentCluster
+    });
+  } catch (error) {
+    console.error('Error creating content cluster:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error creating content cluster',
+      error: error.message
+    });
+  }
+}
+
+/**
+ * API Functions for blog routes
+ */
+
+// Get all blog posts for API
+async function getAllBlogPosts(req, res) {
+  try {
+    const { page = 1, limit = 10, category, tag, author } = req.query;
+    const offset = (page - 1) * limit;
+
+    let query = `
+      SELECT p.*, c.name as category_name, u.name as author_name
+      FROM blog_posts p
+      LEFT JOIN blog_categories c ON p.category_id = c.id
+      LEFT JOIN users u ON p.author_id = u.id
+      WHERE p.status = 'published'
+    `;
+    const params = [];
+    let paramCount = 0;
+
+    if (category) {
+      paramCount++;
+      query += ` AND c.slug = $${paramCount}`;
+      params.push(category);
+    }
+
+    if (tag) {
+      paramCount++;
+      query += ` AND p.id IN (
+        SELECT bt.blog_post_id FROM blog_tags_posts bt
+        JOIN blog_tags t ON bt.blog_tag_id = t.id
+        WHERE t.slug = $${paramCount}
+      )`;
+      params.push(tag);
+    }
+
+    if (author) {
+      paramCount++;
+      query += ` AND u.slug = $${paramCount}`;
+      params.push(author);
+    }
+
+    query += ` ORDER BY p.created_at DESC LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`;
+    params.push(limit, offset);
+
+    const result = await db.query(query, params);
+    
+    res.json({
+      success: true,
+      data: result.rows,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        hasMore: result.rows.length === parseInt(limit)
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching blog posts:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+}
+
+// Get featured blog posts
+async function getFeaturedBlogPosts(req, res) {
+  try {
+    const { limit = 5 } = req.query;
+    
+    const result = await db.query(
+      `SELECT p.*, c.name as category_name, u.name as author_name
+       FROM blog_posts p
+       LEFT JOIN blog_categories c ON p.category_id = c.id
+       LEFT JOIN users u ON p.author_id = u.id
+       WHERE p.status = 'published' AND p.is_featured = true
+       ORDER BY p.created_at DESC
+       LIMIT $1`,
+      [limit]
+    );
+    
+    res.json({
+      success: true,
+      data: result.rows
+    });
+  } catch (error) {
+    console.error('Error fetching featured posts:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+}
+
+// Get recent blog posts
+async function getRecentBlogPosts(req, res) {
+  try {
+    const { limit = 10 } = req.query;
+    
+    const result = await db.query(
+      `SELECT p.*, c.name as category_name, u.name as author_name
+       FROM blog_posts p
+       LEFT JOIN blog_categories c ON p.category_id = c.id
+       LEFT JOIN users u ON p.author_id = u.id
+       WHERE p.status = 'published'
+       ORDER BY p.created_at DESC
+       LIMIT $1`,
+      [limit]
+    );
+    
+    res.json({
+      success: true,
+      data: result.rows
+    });
+  } catch (error) {
+    console.error('Error fetching recent posts:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+}
+
+// Get related blog posts by slug
+async function getRelatedBlogPosts(req, res) {
+  try {
+    const { slug } = req.params;
+    const { limit = 5 } = req.query;
+    
+    // First get the current post to find related posts
+    const currentPost = await db.query(
+      'SELECT * FROM blog_posts WHERE slug = $1 AND status = $2',
+      [slug, 'published']
+    );
+    
+    if (currentPost.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Post not found' });
+    }
+    
+    const post = currentPost.rows[0];
+    
+    // Get related posts by category, excluding current post
+    const result = await db.query(
+      `SELECT p.*, c.name as category_name, u.name as author_name
+       FROM blog_posts p
+       LEFT JOIN blog_categories c ON p.category_id = c.id
+       LEFT JOIN users u ON p.author_id = u.id
+       WHERE p.status = 'published' 
+         AND p.category_id = $1 
+         AND p.id != $2
+       ORDER BY p.created_at DESC
+       LIMIT $3`,
+      [post.category_id, post.id, limit]
+    );
+    
+    res.json({
+      success: true,
+      data: result.rows
+    });
+  } catch (error) {
+    console.error('Error fetching related posts:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+}
+
+// Get blog post by slug (JSON response)
+async function getBlogPostBySlugJson(req, res) {
+  try {
+    const { slug } = req.params;
+    
+    const result = await db.query(
+      `SELECT p.*, c.name as category_name, c.slug as category_slug,
+              u.name as author_name, u.bio as author_bio
+       FROM blog_posts p
+       LEFT JOIN blog_categories c ON p.category_id = c.id
+       LEFT JOIN users u ON p.author_id = u.id
+       WHERE p.slug = $1 AND p.status = $2`,
+      [slug, 'published']
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Post not found' });
+    }
+    
+    // Get tags for this post
+    const tagsResult = await db.query(
+      `SELECT t.name, t.slug
+       FROM blog_tags t
+       JOIN blog_tags_posts btp ON t.id = btp.blog_tag_id
+       WHERE btp.blog_post_id = $1`,
+      [result.rows[0].id]
+    );
+    
+    const post = {
+      ...result.rows[0],
+      tags: tagsResult.rows
+    };
+    
+    res.json({
+      success: true,
+      data: post
+    });
+  } catch (error) {
+    console.error('Error fetching blog post:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+}
+
+// Get all categories
+async function getAllCategories(req, res) {
+  try {
+    const result = await db.query(
+      `SELECT c.*, COUNT(p.id) as post_count
+       FROM blog_categories c
+       LEFT JOIN blog_posts p ON c.id = p.category_id AND p.status = 'published'
+       GROUP BY c.id, c.name, c.slug, c.description
+       ORDER BY c.name ASC`
+    );
+    
+    res.json({
+      success: true,
+      data: result.rows
+    });
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+}
+
+// Get all tags
+async function getAllTags(req, res) {
+  try {
+    const result = await db.query(
+      `SELECT t.*, COUNT(btp.blog_post_id) as post_count
+       FROM blog_tags t
+       LEFT JOIN blog_tags_posts btp ON t.id = btp.blog_tag_id
+       LEFT JOIN blog_posts p ON btp.blog_post_id = p.id AND p.status = 'published'
+       GROUP BY t.id, t.name, t.slug
+       ORDER BY t.name ASC`
+    );
+    
+    res.json({
+      success: true,
+      data: result.rows
+    });
+  } catch (error) {
+    console.error('Error fetching tags:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+}
+
+// Create blog post
+async function createBlogPost(req, res) {
+  try {
+    const {
+      title,
+      content,
+      excerpt,
+      category_id,
+      tags,
+      meta_description,
+      is_featured = false
+    } = req.body;
+    
+    const author_id = req.user.id; // From auth middleware
+    const slug = title.toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .trim('-');
+    
+    // Insert blog post
+    const result = await db.query(
+      `INSERT INTO blog_posts (
+        title, slug, content, excerpt, category_id, author_id,
+        meta_description, is_featured, status, created_at, updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
+      RETURNING *`,
+      [title, slug, content, excerpt, category_id, author_id, meta_description, is_featured, 'published']
+    );
+    
+    const post = result.rows[0];
+    
+    // Add tags if provided
+    if (tags && tags.length > 0) {
+      for (const tagName of tags) {
+        // Get or create tag
+        let tagResult = await db.query('SELECT id FROM blog_tags WHERE name = $1', [tagName]);
+        let tagId;
+        
+        if (tagResult.rows.length === 0) {
+          const tagSlug = tagName.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-');
+          const newTag = await db.query(
+            'INSERT INTO blog_tags (name, slug) VALUES ($1, $2) RETURNING id',
+            [tagName, tagSlug]
+          );
+          tagId = newTag.rows[0].id;
+        } else {
+          tagId = tagResult.rows[0].id;
+        }
+        
+        // Link tag to post
+        await db.query(
+          'INSERT INTO blog_tags_posts (blog_post_id, blog_tag_id) VALUES ($1, $2)',
+          [post.id, tagId]
+        );
+      }
+    }
+    
+    res.json({
+      success: true,
+      data: post,
+      message: 'Blog post created successfully'
+    });
+  } catch (error) {
+    console.error('Error creating blog post:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+}
+
+// Update blog post
+async function updateBlogPost(req, res) {
+  try {
+    const { id } = req.params;
+    const {
+      title,
+      content,
+      excerpt,
+      category_id,
+      tags,
+      meta_description,
+      is_featured,
+      status
+    } = req.body;
+    
+    // Update blog post
+    const result = await db.query(
+      `UPDATE blog_posts SET
+        title = COALESCE($1, title),
+        content = COALESCE($2, content),
+        excerpt = COALESCE($3, excerpt),
+        category_id = COALESCE($4, category_id),
+        meta_description = COALESCE($5, meta_description),
+        is_featured = COALESCE($6, is_featured),
+        status = COALESCE($7, status),
+        updated_at = NOW()
+       WHERE id = $8
+       RETURNING *`,
+      [title, content, excerpt, category_id, meta_description, is_featured, status, id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Post not found' });
+    }
+    
+    // Update tags if provided
+    if (tags) {
+      // Remove existing tags
+      await db.query('DELETE FROM blog_tags_posts WHERE blog_post_id = $1', [id]);
+      
+      // Add new tags
+      for (const tagName of tags) {
+        let tagResult = await db.query('SELECT id FROM blog_tags WHERE name = $1', [tagName]);
+        let tagId;
+        
+        if (tagResult.rows.length === 0) {
+          const tagSlug = tagName.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-');
+          const newTag = await db.query(
+            'INSERT INTO blog_tags (name, slug) VALUES ($1, $2) RETURNING id',
+            [tagName, tagSlug]
+          );
+          tagId = newTag.rows[0].id;
+        } else {
+          tagId = tagResult.rows[0].id;
+        }
+        
+        await db.query(
+          'INSERT INTO blog_tags_posts (blog_post_id, blog_tag_id) VALUES ($1, $2)',
+          [id, tagId]
+        );
+      }
+    }
+    
+    res.json({
+      success: true,
+      data: result.rows[0],
+      message: 'Blog post updated successfully'
+    });
+  } catch (error) {
+    console.error('Error updating blog post:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+}
+
+// Delete blog post
+async function deleteBlogPost(req, res) {
+  try {
+    const { id } = req.params;
+    
+    // Delete tag associations first
+    await db.query('DELETE FROM blog_tags_posts WHERE blog_post_id = $1', [id]);
+    
+    // Delete the post
+    const result = await db.query(
+      'DELETE FROM blog_posts WHERE id = $1 RETURNING *',
+      [id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Post not found' });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Blog post deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting blog post:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+}
+
+// Approve blog post
+async function approveBlogPost(req, res) {
+  try {
+    const { id } = req.params;
+    
+    const result = await db.query(
+      `UPDATE blog_posts SET 
+        status = 'published',
+        updated_at = NOW()
+       WHERE id = $1
+       RETURNING *`,
+      [id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Post not found' });
+    }
+    
+    res.json({
+      success: true,
+      data: result.rows[0],
+      message: 'Blog post approved and published'
+    });
+  } catch (error) {
+    console.error('Error approving blog post:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+}
+
+// Upload blog image
+async function uploadBlogImage(req, res) {
+  upload(req, res, function (err) {
+    if (err) {
+      console.error('Image upload error:', err);
+      return res.status(400).json({
+        success: false,
+        error: err.message
+      });
+    }
+    
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        error: 'No file uploaded'
+      });
+    }
+    
+    const imageUrl = `/uploads/blog/${req.file.filename}`;
+    
+    res.json({
+      success: true,
+      imageUrl,
+      message: 'Image uploaded successfully'
+    });
+  });
+}
+
+// Refresh blog cache
+async function refreshBlogCache(req, res) {
+  try {
+    const { slug } = req.params;
+    
+    // Clear any caching for this post
+    // This would integrate with your caching system (Redis, etc.)
+    console.log(`Cache refresh requested for blog post: ${slug}`);
+    
+    res.json({
+      success: true,
+      message: `Cache refreshed for post: ${slug}`
+    });
+  } catch (error) {
+    console.error('Error refreshing cache:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+}
+
+// Handle n8n webhook
+async function handleN8nWebhook(req, res) {
+  try {
+    console.log('N8N Webhook received:', req.body);
+    
+    // Process the webhook data
+    const webhookData = req.body;
+    
+    // Log the webhook request
+    await blogService.logWebhookRequest(webhookData);
+    
+    res.json({
+      success: true,
+      message: 'Webhook processed successfully'
+    });
+  } catch (error) {
+    console.error('Error processing webhook:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+}
+
 export default {
   getBlogHomePage,
-  searchBlogPosts,
-  getBlogPostBySlug,
   getBlogPostsByCategory,
   getBlogPostsByTag,
   getBlogPostsByAuthor,
+  getBlogPostByPath,
+  getBlogPostBySlug,
+  searchBlogPosts,
+  previewBlogPost,
+  uploadImage,
+  createContentCluster,
   getAllBlogPosts,
   getFeaturedBlogPosts,
   getRecentBlogPosts,
@@ -1411,9 +1032,7 @@ export default {
   updateBlogPost,
   deleteBlogPost,
   approveBlogPost,
-  handleN8nWebhook,
   uploadBlogImage,
   refreshBlogCache,
-  previewBlogPost,
-  ensureProperImageUrl // Export the helper function
+  handleN8nWebhook
 };

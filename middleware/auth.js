@@ -201,7 +201,10 @@ const authenticateToken = (req, res, next) => {
     /^\/(css|js|images|public|favicon|fonts)/i,
     /\.(css|js|png|jpg|gif|ico|svg|woff|woff2)$/i,
     /^\/(login|signup|logout|auth)/i,
-    /^\/(seller-questionnaire)/i
+    /^\/(seller-questionnaire)/i,
+    /^\/marketplace-landing$/i,
+    /^\/buyer-landing$/i,
+    /^\/seller-landing$/i
   ];
   
   if (publicPatterns.some(pattern => pattern.test(req.path))) {

@@ -2005,3 +2005,745 @@ body {
   background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
   transform: scale(1.05);
 }
+
+/* =============================================== */
+/* RESPONSIVE NAVBAR AND FILTER STYLES */
+/* =============================================== */
+
+/* Mobile Filter Dropdown - Hidden by default */
+.mobile-filter-dropdown {
+  display: none;
+}
+
+.mobile-filter-btn {
+  background-color: var(--accent-color);
+  color: white;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.mobile-filter-btn:hover {
+  background-color: var(--button-bg);
+  color: white;
+}
+
+.mobile-filter-menu {
+  width: 350px;
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 0;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+
+.mobile-filter-content {
+  padding: 16px;
+}
+
+.mobile-filter-section {
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+.mobile-filter-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.mobile-filter-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent-color);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.mobile-filter-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid rgba(0,0,0,0.2);
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.mobile-filter-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mobile-checkbox-grid, .mobile-radio-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.mobile-checkbox-item, .mobile-radio-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.mobile-checkbox-item:hover, .mobile-radio-item:hover {
+  background-color: rgba(0,0,0,0.05);
+}
+
+.mobile-checkbox, .mobile-radio-item input {
+  margin: 0;
+}
+
+.mobile-location-item {
+  padding: 8px 12px;
+  border: 1px solid rgba(0,0,0,0.2);
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s ease;
+}
+
+.mobile-location-item:hover {
+  background-color: var(--accent-color);
+  color: white;
+  border-color: var(--accent-color);
+}
+
+.mobile-filter-actions {
+  display: flex;
+  gap: 10px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(0,0,0,0.1);
+  margin-top: 16px;
+}
+
+.mobile-filter-clear {
+  flex: 1;
+  padding: 10px;
+  font-size: 14px;
+}
+
+.mobile-filter-apply {
+  flex: 1;
+  padding: 10px;
+  font-size: 14px;
+  background-color: var(--accent-color);
+  border-color: var(--accent-color);
+}
+
+/* Large Tablets and smaller laptops (1024px and below) */
+@media screen and (max-width: 1024px) {
+  /* Navbar responsiveness */
+  .navbar {
+    padding: 8px 20px;
+  }
+  
+  .navbar-icons {
+    min-width: 700px;
+    gap: 20px;
+    padding: 8px 24px;
+  }
+  
+  .navbar-link {
+    width: 44px;
+    height: 44px;
+    gap: 12px;
+  }
+  
+  .navbar-link .icon {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .navbar-link span {
+    font-size: 14px;
+  }
+  
+  .logo-img {
+    width: 140px;
+  }
+  
+  .handshake-logo-container img {
+    width: 140px;
+  }
+}
+
+/* Small Tablets (768px and below) */
+@media screen and (max-width: 768px) {
+  /* Hide desktop filters and show mobile filter button */
+  .desktop-filters {
+    display: none;
+  }
+  
+  .mobile-filter-dropdown {
+    display: block;
+    width: 100%;
+  }
+  
+  .mobile-filter-btn {
+    width: 100%;
+    justify-content: center;
+    height: 48px;
+    font-size: 16px;
+  }
+  
+  .mobile-filter-menu {
+    width: 100%;
+    max-width: 400px;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+  }
+  
+  /* Navbar responsiveness */
+  .navbar {
+    padding: 6px 15px;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  
+  .navbar-brand {
+    position: static;
+    order: 1;
+  }
+  
+  .navbar-container {
+    order: 2;
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    min-width: 0;
+  }
+  
+  .navbar-icons {
+    min-width: auto;
+    width: auto;
+    max-width: 400px;
+    gap: 12px;
+    padding: 4px 16px;
+    flex-wrap: nowrap;
+    justify-content: center;
+  }
+  
+  .navbar-link {
+    width: 36px;
+    height: 36px;
+    gap: 6px;
+    flex-direction: column;
+    padding: 4px;
+  }
+  
+  .navbar-link .icon {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .navbar-link span {
+    font-size: 10px;
+    line-height: 1;
+  }
+  
+  /* Profile section */
+  .profile-btn {
+    order: 3;
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+  
+  /* Hide post business section on small tablets */
+  .navbar-nav {
+    display: none;
+  }
+  
+  .logo-img {
+    width: 120px;
+  }
+  
+  .handshake-logo-container img {
+    width: 120px;
+  }
+  
+  .logo-img {
+    width: 120px;
+  }
+  
+  .handshake-logo-container img {
+    width: 120px;
+  }
+}
+
+/* Mobile Phones (480px and below) */
+@media screen and (max-width: 480px) {
+  /* Mobile filter adjustments */
+  .mobile-filter-menu {
+    width: calc(100vw - 20px);
+    max-width: none;
+    left: 10px !important;
+    right: 10px !important;
+    transform: none !important;
+  }
+  
+  .mobile-checkbox-grid, .mobile-radio-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  /* Navbar responsiveness */
+  .navbar {
+    padding: 8px 10px;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .navbar-brand {
+    position: static;
+    order: 1;
+    flex-shrink: 0;
+  }
+  
+  .navbar-container {
+    order: 2;
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    min-width: 0;
+  }
+  
+  .navbar-icons {
+    min-width: auto;
+    width: auto;
+    max-width: 280px;
+    gap: 8px;
+    padding: 4px 12px;
+    flex-wrap: nowrap;
+    justify-content: center;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  .navbar-icons::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Hide all navbar links except Arzani on mobile */
+  .navbar-link {
+    display: none;
+  }
+  
+  /* Show only Arzani link on mobile with special styling */
+  .navbar-link#arzani-link {
+    display: flex;
+    width: 56px;
+    height: 56px;
+    background-color: transparent;
+    border-radius: 50%;
+    gap: 4px;
+    flex-direction: column;
+    padding: 8px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+  }
+  
+  .navbar-link#arzani-link:hover {
+    background-color: rgba(0,0,0,0.05);
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  
+  .navbar-link#arzani-link .arzani-icon {
+    width: 32px !important;
+    height: 32px !important;
+  }
+  
+  .navbar-link#arzani-link span {
+    font-size: 8px;
+    line-height: 1;
+    color: #333;
+    font-weight: 600;
+    text-align: center;
+  }
+  
+  /* Profile section */
+  .profile-btn {
+    order: 3;
+    font-size: 11px;
+    padding: 4px 8px;
+    flex-shrink: 0;
+  }
+  
+  /* Hide post business section on mobile */
+  .navbar-nav {
+    display: none;
+  }
+  
+  .logo-img {
+    width: 100px;
+  }
+  
+  .handshake-logo-container img {
+    width: 100px;
+  }
+}
+
+/* Extra Small Mobile Phones (320px and below) */
+@media screen and (max-width: 320px) {
+  .navbar {
+    padding: 6px 8px;
+  }
+  
+  .navbar-icons {
+    max-width: 280px;
+    gap: 8px;
+    padding: 6px 12px;
+  }
+  
+  .navbar-link {
+    width: 32px;
+    height: 32px;
+    padding: 4px;
+  }
+  
+  .navbar-link .icon {
+    width: 10px;
+    height: 10px;
+  }
+  
+  .navbar-link span {
+    font-size: 9px;
+  }
+  
+  .logo-img {
+    width: 80px;
+  }
+  
+  .handshake-logo-container img {
+    width: 80px;
+  }
+}
+
+/* =============================================== */
+/* HORIZONTAL MARKETPLACE STYLES */
+/* =============================================== */
+
+/* Reduce container margins for better space utilization */
+.container.mt-5 {
+  padding-left: 15px; /* Reduced from Bootstrap default */
+  padding-right: 15px;
+  max-width: 100%; /* Allow full width utilization */
+}
+
+@media screen and (max-width: 768px) {
+  .container.mt-5 {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+}
+
+/* Main horizontal wrapper */
+.horizontal-marketplace-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px; /* Reduced from 15px */
+  margin: 20px 0;
+  padding: 0 5px; /* Reduced from 10px */
+}
+
+/* Navigation buttons */
+.marketplace-nav-btn {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(189, 189, 189, 0.3);
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 10;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.marketplace-nav-btn:hover {
+  background: rgba(255, 255, 255, 1);
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.marketplace-nav-btn i {
+  font-size: 18px;
+  color: var(--accent-color);
+}
+
+.marketplace-nav-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Horizontal container wrapper */
+.horizontal-listings-container {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Horizontal scroll container */
+.horizontal-listings-scroll {
+  display: flex;
+  gap: 15px; /* Reduced from 20px */
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+  padding: 10px 0;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+.horizontal-listings-scroll::-webkit-scrollbar {
+  display: none; /* Chrome/Safari/Edge */
+}
+
+/* Horizontal card wrapper */
+.horizontal-card {
+  flex-shrink: 0;
+}
+
+/* Card sizing for horizontal layout */
+.horizontal-listings-scroll .card {
+  flex: 0 0 260px; /* Increased from 220px for better space utilization */
+  width: 260px;
+  scroll-snap-align: start;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.horizontal-listings-scroll .card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Image adjustments for horizontal cards */
+.horizontal-listings-scroll .card-img-top,
+.horizontal-listings-scroll .carousel-item img {
+  height: 130px; /* Adjusted to 130px for better balance */
+  object-fit: cover;
+}
+
+/* Carousel container height optimization */
+.horizontal-listings-scroll .card-image-carousel {
+  height: 130px;
+  overflow: hidden;
+}
+
+.horizontal-listings-scroll .carousel-inner {
+  height: 130px;
+}
+
+.horizontal-listings-scroll .carousel-item {
+  height: 130px;
+}
+
+/* Card content adjustments for smaller cards */
+.horizontal-listings-scroll .card .card-body {
+  padding: 15px;
+  height: auto;
+}
+
+.horizontal-listings-scroll .business-name {
+  font-size: 1rem;
+  line-height: 1.3;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.horizontal-listings-scroll .price {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--accent-color);
+}
+
+.horizontal-listings-scroll .metric-value {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.horizontal-listings-scroll .metric-label {
+  font-size: 0.75rem;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.horizontal-listings-scroll .btn {
+  font-size: 0.85rem;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.horizontal-listings-scroll .badge {
+  font-size: 0.7rem;
+  padding: 4px 8px;
+  border-radius: 12px;
+}
+
+/* Trust badges adjustments */
+.horizontal-listings-scroll .trust-badges {
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.horizontal-listings-scroll .trust-badge {
+  padding: 2px 6px;
+  font-size: 0.6rem;
+}
+
+/* Metrics container adjustments */
+.horizontal-listings-scroll .price-metrics-container {
+  margin-bottom: 10px;
+}
+
+.horizontal-listings-scroll .metrics-pair {
+  gap: 8px;
+}
+
+/* Responsive card sizing */
+@media screen and (max-width: 1400px) {
+  .horizontal-listings-scroll .card {
+    flex: 0 0 240px; /* Increased from 200px */
+    width: 240px;
+  }
+}
+
+@media screen and (max-width: 1200px) {
+  .horizontal-listings-scroll .card {
+    flex: 0 0 220px; /* Increased from 180px */
+    width: 220px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .horizontal-marketplace-wrapper {
+    gap: 6px; /* Reduced from 10px */
+    padding: 0 3px; /* Reduced from 5px */
+  }
+  
+  .marketplace-nav-btn {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .marketplace-nav-btn i {
+    font-size: 16px;
+  }
+  
+  .horizontal-listings-scroll {
+    gap: 12px; /* Reduced from 15px */
+  }
+  
+  .horizontal-listings-scroll .card {
+    flex: 0 0 180px; /* Increased from 160px */
+    width: 180px;
+  }
+  
+  .horizontal-listings-scroll .card .card-body {
+    padding: 12px;
+  }
+  
+  .horizontal-listings-scroll .business-name {
+    font-size: 0.9rem;
+  }
+  
+  .horizontal-listings-scroll .price {
+    font-size: 1rem;
+  }
+  
+  /* Adjust image height for mobile */
+  .horizontal-listings-scroll .card-img-top,
+  .horizontal-listings-scroll .carousel-item img,
+  .horizontal-listings-scroll .card-image-carousel,
+  .horizontal-listings-scroll .carousel-inner,
+  .horizontal-listings-scroll .carousel-item {
+    height: 85px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .horizontal-listings-scroll .card {
+    flex: 0 0 160px; /* Increased from 140px */
+    width: 160px;
+  }
+  
+  .horizontal-listings-scroll .card .card-body {
+    padding: 10px;
+  }
+  
+  .horizontal-listings-scroll .btn {
+    font-size: 0.75rem;
+    padding: 6px 8px;
+  }
+  
+  /* Further reduce image height for smaller mobile */
+  .horizontal-listings-scroll .card-img-top,
+  .horizontal-listings-scroll .carousel-item img,
+  .horizontal-listings-scroll .card-image-carousel,
+  .horizontal-listings-scroll .carousel-inner,
+  .horizontal-listings-scroll .carousel-item {
+    height: 70px;
+  }
+}
+
+/* Loading state for horizontal scroll */
+.horizontal-listings-scroll .loading-spinner {
+  width: 100%;
+  text-align: center;
+  padding: 40px;
+  color: var(--accent-color);
+}
+
+/* Navigation button visibility controls */
+.marketplace-nav-left.hidden,
+.marketplace-nav-right.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Smooth fade gradients at edges */
+.horizontal-listings-container::before,
+.horizontal-listings-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 20px;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.horizontal-listings-container::before {
+  left: 0;
+  background: linear-gradient(to right, var(--main-bg), transparent);
+}
+
+.horizontal-listings-container::after {
+  right: 0;
+  background: linear-gradient(to left, var(--main-bg), transparent);
+}

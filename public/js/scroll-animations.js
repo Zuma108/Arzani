@@ -388,7 +388,7 @@ function initializeScrollAnimations() {    // Enhanced scroll animation handler 
     animateHeroSection();
     animateFAQSection();
     animateFooter();
-    createScrollProgressIndicator();
+    // createScrollProgressIndicator(); // Disabled: Removed scroll progress bar as requested
     animateSectionReveals();
     addMagneticEffect();
     

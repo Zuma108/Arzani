@@ -78,6 +78,7 @@ import businessRoutes from './routes/businessRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import publicValuationRouter from './api/public-valuation.js';
 import valuationRouter from './api/valuation.js';
+import blogRoutes from './routes/blogRoutes.js';
 
 // Import the image routes - use ES module syntax
 import imageRoutes from './routes/imageRoutes.js';
@@ -99,6 +100,7 @@ app.use((req, res, next) => {
 // Public routes that don't require authentication
 app.use('/', voiceRoutes);
 app.use('/', chatRoutes);
+app.use('/blog', blogRoutes); // Blog routes are public
 app.use('/checkout', checkoutRouter);
 app.use('/stripe', stripeImportedRoutes); // Use the imported ESM routes
 app.use('/stripe-legacy', stripeRoutes); // Keep the CommonJS routes at a different path
@@ -227,6 +229,7 @@ const publicPaths = [
   '/api/business/save-questionnaire',
   '/api/verification/business',  // Make verification endpoints public
   '/api/verification/stats',     // Make verification stats public
+  '/blog',                       // Make blog publicly accessible
   '/login',
   '/login2',
   '/signup',

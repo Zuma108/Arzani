@@ -4,6 +4,19 @@
  */
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize A/B Testing Analytics for marketplace-landing (seller-focused)
+    if (window.ABTestAnalytics && window.abTestAnalytics) {
+        // Track page view for seller-focused landing
+        window.abTestAnalytics.trackEvent('page_view', {
+            page: 'marketplace-landing',
+            userType: 'seller',
+            timestamp: Date.now()
+        });
+        
+        // Set up seller-specific CTA tracking
+        setupSellerCTATracking();
+    }
+    
     // Video background optimization
     const heroVideo = document.getElementById('hero-video');
     
@@ -21,7 +34,29 @@ document.addEventListener('DOMContentLoaded', function() {
             // Add play button for browsers that block autoplay
             const playButton = document.createElement('button');
             playButton.className = 'video-play-button';
-            playButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>';
+            // Create play button content safely
+            const svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svgElement.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+            svgElement.setAttribute('width', '48');
+            svgElement.setAttribute('height', '48');
+            svgElement.setAttribute('viewBox', '0 0 24 24');
+            svgElement.setAttribute('fill', 'none');
+            svgElement.setAttribute('stroke', 'currentColor');
+            svgElement.setAttribute('stroke-width', '2');
+            svgElement.setAttribute('stroke-linecap', 'round');
+            svgElement.setAttribute('stroke-linejoin', 'round');
+            
+            const circleElement = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circleElement.setAttribute('cx', '12');
+            circleElement.setAttribute('cy', '12');
+            circleElement.setAttribute('r', '10');
+            
+            const polygonElement = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+            polygonElement.setAttribute('points', '10 8 16 12 10 16 10 8');
+            
+            svgElement.appendChild(circleElement);
+            svgElement.appendChild(polygonElement);
+            playButton.appendChild(svgElement);
             
             heroVideo.parentElement.appendChild(playButton);
             
@@ -194,6 +229,95 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 /**
+ * Set up seller-specific CTA tracking for A/B testing
+ */
+function setupSellerCTATracking() {
+    // Track seller-focused CTAs
+    const sellerCTAs = [
+        'a[href="/sell"]',
+        'a[href*="valuation"]',
+        'a[href*="list-business"]',
+        '.journey-cta-primary',
+        'a:contains("List Your Business")',
+        'a:contains("Get Free Business Valuation")',
+        'a:contains("Sell Your Business")',
+        '.seller-cta'
+    ];
+
+    sellerCTAs.forEach(selector => {
+        trackCTAClicks(selector, 'seller_cta_click');
+    });
+
+    // Track navigation to selling-related pages
+    const sellingNavLinks = document.querySelectorAll('a[href*="sell"], a[href*="valuation"], a[href*="pricing"]');
+    sellingNavLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            const href = this.getAttribute('href');
+            const text = this.textContent.trim();
+            
+            window.abTestAnalytics.trackEvent('seller_navigation', {
+                destination: href,
+                linkText: text,
+                section: getElementLocation(this)
+            });
+        });
+    });
+
+    // Track business listing form interactions
+    const listingForms = document.querySelectorAll('form[action*="business"], form[action*="listing"]');
+    listingForms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            window.abTestAnalytics.trackEvent('business_listing_submit', {
+                formId: this.id || 'business-listing-form'
+            });
+        });
+    });
+}
+
+/**
+ * Track CTA clicks with specific event names
+ */
+function trackCTAClicks(selector, eventName) {
+    try {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach(element => {
+            element.addEventListener('click', function(e) {
+                const ctaData = {
+                    selector: selector,
+                    text: this.textContent.trim(),
+                    href: this.getAttribute('href'),
+                    location: getElementLocation(this),
+                    timestamp: Date.now()
+                };
+                
+                window.abTestAnalytics.trackEvent(eventName, ctaData);
+                console.log(`Seller CTA tracked: ${eventName}`, ctaData);
+            });
+        });
+    } catch (error) {
+        console.warn(`Failed to track CTA ${selector}:`, error);
+    }
+}
+
+/**
+ * Get element location/section for tracking
+ */
+function getElementLocation(element) {
+    // Try to find parent section
+    const section = element.closest('section, .hero-section, .features-section, .journey-section');
+    if (section) {
+        return section.className.split(' ').find(cls => cls.includes('section')) || 'unknown-section';
+    }
+    
+    // Check for common location indicators
+    if (element.closest('.hero')) return 'hero';
+    if (element.closest('.navbar')) return 'navigation';
+    if (element.closest('.footer')) return 'footer';
+    
+    return 'unknown';
+}
+
+/**
  * Initialize Enhanced Search Bar Features
  */
 function initializeSearchBar() {
@@ -295,19 +419,47 @@ function showSearchSuggestions(query) {
     );
     
     if (suggestions.length > 0) {
-        const suggestionsHTML = suggestions.map(suggestion => 
-            `<div class="suggestion-item px-6 py-3 hover:bg-gray-50 cursor-pointer flex items-center justify-between border-b border-gray-100 last:border-b-0" data-suggestion="${suggestion.text}">
-                <div class="flex items-center">
-                    <svg class="w-4 h-4 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                    <span class="text-gray-800">${suggestion.text}</span>
-                </div>
-                <span class="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600">${suggestion.type}</span>
-            </div>`
-        ).join('');
+        // Create suggestions safely using DOM methods instead of innerHTML
+        suggestionsDropdown.innerHTML = ''; // Clear existing content
         
-        suggestionsDropdown.innerHTML = suggestionsHTML;
+        suggestions.forEach(suggestion => {
+            const suggestionElement = document.createElement('div');
+            suggestionElement.className = 'suggestion-item px-6 py-3 hover:bg-gray-50 cursor-pointer flex items-center justify-between border-b border-gray-100 last:border-b-0';
+            suggestionElement.setAttribute('data-suggestion', suggestion.text);
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'flex items-center';
+            
+            const iconSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            iconSvg.setAttribute('class', 'w-4 h-4 text-gray-400 mr-3');
+            iconSvg.setAttribute('fill', 'none');
+            iconSvg.setAttribute('stroke', 'currentColor');
+            iconSvg.setAttribute('viewBox', '0 0 24 24');
+            
+            const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            pathElement.setAttribute('stroke-linecap', 'round');
+            pathElement.setAttribute('stroke-linejoin', 'round');
+            pathElement.setAttribute('stroke-width', '2');
+            pathElement.setAttribute('d', 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z');
+            
+            iconSvg.appendChild(pathElement);
+            
+            const textSpan = document.createElement('span');
+            textSpan.className = 'text-gray-800';
+            textSpan.textContent = suggestion.text; // Safe text content assignment
+            
+            contentDiv.appendChild(iconSvg);
+            contentDiv.appendChild(textSpan);
+            
+            const typeSpan = document.createElement('span');
+            typeSpan.className = 'text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600';
+            typeSpan.textContent = suggestion.type; // Safe text content assignment
+            
+            suggestionElement.appendChild(contentDiv);
+            suggestionElement.appendChild(typeSpan);
+            
+            suggestionsDropdown.appendChild(suggestionElement);
+        });
         suggestionsDropdown.classList.remove('hidden');
         
         // Add click handlers to suggestions

@@ -116,7 +116,12 @@
                 <h2 class="text-xl font-semibold mb-4 text-primary">Recent Blog Posts</h2>
                 <ul class="space-y-2">
                     <% recentBlogPosts.forEach(post => { %>
-                        <li><a href="/blog/<%= post.slug %>" class="text-gray-300 hover:text-white transition-colors"><%= post.title %></a></li>
+                        <li>
+                            <a href="<%= post.url_path ? post.url_path : '/blog/' + post.slug %>" 
+                               class="text-gray-300 hover:text-white transition-colors">
+                               <%= post.title %>
+                            </a>
+                        </li>
                     <% }); %>
                     <% if (recentBlogPosts.length === 0) { %>
                         <li class="text-gray-400">No posts found</li>

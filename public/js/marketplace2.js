@@ -3,6 +3,50 @@
  * Handles marketplace listing functionality with enhanced UI
  */
 
+// SECURITY: Utility functions for safe HTML handling
+const SecurityUtils = {
+  /**
+   * Escape HTML characters to prevent XSS
+   * @param {string} text - Text to escape
+   * @returns {string} Escaped text
+   */
+  escapeHtml: function(text) {
+    if (typeof text !== 'string') return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  },
+
+  /**
+   * Safely set innerHTML with basic sanitization
+   * @param {HTMLElement} element - Target element
+   * @param {string} html - HTML content to set
+   */
+  safeSetInnerHTML: function(element, html) {
+    // For now, we'll use innerHTML but with validation
+    // In production, consider using DOMPurify library
+    if (!element || typeof html !== 'string') return;
+    
+    // Basic validation - reject scripts
+    if (html.includes('<script') || html.includes('javascript:') || html.includes('on')) {
+      console.warn('Potentially unsafe HTML detected, using text content instead');
+      element.textContent = html.replace(/<[^>]*>/g, '');
+      return;
+    }
+    
+    element.innerHTML = html;
+  },
+
+  /**
+   * Create a safe text node
+   * @param {string} text - Text content
+   * @returns {Text} Text node
+   */
+  createSafeTextNode: function(text) {
+    return document.createTextNode(this.escapeHtml(text));
+  }
+};
+
 // Create a helper for conditional logging
 function debugLog(...args) {
   if (window.DEBUG_MODE) {
@@ -154,7 +198,7 @@ function loadFilteredResults(params) {
     if (!listingsContainer) return;
     
     // Show loading indicator
-    listingsContainer.innerHTML = '<div class="loading-spinner">Loading...</div>';
+    SecurityUtils.safeSetInnerHTML(listingsContainer, '<div class="loading-spinner">Loading...</div>');
     
     // Fetch filtered results
     fetch(`/api/businesses?${params.toString()}`)
@@ -163,12 +207,12 @@ function loadFilteredResults(params) {
             if (data.success && data.businesses) {
                 renderBusinesses(data.businesses);
             } else {
-                listingsContainer.innerHTML = '<p>No businesses found matching your criteria.</p>';
+                SecurityUtils.safeSetInnerHTML(listingsContainer, '<p>No businesses found matching your criteria.</p>');
             }
         })
         .catch(error => {
             console.error('Error fetching filtered results:', error);
-            listingsContainer.innerHTML = '<p>Error loading businesses. Please try again.</p>';
+            SecurityUtils.safeSetInnerHTML(listingsContainer, '<p>Error loading businesses. Please try again.</p>');
         });
 }
 
@@ -535,28 +579,29 @@ function renderBusinesses(businesses) {
             : createDefaultImage();
             
         // Build the business card HTML
-        businessCard.innerHTML = `
+        const businessCardHTML = `
             <div class="card h-100">
                 ${imagesHtml}
                 <div class="card-body">
-                    <h5 class="card-title">${business.business_name}</h5>
-                    <p class="card-location">${business.location || 'Location not specified'}</p>
+                    <h5 class="card-title">${SecurityUtils.escapeHtml(business.business_name)}</h5>
+                    <p class="card-location">${SecurityUtils.escapeHtml(business.location || 'Location not specified')}</p>
                     <p class="card-price">£${formatPrice(business.price)}</p>
                     <div class="d-flex justify-content-between gap-2 mt-3">
                         <button class="btn btn-primary flex-grow-1 view-details-btn" 
-                                data-business-id="${business.id}"
-                                onclick="window.location.href='/businesses/${business.id}'">
+                                data-business-id="${SecurityUtils.escapeHtml(business.id)}"
+                                onclick="window.location.href='/businesses/${SecurityUtils.escapeHtml(business.id)}'">
                             View Details
                         </button>
                         <button class="btn btn-outline-secondary flex-grow-1 contact-btn"
-                           data-business-id="${business.id}"
-                           data-user-id="${business.user_id}">
+                           data-business-id="${SecurityUtils.escapeHtml(business.id)}"
+                           data-user-id="${SecurityUtils.escapeHtml(business.user_id)}">
                             Contact
                         </button>
                     </div>
                 </div>
             </div>
         `;
+        SecurityUtils.safeSetInnerHTML(businessCard, businessCardHTML);
         
         listingsContainer.appendChild(businessCard);
     });
@@ -790,7 +835,7 @@ async function exportToGoogleDrive(businessId) {
 function showSharingDialog(fileId, viewLink) {
     const modal = document.createElement('div');
     modal.className = 'modal fade';
-    modal.innerHTML = `
+    const modalHTML = `
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
@@ -799,7 +844,7 @@ function showSharingDialog(fileId, viewLink) {
                 </div>
                 <div class="modal-body">
                     <p>Document exported successfully!</p>
-                    <p>View link: <a href="${viewLink}" target="_blank">${viewLink}</a></p>
+                    <p>View link: <a href="${SecurityUtils.escapeHtml(viewLink)}" target="_blank">${SecurityUtils.escapeHtml(viewLink)}</a></p>
                     <div class="mb-3">
                         <label class="form-label">Share with email:</label>
                         <input type="email" class="form-control" id="shareEmail">
@@ -815,11 +860,12 @@ function showSharingDialog(fileId, viewLink) {
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary" onclick="shareDocument('${fileId}')">Share</button>
+                    <button type="button" class="btn btn-primary" onclick="shareDocument('${SecurityUtils.escapeHtml(fileId)}')">Share</button>
                 </div>
             </div>
         </div>
     `;
+    SecurityUtils.safeSetInnerHTML(modal, modalHTML);
 
     document.body.appendChild(modal);
     const modalInstance = new bootstrap.Modal(modal);
@@ -1439,11 +1485,12 @@ function loadPage(page = 1, filters = {}) {
       })
       .catch(error => {
         console.error('Error loading businesses:', error);
-        listingsContainer.innerHTML = `
+                const errorContent = `
           <div class="alert alert-danger">
             <i class="bi bi-exclamation-triangle"></i> Error loading listings. Please try again.
           </div>
         `;
+        SecurityUtils.safeSetInnerHTML(listingsContainer, errorContent);
       });
   }, 500); // Short delay to ensure loading animation is visible
 }
@@ -1762,4 +1809,4 @@ function showPremiumUpgradeModal(businessId) {
   }
 }
 
-// ...existing code...
+//# sourceMappingURL=marketplace2.js.map

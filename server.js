@@ -26,6 +26,7 @@ import s3UploadRoutes from './routes/api/s3-upload.js';
 // Import threads API routes
 import threadsApiRoutes from './routes/api/threads.js';
 import buyerRoutes from './routes/api/buyer.js';
+import buyerDashboardRoutes from './routes/api/buyer-dashboard.js';
 import trustRoutes from './routes/api/trust.js';
 
 // Add a simple RateLimiter class implementation
@@ -123,6 +124,41 @@ import valuationApi from './api/valuation.js';
 
 import debugApiRoutes from './routes/api/debug.js';
 
+// Import A/B Testing Analytics routes
+import analyticsRoutes from './routes/analytics.js';
+
+// Import Smart Routing
+import smartRoutingRoutes from './routes/smartRouting.js';
+
+// Import Enhanced Role-Based Routing
+import { detectUserRole, injectRoleCacheScript } from './middleware/enhancedRoleBasedRouting.js';
+
+// A/B Testing Middleware
+function assignABTestVariant(req, res, next) {
+  // Check if user already has a variant assigned in session
+  if (req.session && req.session.abTestVariant) {
+    req.abTestVariant = req.session.abTestVariant;
+    return next();
+  }
+  
+  // Generate random variant (50/50 split)
+  const isSellerFirst = Math.random() < 0.5;
+  const variant = isSellerFirst ? 'seller_first' : 'buyer_first';
+  
+  // Store in session for persistence
+  if (req.session) {
+    req.session.abTestVariant = variant;
+  }
+  
+  // Attach to request for use in route
+  req.abTestVariant = variant;
+  
+  // Log assignment for debugging (remove in production)
+  console.log(`A/B Test: User assigned to ${variant} variant`);
+  
+  next();
+}
+
 // Add this import near the top of the file with other imports
 import { attachRootRoute } from './root-route-fix.js';
 import apiAuthRoutes from './routes/api/auth.js'; // Add this import
@@ -167,6 +203,9 @@ import verificationUploadRoutes from './routes/verificationUploadRoutes.js';
 
 // Import professional routes
 import professionalRoutes from './routes/professionalRoutes.js';
+
+// Import professional profiles API routes
+import professionalProfilesRoutes from './routes/api/professional-profiles.js';
 
 // Import valuation payment routes
 import valuationPaymentRoutes from './routes/valuationPaymentRoutes.js';
@@ -312,16 +351,24 @@ const s3Client = new S3Client({
 // Test S3 connection on startup - replace this function with enhanced version
 async function testS3Connection() {
   try {
+    // SECURITY: Enhanced secret masking function
+    const isSensitiveKey = (key) => {
+      const sensitivePatterns = [
+        'SECRET', 'KEY', 'TOKEN', 'PASSWORD', 'PASS', 'PWD', 
+        'PRIVATE', 'CREDENTIAL', 'AUTH', 'API_KEY', 'CLIENT_SECRET'
+      ];
+      return sensitivePatterns.some(pattern => 
+        key.toUpperCase().includes(pattern)
+      );
+    };
+
     // Print all environment variables for debugging (without sensitive values)
     console.log("Environment variables scan:");
     Object.keys(process.env)
       .filter(key => key.includes('AWS'))
       .forEach(key => {
-        if (key.includes('SECRET') || key.includes('KEY')) {
-          console.log(`${key}=***`);
-        } else {
-          console.log(`${key}=${process.env[key]}`);
-        }
+        const value = isSensitiveKey(key) ? '***' : process.env[key];
+        console.log(`${key}=${value}`);
       });
     
     // Explicitly set AWS environment variables to ensure correct values
@@ -538,13 +585,183 @@ app.get('/valuation-confirmation', (req, res) => {
   });
 });
 
-// Add buyer dashboard route
-app.get('/buyer-dashboard', (req, res) => {
-  res.render('buyer-dashboard', {
-    title: 'Buyer Dashboard - Arzani',
-    user: req.user || null
-  });
+// Add buyer dashboard route with database integration
+app.get('/buyer-dashboard', async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    
+    // Initialize dashboard data with defaults
+    let dashboardData = {
+      stats: {
+        savedSearches: 0,
+        activeAlerts: 0,
+        meetingsBooked: 0,
+        businessesViewed: 0
+      },
+      recentAlerts: [],
+      upcomingMeetings: [],
+      savedSearches: [],
+      analytics: {
+        searchActivity: [],
+        alertTrends: []
+      }
+    };
+
+    if (userId) {
+      try {
+        // Fetch buyer dashboard statistics
+        const statsQuery = `
+          SELECT 
+            COUNT(DISTINCT ss.id) as saved_searches,
+            COUNT(DISTINCT ba.id) as active_alerts,
+            COUNT(DISTINCT bm.id) as meetings_booked,
+            COUNT(DISTINCT bvt.id) as businesses_viewed
+          FROM users u
+          LEFT JOIN saved_searches ss ON u.id = ss.user_id AND ss.deleted_at IS NULL
+          LEFT JOIN buyer_alerts ba ON u.id = ba.buyer_id AND ba.status = 'active'
+          LEFT JOIN business_meetings bm ON u.id = bm.buyer_id AND bm.status IN ('scheduled', 'confirmed')
+          LEFT JOIN buyer_view_tracking bvt ON u.id = bvt.buyer_id 
+            AND bvt.viewed_at >= NOW() - INTERVAL '30 days'
+          WHERE u.id = $1
+        `;
+        
+        const statsResult = await pool.query(statsQuery, [userId]);
+        if (statsResult.rows.length > 0) {
+          const stats = statsResult.rows[0];
+          dashboardData.stats = {
+            savedSearches: parseInt(stats.saved_searches) || 0,
+            activeAlerts: parseInt(stats.active_alerts) || 0,
+            meetingsBooked: parseInt(stats.meetings_booked) || 0,
+            businessesViewed: parseInt(stats.businesses_viewed) || 0
+          };
+        }
+
+        // Fetch recent alerts (last 10)
+        const alertsQuery = `
+          SELECT ba.*, 
+                 CASE 
+                   WHEN ba.alert_type = 'price_drop' THEN 'Price Drop Alert'
+                   WHEN ba.alert_type = 'new_listing' THEN 'New Business Listed'
+                   WHEN ba.alert_type = 'status_change' THEN 'Status Change'
+                   ELSE 'Business Alert'
+                 END as alert_title,
+                 ba.created_at,
+                 ba.criteria
+          FROM buyer_alerts ba
+          WHERE ba.buyer_id = $1 
+            AND ba.status = 'active'
+            AND ba.created_at >= NOW() - INTERVAL '7 days'
+          ORDER BY ba.created_at DESC
+          LIMIT 10
+        `;
+        
+        const alertsResult = await pool.query(alertsQuery, [userId]);
+        dashboardData.recentAlerts = alertsResult.rows.map(alert => ({
+          id: alert.id,
+          title: alert.alert_title,
+          description: alert.criteria ? 
+            `${alert.criteria.business_type || 'Business'} in ${alert.criteria.location || 'Various locations'}` :
+            'New business opportunity available',
+          timeAgo: formatTimeAgo(alert.created_at),
+          type: alert.alert_type,
+          icon: getAlertIcon(alert.alert_type)
+        }));
+
+        // Fetch upcoming meetings (next 5)
+        const meetingsQuery = `
+          SELECT bm.*, b.business_name, b.business_type,
+                 s.business_name as seller_business_name,
+                 u.username as seller_name
+          FROM business_meetings bm
+          JOIN businesses b ON bm.business_id = b.id
+          LEFT JOIN users s ON b.seller_id = s.id
+          LEFT JOIN users u ON s.id = u.id
+          WHERE bm.buyer_id = $1 
+            AND bm.status IN ('scheduled', 'confirmed')
+            AND bm.scheduled_at >= NOW()
+          ORDER BY bm.scheduled_at ASC
+          LIMIT 5
+        `;
+        
+        const meetingsResult = await pool.query(meetingsQuery, [userId]);
+        dashboardData.upcomingMeetings = meetingsResult.rows.map(meeting => ({
+          id: meeting.id,
+          businessName: meeting.business_name,
+          businessType: meeting.business_type,
+          sellerName: meeting.seller_name,
+          scheduledAt: meeting.scheduled_at,
+          status: meeting.status,
+          meetingType: meeting.meeting_type || 'video'
+        }));
+
+        // Fetch saved searches (last 5)
+        const searchesQuery = `
+          SELECT ss.*, 
+                 COUNT(b.id) as matching_businesses
+          FROM saved_searches ss
+          LEFT JOIN businesses b ON (
+            (ss.criteria->>'business_type' IS NULL OR b.business_type ILIKE '%' || (ss.criteria->>'business_type') || '%')
+            AND (ss.criteria->>'location' IS NULL OR b.location ILIKE '%' || (ss.criteria->>'location') || '%')
+            AND (ss.criteria->>'min_price' IS NULL OR b.asking_price >= (ss.criteria->>'min_price')::numeric)
+            AND (ss.criteria->>'max_price' IS NULL OR b.asking_price <= (ss.criteria->>'max_price')::numeric)
+          )
+          WHERE ss.user_id = $1 AND ss.deleted_at IS NULL
+          GROUP BY ss.id
+          ORDER BY ss.created_at DESC
+          LIMIT 5
+        `;
+        
+        const searchesResult = await pool.query(searchesQuery, [userId]);
+        dashboardData.savedSearches = searchesResult.rows.map(search => ({
+          id: search.id,
+          name: search.name,
+          criteria: search.criteria,
+          matchingBusinesses: parseInt(search.matching_businesses) || 0,
+          createdAt: search.created_at
+        }));
+
+      } catch (dbError) {
+        console.error('Database error in buyer dashboard:', dbError);
+        // Continue with default data if database queries fail
+      }
+    }
+
+    res.render('buyer-dashboard', {
+      title: 'Buyer Dashboard - Arzani',
+      user: req.user || null,
+      dashboardData: dashboardData
+    });
+
+  } catch (error) {
+    console.error('Error loading buyer dashboard:', error);
+    res.status(500).render('error', {
+      title: 'Error - Arzani',
+      message: 'Failed to load dashboard',
+      error: process.env.NODE_ENV === 'development' ? error : {}
+    });
+  }
 });
+
+// Helper functions for dashboard
+function formatTimeAgo(date) {
+  const now = new Date();
+  const diff = now - new Date(date);
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const days = Math.floor(hours / 24);
+  
+  if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`;
+  if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+  return 'Less than an hour ago';
+}
+
+function getAlertIcon(alertType) {
+  switch (alertType) {
+    case 'price_drop': return 'fas fa-tag';
+    case 'new_listing': return 'fas fa-exclamation';
+    case 'status_change': return 'fas fa-info-circle';
+    default: return 'fas fa-bell';
+  }
+}
 
 // Make sure cookie parser runs early (before session middleware)
 app.use(cookieParser());
@@ -787,6 +1004,7 @@ app.use('/api/auth', apiAuthRoutes); // Add API auth routes
 app.use('/api/chat', chatApiRoutes); // Use chatApiRoutes instead of chatRouter
 app.use('/api/threads', threadsApiRoutes); // Add threads API for conversation management
 app.use('/api/buyer', buyerRoutes);
+app.use('/api/buyer-dashboard', buyerDashboardRoutes);
 app.use('/api/trust', trustRoutes);
 app.use('/payment', paymentRoutes);
 // Add specific CORS middleware for OAuth routes
@@ -896,6 +1114,8 @@ app.use('/api/business', businessRoutes);
 app.use('/api', apiRoutes);
 app.use('/api/business', savedBusinessesRoutes); 
 app.use('/api/debug', debugApiRoutes);
+// Add A/B Testing Analytics routes (public access for tracking)
+app.use('/api/analytics', analyticsRoutes);
 // Add assistant monitoring routes
 app.use('/api/assistant-monitor', assistantMonitorRoutes);
 // Add this before other routes
@@ -911,6 +1131,11 @@ app.use('/api/assistant', aiAssistantRoutes);
 
 // Use the new auth middleware where needed
 app.use('/api/protected', authMiddleware);
+
+// Add enhanced smart routing middleware and routes BEFORE other route registrations
+app.use(detectUserRole); // Add enhanced smart role detection middleware globally
+app.use(injectRoleCacheScript); // Add client-side caching script injection
+app.use('/api', smartRoutingRoutes); // Register smart routing API routes under /api
 // API endpoints
 app.use('/api/valuation', (req, res, next) => {
   // Check for the special header or if it's a public endpoint
@@ -1090,6 +1315,21 @@ app.get('/features/power-ups', (req, res) => {
     user: req.user // Pass user if needed for navbar logic
   });
 });
+
+// A/B Testing Dashboard route (admin only)
+app.get('/ab-dashboard', (req, res) => {
+  // In production, you might want to add admin authentication here
+  // For now, serving for internal review
+  res.sendFile(path.join(__dirname, 'views', 'ab-dashboard.html'));
+});
+
+// A/B Testing Info page route
+app.get('/ab-test-info', (req, res) => {
+  res.render('ab-test-info', {
+    title: 'A/B Testing Analytics Setup | Arzani'
+  });
+});
+
 // Add API endpoint for featured businesses with mock data
 app.get('/api/business-preview/featured', async (req, res) => {
   try {
@@ -1280,6 +1520,7 @@ app.use('/', googleAuthRoutes);
 // Apply routes
 app.use('/professional', professionalRoutes);
 app.use('/api/professional', professionalRoutes);
+app.use('/api/professional-profiles', professionalProfilesRoutes); // Add professional profiles API routes
 app.use('/api/verification', verificationUploadRoutes); // Add the verification upload routes
 
 // Serve static files from the 'views/partials/public' directory
@@ -1537,15 +1778,6 @@ app.post('/create-valuation-checkout', async (req, res) => {
 });
 
 
-  // This route will be overridden by the root-route-fix.js handler with higher priority
-  // It's left here as a fallback but won't normally be used
-  app.get('/', (req, res) => {
-    // Render the marketplace landing page - this is now the main landing page
-    res.render('marketplace-landing', {
-      title: 'Buy & Sell Businesses | Arzani Marketplace'
-    });
-  });
-
   app.get('/homepage', (req, res) => {
     res.render('homepage', {
       title: 'Arzani'
@@ -1619,11 +1851,13 @@ app.get('/marketplace', authDebug.enforceNonChatPage, (req, res) => {
   res.redirect('/marketplace2');
 });
 
-// Redirect old marketplace landing URL to the root path (now primary landing page)
+// Direct route to seller-focused marketplace landing page (for testing/admin use)
 app.get('/marketplace-landing', (req, res) => {
   res.locals.isChatPage = false;
-  // Redirect to root since marketplace-landing is now the homepage
-  res.redirect('/');
+  res.render('marketplace-landing', {
+    title: 'Sell Your Business Fast | Arzani Marketplace',
+    abTestVariant: 'seller_first'
+  });
 });
   
 app.get('/marketplace2', async (req, res) => {
@@ -2354,6 +2588,9 @@ app.get('*', (req, res, next) => {  // Don't redirect specific server-rendered p
       req.path === '/history' || 
       req.path === '/profile' || // Ensure profile isn't caught
       req.path === '/professional-verification' || // Exclude professional verification
+      req.path === '/buyer-landing' || // Exclude buyer-landing page
+      req.path === '/seller-landing' || // Exclude seller-landing page
+      req.path === '/marketplace-landing' || // Exclude marketplace-landing page
       req.path.startsWith('/post-business') ||
       req.path.startsWith('/api/')) { // Exclude all API routes
     return next(); // Let specific handlers manage these
@@ -2520,10 +2757,70 @@ app.get('/homepage', async (req, res) => {
 //   res.redirect('/homepage');
 // });
 
-// This route definition will be overridden by the higher priority handler in root-route-fix.js
-app.get('/', (req, res) => {
+// A/B Testing Homepage Route - serves either seller-first or buyer-first variant
+// Now enhanced with smart role-based routing
+app.get('/', assignABTestVariant, (req, res) => {
+  let variant = req.abTestVariant;
+  let routingMethod = 'ab_test';
+  
+  // Smart routing override: Check if we have a detected or selected role
+  const userRole = req.session?.userRole || req.detectedRole;
+  if (userRole) {
+    // Override A/B test with smart routing
+    variant = userRole === 'buyer' ? 'buyer_first' : 'seller_first';
+    routingMethod = 'smart_routing';
+    
+    // Update session to maintain consistency
+    req.session.abTestVariant = variant;
+  }
+  
+  // Track page view with variant and routing method information
+  const pageViewData = {
+    type: 'page_view',
+    variant: variant,
+    routing_method: routingMethod,
+    user_role: userRole || null,
+    timestamp: new Date().toISOString(),
+    session: req.sessionID || 'anonymous',
+    userAgent: req.get('User-Agent'),
+    referrer: req.get('Referrer') || null,
+    path: '/'
+  };
+  
+  // Log analytics data (in production, this would go to your analytics service)
+  console.log('Homepage View:', pageViewData);
+  
+  // Serve the appropriate variant
+  if (variant === 'buyer_first') {
+    res.render('buyer-landing', {
+      title: 'Find Your Perfect Business | Arzani Marketplace',
+      abTestVariant: variant,
+      routingMethod: routingMethod,
+      userRole: userRole || null
+    });
+  } else {
+    res.render('marketplace-landing', {
+      title: 'Sell Your Business Fast | Arzani Marketplace', 
+      abTestVariant: variant,
+      routingMethod: routingMethod,
+      userRole: userRole || null
+    });
+  }
+});
+
+// Direct route to buyer-focused landing page (for testing/admin use)
+app.get('/buyer-landing', (req, res) => {
+  res.render('buyer-landing', {
+    title: 'Find Your Perfect Business | Arzani Marketplace',
+    abTestVariant: 'buyer_first'
+  });
+});
+
+// Direct route to seller-focused landing page (for testing/admin use)  
+app.get('/seller-landing', (req, res) => {
   res.render('marketplace-landing', {
-    title: 'Welcome to Arzani Marketplace'
+    title: 'Sell Your Business Fast | Arzani Marketplace',
+    abTestVariant: 'seller_first'
   });
 });
 

@@ -3,7 +3,8 @@ module.exports = {
   content: [
     './views/**/*.ejs',
     './public/**/*.js',
-    "./src/**/*.{js,jsx,ts,tsx}"
+    "./src/**/*.{js,jsx,ts,tsx}",
+    "./marketplace-landing-page/**/*.html",
   ],
   theme: {
     extend: {

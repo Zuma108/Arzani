@@ -1,0 +1,41 @@
+
+{
+    "businesses": [
+      {
+        "id": "biz_001",
+        "name": "TechStart Solutions",
+        "industry": "SaaS",
+        "valuation": "£1,200,000",
+        "revenue": "£800,000",
+        "profit": "£320,000",
+        "multiple": "3.8x",
+        "location": "London",
+        "ai_confidence": "96%",
+        "business_image": "/images/stock-business-1.jpg"
+      },
+      {
+        "id": "biz_002",
+        "name": "Gourmet Grill",
+        "industry": "Restaurant",
+        "valuation": "£500,000",
+        "revenue": "£400,000",
+        "profit": "£100,000",
+        "multiple": "5.0x",
+        "location": "Manchester",
+        "ai_confidence": "92%",
+        "business_image": "/images/stock-business-2.jpg"
+      },
+      {
+        "id": "biz_003",
+        "name": "Retail Emporium",
+        "industry": "Retail",
+        "valuation": "£750,000",
+        "revenue": "£1,000,000",
+        "profit": "£150,000",
+        "multiple": "5.0x",
+        "location": "London",
+        "ai_confidence": "94%",
+        "business_image": "/images/stock-business-3.jpg"
+      }
+    ]
+  }

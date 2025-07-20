@@ -1,0 +1,1966 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">   
+    <title>Buy & Sell Businesses | Arzani Marketplace</title>    
+    <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">    
+    <link rel="stylesheet" href="/css/marketplace-landing.css">
+    <link rel="stylesheet" href="/css/testimonial-carousel.css">
+    <link rel="stylesheet" href="/css/feature-animations.css">
+    <link rel="stylesheet" href="/css/modern.css">
+    <link rel="stylesheet" href="/css/journey-section.css">
+    <link rel="stylesheet" href="/css/section-separators.css">
+    <link rel="stylesheet" href="/css/enhanced-scroll-animations.css">
+    <link rel="stylesheet" href="/css/white-section-glows.css">
+    <link rel="stylesheet" href="/css/performance-fixes.css">
+    <link rel="stylesheet" href="/css/navbar2.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#316FD4',
+                        'navbar-blue': '#041b76', /* Added navbar blue color */
+                        dark: '#141414',
+                        'dark-light': '#1E1E1E',
+                        'blue-glow': '#2563EB',
+                        'accent-blue': '#3B82F6',
+                        'zinc-200': '#e4e4e7'
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'sans-serif']
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-W50GKB6F3M"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-W50GKB6F3M');
+    </script>
+    
+    <!-- A/B Testing Analytics -->
+    <script src="/js/ab-testing-analytics.js"></script>
+    <script src="/js/debug-ab-testing.js"></script>
+    
+    <!-- Smart Routing Analytics -->
+    <script src="/js/smart-routing.js"></script>
+</head>
+<body class="bg-dark text-white font-sans">
+    <div class="page-wrapper">
+       
+        <%- include('partials/navbar2') %>
+
+        <!-- Smart Routing Role Indicator -->
+        <% if (typeof routingMethod !== 'undefined' && routingMethod === 'smart_routing') { %>
+        <div class="fixed top-20 right-4 z-40">
+            <div class="bg-blue-600/90 backdrop-blur-md text-white px-4 py-2 rounded-lg shadow-lg border border-blue-500/50 text-sm">
+                <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <span>Smart routing: Buyer experience</span>
+                    <button onclick="selectRole('seller')" class="ml-2 text-xs underline hover:no-underline">
+                        Switch to seller
+                    </button>
+                </div>
+            </div>
+        </div>
+        <% } %>
+
+        <!-- Hero Section with Video Background -->
+        <section class="hero-section-video relative h-screen flex items-center justify-start overflow-hidden">
+            <!-- Video Background -->
+            <div class="absolute inset-0 z-0">
+                <video 
+                    id="hero-video"
+                    class="absolute inset-0 w-full h-full object-cover"
+                    autoplay 
+                    muted 
+                    loop 
+                    playsinline
+                    preload="metadata"
+
+                >
+                    <source src="/video/arzani-loop.mp4" type="video/mp4">
+
+                    <!-- Fallback for browsers that don't support video -->
+                    <div class="absolute inset-0 bg-gradient-to-br from-primary-dark to-dark-light"></div>
+                </video>
+                <!-- Dark overlay for better text readability -->
+                <div class="absolute inset-0 bg-black bg-opacity-0 z-10"></div>
+            </div>
+            
+            <!-- Hero Content -->
+            <div class="container mx-auto px-4 md:px-6 lg:px-8 relative z-20 w-full">
+                <div class="w-full md:w-2/3 lg:w-3/5 text-left">
+                    <h1 class="text-4xl md:text-6xl lg:text-7xl font-black text-white leading-tight mb-6 animate-fade-in-up" style="animation-delay: 200ms;">
+                        Find Your Perfect Business &<br>Start Your <span class="text-gradient-animated">Acquisition Journey</span>
+                    </h1>
+                    <p class="text-lg md:text-xl text-gray-300 max-w-2xl mb-8 animate-fade-in-up" style="animation-delay: 400ms;">
+                        Discover verified UK businesses for sale with complete financial transparency. Access exclusive deals, detailed insights, and streamlined acquisition support.
+                    </p>
+                    
+                    <!-- Buyer-focused Key Benefits -->
+                    <div class="flex flex-wrap items-center gap-4 mb-12 text-sm md:text-base animate-fade-in-up" style="animation-delay: 500ms;">
+                        <div class="bg-white/20 backdrop-blur-md border border-white/30 rounded-xl px-4 py-3 flex items-center text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-white/25">
+                            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span class="font-medium">Verified listings only</span>
+                        </div>
+                        <div class="bg-white/20 backdrop-blur-md border border-white/30 rounded-xl px-4 py-3 flex items-center text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-white/25">
+                            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span class="font-medium">Full financial data</span>
+                        </div>
+                        <div class="bg-white/20 backdrop-blur-md border border-white/30 rounded-xl px-4 py-3 flex items-center text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-white/25">
+                            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span class="font-medium">Expert acquisition support</span>
+                        </div>
+                    </div>
+
+                    <!-- Buyer-focused CTA Buttons -->
+                    <div class="flex flex-col sm:flex-row gap-4 mb-12 animate-fade-in-up" style="animation-delay: 600ms;">
+                        <a href="/marketplace2" class="btn-primary px-8 py-4 text-lg font-semibold rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 ab-track-cta" style="background-color: rgb(49 111 212); color: white;" data-cta-type="buyer_primary" data-cta-text="Browse Available Businesses" data-cta-location="hero">
+                            Browse Available Businesses
+                        </a>
+                        <a href="/buyer-dashboard" class="btn-secondary px-8 py-4 text-lg font-semibold rounded-xl border-2 border-white/30 text-white hover:bg-white/10 transition-all duration-300 ab-track-cta" data-cta-type="buyer_secondary" data-cta-text="Start Your Search" data-cta-location="hero">
+                            Start Your Search
+                        </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Business Preview Slider Section -->
+        <section class="business-preview-section-white py-16 md:py-24 bg-gradient-to-br from-gray-50 to-white relative overflow-hidden">
+            <!-- Background elements with light theme -->
+            <div class="absolute top-0 left-0 w-full h-full overflow-hidden z-0" aria-hidden="true">
+                <div class="absolute -top-40 -left-40 w-80 h-80 bg-blue-100/40 rounded-full blur-3xl animate-pulse-slow"></div>
+                <div class="absolute -bottom-60 -right-40 w-96 h-96 bg-indigo-100/40 rounded-full blur-3xl animate-pulse-slow animation-delay-2000"></div>
+                <div class="absolute top-1/4 right-1/4 w-64 h-64 bg-purple-100/30 rounded-full blur-3xl animate-pulse-slow animation-delay-1000"></div>
+            </div>
+            
+            <!-- Light background pattern -->
+            <div class="absolute inset-0 z-0 opacity-20" aria-hidden="true">
+                <div class="light-grid-pattern-white"></div>
+            </div>
+            
+            <div class="container mx-auto px-4 md:px-6 relative z-10">
+                <!-- Section Header -->
+                <div class="text-center mb-12" data-animation="fade-in-up">
+                    <h2 class="text-3xl md:text-4xl font-bold mb-4 text-gray-900">
+                        <span class="text-gradient-blue">Featured</span> Businesses
+                    </h2>
+                    <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+                        Discover our carefully curated selection of profitable businesses ready for acquisition
+                    </p>
+                </div>
+                
+                <!-- Business Preview Slider Container -->
+                <div class="business-slider-container-white relative overflow-hidden mx-auto my-8 max-w-7xl">
+                    <!-- Loading State -->
+                    <div class="loading-state-white flex items-center justify-center py-12">
+                        <div class="loader-circle-white"></div>
+                        <p class="ml-3 text-gray-500 font-medium">Loading featured businesses...</p>
+                    </div>
+                    
+                    <!-- Slider Track -->
+                    <div id="businessSliderTrack" class="business-slider-track-white flex transition-transform duration-500 ease-out opacity-0">
+                        <!-- Business cards will be dynamically inserted here -->
+                    </div>
+                    
+                    <!-- Slider Navigation -->
+                    <button class="slider-nav-button-white bg-white hover:bg-primary text-gray-600 hover:text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg focus:outline-none transition-all duration-300 border border-gray-200" id="slideLeft" aria-label="Previous slide" disabled>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+                    
+                    <button class="slider-nav-button-white bg-white hover:bg-primary text-gray-600 hover:text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg focus:outline-none transition-all duration-300 border border-gray-200" id="slideRight" aria-label="Next slide">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- Navigation Dots -->
+                <div class="slider-dots-white flex justify-center mt-8 space-x-3" id="sliderDots">
+                    <!-- Dots will be populated by JavaScript -->
+                </div>
+                
+                <!-- View All Listings Button -->
+                <div class="text-center mt-12">
+                    <a href="/marketplace2" class="view-all-btn-white inline-flex items-center bg-primary hover:bg-primary/90 text-white font-semibold px-8 py-4 rounded-lg shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 ab-track-cta" data-cta-type="buyer_view_all" data-cta-text="View All Listings" data-cta-location="business_preview">
+                        View All Listings
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- AI Business Intelligence Section -->
+        <section class="ai-business-section-white py-16 md:py-24 bg-gradient-to-br from-blue-50 to-white relative overflow-hidden">
+            <!-- Background elements with light theme -->
+            <div class="absolute top-0 left-0 w-full h-full overflow-hidden z-0" aria-hidden="true">
+                <div class="absolute -top-40 right-20 w-80 h-80 bg-blue-100/30 rounded-full blur-3xl animate-pulse-slow"></div>
+                <div class="absolute bottom-20 -left-40 w-96 h-96 bg-indigo-100/30 rounded-full blur-3xl animate-pulse-slow animation-delay-2000"></div>
+                <div class="absolute top-1/3 right-1/3 w-64 h-64 bg-purple-100/20 rounded-full blur-3xl animate-pulse-slow animation-delay-1000"></div>
+            </div>
+            
+            <!-- Light background pattern -->
+            <div class="absolute inset-0 z-0 opacity-10" aria-hidden="true">
+                <div class="light-grid-pattern-white"></div>
+            </div>
+            
+            <div class="container mx-auto px-4 md:px-6 relative z-10">
+                <!-- Section Header -->
+                <header class="text-center mb-16" data-animation="fade-in-up">
+                    <h2 class="text-3xl md:text-5xl font-bold mb-6 text-gray-900 leading-tight">
+                        Transform Data Into <span class="text-gradient-blue">Business Decisions</span>
+                    </h2>
+                    <p class="text-lg text-gray-600 max-w-3xl mx-auto">
+                        Stop guessing and start growing with AI-powered insights that reveal hidden opportunities, 
+                        provide actionable strategies, and help you make confident decisions backed by real-time data
+                    </p>
+                </header>
+                
+                <!-- Main content grid - centered for all screen sizes -->
+                <div class="flex flex-col items-center justify-center mx-auto max-w-7xl">
+                    <!-- Centered content column -->
+                    <article class="w-full md:w-4/5 lg:w-3/4 xl:w-2/3 space-y-6 text-center" data-animation="fade-in-up" data-delay="300">
+                        <header class="content-header">
+                            <h3 class="text-2xl md:text-3xl font-bold text-gray-900 mb-4"><span class="text-gradient-blue">Know Your Company's True Value - in Seconds</span></h3>
+                            <p class="text-gray-600 text-lg mb-6">
+                                Instant valuations, growth forecasts & secure market analysis—all powered by AI.
+                            </p>
+                        </header>
+                        
+                        <!-- Main visualization panel - centered and responsive -->
+                        <div class="bg-white/70 backdrop-blur-md border border-gray-200/50 rounded-2xl p-4 sm:p-6 overflow-hidden relative mb-8 shadow-lg mx-auto max-w-4xl" data-animation="fade-in-up" data-delay="400">
+                            <!-- Chart visualization image - improved responsiveness -->
+                            <div class="h-60 sm:h-72 relative mb-4 sm:mb-6">
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <img src="/figma design exports/images/Arzanigraphimage.webp" alt="Arzani Graph Analysis" class="w-full h-full object-contain rounded-lg" />
+                                </div>
+                            </div>
+                            
+                            <!-- AI Insight overlay - centered and responsive -->
+                            <div class="ai-insight-overlay bg-white backdrop-blur-md border-2 border-blue-300/70 rounded-2xl p-4 sm:p-5 shadow-lg mb-4 sm:mb-6 relative transform transition-all duration-500 hover:scale-[1.02] mx-auto max-w-3xl" data-animation="fade-in-up" data-delay="600">
+                                <!-- Enhanced speech bubble arrow with gradient - centered for mobile -->
+                                <div class="absolute -top-5 left-1/2 sm:left-1/4 transform -translate-x-1/2 w-8 sm:w-10 h-8 sm:h-10 rotate-45 bg-gradient-to-br from-white to-white border-l-2 border-t-2 border-blue-300/70 shadow-sm"></div>
+                                
+                                <div class="ai-insight-header flex items-center mb-3 justify-center sm:justify-start text-left">
+                                    <div class="w-9 h-9 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 overflow-hidden flex items-center justify-center mr-3 shadow-md">
+                                        <img src="/figma design exports/images.webp/arzani-icon-nobackground.png" alt="Arzani AI" class="w-6 h-6 object-contain">
+                                    </div>
+                                    <div>
+                                        <p class="font-bold text-base ai-insight-title text-gray-800">AI Insight</p>
+                                        <p class="text-xs text-gray-500">Updated just now</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="ai-insight-text ai-insight-content text-gray-700 space-y-3 text-left">
+                                    <p class="font-medium text-sm sm:text-base"><span class="text-blue-600 font-bold">+28% growth</span> in Q2 compared to industry average - consider <span class="underline decoration-blue-400 decoration-2 cursor-pointer">scaling digital channels</span> based on performance data.</p>
+                                    
+                                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-gray-50 p-2 sm:p-3 rounded-lg border border-gray-100">
+                                        <div>
+                                            <span class="text-xs sm:text-sm text-gray-500">Business Valuation</span>
+                                            <div class="flex items-baseline flex-wrap">
+                                                <span class="text-base sm:text-lg font-bold text-gray-900">£1,245,000</span>
+                                                <span class="ml-2 text-blue-600 text-xs sm:text-sm">+£45K this quarter</span>
+                                            </div>
+                                        </div>
+                                        <div class="ml-auto mt-2 sm:mt-0 text-blue-500">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 sm:h-8 sm:w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 mt-2">
+                                        <div class="flex-1 bg-gray-50 p-2 sm:p-3 rounded-lg border border-gray-100">
+                                            <p class="text-xs sm:text-sm text-gray-500">Digital ROI</p>
+                                            <p class="font-bold text-indigo-600">3.2x</p>
+                                        </div>
+                                        <div class="flex-1 bg-gray-50 p-2 sm:p-3 rounded-lg border border-gray-100">
+                                            <p class="text-sm text-gray-500">Growth Potential</p>
+                                            <p class="font-bold text-purple-600">High</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Interactive metrics dashboard with improved mobile responsiveness -->
+                            <div class="mb-4 sm:mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-3 sm:space-y-0">
+                                <div class="flex items-center">
+                                    <h4 class="font-semibold text-gray-800 text-sm sm:text-base">Performance Metrics</h4>
+                                    <div class="relative ml-2 group">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 cursor-pointer" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                                        </svg>
+                                        <div class="absolute left-0 bottom-full mb-2 w-48 bg-white rounded-lg shadow-lg p-3 text-xs text-gray-600 hidden group-hover:block z-10">
+                                            These metrics are calculated based on your business data and industry benchmarks.
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Mobile-friendly time filter -->
+                                <div class="time-filter flex flex-wrap items-center bg-white rounded-full overflow-hidden border border-gray-200 text-xs sm:text-sm shadow-sm w-full sm:w-auto">
+                                    <button class="flex-1 sm:flex-initial px-3 sm:px-4 py-1.5 sm:py-2 text-gray-600 hover:bg-blue-50 transition-all active-filter font-medium relative text-center" data-filter="jan-aug">
+                                        Jan–Aug
+                                        <span class="absolute bottom-0 left-0 w-full h-0.5 bg-blue-500 transform scale-x-0 transition-transform origin-left group-active:scale-x-100"></span>
+                                    </button>
+                                    <button class="flex-1 sm:flex-initial px-3 sm:px-4 py-1.5 sm:py-2 text-gray-600 hover:bg-blue-50 transition-all font-medium relative text-center" data-filter="last-12">
+                                        Last 12 Months
+                                        <span class="absolute bottom-0 left-0 w-full h-0.5 bg-blue-500 transform scale-x-0 transition-transform origin-left group-active:scale-x-100"></span>
+                                    </button>
+                                    <button class="flex-1 sm:flex-initial px-3 sm:px-4 py-1.5 sm:py-2 text-gray-600 hover:bg-blue-50 transition-all font-medium relative text-center" data-filter="quarter">
+                                        Last Quarter
+                                        <span class="absolute bottom-0 left-0 w-full h-0.5 bg-blue-500 transform scale-x-0 transition-transform origin-left group-active:scale-x-100"></span>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Enhanced interactive metrics dashboard with better responsive layout -->
+                            <div class="metrics-dashboard grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4" data-animation="fade-in-up" data-delay="700">
+                                <div class="bg-white rounded-xl p-3 sm:p-5 border border-gray-200 revenue-metric shadow-md transform transition-all duration-300 hover:scale-105 hover:shadow-lg relative" data-animation="slide-in-left" data-delay="800">
+                                    <!-- Annotation badge -->
+                                    <div class="absolute -top-2 -right-2 w-5 h-5 sm:w-6 sm:h-6 bg-green-500 rounded-full flex items-center justify-center shadow-md z-10 cursor-pointer metric-tooltip-trigger" data-tooltip="This outperforms 92% of similar businesses in your sector">
+                                        <span class="text-white font-bold text-xs">i</span>
+                                    </div>
+                                    <div class="metric-tooltip hidden absolute top-0 right-0 w-36 sm:w-48 bg-gray-800 text-white p-2 sm:p-3 rounded-lg text-xs transform translate-y-[-100%] z-20">
+                                        This outperforms 92% of similar businesses in your sector
+                                    </div>
+                                    
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="data-labels text-gray-700 font-semibold text-xs sm:text-sm">Revenue Growth</span>
+                                        <span class="text-blue-600 data-value font-bold text-xl sm:text-2xl" data-count-value="24.5" data-count-suffix="%">0%</span>
+                                    </div>
+                                    
+                                    <div class="mt-2 sm:mt-3 h-3 sm:h-4 bg-gray-100 rounded-full overflow-hidden">
+                                        <div class="metric-progress-bar h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full transition-all duration-2000 ease-out relative" style="width: 0%" data-target-width="75%">
+                                            <div class="absolute inset-0 bg-white/20 shine-effect"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-2 sm:mt-3 flex items-center justify-between text-xs sm:text-sm">
+                                        <div class="flex flex-col">
+                                            <span class="text-gray-500">Industry avg</span>
+                                            <span class="font-medium">16.2%</span>
+                                        </div>
+                                        <div class="flex items-center text-blue-600 font-medium bg-blue-50 px-2 py-1 rounded-full">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd" />
+                                            </svg>
+                                            +8.3%
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-white rounded-xl p-3 sm:p-5 border border-gray-200 market-metric shadow-md transform transition-all duration-300 hover:scale-105 hover:shadow-lg" data-animation="slide-in-up" data-delay="900">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="data-labels text-gray-700 font-semibold text-xs sm:text-sm">Market Share</span>
+                                        <span class="text-blue-600 data-value font-bold text-xl sm:text-2xl" data-count-value="12.8" data-count-suffix="%">0%</span>
+                                    </div>
+                                    
+                                    <div class="mt-2 sm:mt-3 h-3 sm:h-4 bg-gray-100 rounded-full overflow-hidden">
+                                        <div class="metric-progress-bar h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full transition-all duration-2000 ease-out relative" style="width: 0%" data-target-width="45%">
+                                            <div class="absolute inset-0 bg-white/20 shine-effect"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-2 sm:mt-3 flex items-center justify-between text-xs sm:text-sm">
+                                        <div class="flex flex-col">
+                                            <span class="text-gray-500">Started at</span>
+                                            <span class="font-medium">8.5%</span>
+                                        </div>
+                                        <div class="flex items-center text-blue-600 font-medium bg-blue-50 px-2 py-1 rounded-full">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd" />
+                                            </svg>
+                                            +4.3%
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-white rounded-xl p-3 sm:p-5 border border-gray-200 retention-metric shadow-md transform transition-all duration-300 hover:scale-105 hover:shadow-lg relative" data-animation="slide-in-right" data-delay="1000">
+                                    <!-- Annotation flag -->
+                                    <div class="absolute -top-2 -right-2 w-auto h-5 sm:h-6 bg-purple-600 text-white text-xs font-medium px-2 rounded-full flex items-center shadow-md z-10">
+                                        <span>Top 5%</span>
+                                    </div>
+                                    
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="data-labels text-gray-700 font-semibold text-xs sm:text-sm">Customer Retention</span>
+                                        <span class="text-purple-600 data-value font-bold text-xl sm:text-2xl" data-count-value="68" data-count-suffix="%">0%</span>
+                                    </div>
+                                    
+                                    <div class="mt-2 sm:mt-3 h-3 sm:h-4 bg-gray-100 rounded-full overflow-hidden">
+                                        <div class="metric-progress-bar h-full bg-gradient-to-r from-purple-400 to-purple-600 rounded-full transition-all duration-2000 ease-out relative" style="width: 0%" data-target-width="68%">
+                                            <div class="absolute inset-0 bg-white/20 shine-effect"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-2 sm:mt-3 flex items-center justify-between text-xs sm:text-sm">
+                                        <div class="flex flex-col">
+                                            <span class="text-gray-500">Previous</span>
+                                            <span class="font-medium">62%</span>
+                                        </div>
+                                        <div class="flex items-center text-purple-600 font-medium bg-purple-50 px-2 py-1 rounded-full">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd" />
+                                            </svg>
+                                            +6%
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- View More Insights Button -->
+                            <div class="text-center mt-8">
+                                <a href="/marketplace2" class="inline-flex items-center bg-primary hover:bg-primary/90 text-white font-semibold px-8 py-4 rounded-lg shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 ab-track-cta" data-cta-type="buyer_insights" data-cta-text="Explore Business Opportunities" data-cta-location="ai_insights">
+                                    Explore Business Opportunities
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                    </svg>
+                                </a>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="py-24 bg-black relative overflow-hidden" id="features-section" data-section-animation="features" style="opacity: 1 !important; visibility: visible !important;">
+            <div class="absolute top-0 left-0 w-full h-full opacity-10" style="opacity: 0.1 !important; visibility: visible !important;">
+                <div class="grid-pattern"></div>
+            </div>
+            
+            <div class="container mx-auto px-6 relative z-10" style="opacity: 1 !important;">
+                <div class="text-center mb-16" data-scroll-animation="fadeInUp" data-animation-delay="0" style="opacity: 1 !important; transform: translateY(0) !important;">
+                    <h2 class="text-3xl md:text-5xl font-bold mb-6" data-scroll-animation="slideInUp" data-animation-delay="200" style="opacity: 1 !important; transform: translateY(0) !important;"><span class="text-gradient-animated">Powerful Tools</span> for Business Success</h2>
+                    <p class="text-xl text-gray-300 max-w-3xl mx-auto" data-scroll-animation="fadeInUp" data-animation-delay="400" style="opacity: 1 !important; transform: translateY(0) !important;">Our AI-powered platform delivers the insights and analytics you need to maximize your business value</p>
+                </div>
+                  <!-- Feature Cards Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8" data-scroll-animation="staggeredChildren" data-stagger="200">                    <!-- Feature Card 1 - Real-time Valuation -->
+                    <div class="feature-card bg-dark-light/30 backdrop-blur-sm rounded-xl overflow-hidden border border-gray-800/50 h-full flex flex-col transition-all duration-300" tabindex="0" data-knowledgegraphmemory="feature-valuation" data-scroll-animation="slideInLeft" data-animation-delay="0">
+                        <div class="relative p-1">
+                            <div class="glow-circle absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"></div>
+                            <img src="/figma design exports/images/pose1 no background.png" alt="Real-time Valuation" class="h-48 w-full object-contain z-10">
+                        </div>
+                        <div class="p-6 flex-grow">
+                            <h3 class="text-2xl font-bold mb-3">Smart Valuation</h3>
+                            <p class="text-gray-300">Get accurate, data-driven business valuations in minutes, not weeks. Our AI analyzes thousands of comparable sales to maximize your business's market value.</p>
+                            <div class="mt-4 flex items-center text-blue-400 text-sm font-medium">
+                                <span>Increase value by 22% on average</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Feature Card 2 - Growth Analysis -->
+                    <div class="feature-card bg-dark-light/30 backdrop-blur-sm rounded-xl overflow-hidden border border-gray-800/50 h-full flex flex-col transition-all duration-300" tabindex="0" data-knowledgegraphmemory="feature-growth" data-scroll-animation="slideInUp" data-animation-delay="200">
+                        <div class="relative p-1">
+                            <div class="glow-circle purple absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"></div>
+                            <img src="/figma design exports/images/pose2 no background.png" alt="Growth Analysis" class="h-48 w-full object-contain z-10">
+                        </div>
+                        <div class="p-6 flex-grow">
+                            <h3 class="text-2xl font-bold mb-3">Growth Intelligence</h3>
+                            <p class="text-gray-300">Uncover hidden growth opportunities with predictive analytics that identify trends before they emerge. Make data-driven decisions that boost your business value.</p>
+                            <div class="mt-4 flex items-center text-purple-400 text-sm font-medium">
+                                <span>Discover 3x more growth opportunities</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Feature Card 3 - Market Sentiment -->
+                    <div class="feature-card bg-dark-light/30 backdrop-blur-sm rounded-xl overflow-hidden border border-gray-800/50 h-full flex flex-col transition-all duration-300" tabindex="0" data-knowledgegraphmemory="feature-sentiment" data-scroll-animation="slideInRight" data-animation-delay="400">
+                        <div class="relative p-1">
+                            <div class="glow-circle green absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"></div>
+                            <img src="/figma design exports/images/pose 3 magnifying glass no background 1.png" alt="Market Sentiment" class="h-48 w-full object-contain z-10">
+                        </div>
+                        <div class="p-6 flex-grow">
+                            <h3 class="text-2xl font-bold mb-3">Market Pulse</h3>
+                            <p class="text-gray-300">Time your market entry perfectly with real-time sentiment analysis. Know exactly when buyer demand is highest for maximum leverage in negotiations.</p>
+                            <div class="mt-4 flex items-center text-blue-400 text-sm font-medium">
+                                <span>Close deals 37% faster</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>        </section>            <section class="journey-section journey-section-solid-bg py-20 md:py-32" aria-label="Business Success Journey" data-section-animation="journey" style="opacity: 1 !important; visibility: visible !important;">
+                <!-- Background elements with improved layering -->
+                <div class="absolute inset-0 bg-white z-[-1]" style="opacity: 1 !important;"></div>
+                <div class="journey-section-background" style="opacity: 1 !important;"></div>
+                
+                <!-- Enhanced decorative elements -->
+                <div class="bg-decoration-circle purple"></div>
+                <div class="bg-decoration-circle blue"></div>
+                <div class="bg-decoration-circle teal"></div>
+                
+                <!-- New background glow accent element -->
+                <div class="glow-accent" aria-hidden="true"></div>
+                
+                <!-- Improved grid pattern with better opacity -->
+                <div class="absolute inset-0 z-0 opacity-3">
+                    <div class="grid-pattern-white"></div>
+                </div>
+                
+                <div class="container mx-auto px-4 md:px-8 relative z-10">
+                    <!-- Enhanced section header with animation -->
+                    <header class="text-center mb-16 md:mb-20" data-scroll-animation="fadeInUp" data-animation-delay="0">
+                        <h2 class="text-4xl md:text-5xl font-bold mb-6 text-gray-900" data-scroll-animation="slideInUp" data-animation-delay="200">Your journey to <span class="text-gradient-animated">business ownership</span></h2>
+                        <p class="text-gray-700 text-xl leading-relaxed max-w-3xl mx-auto font-medium" data-scroll-animation="fadeInUp" data-animation-delay="400">
+                            Find and acquire your perfect business with our AI-powered platform that connects you directly with verified sellers and provides comprehensive due diligence support.
+                        </p>
+                    </header>
+
+                    <!-- Modern journey card grid with improved accessibility -->
+                    <div class="journey-grid" aria-live="polite" data-scroll-animation="staggeredChildren" data-stagger="300">
+                        <!-- Step 1: Browse Verified Businesses - Enhanced with better interactions -->
+                        <article class="journey-card" data-step="1" tabindex="0" data-scroll-animation="slideInLeft" data-animation-delay="0">
+                            <div class="journey-card-inner">
+                                <header class="journey-card-header">
+                                    <div class="journey-icon-container" aria-hidden="true">
+                                        <!-- Custom SVG with better styling -->
+                                        <svg class="journey-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M11 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V20C2 20.5304 2.21071 21.0391 2.58579 21.4142C2.96086 21.7893 3.46957 22 4 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M18 6L22 2L20 0L16 4L18 6Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                        <span class="journey-step-number" aria-label="Step 1">1</span>
+                                    </div>
+                                    <h3 class="journey-card-title">Browse Verified Businesses</h3>
+                                </header>
+                                <div class="journey-card-content">
+                                    <p class="journey-card-description">
+                                        Explore our curated marketplace of verified business opportunities. Filter by industry, size, location, and financial performance to find businesses that match your investment criteria.
+                                    </p>
+                                    <div class="journey-card-visual">
+                                        <div class="journey-visual-header">
+                                            <div class="flex items-center gap-3">
+                                                <div class="journey-visual-icon" aria-hidden="true">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                                        <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"/>
+                                                    </svg>
+                                                </div>
+                                                <h4>Available Businesses</h4>
+                                            </div>
+                                            <div class="journey-badge">Verified</div>
+                                        </div>
+                                        <div class="journey-visual-grid">
+                                            <div class="journey-result-card" tabindex="0">
+                                                <div class="journey-result-header">
+                                                    <h5>Tech Services</h5>
+                                                    <span class="journey-match-rate">£750K</span>
+                                                </div>
+                                                <div class="journey-result-details">
+                                                    <p>Revenue: £300K</p>
+                                                    <p>Growth: +15% YoY</p>
+                                                </div>
+                                            </div>
+                                            <div class="journey-result-card" tabindex="0">
+                                                <div class="journey-result-header">
+                                                    <h5>E-commerce</h5>
+                                                    <span class="journey-match-rate">£650K</span>
+                                                </div>
+                                                <div class="journey-result-details">
+                                                    <p>Revenue: £250K</p>
+                                                    <p>Industry: Retail</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="journey-card-footer">
+                                    <div class="journey-card-progress">
+                                        <div class="journey-step-indicator"></div>
+                                        <div class="journey-step-indicator"></div>
+                                        <div class="journey-step-indicator"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
+                          <!-- Step 2: Get Due Diligence Reports - Enhanced with better interactions -->
+                        <article class="journey-card" data-step="2" tabindex="0" data-scroll-animation="slideInUp" data-animation-delay="300">
+                            <div class="journey-card-inner">
+                                <header class="journey-card-header">
+                                    <div class="journey-icon-container" aria-hidden="true">
+                                        <svg class="journey-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M14 2V8H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M16 13H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M16 17H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M10 9H9H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                        <span class="journey-step-number" aria-label="Step 2">2</span>
+                                    </div>
+                                    <h3 class="journey-card-title">Get Due Diligence Reports</h3>
+                                </header>
+                                <div class="journey-card-content">
+                                    <p class="journey-card-description">
+                                        Access comprehensive financial reports, legal documentation, and business performance data. Our AI analyzes key metrics and highlights potential risks and opportunities for each business.
+                                    </p>
+                                    <div class="journey-card-visual">
+                                        <div style="position: relative; box-sizing: content-box; width: 100%; aspect-ratio: 16/9; padding: 20px 0;">
+                                            <iframe src="https://app.supademo.com/embed/cm9ihwub02li4ljv5x9uy5g5k?embed_v=2" loading="lazy" title="Due Diligence Demo" allow="clipboard-write" frameborder="0" webkitallowfullscreen="true" mozallowfullscreen="true" allowfullscreen class="journey-iframe" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="journey-card-footer">
+                                    <div class="journey-card-progress">
+                                        <div class="journey-step-indicator"></div>
+                                        <div class="journey-step-indicator"></div>
+                                        <div class="journey-step-indicator"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
+                          <!-- Step 3: Connect & Acquire - Enhanced with better interactions -->
+                        <article class="journey-card" data-step="3" tabindex="0" data-scroll-animation="slideInRight" data-animation-delay="600">
+                            <div class="journey-card-inner">
+                                <header class="journey-card-header">
+                                    <div class="journey-icon-container" aria-hidden="true">
+                                        <svg class="journey-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M16 4H18C18.5304 4 19.0391 4.21071 19.4142 4.58579C19.7893 4.96086 20 5.46957 20 6V18C20 18.5304 19.7893 19.0391 19.4142 19.4142C19.0391 19.7893 18.5304 20 18 20H6C5.46957 20 4.96086 19.7893 4.58579 19.4142C4.21071 19.0391 4 18.5304 4 18V6C4 5.46957 4.21071 4.96086 4.58579 4.58579C4.96086 4.21071 5.46957 4 6 4H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M15 2H9C8.44772 2 8 2.44772 8 3V5C8 5.55228 8.44772 6 9 6H15C15.5523 6 16 5.55228 16 5V3C16 2.44772 15.5523 2 15 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                        <span class="journey-step-number" aria-label="Step 3">3</span>
+                                    </div>
+                                    <h3 class="journey-card-title">Connect & Acquire</h3>
+                                </header>
+                                <div class="journey-card-content">
+                                    <p class="journey-card-description">
+                                        Connect directly with business owners through our secure platform. Get expert support throughout the acquisition process, from initial contact to deal completion and business transfer.
+                                    </p>
+                                    <div class="journey-card-visual">
+                                        <img src="/figma design exports/images/Arzani-seller-visualiser.webp" alt="Arzani Buyer Connection Platform" class="journey-image" loading="lazy" />
+                                        <div class="journey-analysis-metrics">
+                                            <div class="journey-metric-row">
+                                                <div class="journey-metric-label">Deal Success Rate</div>
+                                                <div class="journey-metric-value">92%</div>
+                                            </div>
+                                            <div class="journey-progress-bar">
+                                                <div class="journey-progress-fill" style="width: 92%"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="journey-card-footer">
+                                    <div class="journey-card-progress">
+                                        <div class="journey-step-indicator"></div>
+                                        <div class="journey-step-indicator"></div>
+                                        <div class="journey-step-indicator"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+                    
+                    <!-- Enhanced Bottom CTA area with better accessibility -->
+                    <footer class="journey-footer bg-white" data-animation="fade-in-up" style="background-color: white !important; color: black !important; padding: 2.5rem; border-radius: 1rem; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15); margin: 3rem auto; max-width: 800px; position: relative; z-index: 10; border: none !important; outline: none !important;">
+                        <h3 class="text-2xl font-bold mb-6" style="color: #1a202c !important; border: none !important;">Ready to find your perfect business acquisition opportunity?</h3>
+                        <div class="journey-cta-buttons" style="border: none !important;">
+                            <a href="/marketplace2" class="journey-cta-primary ab-track-cta" aria-label="Browse available businesses" style="border-color: transparent !important;" data-cta-type="buyer_journey" data-cta-text="Browse Businesses Now" data-cta-location="journey_section">
+                                Browse Businesses Now
+                            </a>
+                            <a href="/buyer-dashboard" class="journey-cta-secondary ab-track-cta" aria-label="Start your acquisition journey" data-cta-type="buyer_secondary" data-cta-text="Start Your Search" data-cta-location="journey_section">
+                                Start Your Search
+                            </a>
+                        </div>
+                    </footer>
+                </div>
+        </section>
+
+        
+
+        <!-- Enhanced Customer Testimonials Section -->
+        <section class="testimonials-section py-20 md:py-32 bg-dark relative overflow-hidden">
+            <!-- Background elements -->
+            <div class="testimonial-bg-element"></div>
+            <div class="testimonial-bg-element-2"></div>
+            
+            <!-- Background grid pattern -->
+            <div class="absolute inset-0 z-0 opacity-10">
+                <div class="grid-pattern"></div>
+            </div>
+            
+            <div class="container mx-auto px-4 md:px-6 relative z-10">
+                <div class="text-center mb-12 md:mb-16" data-animation="fade-in-up">
+                    <h2 class="text-3xl md:text-5xl font-bold mb-6">What Our <span class="text-gradient-animated">Buyers</span> Say</h2>
+                    <p class="text-xl text-gray-300 max-w-3xl mx-auto">
+                        Hear from successful business owners who found and acquired their perfect businesses through our platform with confidence and expert support.
+                    </p>
+                </div>
+                
+                <!-- Testimonials Carousel -->
+                <div class="testimonials-scroll-container">
+                    <!-- Navigation Buttons -->
+                    <button id="scroll-left" class="testimonial-nav-button">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                    </button>
+                    <button id="scroll-right" class="testimonial-nav-button">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </button>
+                       <!-- Scrollable Testimonial Cards -->
+                    <div class="testimonials-wrapper">
+                        <!-- Testimonial 1 -->
+                        <div class="testimonial-card">
+                            <div class="testimonial-quote">"</div>
+                            <div class="testimonial-content">
+                                <p class="mb-6">This marketplace helped me achieve a 32% increase in my restaurant’s valuation in just six months. Their in‐depth market analysis revealed opportunities I never would have discovered on my own.</p>
+                                <div class="flex items-center justify-between mt-auto">
+                                    <div class="flex items-center gap-3">
+                                        <div class="user-avatar">
+                                            <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="User" class="w-full h-full object-cover">
+                                        </div>
+                                        <div>
+                                            <h4 class="font-bold text-sm">Michael Carter</h4>
+                                            <p class="text-xs text-gray-400">Restaurant Owner (Buyer)</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <div class="social-icon hover:bg-gray-800/50 rounded">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                                <path d="M0 1.146C0 .513.526 0 1.175 0h13.65C15.474 0 16 .513 16 1.146v13.708c0 .633-.526 1.146-1.175 1.146H1.175C.526 16 0 15.487 0 14.854V1.146zm4.943 12.248V6.169H2.542v7.225h2.401zm-1.2-8.212c.837 0 1.358-.554 1.358-1.248-.015-.709-.52-1.248-1.342-1.248-.822 0-1.359.54-1.359 1.248 0 .694.521 1.248 1.327 1.248h.016zm4.908 8.212V9.359c0-.216.016-.432.08-.586.173-.431.568-.878 1.232-.878.869 0 1.216.662 1.216 1.634v3.865h2.401V9.25c0-2.22-1.184-3.252-2.764-3.252-1.274 0-1.845.7-2.165 1.193v.025h-.016a5.54 5.54 0 0 1 .016-.025V6.169h-2.4c.03.678 0 7.225 0 7.225h2.4z"/>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Testimonial 2 -->
+                        <div class="testimonial-card">
+                            <div class="testimonial-quote">"</div>
+                            <div class="testimonial-content">
+                                <p class="mb-6">As a business broker, this marketplace has completely transformed my approach to valuations. Their detailed market research and trend insights have enabled my clients to secure sale prices that are, on average, 18% higher than expected.</p>
+                                <div class="flex items-center justify-between mt-auto">
+                                    <div class="flex items-center gap-3">
+                                        <div class="user-avatar">
+                                            <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="User" class="w-full h-full object-cover">
+                                        </div>
+                                        <div>
+                                            <h4 class="font-bold text-sm">Sarah Johnson</h4>
+                                            <p class="text-xs text-gray-400">Business Broker, Acquisition Partners</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <div class="social-icon hover:bg-gray-800/50 rounded">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                                <path d="M0 1.146C0 .513.526 0 1.175 0h13.65C15.474 0 16 .513 16 1.146v13.708c0 .633-.526 1.146-1.175 1.146H1.175C.526 16 0 15.487 0 14.854V1.146zm4.943 12.248V6.169H2.542v7.225h2.401zm-1.2-8.212c.837 0 1.358-.554 1.358-1.248-.015-.709-.52-1.248-1.342-1.248-.822 0-1.359.54-1.359 1.248 0 .694.521 1.248 1.327 1.248h.016zm4.908 8.212V9.359c0-.216.016-.432.08-.586.173-.431.568-.878 1.232-.878.869 0 1.216.662 1.216 1.634v3.865h2.401V9.25c0-2.22-1.184-3.252-2.764-3.252-1.274 0-1.845.7-2.165 1.193v.025h-.016a5.54 5.54 0 0 1 .016-.025V6.169h-2.4c.03.678 0 7.225 0 7.225h2.4z"/>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Testimonial 3 -->
+                        <div class="testimonial-card">
+                            <div class="testimonial-quote">"</div>
+                            <div class="testimonial-content">
+                                <p class="mb-6">The clear market insights provided by this marketplace allowed us to negotiate a deal that exceeded our initial expectations by 40%. Their straightforward advice helped us focus on what really mattered during the sale.</p>
+                                <div class="flex items-center justify-between mt-auto">
+                                    <div class="flex items-center gap-3">
+                                        <div class="user-avatar">
+                                            <img src="https://randomuser.me/api/portraits/men/86.jpg" alt="User" class="w-full h-full object-cover">
+                                        </div>
+                                        <div>
+                                            <h4 class="font-bold text-sm">David Chen</h4>
+                                            <p class="text-xs text-gray-400">Owner, Urban Eats</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <div class="social-icon hover:bg-gray-800/50 rounded">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                                <path d="M0 1.146C0 .513.526 0 1.175 0h13.65C15.474 0 16 .513 16 1.146v13.708c0 .633-.526 1.146-1.175 1.146H1.175C.526 16 0 15.487 0 14.854V1.146zm4.943 12.248V6.169H2.542v7.225h2.401zm-1.2-8.212c.837 0 1.358-.554 1.358-1.248-.015-.709-.52-1.248-1.342-1.248-.822 0-1.359.54-1.359 1.248 0 .694.521 1.248 1.327 1.248h.016zm4.908 8.212V9.359c0-.216.016-.432.08-.586.173-.431.568-.878 1.232-.878.869 0 1.216.662 1.216 1.634v3.865h2.401V9.25c0-2.22-1.184-3.252-2.764-3.252-1.274 0-1.845.7-2.165 1.193v.025h-.016a5.54 5.54 0 0 1 .016-.025V6.169h-2.4c.03.678 0 7.225 0 7.225h2.4z"/>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Testimonial 4 -->
+                        <div class="testimonial-card">
+                            <div class="testimonial-quote">"</div>
+                            <div class="testimonial-content">
+                                <p class="mb-6">After listing my business on this marketplace for a year, I successfully sold my café for 2.4 times the initial offer. Their precise valuations and expert guidance were instrumental in connecting me with the right buyers.</p>
+                                <div class="flex items-center justify-between mt-auto">
+                                    <div class="flex items-center gap-3">
+                                        <div class="user-avatar">
+                                            <img src="https://randomuser.me/api/portraits/women/15.jpg" alt="User" class="w-full h-full object-cover">
+                                        </div>
+                                        <div>
+                                            <h4 class="font-bold text-sm">Amanda Rodriguez</h4>
+                                            <p class="text-xs text-gray-400">Former Owner, Maple Cafe</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <div class="social-icon hover:bg-gray-800/50 rounded">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                                <path d="M0 1.146C0 .513.526 0 1.175 0h13.65C15.474 0 16 .513 16 1.146v13.708c0 .633-.526 1.146-1.175 1.146H1.175C.526 16 0 15.487 0 14.854V1.146zm4.943 12.248V6.169H2.542v7.225h2.401zm-1.2-8.212c.837 0 1.358-.554 1.358-1.248-.015-.709-.52-1.248-1.342-1.248-.822 0-1.359.54-1.359 1.248 0 .694.521 1.248 1.327 1.248h.016zm4.908 8.212V9.359c0-.216.016-.432.08-.586.173-.431.568-.878 1.232-.878.869 0 1.216.662 1.216 1.634v3.865h2.401V9.25c0-2.22-1.184-3.252-2.764-3.252-1.274 0-1.845.7-2.165 1.193v.025h-.016a5.54 5.54 0 0 1 .016-.025V6.169h-2.4c.03.678 0 7.225 0 7.225h2.4z"/>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Testimonial 5 -->
+                        <div class="testimonial-card">
+                            <div class="testimonial-quote">"</div>
+                            <div class="testimonial-content">
+                                <p class="mb-6">As an investor, I have found this marketplace to be an essential resource for identifying promising acquisition opportunities. The thorough market research and clear evaluations give me the confidence to invest wisely.</p>
+                                <div class="flex items-center justify-between mt-auto">
+                                    <div class="flex items-center gap-3">
+                                        <div class="user-avatar">
+                                            <img src="https://randomuser.me/api/portraits/men/59.jpg" alt="User" class="w-full h-full object-cover">
+                                        </div>
+                                        <div>
+                                            <h4 class="font-bold text-sm">Thomas Wright</h4>
+                                            <p class="text-xs text-gray-400">Angel Investor</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <div class="social-icon hover:bg-gray-800/50 rounded">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                                <path d="M0 1.146C0 .513.526 0 1.175 0h13.65C15.474 0 16 .513 16 1.146v13.708c0 .633-.526 1.146-1.175 1.146H1.175C.526 16 0 15.487 0 14.854V1.146zm4.943 12.248V6.169H2.542v7.225h2.401zm-1.2-8.212c.837 0 1.358-.554 1.358-1.248-.015-.709-.52-1.248-1.342-1.248-.822 0-1.359.54-1.359 1.248 0 .694.521 1.248 1.327 1.248h.016zm4.908 8.212V9.359c0-.216.016-.432.08-.586.173-.431.568-.878 1.232-.878.869 0 1.216.662 1.216 1.634v3.865h2.401V9.25c0-2.22-1.184-3.252-2.764-3.252-1.274 0-1.845.7-2.165 1.193v.025h-.016a5.54 5.54 0 0 1 .016-.025V6.169h-2.4c.03.678 0 7.225 0 7.225h2.4z"/>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Testimonial Navigation Dots -->
+                    <div class="testimonial-dots flex justify-center gap-2">
+                        <div class="testimonial-dot"></div>
+                        <div class="testimonial-dot"></div>
+                        <div class="testimonial-dot"></div>
+                        <div class="testimonial-dot"></div>
+                        <div class="testimonial-dot"></div>
+                    </div>
+                </div>
+                  <!-- Testimonial Stats -->
+            </div>
+        </section>        <div class="container mx-auto px-4 md:px-6 relative z-10">
+            <div class="text-center mb-12 md:mb-16" data-scroll-animation="fadeInUp" data-animation-delay="0">
+                <h2 class="text-3xl md:text-5xl font-bold mb-6" data-scroll-animation="slideInUp" data-animation-delay="200">What Our <span class="text-gradient-animated">Buyers</span> Say</h2>
+                <p class="text-xl text-gray-300 max-w-3xl mx-auto" data-scroll-animation="fadeInUp" data-animation-delay="400">
+                    Don't just take our word for it-hear from buyers and investors who have discovered 
+                    valuable opportunities and made successful deals through Azani Marketplace.
+                </p>
+            </div>
+                <!-- Animated background elements -->
+                <div class="testimonial-bg-element"></div>
+                <div class="testimonial-bg-element-2"></div>
+                
+                <!-- Horizontal scrollable testimonials container -->
+                <div class="testimonials-scroll-container relative" data-scroll-animation="fadeInUp" data-animation-delay="600">
+                    <!-- Arrow navigation - updated IDs for the buyers section -->
+                    <button class="testimonial-nav-button left-0 -ml-4" id="scroll-left-buyers">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+                    <button class="testimonial-nav-button right-0 -mr-4" id="scroll-right-buyers">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+                      <!-- Scrollable testimonials wrapper -->
+                    <div class="testimonials-wrapper" data-scroll-animation="staggeredChildren" data-stagger="200">
+                        <!-- Testimonial 1 -->
+                        <div class="testimonial-card" data-scroll-animation="slideInLeft" data-animation-delay="0">
+                            <div class="flex items-center mb-4">
+                                <img src="/figma design exports/copydesigns/image.webp" alt="User" class="w-12 h-12 rounded-full border-2 border-gray-200 object-cover">
+                                <div class="ml-4">
+                                    <h4 class="font-bold text-white">James Wilson</h4>
+                                    <p class="text-gray-400 text-sm">Business Owner</p>
+                                </div>
+                                <div class="ml-auto">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="testimonial-content">
+                                <p class="text-gray-200 text-base leading-relaxed mb-3">
+                                    Using this marketplace, I discovered the perfect opportunity to acquire my business. Their clear, honest market data and dedicated support made the buying process straightforward and transparent. I now own a thriving business that I found with confidence.
+                                </p>
+                                <div class="flex items-center text-gray-500 text-sm mt-4 pt-4 border-t border-gray-800">
+                                    <span>5:48 PM</span>
+                                    <span class="mx-2">•</span>
+                                    <span>Sep 15, 2023</span>
+                                </div>
+                            </div>
+                        </div>
+                          <!-- Testimonial 2 -->
+                        <div class="testimonial-card" data-scroll-animation="slideInUp" data-animation-delay="200">
+                            <div class="flex items-center mb-4">
+                                <img src="/figma design exports/copydesigns/image-2.webp" alt="User" class="w-12 h-12 rounded-full border-2 border-gray-200 object-cover">
+                                <div class="ml-4">
+                                    <h4 class="font-bold text-white">Sarah Johnson</h4>
+                                    <p class="text-gray-400 text-sm">Investor</p>
+                                </div>
+                                <div class="ml-auto">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="testimonial-content">
+                                <p class="text-gray-200 text-base leading-relaxed mb-3">
+                                    The curated listings and detailed insights provided by this marketplace made all the difference. In just six months, I successfully acquired two profitable ventures, each matching my vision and performing even better than I expected.
+                                </p>
+                                <div class="flex items-center text-gray-500 text-sm mt-4 pt-4 border-t border-gray-800">
+                                    <span>6:19 AM</span>
+                                    <span class="mx-2">•</span>
+                                    <span>Sep 7, 2023</span>
+                                </div>
+                            </div>
+                        </div>
+                          <!-- Testimonial 3 -->
+                        <div class="testimonial-card" data-scroll-animation="slideInRight" data-animation-delay="400">
+                            <div class="flex items-center mb-4">
+                                <img src="/figma design exports/copydesigns/image-4.webp" alt="User" class="w-12 h-12 rounded-full border-2 border-gray-200 object-cover">
+                                <div class="ml-4">
+                                    <h4 class="font-bold text-white">David Chen</h4>
+                                    <p class="text-gray-400 text-sm">Serial Entrepreneur</p>
+                                </div>
+                                <div class="ml-auto">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-pink-500" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.207 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.041.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678c-3.405 0-6.162 2.76-6.162 6.162 0 3.405 2.76 6.162 6.162 6.162 3.405 0 6.162-2.76 6.162-6.162 0-3.405-2.76-6.162-6.162-6.162zM12 16c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm7.846-10.405c0 .795-.646 1.44-1.44 1.44-.795 0-1.44-.646-1.44-1.44 0-.794.646-1.439 1.44-1.439.793-.001 1.44.645 1.44 1.439z"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="testimonial-content">
+                                <p class="text-gray-200 text-base leading-relaxed mb-3">
+                                    Buying a business through this platform was a game-changer. With comprehensive market information and personalized guidance every step of the way, I secured a company that fits perfectly with my goals. The entire experience was seamless and stress-free.
+                                </p>
+                                <div class="flex items-center text-gray-500 text-sm mt-4 pt-4 border-t border-gray-800">
+                                    <span>12:27 PM</span>
+                                    <span class="mx-2">•</span>
+                                    <span>Jun 21, 2023</span>
+                                </div>
+                            </div>
+                        </div>
+                          <!-- Testimonial 4 -->
+                        <div class="testimonial-card" data-scroll-animation="slideInLeft" data-animation-delay="600">
+                            <div class="flex items-center mb-4">
+                                <img src="/figma design exports/copydesigns/image-3.webp" alt="User" class="w-12 h-12 rounded-full border-2 border-gray-200 object-cover">
+                                <div class="ml-4">
+                                    <h4 class="font-bold text-white">Michael Rodriguez</h4>
+                                    <p class="text-gray-400 text-sm">Business Broker</p>
+                                </div>
+                                <div class="ml-auto">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="testimonial-content">
+                                <p class="text-gray-200 text-base leading-relaxed mb-3">
+                                    As someone familiar with the industry, I value clear and reliable data. This marketplace delivered exactly that, enabling me to purchase a business with complete confidence. Their detailed analysis and support ensured a smooth acquisition process, and I now proudly own my venture.
+                                </p>
+                                <div class="flex items-center text-gray-500 text-sm mt-4 pt-4 border-t border-gray-800">
+                                    <span>3:14 PM</span>
+                                    <span class="mx-2">•</span>
+                                    <span>Aug 12, 2023</span>
+                                </div>
+                            </div>
+                        </div>
+                          <!-- Testimonial 5 -->
+                        <div class="testimonial-card" data-scroll-animation="slideInUp" data-animation-delay="800">
+                            <div class="flex items-center mb-4">
+                                <img src="/figma design exports/copydesigns/image-5.webp" alt="User" class="w-12 h-12 rounded-full border-2 border-gray-200 object-cover">
+                                <div class="ml-4">
+                                    <h4 class="font-bold text-white">Rebecca Taylor</h4>
+                                    <p class="text-gray-400 text-sm">First-time Buyer</p>
+                                </div>
+                                <div class="ml-auto">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                                </svg>
+                                </div>
+                            </div>
+                            <div class="testimonial-content">
+                                <p class="text-gray-200 text-base leading-relaxed mb-3">
+                                    I was initially nervous about buying my first business, but this marketplace’s step-by-step guidance and thorough due diligence turned my fears into assurance. Their careful risk assessments helped me make an informed decision, and today, I’m the proud owner of a business I truly believe in.
+                                </p>
+                                <div class="flex items-center text-gray-500 text-sm mt-4 pt-4 border-t border-gray-800">
+                                    <span>10:31 AM</span>
+                                    <span class="mx-2">•</span>
+                                    <span>Jul 7, 2023</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Scroll indicator dots -->
+                    <div class="testimonial-dots flex justify-center mt-8 gap-2">
+                        <span class="testimonial-dot active" data-index="0"></span>
+                        <span class="testimonial-dot" data-index="1"></span>
+                        <span class="testimonial-dot" data-index="2"></span>
+                        <span class="testimonial-dot" data-index="3"></span>
+                        <span class="testimonial-dot" data-index="4"></span>
+                    </div>                </div>
+            </div>
+        </section><!-- FAQ Section -->
+        <section id="faq" class="py-16 md:py-24 bg-dark" data-section-animation="faq">
+            <div class="container mx-auto px-4 md:px-6">
+                <div class="flex flex-col md:flex-row gap-12">
+                    <div class="md:w-1/3" data-scroll-animation="slideInLeft" data-animation-delay="0">
+                        <h2 class="text-3xl md:text-4xl font-bold mb-4"><span class="text-gradient-animated">Questions?</span><br>Let's clear things up</h2>
+                        <p class="text-gray-400">
+                            Yes, we understand-AI-powered solutions, business automation tools, AI for market insights... a lot of big words can get confusing.
+                        </p>
+                        <p class="text-gray-400 mt-4">
+                            We're here to make it clear-check out our FAQs, and if you still feel the need to ask questions, Arzani's always ready to answer.
+                        </p>
+                    </div>
+                    
+                    <div class="md:w-2/3" data-scroll-animation="slideInRight" data-animation-delay="200">
+                        <div class="space-y-4 faq-accordion" data-scroll-animation="staggeredChildren" data-stagger="100">
+                            <div class="faq-item bg-dark-light/40 backdrop-blur-md rounded-xl p-5 border border-gray-800" data-scroll-animation="fadeInUp" data-animation-delay="0">
+                                <button class="faq-question w-full flex justify-between items-center text-left">
+                                    <h5 class="font-semibold text-xl">What makes Arzani's marketplace different?</h5>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 faq-icon transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                                <div class="faq-answer hidden mt-4 text-gray-400">
+                                    <p>Unlike traditional marketplaces, Arzani integrates AI-powered analytics and valuation tools that provide deep insights into business performance, market trends, and growth opportunities. Our platform offers personalized matching, comprehensive due diligence assistance, and data-driven decision support that traditional brokers simply can't match.</p>
+                                </div>
+                            </div>
+                            
+                            <div class="faq-item bg-dark-light/40 backdrop-blur-md rounded-xl p-5 border border-gray-800">
+                                <button class="faq-question w-full flex justify-between items-center text-left">
+                                    <h5 class="font-semibold text-xl">How long does it take to find and acquire a business through Arzani?</h5>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 faq-icon transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                                <div class="faq-answer hidden mt-4 text-gray-400">
+                                    <p>The acquisition timeline varies based on business complexity, financing arrangements, and due diligence requirements. However, our AI-powered matching and streamlined process typically helps buyers close deals 40% faster than traditional methods. Most acquisitions complete in 3-8 months, compared to the industry average of 6-12 months. Our platform provides comprehensive due diligence support and direct seller communication to accelerate the process.</p>
+                                </div>
+                            </div>
+                            
+                            <div class="faq-item bg-dark-light/40 backdrop-blur-md rounded-xl p-5 border border-gray-800">
+                                <button class="faq-question w-full flex justify-between items-center text-left">
+                                    <h5 class="font-semibold text-xl">Can I use Arzani if I'm just researching the market?</h5>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 faq-icon transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                                <div class="faq-answer hidden mt-4 text-gray-400">
+                                    <p>Absolutely! We offer a Basic plan specifically for market research purposes. You can access aggregated market data, industry trends, and basic valuation metrics without listing or purchasing a business. This is perfect for entrepreneurs considering an exit in the future or investors researching new sectors.</p>
+                                </div>
+                            </div>
+                            
+                            <!-- New FAQ Item 1 -->
+                            <div class="faq-item bg-dark-light/40 backdrop-blur-md rounded-xl p-5 border border-gray-800">
+                                <button class="faq-question w-full flex justify-between items-center text-left">
+                                    <h5 class="font-semibold text-xl">How accurate are your AI-powered business valuations?</h5>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 faq-icon transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                                <div class="faq-answer hidden mt-4 text-gray-400">
+                                    <p>Our AI valuation system combines machine learning with market data from thousands of business sales to provide estimates with 85-90% accuracy compared to final sale prices. The system analyzes over 100 factors including industry trends, growth rates, profitability metrics, and comparable sales data. For maximum accuracy, we recommend completing your full business profile and providing at least 2 years of financial data.</p>
+                                </div>
+                            </div>
+                            
+                            <!-- New FAQ Item 2 -->
+                            <div class="faq-item bg-dark-light/40 backdrop-blur-md rounded-xl p-5 border border-gray-800">
+                                <button class="faq-question w-full flex justify-between items-center text-left">
+                                    <h5 class="font-semibold text-xl">How do you ensure the security and privacy of my business data?</h5>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 faq-icon transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                                <div class="faq-answer hidden mt-4 text-gray-400">
+                                    <p>We take security and privacy extremely seriously. All data is encrypted both in transit and at rest using industry-standard protocols. Our platform uses role-based access controls, ensuring only authorized users can access your information. Financial and sensitive business data is compartmentalized and never shared without explicit permission. We comply with GDPR, CCPA, and other relevant data protection regulations, and our system undergoes regular security audits and penetration testing by independent firms.</p>
+                                </div>
+                            </div>
+                            
+                            <!-- New FAQ Item 3 -->
+                            <div class="faq-item bg-dark-light/40 backdrop-blur-md rounded-xl p-5 border border-gray-800">
+                                <button class="faq-question w-full flex justify-between items-center text-left">
+                                    <h5 class="font-semibold text-xl">What subscription plans do you offer and what features are included?</h5>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 faq-icon transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                                <div class="faq-answer hidden mt-4 text-gray-400">
+                                    <p>We offer three subscription tiers: Basic, Gold, and Platinum. The Basic plan includes business listings, basic AI insights, and marketplace access. The Platinum plan adds advanced valuation tools, detailed market analytics, priority support, and enhanced visibility for listings. Our Platinum plan includes all premium features plus custom API access, white-labeled reports, dedicated account management, and bespoke AI training for your specific business sector. Visit our pricing page for current rates and special offers. All plans start with a 14-day free trial with no credit card required.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Add spacer between FAQ and footer -->
+        <div class="py-16 bg-dark"></div>
+
+      
+        <!-- Footer with black background -->
+        <footer class="bg-black border-t border-gray-800">
+            <!-- Upper footer with navigation -->
+            <div class="container mx-auto px-6 py-16">
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-10">
+                    <!-- Company info -->
+                    <div class="md:col-span-4 space-y-6">
+                        <img src="/figma design exports/logos/white-arzani-logo.svg" alt="Arzani Logo" class="h-8">
+                        <p class="text-gray-400 text-sm pr-8 leading-relaxed">
+                            Arzani uses AI-powered insights to revolutionize how businesses are bought and sold, making transactions smarter, faster, and more profitable.
+                        </p>
+                        <div class="flex space-x-4">
+                            <a href="https://www.tiktok.com/@arzani.co.uk" class="w-9 h-9 rounded-full flex items-center justify-center bg-dark border border-gray-800 text-gray-400 hover:bg-primary/10 hover:text-white transition-colors">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/>
+                                </svg>
+                            </a>
+                            <a href="https://x.com/arzaniuk/" class="w-9 h-9 rounded-full flex items-center justify-center bg-dark border border-gray-800 text-gray-400 hover:bg-primary/10 hover:text-white transition-colors">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.107 4.107 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.096 4.096 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.109 4.109 0 001.27 5.477A4.07 4.07 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84"/>
+                                </svg>
+                            </a>
+                            <a href="https://www.instagram.com/arzani.co.uk/" class="w-9 h-9 rounded-full flex items-center justify-center bg-dark border border-gray-800 text-gray-400 hover:bg-primary/10 hover:text-white transition-colors">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M12.315 2c2.43 0 2.784.013 3.808.06 1.064.049 1.791.218 2.427.465a4.902 4.902 0 011.772 1.153 4.902 4.902 0 011.153 1.772c.247.636.416 1.363.465 2.427.048 1.067.06 1.407.06 4.123v.08c0 2.643-.012 2.987-.06 4.043-.049 1.064-.218 1.791-.465 2.427a4.902 4.902 0 01-1.153 1.772 4.902 4.902 0 01-1.772 1.153c-.636.247-1.363.416-2.427.465-1.067.048-1.407.06-4.123.06h-.08c-2.643 0-2.987-.012-4.043-.06-1.064-.049-1.791-.218-2.427-.465a4.902 4.902 0 01-1.772-1.153 4.902 4.902 0 01-1.153-1.772c-.247-.636-.416-1.363-.465-2.427-.047-1.024-.06-1.379-.06-3.808v-.63c0-2.43.013-2.784.06-3.808.049-1.064.218-1.791.465-2.427a4.902 4.902 0 011.153-1.772A4.902 4.902 0 015.45 2.525c.636-.247 1.363-.416 2.427-.465C8.901 2.013 9.256 2 11.685 2h.63zm-.081 1.802h-.468c-2.456 0-2.784.011-3.807.058-.975.045-1.504.207-1.857.344-.467.182-.8.398-1.15.748-.35.35-.566.683-.748 1.15-.137.353-.3.882-.344 1.857-.047 1.023-.058 1.351-.058 3.807v.468c0 2.456.011 2.784.058 3.807.045.975.207 1.504.344 1.857.182.466.399.8.748 1.15.35.35.683.566 1.15.748.353.137.882.3 1.857.344 1.054.048 1.37.058 4.041.058h.08c2.597 0 2.917-.01 3.96-.058.976-.045 1.505-.207 1.858-.344.466-.182.8-.398 1.15-.748.35-.35.566-.683.748-1.15.137-.353.3-.882.344-1.857.048-1.055.058-1.37.058-4.041v-.08c0-2.597-.01-2.917-.058-3.96-.045-.976-.207-1.505-.344-1.858a3.097 3.097 0 00-.748-1.15 3.098 3.098 0 00-1.15-.748c-.353-.137-.882-.3-1.857-.344-1.023-.047-1.351-.058-3.807-.058zM12 6.865a5.135 5.135 0 110 10.27 5.135 5.135 0 010-10.27zm0 1.802a3.333 3.333 0 100 6.666 3.333 3.333 0 000-6.666zm5.338-3.205a1.2 1.2 0 110 2.4 1.2 1.2 0 010-2.4z" clip-rule="evenodd"/>
+                                </svg>
+                            </a>
+                            <a href="https://www.linkedin.com/in/arzani.co.uk/" class="w-9 h-9 rounded-full flex items-center justify-center bg-dark border border-gray-800 text-gray-400 hover:bg-primary/10 hover:text-white transition-colors">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                                </svg>
+                            </a>
+                            <a href="https://www.facebook.com/share/16tLCq5fxo/?mibextid=wwXIfr" class="w-9 h-9 rounded-full flex items-center justify-center bg-dark border border-gray-800 text-gray-400 hover:bg-primary/10 hover:text-white transition-colors">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clip-rule="evenodd"/>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Navigation links -->
+                    <div class="md:col-span-2">
+                        <h5 class="text-sm font-bold tracking-wide text-gray-100 uppercase mb-4">Product</h5>
+                        <ul class="space-y-3">
+                            <li><a href="/marketplace2" class="text-gray-400 text-sm hover:text-white transition-colors">Browse Businesses</a></li>
+                            <li><a href="/ai-insights" class="text-gray-400 text-sm hover:text-white transition-colors">AI Market Insights</a></li>
+                            <li><a href="/marketplace2" class="text-gray-400 text-sm hover:text-white transition-colors">Marketplace</a></li>
+                            <li><a href="/arzani-x" class="text-gray-400 text-sm hover:text-white transition-colors">Arzani X</a></li>
+                            <li><a href="/pricing" class="text-gray-400 text-sm hover:text-white transition-colors">Pricing</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <h5 class="text-sm font-bold tracking-wide text-gray-100 uppercase mb-4">Resources</h5>
+                        <ul class="space-y-3">
+                            <li><a href="/blog" class="text-gray-400 text-sm hover:text-white transition-colors">Blog</a></li>
+                            <li><a href="/market-reports" class="text-gray-400 text-sm hover:text-white transition-colors">Market Reports</a></li>
+                            <li><a href="/guides" class="text-gray-400 text-sm hover:text-white transition-colors">Buyer Guides</a></li>
+                            <li><a href="/webinars" class="text-gray-400 text-sm hover:text-white transition-colors">Webinars</a></li>
+                            <li><a href="/faq" class="text-gray-400 text-sm hover:text-white transition-colors">FAQ</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <h5 class="text-sm font-bold tracking-wide text-gray-100 uppercase mb-4">Company</h5>
+                        <ul class="space-y-3">
+                            <li><a href="/about" class="text-gray-400 text-sm hover:text-white transition-colors">About Us</a></li>
+                            <li><a href="/careers" class="text-gray-400 text-sm hover:text-white transition-colors">Careers</a></li>
+                            <li><a href="/contact" class="text-gray-400 text-sm hover:text-white transition-colors">Contact</a></li>
+                            <li><a href="/press" class="text-gray-400 text-sm hover:text-white transition-colors">Press</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <h5 class="text-sm font-bold tracking-wide text-gray-100 uppercase mb-4">Legal</h5>
+                        <ul class="space-y-3">
+                            <li><a href="/terms" class="text-gray-400 text-sm hover:text-white transition-colors">Terms of Service</a></li>
+                            <li><a href="/privacy" class="text-gray-400 text-sm hover:text-white transition-colors">Privacy Policy</a></li>
+                            <li><a href="/cookies" class="text-gray-400 text-sm hover:text-white transition-colors">Cookie Policy</a></li>
+                            <li><a href="/security" class="text-gray-400 text-sm hover:text-white transition-colors">Security</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom footer with copyright - also in black -->
+            <div class="border-t border-gray-800 bg-black">
+                <div class="container mx-auto px-6 py-6">
+                    <div class="flex flex-col md:flex-row justify-between items-center">
+                        <div class="mt-4 text-sm text-gray-500 text-center md:text-left">
+                            © <%= new Date().getFullYear() %> Arzani. All rights reserved.
+                        </div>
+                        
+                        <div class="flex items-center mt-4 md:mt-0 space-x-6">
+                            <a href="/accessibility" class="text-gray-400 text-xs hover:text-gray-300">Accessibility</a>
+                            <span class="text-gray-700">|</span>
+                            <a href="/sitemap" class="text-gray-400 text-xs hover:text-gray-300">Sitemap</a>
+                            <span class="text-gray-700">|</span>
+                            <div class="flex items-center">
+                                <span class="text-gray-400 text-xs mr-2">Region:</span>
+                                <select class="bg-transparent text-gray-400 text-xs border-0 focus:ring-0 cursor-pointer">
+                                    <option value="uk" selected>United Kingdom</option>
+                                    <option value="us">United States</option>
+                                    <option value="eu">European Union</option>
+                                    <option value="ca">Canada</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Simplified Cookie Consent Banner -->
+    <div id="cookieConsentBanner" class="fixed bottom-0 left-0 right-0 bg-white p-4 border-t border-gray-300 z-[100] hidden shadow-lg">
+        <div class="container mx-auto px-4 md:px-6 flex flex-col md:flex-row items-center justify-between gap-4">
+            <p class="text-sm text-gray-700 text-center md:text-left">
+                We use essential cookies to make our site work. With your consent, we may also use non-essential cookies to improve user experience and analyze website traffic. By clicking “Accept All,” you agree to our website's cookie use as described in our                <a href="/cookies" class="text-blue-600 hover:underline">Cookie Policy</a>.
+            </p>
+            <div class="flex flex-shrink-0 gap-3">
+                <button id="acceptNecessary" class="border border-gray-300 bg-transparent text-gray-700 hover:bg-gray-50 text-sm px-4 py-2 rounded transition-colors">Accept Necessary</button>
+                <button id="acceptAllCookies" class="text-sm px-4 py-2 rounded text-white hover:opacity-90 transition-opacity" style="background-color: rgb(49 111 212);">Accept All</button>
+            </div>
+        </div>
+    </div>    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>    <script src="/js/navbar2.js"></script>
+    <script src="/js/testimonial-carousel.js"></script>
+    <script src="/js/ai-features.js"></script>
+    <script src="/js/feature-animations.js"></script>
+    <script src="/js/faq-accordion.js"></script>
+    <script src="/js/cookie-banner.js"></script>
+    <script src="/js/journey-animations.js"></script>
+    <script src="/js/ai-hero-animations.js"></script>
+
+    <!-- Scripts -->
+    <script src="/js/navbar2.js"></script>
+    <script src="/js/performance-optimized-animations.js"></script>
+    <script src="/js/marketplace-landing.js"></script>
+    <script src="/js/animations.js"></script>
+    <script src="/js/scroll-animations.js"></script>
+    
+    <!-- Business Slider JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            let businesses = [];
+            let currentSlide = 0;
+            let slidesToShow = 3;
+            let autoSlideInterval = null;
+            
+            // Calculate how many slides to show based on screen size
+            function calculateSlidesToShow() {
+                const width = window.innerWidth;
+                
+                // Determine slidesToShow based on screen width
+                if (width < 640) {
+                    slidesToShow = 1;
+                } else if (width < 1024) {
+                    slidesToShow = 2;
+                } else {
+                    slidesToShow = 3;
+                }
+                
+                // Update card widths and flex properties based on slidesToShow
+                const cards = document.querySelectorAll('.business-card-white');
+                const track = document.getElementById('businessSliderTrack');
+                const containerWidth = track ? track.parentNode.clientWidth : 0;
+                
+                // Calculate card width with margins
+                const cardGap = 24; // gap between cards in pixels
+                let cardWidth;
+                
+                if (slidesToShow === 1) {
+                    cardWidth = containerWidth - (cardGap * 2) - 30; // Single card, less margin
+                } else if (slidesToShow === 2) {
+                    cardWidth = (containerWidth / 2) - (cardGap * 1.5); // Two cards
+                } else {
+                    cardWidth = (containerWidth / 3) - (cardGap * 1.2); // Three cards
+                }
+                
+                // Apply width to cards
+                cards.forEach(card => {
+                    // Set flex basis and width
+                    if (slidesToShow === 1) {
+                        card.style.flex = '0 0 calc(100% - 16px)';
+                        card.style.maxWidth = `${cardWidth}px`;
+                    } else if (slidesToShow === 2) {
+                        card.style.flex = '0 0 calc(50% - 16px)';
+                        card.style.maxWidth = `${cardWidth}px`;
+                    } else {
+                        card.style.flex = '0 0 calc(33.333% - 16px)';
+                        card.style.maxWidth = `${cardWidth}px`;
+                    }
+                });
+                
+                // Adjust current slide if needed to avoid empty space
+                if (businesses && businesses.length) {
+                    const maxSlide = Math.max(0, Math.ceil(businesses.length / slidesToShow) - 1);
+                    if (currentSlide > maxSlide) {
+                        currentSlide = maxSlide;
+                        updateSlider();
+                    }
+                }
+            }
+
+            // Show loading state
+            function showLoadingState() {
+                const loadingState = document.querySelector('.loading-state-white');
+                if (loadingState) {
+                    loadingState.style.display = 'flex';
+                }
+            }
+
+            // Hide loading state
+            function hideLoadingState() {
+                const loadingState = document.querySelector('.loading-state-white');
+                if (loadingState) {
+                    loadingState.style.display = 'none';
+                }
+            }
+
+            // Show error message
+            function showErrorMessage() {
+                const track = document.getElementById('businessSliderTrack');
+                if (track) {
+                    track.innerHTML = `
+                        <div class="w-full flex items-center justify-center py-16">
+                            <div class="text-center">
+                                <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <p class="text-gray-600 text-lg">Unable to load featured businesses</p>
+                                <p class="text-gray-500 text-sm mt-2">Please try again later</p>
+                            </div>
+                        </div>
+                    `;
+                    track.style.opacity = '1';
+                }
+            }
+
+            // Show no data message
+            function showNoDataMessage() {
+                const track = document.getElementById('businessSliderTrack');
+                if (track) {
+                    track.innerHTML = `
+                        <div class="w-full flex items-center justify-center py-16">
+                            <div class="text-center">
+                                <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                                </svg>
+                                <p class="text-gray-600 text-lg">No featured businesses available</p>
+                                <p class="text-gray-500 text-sm mt-2">Check back soon for new listings</p>
+                            </div>
+                        </div>
+                    `;
+                    track.style.opacity = '1';
+                }
+            }
+
+            // Fetch business data from API
+            async function fetchBusinessData() {
+                showLoadingState();
+                try {
+                    const response = await fetch('/api/business-preview/featured');
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch business data');
+                    }
+                    businesses = await response.json();
+                    if (businesses.length > 0) {
+                        renderSlider();
+                        initializeNavButtons();
+                        calculateSlidesToShow();
+                        startAutoSlide();
+                    } else {
+                        showNoDataMessage();
+                    }
+                } catch (error) {
+                    console.error('Error fetching business data:', error);
+                    showErrorMessage();
+                } finally {
+                    hideLoadingState();
+                }
+            }
+
+            // Format currency values
+            function formatCurrency(value) {
+                if (value >= 1000000) {
+                    return '£' + (value / 1000000).toFixed(1) + 'M';
+                } else if (value >= 1000) {
+                    return '£' + (value / 1000).toFixed(0) + 'K';
+                } else {
+                    return '£' + value.toLocaleString();
+                }
+            }
+
+            // Create business card HTML with white theme styling
+            function createBusinessCard(business) {
+                return `
+                    <div class="business-card-white transition-all duration-300 hover:-translate-y-1 overflow-hidden" onclick="window.location.href='/signup'">
+                        <div class="business-card-header-white">
+                            <div class="business-card-category-white">
+                                ${business.industry || 'Business'}
+                            </div>
+                            <h3 class="business-card-title-white">
+                                ${business.name}
+                            </h3>
+                            <div class="business-card-location-white">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                ${business.location || 'UK'}
+                            </div>
+                        </div>
+                        <div class="business-card-body-white">
+                            <div class="business-metrics-white">
+                                <div class="metric-item-white" data-type="price">
+                                    <div class="metric-label-white">ASKING PRICE</div>
+                                    <div class="metric-value-white">${formatCurrency(business.price)}</div>
+                                </div>
+                                <div class="metric-item-white" data-type="revenue">
+                                    <div class="metric-label-white">REVENUE</div>
+                                    <div class="metric-value-white">${formatCurrency(business.revenue)}</div>
+                                </div>
+                                <div class="metric-item-white" data-type="profit">
+                                    <div class="metric-label-white">PROFIT</div>
+                                    <div class="metric-value-white">${formatCurrency(business.profit)}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Render the slider
+            function renderSlider() {
+                const track = document.getElementById('businessSliderTrack');
+                if (!track || businesses.length === 0) return;
+
+                // Create HTML for all business cards
+                track.innerHTML = businesses.map(createBusinessCard).join('');
+                
+                // Add a slight delay before showing the track with a fade-in effect
+                setTimeout(() => {
+                    track.style.opacity = '1';
+                    
+                    // Add animation to cards
+                    const cards = track.querySelectorAll('.business-card-white');
+                    cards.forEach((card, index) => {
+                        card.style.opacity = '0';
+                        card.style.transform = 'translateY(20px)';
+                        
+                        setTimeout(() => {
+                            card.style.opacity = '1';
+                            card.style.transform = 'translateY(0)';
+                        }, 100 + (index * 100)); // Stagger the animations
+                    });
+                    
+                    updateSlider();
+                    createDots();
+                }, 300);
+            }
+
+            // Update slider position
+            function updateSlider() {
+                const track = document.getElementById('businessSliderTrack');
+                if (!track || businesses.length === 0) return;
+                
+                // Get first card to calculate measurements
+                const firstCard = track.children[0];
+                if (!firstCard) return;
+                
+                // Calculate card and container dimensions
+                const cardRect = firstCard.getBoundingClientRect();
+                const cardWidth = cardRect.width;
+                const cardGap = 24; // Gap between cards in pixels
+                
+                // Calculate total width of a slide (card + gap)
+                const slideWidth = cardWidth + cardGap;
+                
+                // Calculate how many full slides we have
+                const totalSlides = Math.ceil(businesses.length / slidesToShow);
+                
+                // Ensure current slide is within bounds
+                currentSlide = Math.max(0, Math.min(currentSlide, totalSlides - 1));
+                
+                // Calculate transition distance
+                let transitionDistance;
+                
+                if (slidesToShow === 1) {
+                    // For 1 card per slide, move by the full card width + gap
+                    transitionDistance = slideWidth * currentSlide;
+                } else {
+                    // For multiple cards per slide, adjust the movement
+                    // Use the number of full slides passed
+                    transitionDistance = slideWidth * currentSlide * slidesToShow;
+                    
+                    // Make sure we don't go beyond the available slides
+                    const remainingCards = businesses.length - (currentSlide * slidesToShow);
+                    if (remainingCards < slidesToShow) {
+                        // Adjust for last partial slide
+                        transitionDistance = slideWidth * (businesses.length - slidesToShow);
+                    }
+                }
+                
+                // Apply the transform
+                track.style.transform = `translateX(-${transitionDistance}px)`;
+                
+                // Update navigation elements
+                updateDots();
+                updateNavButtons();
+            }
+
+            // Create navigation dots
+            function createDots() {
+                const dotsContainer = document.getElementById('sliderDots');
+                if (!dotsContainer || businesses.length === 0) return;
+
+                // Calculate how many dots we need based on number of slides
+                const totalSlides = Math.ceil(businesses.length / slidesToShow);
+                
+                // Generate HTML for dots
+                const dots = Array.from({ length: totalSlides }, (_, i) => 
+                    `<button class="slider-dot w-3 h-3 rounded-full transition-all duration-300 ${i === currentSlide ? 'bg-primary active' : 'bg-gray-300 hover:bg-gray-400'}" 
+                             data-slide="${i}" 
+                             aria-label="Go to slide ${i + 1}">
+                     </button>`
+                ).join('');
+
+                dotsContainer.innerHTML = dots;
+
+                // Add click handlers to dots
+                dotsContainer.querySelectorAll('.slider-dot').forEach((dot, index) => {
+                    dot.addEventListener('click', () => {
+                        currentSlide = index;
+                        updateSlider();
+                        stopAutoSlide();
+                        startAutoSlide();
+                    });
+                });
+            }
+
+            // Update dots appearance
+            function updateDots() {
+                const dots = document.querySelectorAll('.slider-dot');
+                const totalSlides = Math.ceil(businesses.length / slidesToShow);
+                
+                // If there are no dots or no businesses, don't proceed
+                if (!dots.length || businesses.length === 0) return;
+                
+                // Calculate active dot index
+                const activeDotIndex = Math.min(currentSlide, totalSlides - 1);
+                
+                dots.forEach((dot, index) => {
+                    // Remove all classes first
+                    dot.classList.remove('bg-primary', 'bg-gray-300', 'hover:bg-gray-400', 'active');
+                    
+                    // Add appropriate classes
+                    if (index === activeDotIndex) {
+                        dot.classList.add('bg-primary', 'active');
+                    } else {
+                        dot.classList.add('bg-gray-300', 'hover:bg-gray-400');
+                    }
+                });
+            }
+
+            // Update navigation buttons
+            function updateNavButtons() {
+                const leftBtn = document.getElementById('slideLeft');
+                const rightBtn = document.getElementById('slideRight');
+                
+                // If buttons don't exist or no businesses, don't proceed
+                if (!leftBtn || !rightBtn || businesses.length === 0) return;
+                
+                const totalSlides = Math.ceil(businesses.length / slidesToShow);
+                const maxSlideIndex = Math.max(0, totalSlides - 1);
+                
+                // Update left button state
+                if (currentSlide <= 0) {
+                    leftBtn.disabled = true;
+                    leftBtn.classList.add('opacity-40', 'cursor-not-allowed');
+                    leftBtn.classList.remove('hover:bg-primary', 'hover:text-white', 'hover:scale-110');
+                } else {
+                    leftBtn.disabled = false;
+                    leftBtn.classList.remove('opacity-40', 'cursor-not-allowed');
+                    leftBtn.classList.add('hover:bg-primary', 'hover:text-white', 'hover:scale-110');
+                }
+                
+                // Update right button state
+                if (currentSlide >= maxSlideIndex) {
+                    rightBtn.disabled = true;
+                    rightBtn.classList.add('opacity-40', 'cursor-not-allowed');
+                    rightBtn.classList.remove('hover:bg-primary', 'hover:text-white', 'hover:scale-110');
+                } else {
+                    rightBtn.disabled = false;
+                    rightBtn.classList.remove('opacity-40', 'cursor-not-allowed');
+                    rightBtn.classList.add('hover:bg-primary', 'hover:text-white', 'hover:scale-110');
+                }
+            }
+
+            // Navigate to previous slide
+            function prevSlide() {
+                if (currentSlide > 0) {
+                    currentSlide--;
+                    updateSlider();
+                }
+            }
+
+            // Navigate to next slide
+            function nextSlide() {
+                const totalSlides = Math.ceil(businesses.length / slidesToShow);
+                if (currentSlide < totalSlides - 1) {
+                    currentSlide++;
+                    updateSlider();
+                }
+            }
+
+            // Auto slide functionality
+            function startAutoSlide() {
+                stopAutoSlide();
+                autoSlideInterval = setInterval(() => {
+                    const totalSlides = Math.ceil(businesses.length / slidesToShow);
+                    
+                    // Move to next slide or loop back to first slide
+                    if (currentSlide >= totalSlides - 1) {
+                        currentSlide = 0;
+                    } else {
+                        currentSlide++;
+                    }
+                    
+                    updateSlider();
+                }, 5000);
+            }
+
+            function stopAutoSlide() {
+                if (autoSlideInterval) {
+                    clearInterval(autoSlideInterval);
+                    autoSlideInterval = null;
+                }
+            }
+
+            // Handle window resize
+            function handleResize() {
+                calculateSlidesToShow();
+                updateSlider();
+            }
+
+            // Initialize navigation buttons
+            function initializeNavButtons() {
+                const slideLeftBtn = document.getElementById('slideLeft');
+                const slideRightBtn = document.getElementById('slideRight');
+                
+                if (slideLeftBtn) {
+                    slideLeftBtn.addEventListener('click', () => {
+                        prevSlide();
+                        stopAutoSlide();
+                        startAutoSlide();
+                    });
+                }
+                
+                if (slideRightBtn) {
+                    slideRightBtn.addEventListener('click', () => {
+                        nextSlide();
+                        stopAutoSlide();
+                        startAutoSlide();
+                    });
+                }
+            }
+
+            // Initialize slider
+            fetchBusinessData();
+            
+            // Add window resize listener with debounce for better performance
+            let resizeTimeout;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(handleResize, 100);
+            });
+
+            // Cleanup on page unload
+            window.addEventListener('beforeunload', () => {
+                stopAutoSlide();
+            });
+            
+            // Business Intelligence Metrics Dashboard Animations
+            function initMetricsDashboard() {
+                // Animate progress bars
+                const progressBars = document.querySelectorAll('.metric-progress-bar');
+                progressBars.forEach(bar => {
+                    const targetWidth = bar.getAttribute('data-target-width');
+                    setTimeout(() => {
+                        bar.style.width = targetWidth;
+                    }, 500);
+                });
+                
+                // Animate counter values
+                const counterElements = document.querySelectorAll('.data-value[data-count-value]');
+                counterElements.forEach(counter => {
+                    const targetValue = parseFloat(counter.getAttribute('data-count-value'));
+                    const suffix = counter.getAttribute('data-count-suffix') || '';
+                    const duration = 2000; // 2 seconds
+                    const frameRate = 30; // frames per second
+                    const totalFrames = duration / (1000 / frameRate);
+                    const valueIncrement = targetValue / totalFrames;
+                    let currentValue = 0;
+                    let currentFrame = 0;
+                    
+                    const animate = () => {
+                        currentFrame++;
+                        currentValue += valueIncrement;
+                        
+                        if (currentFrame <= totalFrames) {
+                            let displayValue;
+                            if (targetValue >= 100) {
+                                displayValue = Math.round(currentValue);
+                            } else {
+                                displayValue = currentValue.toFixed(1);
+                            }
+                            counter.textContent = displayValue + suffix;
+                            requestAnimationFrame(animate);
+                        } else {
+                            counter.textContent = targetValue + suffix;
+                        }
+                    };
+                    
+                    requestAnimationFrame(animate);
+                });
+                
+                // Initialize tooltips
+                const tooltipTriggers = document.querySelectorAll('.metric-tooltip-trigger');
+                tooltipTriggers.forEach(trigger => {
+                    trigger.addEventListener('mouseenter', () => {
+                        const tooltip = trigger.parentElement.querySelector('.metric-tooltip');
+                        if (tooltip) {
+                            tooltip.classList.remove('hidden');
+                        }
+                    });
+                    
+                    trigger.addEventListener('mouseleave', () => {
+                        const tooltip = trigger.parentElement.querySelector('.metric-tooltip');
+                        if (tooltip) {
+                            tooltip.classList.add('hidden');
+                        }
+                    });
+                });
+                
+                // Time filter functionality
+                const timeFilters = document.querySelectorAll('.time-filter button');
+                timeFilters.forEach(filter => {
+                    filter.addEventListener('click', () => {
+                        // Remove active class from all filters
+                        timeFilters.forEach(f => f.classList.remove('active-filter'));
+                        // Add active class to clicked filter
+                        filter.classList.add('active-filter');
+                    });
+                });
+            }
+            
+            // Initialize metrics dashboard when page loads
+            setTimeout(initMetricsDashboard, 1000);
+        });
+        
+        // Initialize A/B Testing Analytics with Smart Routing Enhancement
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get server-assigned variant and routing information
+            const serverVariant = '<%= typeof abTestVariant !== "undefined" ? abTestVariant : "" %>';
+            const routingMethod = '<%= typeof routingMethod !== "undefined" ? routingMethod : "ab_test" %>';
+            const userRole = '<%= typeof userRole !== "undefined" ? userRole : null %>';
+            
+            // Initialize the analytics tracker with enhanced debugging
+            console.log('🧪 Initializing A/B Test Analytics...');
+            window.abTestAnalytics = new ABTestingAnalytics();
+            
+            // Verify analytics instance
+            console.log('Analytics instance created:', {
+                exists: !!window.abTestAnalytics,
+                variant: window.abTestAnalytics?.variant,
+                sessionId: window.abTestAnalytics?.sessionId,
+                methods: {
+                    trackEvent: typeof window.abTestAnalytics?.trackEvent,
+                    setVariant: typeof window.abTestAnalytics?.setVariant
+                }
+            });
+            
+            // Override variant if server provided one
+            if (serverVariant) {
+                window.abTestAnalytics.setVariant(serverVariant);
+            }
+            
+            // Set up variant-specific styling and get final variant
+            const variant = serverVariant || window.abTestAnalytics.variant;
+            document.body.setAttribute('data-ab-variant', variant);
+            document.body.setAttribute('data-routing-method', routingMethod);
+            if (userRole) {
+                document.body.setAttribute('data-user-role', userRole);
+            }
+            
+            // Track variant exposure with routing method
+            window.abTestAnalytics.trackEvent('variant_exposure', {
+                variant: variant,
+                routing_method: routingMethod,
+                user_role: userRole,
+                page: 'buyer-landing',
+                timestamp: Date.now()
+            });
+            
+            // Set up CTA click tracking with enhanced error handling
+            const ctaButtons = document.querySelectorAll('.ab-track-cta');
+            console.log(`Found ${ctaButtons.length} CTA buttons for tracking`);
+            
+            ctaButtons.forEach((cta, index) => {
+                console.log(`Setting up CTA ${index + 1}:`, {
+                    text: cta.textContent.trim(),
+                    ctaType: cta.getAttribute('data-cta-type'),
+                    ctaLocation: cta.getAttribute('data-cta-location')
+                });
+                
+                cta.addEventListener('click', function(e) {
+                    try {
+                        const ctaType = this.getAttribute('data-cta-type') || 'unknown';
+                        const ctaText = this.getAttribute('data-cta-text') || this.textContent.trim();
+                        const ctaLocation = this.getAttribute('data-cta-location') || 'unknown';
+                        
+                        // Determine if this is a seller or buyer CTA
+                        const isSeller = ctaType.includes('seller');
+                        const eventType = isSeller ? 'seller_cta_click' : 'buyer_cta_click';
+                        
+                        console.log(`CTA Click Detected:`, {
+                            eventType,
+                            ctaType,
+                            ctaText,
+                            ctaLocation,
+                            variant,
+                            analyticsExists: !!window.abTestAnalytics
+                        });
+                        
+                        if (window.abTestAnalytics) {
+                            window.abTestAnalytics.trackEvent(eventType, {
+                                ctaType: ctaType,
+                                ctaText: ctaText,
+                                ctaLocation: ctaLocation,
+                                href: this.href,
+                                variant: variant
+                            });
+                            console.log(`✅ CTA Event Tracked: ${eventType} - ${ctaText} (${ctaLocation})`);
+                        } else {
+                            console.error('❌ abTestAnalytics not available');
+                        }
+                    } catch (error) {
+                        console.error('❌ Error in CTA click handler:', error);
+                    }
+                });
+            });
+            
+            // Track section viewing using Intersection Observer
+            const sectionObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const sectionName = entry.target.getAttribute('data-section') || 
+                                          entry.target.className.split(' ').find(c => c.includes('section')) ||
+                                          'unknown_section';
+                        
+                        window.abTestAnalytics.trackEvent('section_view', {
+                            section: sectionName,
+                            variant: variant
+                        });
+                    }
+                });
+            }, { threshold: 0.5 });
+            
+            // Observe key sections
+            const sections = document.querySelectorAll('section, .hero-section-video, .business-preview-section-white, .ai-business-section-white');
+            sections.forEach((section, index) => {
+                if (!section.getAttribute('data-section')) {
+                    section.setAttribute('data-section', `section_${index + 1}`);
+                }
+                sectionObserver.observe(section);
+            });
+            
+            // Track pricing interaction
+            const pricingElements = document.querySelectorAll('[href="/pricing"], .pricing-element');
+            pricingElements.forEach(element => {
+                element.addEventListener('click', function() {
+                    window.abTestAnalytics.trackEvent('pricing_viewed', {
+                        variant: variant,
+                        source: 'homepage'
+                    });
+                });
+            });
+            
+            // Track form interactions if any
+            const forms = document.querySelectorAll('form');
+            forms.forEach(form => {
+                form.addEventListener('submit', function() {
+                    window.abTestAnalytics.trackEvent('form_submission', {
+                        formId: this.id || 'unknown',
+                        variant: variant
+                    });
+                });
+                
+                // Track form start
+                const formInputs = form.querySelectorAll('input, textarea, select');
+                let formStarted = false;
+                formInputs.forEach(input => {
+                    input.addEventListener('focus', function() {
+                        if (!formStarted) {
+                            formStarted = true;
+                            window.abTestAnalytics.trackEvent('form_started', {
+                                formId: form.id || 'unknown',
+                                variant: variant
+                            });
+                        }
+                    });
+                });
+            });
+            
+            console.log(`A/B Test Analytics initialized - Variant: ${variant}`);
+        });
+    </script>
+</body>
+</html>

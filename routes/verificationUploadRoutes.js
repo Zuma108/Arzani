@@ -8,10 +8,29 @@ const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
 
 // Upload verification documents
-router.post('/upload', authenticateToken, upload.array('documents', 5), async (req, res) => {
+router.post('/upload', authenticateToken, upload.fields([
+  { name: 'documents', maxCount: 5 },
+  { name: 'profilePicture', maxCount: 1 }
+]), async (req, res) => {
   try {
-    const { professionalType, verificationNotes } = req.body;
-    const documents = req.files;
+    const { 
+      professionalType, 
+      licenseNumber,
+      verificationNotes,
+      // Profile data
+      professionalBio,
+      professionalTagline,
+      yearsExperience,
+      professionalWebsite,
+      professionalPhone,
+      servicesOffered,
+      industriesServiced,
+      profileVisibility,
+      allowDirectContact
+    } = req.body;
+
+    const documents = req.files?.documents || [];
+    const profilePicture = req.files?.profilePicture?.[0];
 
     if (!documents || documents.length === 0) {
       return res.status(400).json({ error: 'No documents uploaded' });
@@ -21,66 +40,116 @@ router.post('/upload', authenticateToken, upload.array('documents', 5), async (r
       return res.status(400).json({ error: 'Professional type is required' });
     }
 
-    // Upload documents to S3
-    const uploadedDocuments = [];
-    for (const document of documents) {
-      try {
-        const timestamp = Date.now();
-        const s3Key = `verification-docs/${req.user.userId}/${timestamp}_${document.originalname}`;
-        
-        // Upload to S3 and get URL
-        const s3Url = await uploadToS3(document.buffer, s3Key, document.mimetype);
-        
-        uploadedDocuments.push({
-          filename: document.originalname,
-          url: s3Url,
-          uploadedAt: new Date().toISOString()
-        });
-      } catch (uploadError) {
-        console.error('Error uploading document to S3:', uploadError);
-        return res.status(500).json({ error: 'Failed to upload document', details: uploadError.message });
+    // Start transaction
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      // Upload documents to S3
+      const uploadedDocuments = [];
+      for (const document of documents) {
+        try {
+          const timestamp = Date.now();
+          const s3Key = `verification-docs/${req.user.userId}/${timestamp}_${document.originalname}`;
+          
+          // Upload to S3 and get URL
+          const s3Url = await uploadToS3(document.buffer, s3Key, document.mimetype);
+          
+          uploadedDocuments.push({
+            filename: document.originalname,
+            url: s3Url,
+            uploadedAt: new Date().toISOString()
+          });
+        } catch (uploadError) {
+          console.error('Error uploading document to S3:', uploadError);
+          throw new Error(`Failed to upload document: ${uploadError.message}`);
+        }
       }
+
+      // Upload profile picture if provided
+      let profilePictureUrl = null;
+      if (profilePicture) {
+        try {
+          const timestamp = Date.now();
+          const s3Key = `profile-pictures/${req.user.userId}/${timestamp}_${profilePicture.originalname}`;
+          profilePictureUrl = await uploadToS3(profilePicture.buffer, s3Key, profilePicture.mimetype);
+        } catch (uploadError) {
+          console.error('Error uploading profile picture:', uploadError);
+          throw new Error(`Failed to upload profile picture: ${uploadError.message}`);
+        }
+      }
+
+      // Create verification request record with profile data
+      const verificationInsertQuery = `
+        INSERT INTO professional_verification_requests (
+          user_id,
+          professional_type,
+          license_number,
+          verification_notes,
+          verification_documents,
+          profile_data,
+          status,
+          request_date
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+        RETURNING id
+      `;
+
+      // Prepare profile data
+      const profileData = {
+        bio: professionalBio,
+        tagline: professionalTagline,
+        yearsExperience: parseInt(yearsExperience) || 0,
+        website: professionalWebsite,
+        phone: professionalPhone,
+        profilePictureUrl,
+        servicesOffered: JSON.parse(servicesOffered || '[]'),
+        industriesServiced: JSON.parse(industriesServiced || '[]'),
+        visibility: profileVisibility || 'public',
+        allowDirectContact: allowDirectContact === 'true' || allowDirectContact === true
+      };
+
+      const verificationResult = await client.query(
+        verificationInsertQuery,
+        [
+          req.user.userId,
+          professionalType,
+          licenseNumber,
+          verificationNotes,
+          uploadedDocuments,
+          profileData,
+          'pending'
+        ]
+      );
+
+      // Update user's professional type and set pending status
+      await client.query(
+        'UPDATE users SET professional_type = $1 WHERE id = $2',
+        [professionalType, req.user.userId]
+      );
+
+      await client.query('COMMIT');
+
+      res.status(201).json({
+        success: true,
+        message: 'Verification documents and profile uploaded successfully',
+        requestId: verificationResult.rows[0].id,
+        documents: uploadedDocuments,
+        profilePictureUrl
+      });
+
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
     }
 
-    // Create verification request record
-    const verificationInsertQuery = `
-      INSERT INTO professional_verification_requests (
-        user_id,
-        professional_type,
-        verification_notes,
-        verification_documents,
-        status,
-        request_date
-      ) VALUES ($1, $2, $3, $4, $5, NOW())
-      RETURNING id
-    `;
-
-    const verificationResult = await pool.query(
-      verificationInsertQuery,
-      [
-        req.user.userId,
-        professionalType,
-        verificationNotes,
-        uploadedDocuments,
-        'pending'
-      ]
-    );
-
-    // Update user's professional type and set pending status
-    await pool.query(
-      'UPDATE users SET professional_type = $1 WHERE id = $2',
-      [professionalType, req.user.userId]
-    );
-
-    res.status(201).json({
-      success: true,
-      message: 'Verification documents uploaded successfully',
-      requestId: verificationResult.rows[0].id,
-      documents: uploadedDocuments
-    });
   } catch (error) {
     console.error('Error uploading verification documents:', error);
-    res.status(500).json({ error: 'Failed to process verification documents' });
+    res.status(500).json({ 
+      error: 'Failed to process verification documents',
+      details: error.message 
+    });
   }
 });
 

@@ -23,9 +23,9 @@ async function getBlogData() {
       'SELECT * FROM blog_tags ORDER BY name'
     );
     
-    // Get ALL published posts - not limited anymore
+    // Get ALL published posts - not limited anymore, include url_path for programmatic SEO
     const postsResult = await db.query(
-      'SELECT id, title, slug, publish_date, updated_at FROM blog_posts ' +
+      'SELECT id, title, slug, publish_date, updated_at, url_path FROM blog_posts ' +
       'WHERE status = $1 ORDER BY publish_date DESC',
       ['Published']
     );
@@ -116,8 +116,13 @@ async function generateXmlSitemap() {
         ? new Date(post.updated_at).toISOString().split('T')[0] 
         : new Date(post.publish_date).toISOString().split('T')[0];
       
+      // Check if the post has a custom url_path field (for programmatic SEO)
+      const postUrl = post.url_path 
+        ? `https://www.arzani.co.uk${post.url_path}`
+        : `https://www.arzani.co.uk/blog/${post.slug}`;
+      
       root.ele('url')
-        .ele('loc').txt(`https://www.arzani.co.uk/blog/${post.slug}`).up()
+        .ele('loc').txt(postUrl).up()
         .ele('lastmod').txt(lastmod).up()
         .ele('changefreq').txt('monthly').up()
         .ele('priority').txt('0.7').up();
@@ -137,6 +142,9 @@ async function generateXmlSitemap() {
     throw error;
   }
 }
+
+// Make the generateXmlSitemap function available for direct import
+export { generateXmlSitemap };
 
 // Route for HTML sitemap
 router.get('/sitemap', async (req, res) => {

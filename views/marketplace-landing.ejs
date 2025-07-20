@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">   
     <title>Buy & Sell Businesses | Arzani Marketplace</title>    
     <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">    
+    <link rel="stylesheet" href="/css/navbar2.css">
     <link rel="stylesheet" href="/css/marketplace-landing.css">
     <link rel="stylesheet" href="/css/testimonial-carousel.css">
     <link rel="stylesheet" href="/css/feature-animations.css">
@@ -55,104 +56,36 @@
         gtag('js', new Date());
         gtag('config', 'G-W50GKB6F3M');
     </script>
+    
+    <!-- A/B Testing Analytics -->
+    <script src="/js/ab-testing-analytics.js"></script>
+    <script src="/js/debug-ab-testing.js"></script>
+    
+    <!-- Smart Routing Analytics -->
+    <script src="/js/smart-routing.js"></script>
 </head>
 <body class="bg-dark text-white font-sans">
     <div class="page-wrapper">
        
-        <header class="header-transparent fixed w-full z-50 transition-all duration-300">
-            <nav class="container max-w-[1920px] mx-auto px-4 md:px-6 py-4">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-4 md:gap-10">
-                        <a href="/" class="navbar__logo">
-                            <img src="/figma design exports/logos/white-arzani-logo.svg" alt="Arzani Logo" class="h-6 md:h-8">
-                        </a>
-                        <div class="hidden md:flex items-center space-x-8">
-                            <!-- Products Dropdown -->
-                            <div class="navbar__drawer group relative">
-                                <div class="navbar__drawer_trigger flex items-center">
-                                    <span class="text-sm font-medium">Products</span>
-                                    <div class="icon-1x1-xsmall ml-2">
-                                        <svg width="20" height="20" fill="none" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" class="transition-transform duration-200 group-hover:rotate-180">
-                                            <path clip-rule="evenodd" d="M15.5303 13.0303C15.2374 13.3232 14.7626 13.3232 14.4697 13.0303L11.7324 10.2931C11.3276 9.8883 11.0555 9.61703 10.8292 9.42491C10.6096 9.23847 10.4829 9.17101 10.3863 9.13961C10.1352 9.05803 9.86478 9.05803 9.61373 9.13961C9.51706 9.17101 9.39038 9.23847 9.17076 9.42491C8.94445 9.61704 8.67236 9.8883 8.26759 10.2931L5.53033 13.0303C5.23744 13.3232 4.76256 13.3232 4.46967 13.0303C4.17678 12.7374 4.17678 12.2626 4.46967 11.9697L7.20693 9.23241L7.22846 9.21088C7.60615 8.83317 7.9214 8.51791 8.2 8.2814C8.49056 8.03473 8.79021 7.82999 9.1502 7.71302C9.70252 7.53356 10.2975 7.53356 10.8498 7.71302C11.2098 7.82999 11.5094 8.03473 11.8 8.2814C12.0786 8.51791 12.3939 8.83318 12.7715 9.21089L12.7931 9.23241L15.5303 11.9697C15.8232 12.2626 15.8232 12.7374 15.5303 13.0303Z" fill="currentColor" fill-rule="evenodd"></path>
-                                        </svg>
-                                    </div>
-                                </div>
-                                <div class="navbar__drawer_dropdown invisible group-hover:visible opacity-0 group-hover:opacity-100 absolute top-full left-0 mt-1 transition-all duration-300 ease-in-out">
-                                    <div class="navbar__drawer_dropdown__wrapper pt-2">
-                                        <div class="navbar__drawer_card bg-dark-light rounded-lg shadow-lg border border-gray-800 overflow-hidden p-4 min-w-[240px]">
-                                            <a href="/seller-questionnaire" class="navbar__link block px-4 py-3 hover:bg-gray-800 transition-colors rounded-md">
-                                                <div class="text-base font-medium">Business Valuation</div>
-                                                <p class="text-xs text-gray-400 mt-1">Get accurate valuations using AI</p>
-                                            </a>
-                                            <a href="/ai-insights" class="navbar__link block px-4 py-3 hover:bg-gray-800 transition-colors rounded-md">
-                                                <div class="text-base font-medium">AI Market Insights</div>
-                                                <p class="text-xs text-gray-400 mt-1">Data-driven market analysis</p>
-                                            </a>
-                                            <a href="/marketplace2" class="navbar__link block px-4 py-3 bg-primary/10 hover:bg-gray-800 transition-colors rounded-md">
-                                                <div class="text-base font-medium">Marketplace</div>
-                                                <p class="text-xs text-gray-400 mt-1">Browse business listings</p>
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Features Dropdown -->
-                            <div class="navbar__drawer group relative">
-                                <div class="navbar__drawer_trigger flex items-center">
-                                    <span class="text-sm font-medium">Features</span>
-                                    <div class="icon-1x1-xsmall ml-2">
-                                        <svg width="20" height="20" fill="none" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" class="transition-transform duration-200 group-hover:rotate-180">
-                                            <path clip-rule="evenodd" d="M15.5303 13.0303C15.2374 13.3232 14.7626 13.3232 14.4697 13.0303L11.7324 10.2931C11.3276 9.8883 11.0555 9.61703 10.8292 9.42491C10.6096 9.23847 10.4829 9.17101 10.3863 9.13961C10.1352 9.05803 9.86478 9.05803 9.61373 9.13961C9.51706 9.17101 9.39038 9.23847 9.17076 9.42491C8.94445 9.61704 8.67236 9.8883 8.26759 10.2931L5.53033 13.0303C5.23744 13.3232 4.76256 13.3232 4.46967 13.0303C4.17678 12.7374 4.17678 12.2626 4.46967 11.9697L7.20693 9.23241L7.22846 9.21088C7.60615 8.83317 7.9214 8.51791 8.2 8.2814C8.49056 8.03473 8.79021 7.82999 9.1502 7.71302C9.70252 7.53356 10.2975 7.53356 10.8498 7.71302C11.2098 7.82999 11.5094 8.03473 11.8 8.2814C12.0786 8.51791 12.3939 8.83318 12.7715 9.21089L12.7931 9.23241L15.5303 11.9697C15.8232 12.2626 15.8232 12.7374 15.5303 13.0303Z" fill="currentColor" fill-rule="evenodd"></path>
-                                        </svg>
-                                    </div>
-                                </div>
-                                <div class="navbar__drawer_dropdown invisible group-hover:visible opacity-0 group-hover:opacity-100 absolute top-full left-0 mt-1 transition-all duration-300 ease-in-out">
-                                    <div class="navbar__drawer_dropdown__wrapper pt-2">
-                                        <div class="navbar__drawer_card bg-dark-light rounded-lg shadow-lg border border-gray-800 overflow-hidden p-4 min-w-[240px]">
-                                            <a href="/features/brain-ai" class="navbar__link block px-4 py-3 hover:bg-gray-800 transition-colors rounded-md">
-                                                <div class="text-base font-medium">Brain AI</div>
-                                                <p class="text-xs text-gray-400 mt-1">Intelligent business analytics</p>
-                                            </a>
-                                            <a href="/features/power-ups" class="navbar__link block px-4 py-3 hover:bg-gray-800 transition-colors rounded-md">
-                                                <div class="text-base font-medium">Power-ups</div>
-                                                <p class="text-xs text-gray-400 mt-1">Enhance your experience</p>
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+        <%- include('partials/navbar2') %>
 
-                            <a href="/blog" class="navbar__link">
-                                <span class="text-sm font-medium">Blog</span>
-                            </a>
-                           
-                            <a href="/pricing" class="navbar__link">
-                                <span class="text-sm font-medium">Pricing</span>
-                            </a>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-4 md:gap-6">
-                        <a href="/login" class="hidden md:block text-sm font-medium">Log in</a>
-                        <a href="/signup" class="btn-primary text-sm md:text-base px-4 py-2 md:px-6">
-                            Get Started
-                        </a>
-                        <button class="navbar__burger md:hidden flex flex-col items-center" id="mobileMenuBtn" aria-expanded="false">
-                            <div class="burger-line"></div>
-                            <div class="burger-line"></div>
-                        </button>
-                    </div>
+        <!-- Smart Routing Role Indicator -->
+        <% if (typeof routingMethod !== 'undefined' && routingMethod === 'smart_routing') { %>
+        <div class="fixed top-20 right-4 z-40">
+            <div class="bg-green-600/90 backdrop-blur-md text-white px-4 py-2 rounded-lg shadow-lg border border-green-500/50 text-sm">
+                <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <span>Smart routing: Seller experience</span>
+                    <button onclick="selectRole('buyer')" class="ml-2 text-xs underline hover:no-underline">
+                        Switch to buyer
+                    </button>
                 </div>
-                
-                <!-- Mobile menu container -->
-                <div class="navbar__menu hidden md:hidden transition-all duration-300 mt-4" id="mobileMenu">
-                    <div class="flex flex-col space-y-4 py-4 border-b border-gray-800">
-                        <!-- Mobile menu content here -->
-                    </div>
-                </div>
-            </nav>
-        </header>
-
+            </div>
+        </div>
+        <% } %>
+        
         <!-- Hero Section with Video Background -->
         <section class="hero-section-video relative h-screen flex items-center justify-start overflow-hidden">
             <!-- Video Background -->
@@ -180,128 +113,42 @@
             <div class="container mx-auto px-4 md:px-6 lg:px-8 relative z-20 w-full">
                 <div class="w-full md:w-2/3 lg:w-3/5 text-left">
                     <h1 class="text-4xl md:text-6xl lg:text-7xl font-black text-white leading-tight mb-6 animate-fade-in-up" style="animation-delay: 200ms;">
-                        Discover & Acquire<br>Profitable Businesses<br>with <span class="text-gradient-animated">Confidence</span>
+                        List Your Business &<br>Reach Verified Buyers<br>with <span class="text-gradient-animated">Confidence</span>
                     </h1>
-                    <p class="text-lg md:text-xl text-gray-300 max-w-2xl mb-12 animate-fade-in-up" style="animation-delay: 400ms;">
-                            Then buy your UK business 37% faster with our AI-matched, verified buyers. No brokers. No commissions. Just transparent, data-driven results.
+                    <p class="text-lg md:text-xl text-gray-300 max-w-2xl mb-8 animate-fade-in-up" style="animation-delay: 400ms;">
+                        Sell your UK business 37% faster with our AI-matched, verified buyers. No brokers. No commissions. Just transparent, data-driven results.
                     </p>
-
-                    <!-- Modern Professional Search Bar -->
-                    <div class="relative max-w-3xl animate-fade-in-up" style="animation-delay: 600ms;">
-                        <!-- Glow Effect Background - Updated to lighter blue -->
-                        <div class="absolute inset-0 bg-primary/30 rounded-2xl blur-xl opacity-70"></div>
-                        
-                        <div class="relative bg-white/95 backdrop-blur-md rounded-2xl p-2 shadow-2xl border border-white/20">
-                            <form action="/marketplace2" method="GET" class="relative">
-                                <!-- Main Search Container -->
-                                <div class="flex items-center bg-white rounded-xl shadow-lg overflow-hidden">
-                                    <!-- Search Icon -->
-                                    <div class="flex items-center pl-6 pr-4">
-                                        <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                        </svg>
-                                    </div>
-                                    
-                                    <!-- Search Input -->
-                                    <input 
-                                        type="text" 
-                                        name="query" 
-                                        id="search-input"
-                                        placeholder="Search by industry, location, or revenue..."
-                                        class="flex-1 py-6 text-lg text-gray-800 bg-transparent border-none focus:outline-none placeholder-gray-500 font-medium"
-                                        autocomplete="off"
-                                    >
-                                    
-                                    <!-- Advanced Filters Toggle -->
-                                    <button type="button" id="filters-toggle" class="flex items-center px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors border-l border-gray-200">
-                                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"/>
-                                        </svg>
-                                        <span class="text-sm font-medium">Filters</span>
-                                    </button>
-                                    
-                                    <!-- Search Button - Updated to lighter blue -->
-                                    <button 
-                                        type="submit" 
-                                        class="bg-primary hover:bg-primary/90 text-white px-8 py-6 rounded-r-xl transition-all duration-300 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-3"
-                                    >
-                                        <span>Search</span>
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
-                                        </svg>
-                                    </button>
-                                </div>
-                                
-                                <!-- Advanced Filters Panel (Initially Hidden) -->
-                                <div id="filters-panel" class="hidden mt-4 bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <!-- Industry Filter -->
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-2">Industry</label>
-                                            <select name="industry" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
-                                                <option value="">All Industries</option>
-                                                <option value="technology">Technology</option>
-                                                <option value="healthcare">Healthcare</option>
-                                                <option value="retail">Retail</option>
-                                                <option value="manufacturing">Manufacturing</option>
-                                                <option value="services">Services</option>
-                                                <option value="food-beverage">Food & Beverage</option>
-                                            </select>
-                                        </div>
-                                        
-                                        <!-- Revenue Range -->
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-2">Revenue Range</label>
-                                            <select name="revenue" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
-                                                <option value="">Any Revenue</option>
-                                                <option value="0-500k">£0 - £500K</option>
-                                                <option value="500k-1m">£500K - £1M</option>
-                                                <option value="1m-5m">£1M - £5M</option>
-                                                <option value="5m-10m">£5M - £10M</option>
-                                                <option value="10m+">£10M+</option>
-                                            </select>
-                                        </div>
-                                        
-                                        <!-- Location -->
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-2">Location</label>
-                                            <select name="location" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
-                                                <option value="">All Locations</option>
-                                                <option value="london">London</option>
-                                                <option value="manchester">Manchester</option>
-                                                <option value="birmingham">Birmingham</option>
-                                                <option value="edinburgh">Edinburgh</option>
-                                                <option value="bristol">Bristol</option>
-                                                <option value="other">Other UK</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Auto-suggest Dropdown -->
-                                <div id="suggestions-dropdown" class="hidden absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-200 z-50 max-h-80 overflow-y-auto">
-                                    <!-- Suggestions will be populated here -->
-                                </div>
-                            </form>
+                    
+                    <!-- Pricing Transparency and Key Benefits -->
+                    <div class="flex flex-wrap items-center gap-4 mb-12 text-sm md:text-base animate-fade-in-up" style="animation-delay: 500ms;">
+                        <div class="bg-white/20 backdrop-blur-md border border-white/30 rounded-xl px-4 py-3 flex items-center text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-white/25">
+                            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span class="font-medium">From £39/month</span>
                         </div>
-                        
-                        <!-- Popular Searches Tags -->
-                        <div class="mt-6 flex flex-wrap gap-3 justify-center">
-                            <span class="text-white/80 text-sm font-medium">Popular:</span>
-                            <button type="button" class="search-tag bg-primary/20 hover:bg-primary/30 text-white px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 backdrop-blur-sm border border-primary/30" data-search="SMB">
-                                Small Business
-                            </button>
-                            <button type="button" class="search-tag bg-primary/20 hover:bg-primary/30 text-white px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 backdrop-blur-sm border border-primary/30" data-search="Family-Owned">
-                                Family-Owned
-                            </button>
-                            <button type="button" class="search-tag bg-primary/20 hover:bg-primary/30 text-white px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 backdrop-blur-sm border border-primary/30" data-search="Local Retail">
-                                Local Retail
-                            </button>
-                            <button type="button" class="search-tag bg-primary/20 hover:bg-primary/30 text-white px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 backdrop-blur-sm border border-primary/30" data-search="Under £500K">
-                                Under £500K
-                            </button>
+                        <div class="bg-white/20 backdrop-blur-md border border-white/30 rounded-xl px-4 py-3 flex items-center text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-white/25">
+                            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span class="font-medium">0% broker fees</span>
+                        </div>
+                        <div class="bg-white/20 backdrop-blur-md border border-white/30 rounded-xl px-4 py-3 flex items-center text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:bg-white/25">
+                            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span class="font-medium">Verified-buyers</span>
                         </div>
                     </div>
+
+                    <!-- Dual CTA Buttons -->
+                    <div class="flex flex-col sm:flex-row gap-4 mb-12 animate-fade-in-up" style="animation-delay: 600ms;">
+                        <a href="/valuation-payment" class="btn-primary px-8 py-4 text-lg font-semibold rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 ab-track-cta" style="background-color: rgb(49 111 212); color: white;" data-cta-type="seller_primary" data-cta-text="Get Your Business Valuated" data-cta-location="hero">
+                            Get Your Business Valuated
+                        </a>
+                        <a href="/marketplace2" class="btn-secondary px-8 py-4 text-lg font-semibold rounded-xl border-2 border-white/30 text-white hover:bg-white/10 transition-all duration-300 ab-track-cta" data-cta-type="buyer_primary" data-cta-text="Browse Businesses for Sale" data-cta-location="hero">
+                            Browse Businesses for Sale
+                        </a>
                 </div>
             </div>
         </section>
@@ -365,7 +212,7 @@
                 
                 <!-- View All Listings Button -->
                 <div class="text-center mt-12">
-                    <a href="/marketplace2" class="view-all-btn-white inline-flex items-center bg-primary hover:bg-primary/90 text-white font-semibold px-8 py-4 rounded-lg shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105">
+                    <a href="/marketplace2" class="view-all-btn-white inline-flex items-center bg-primary hover:bg-primary/90 text-white font-semibold px-8 py-4 rounded-lg shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 ab-track-cta" data-cta-type="buyer_view_all" data-cta-text="View All Listings" data-cta-location="business_preview">
                         View All Listings
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
@@ -437,17 +284,17 @@
                                 </div>
                                 
                                 <div class="ai-insight-text ai-insight-content text-gray-700 space-y-3 text-left">
-                                    <p class="font-medium text-sm sm:text-base"><span class="text-green-600 font-bold">+28% growth</span> in Q2 compared to industry average - consider <span class="underline decoration-green-400 decoration-2 cursor-pointer">scaling digital channels</span> based on performance data.</p>
+                                    <p class="font-medium text-sm sm:text-base"><span class="text-blue-600 font-bold">+28% growth</span> in Q2 compared to industry average - consider <span class="underline decoration-blue-400 decoration-2 cursor-pointer">scaling digital channels</span> based on performance data.</p>
                                     
                                     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-gray-50 p-2 sm:p-3 rounded-lg border border-gray-100">
                                         <div>
                                             <span class="text-xs sm:text-sm text-gray-500">Business Valuation</span>
                                             <div class="flex items-baseline flex-wrap">
                                                 <span class="text-base sm:text-lg font-bold text-gray-900">£1,245,000</span>
-                                                <span class="ml-2 text-green-600 text-xs sm:text-sm">+£45K this quarter</span>
+                                                <span class="ml-2 text-blue-600 text-xs sm:text-sm">+£45K this quarter</span>
                                             </div>
                                         </div>
-                                        <div class="ml-auto mt-2 sm:mt-0 text-green-500">
+                                        <div class="ml-auto mt-2 sm:mt-0 text-blue-500">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 sm:h-8 sm:w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                                             </svg>
@@ -511,11 +358,11 @@
                                     
                                     <div class="flex items-center justify-between mb-2">
                                         <span class="data-labels text-gray-700 font-semibold text-xs sm:text-sm">Revenue Growth</span>
-                                        <span class="text-green-600 data-value font-bold text-xl sm:text-2xl" data-count-value="24.5" data-count-suffix="%">0%</span>
+                                        <span class="text-blue-600 data-value font-bold text-xl sm:text-2xl" data-count-value="24.5" data-count-suffix="%">0%</span>
                                     </div>
                                     
                                     <div class="mt-2 sm:mt-3 h-3 sm:h-4 bg-gray-100 rounded-full overflow-hidden">
-                                        <div class="metric-progress-bar h-full bg-gradient-to-r from-green-400 to-green-600 rounded-full transition-all duration-2000 ease-out relative" style="width: 0%" data-target-width="75%">
+                                        <div class="metric-progress-bar h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full transition-all duration-2000 ease-out relative" style="width: 0%" data-target-width="75%">
                                             <div class="absolute inset-0 bg-white/20 shine-effect"></div>
                                         </div>
                                     </div>
@@ -525,7 +372,7 @@
                                             <span class="text-gray-500">Industry avg</span>
                                             <span class="font-medium">16.2%</span>
                                         </div>
-                                        <div class="flex items-center text-green-600 font-medium bg-green-50 px-2 py-1 rounded-full">
+                                        <div class="flex items-center text-blue-600 font-medium bg-blue-50 px-2 py-1 rounded-full">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
                                                 <path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd" />
                                             </svg>
@@ -594,7 +441,7 @@
                             
                             <!-- View More Insights Button -->
                             <div class="text-center mt-8">
-                                <a href="/ai-insights" class="inline-flex items-center bg-primary hover:bg-primary/90 text-white font-semibold px-8 py-4 rounded-lg shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105">
+                                <a href="/ai-insights" class="inline-flex items-center bg-primary hover:bg-primary/90 text-white font-semibold px-8 py-4 rounded-lg shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 ab-track-cta" data-cta-type="seller_insights" data-cta-text="Get Your Business Insights" data-cta-location="ai_insights">
                                     Get Your Business Insights
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
@@ -663,7 +510,7 @@
                         <div class="p-6 flex-grow">
                             <h3 class="text-2xl font-bold mb-3">Market Pulse</h3>
                             <p class="text-gray-300">Time your market entry perfectly with real-time sentiment analysis. Know exactly when buyer demand is highest for maximum leverage in negotiations.</p>
-                            <div class="mt-4 flex items-center text-green-400 text-sm font-medium">
+                            <div class="mt-4 flex items-center text-blue-400 text-sm font-medium">
                                 <span>Close deals 37% faster</span>
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
                                     <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -693,63 +540,63 @@
                 <div class="container mx-auto px-4 md:px-8 relative z-10">
                     <!-- Enhanced section header with animation -->
                     <header class="text-center mb-16 md:mb-20" data-scroll-animation="fadeInUp" data-animation-delay="0">
-                        <h2 class="text-4xl md:text-5xl font-bold mb-6 text-gray-900" data-scroll-animation="slideInUp" data-animation-delay="200">Your journey to <span class="text-gradient-animated">business success</span></h2>
+                        <h2 class="text-4xl md:text-5xl font-bold mb-6 text-gray-900" data-scroll-animation="slideInUp" data-animation-delay="200">Your journey to <span class="text-gradient-animated">selling success</span></h2>
                         <p class="text-gray-700 text-xl leading-relaxed max-w-3xl mx-auto font-medium" data-scroll-animation="fadeInUp" data-animation-delay="400">
-                            Our platform streamlines your path to success with AI-powered tools and insights at every step.
+                            Sell your business faster and for maximum value with our AI-powered platform that connects you directly with verified buyers.
                         </p>
                     </header>
 
                     <!-- Modern journey card grid with improved accessibility -->
                     <div class="journey-grid" aria-live="polite" data-scroll-animation="staggeredChildren" data-stagger="300">
-                        <!-- Step 1: Explore - Enhanced with better interactions -->
+                        <!-- Step 1: Get AI Valuation - Enhanced with better interactions -->
                         <article class="journey-card" data-step="1" tabindex="0" data-scroll-animation="slideInLeft" data-animation-delay="0">
                             <div class="journey-card-inner">
                                 <header class="journey-card-header">
                                     <div class="journey-icon-container" aria-hidden="true">
                                         <!-- Custom SVG with better styling -->
                                         <svg class="journey-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M11 19C15.4183 19 19 15.4183 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11C3 15.4183 6.58172 19 11 19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                            <path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M12 2L2 7V10C2 16 6 20.5 12 22C18 20.5 22 16 22 10V7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                         </svg>
                                         <span class="journey-step-number" aria-label="Step 1">1</span>
                                     </div>
-                                    <h3 class="journey-card-title">Explore</h3>
+                                    <h3 class="journey-card-title">Get AI Valuation</h3>
                                 </header>
                                 <div class="journey-card-content">
                                     <p class="journey-card-description">
-                                        Discover businesses that match your investment criteria through our AI-powered marketplace. Filter by industry, location, price range, and performance metrics.
+                                        Get an instant, accurate valuation of your business using our AI-powered assessment. Input basic details and receive a comprehensive market-based valuation in seconds.
                                     </p>
                                     <div class="journey-card-visual">
                                         <div class="journey-visual-header">
                                             <div class="flex items-center gap-3">
                                                 <div class="journey-visual-icon" aria-hidden="true">
                                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                                        <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                                                        <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"/>
                                                     </svg>
                                                 </div>
-                                                <h4>Matching Businesses</h4>
+                                                <h4>Business Valuation</h4>
                                             </div>
-                                            <div class="journey-badge">Top Match</div>
+                                            <div class="journey-badge">AI-Powered</div>
                                         </div>
                                         <div class="journey-visual-grid">
                                             <div class="journey-result-card" tabindex="0">
                                                 <div class="journey-result-header">
-                                                    <h5>AI-Marketing Platform</h5>
-                                                    <span class="journey-match-rate">98%</span>
+                                                    <h5>Market Value</h5>
+                                                    <span class="journey-match-rate">£750K</span>
                                                 </div>
                                                 <div class="journey-result-details">
-                                                    <p>MRR: £15,200</p>
-                                                    <p>Growth: +24% YoY</p>
+                                                    <p>Revenue: £300K</p>
+                                                    <p>Growth: +15% YoY</p>
                                                 </div>
                                             </div>
                                             <div class="journey-result-card" tabindex="0">
                                                 <div class="journey-result-header">
-                                                    <h5>Analytics Dashboard</h5>
-                                                    <span class="journey-match-rate">92%</span>
+                                                    <h5>Quick Sale</h5>
+                                                    <span class="journey-match-rate">£650K</span>
                                                 </div>
                                                 <div class="journey-result-details">
-                                                    <p>MRR: £12,800</p>
-                                                    <p>Growth: +18% YoY</p>
+                                                    <p>Time: 2-3 months</p>
+                                                    <p>Certainty: High</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -764,22 +611,25 @@
                                 </div>
                             </div>
                         </article>
-                          <!-- Step 2: Create - Enhanced with better interactions -->
+                          <!-- Step 2: Create Your Listing - Enhanced with better interactions -->
                         <article class="journey-card" data-step="2" tabindex="0" data-scroll-animation="slideInUp" data-animation-delay="300">
                             <div class="journey-card-inner">
                                 <header class="journey-card-header">
                                     <div class="journey-icon-container" aria-hidden="true">
                                         <svg class="journey-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M12 5V19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                            <path d="M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M14 2V8H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M16 13H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M16 17H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M10 9H9H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                         </svg>
                                         <span class="journey-step-number" aria-label="Step 2">2</span>
                                     </div>
-                                    <h3 class="journey-card-title">Create</h3>
+                                    <h3 class="journey-card-title">Create Your Listing</h3>
                                 </header>
                                 <div class="journey-card-content">
                                     <p class="journey-card-description">
-                                        List your business with comprehensive details or create offer proposals with our intelligent templates. Our AI suggests the perfect positioning and valuation for maximum market appeal.
+                                        Create a compelling business listing using our intelligent templates. Our AI suggests the perfect positioning, highlights key strengths, and optimizes for maximum buyer interest.
                                     </p>
                                     <div class="journey-card-visual">
                                         <div style="position: relative; box-sizing: content-box; width: 100%; aspect-ratio: 16/9; padding: 20px 0;">
@@ -796,23 +646,23 @@
                                 </div>
                             </div>
                         </article>
-                          <!-- Step 3: Evaluate - Enhanced with better interactions -->
+                          <!-- Step 3: Connect & Close - Enhanced with better interactions -->
                         <article class="journey-card" data-step="3" tabindex="0" data-scroll-animation="slideInRight" data-animation-delay="600">
                             <div class="journey-card-inner">
                                 <header class="journey-card-header">
                                     <div class="journey-icon-container" aria-hidden="true">
                                         <svg class="journey-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M20.24 12.24C21.3658 11.1142 21.9983 9.58722 21.9983 7.99504C21.9983 6.40285 21.3658 4.87588 20.24 3.75004C19.1142 2.62419 17.5872 1.9917 15.995 1.9917C14.4028 1.9917 12.8758 2.62419 11.75 3.75004L5 10.5V19H13.5L20.24 12.24Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                            <path d="M16 8L2 22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                            <path d="M17.5 15H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M16 4H18C18.5304 4 19.0391 4.21071 19.4142 4.58579C19.7893 4.96086 20 5.46957 20 6V18C20 18.5304 19.7893 19.0391 19.4142 19.4142C19.0391 19.7893 18.5304 20 18 20H6C5.46957 20 4.96086 19.7893 4.58579 19.4142C4.21071 19.0391 4 18.5304 4 18V6C4 5.46957 4.21071 4.96086 4.58579 4.58579C4.96086 4.21071 5.46957 4 6 4H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M15 2H9C8.44772 2 8 2.44772 8 3V5C8 5.55228 8.44772 6 9 6H15C15.5523 6 16 5.55228 16 5V3C16 2.44772 15.5523 2 15 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                         </svg>
                                         <span class="journey-step-number" aria-label="Step 3">3</span>
                                     </div>
-                                    <h3 class="journey-card-title">Evaluate</h3>
+                                    <h3 class="journey-card-title">Connect & Close</h3>
                                 </header>
                                 <div class="journey-card-content">
                                     <p class="journey-card-description">
-                                        Perform comprehensive due diligence with our AI analysis tools. Get deep insights into business performance, market position, growth potential, and risk factors.
+                                        Connect directly with verified, qualified buyers. Manage inquiries, schedule meetings, and close deals faster—all while maintaining complete control over your sale process.
                                     </p>
                                     <div class="journey-card-visual">
                                         <img src="/figma design exports/images/Arzani-seller-visualiser.webp" alt="Arzani Data and Analysis Visualizer" class="journey-image" loading="lazy" />
@@ -840,12 +690,12 @@
                     
                     <!-- Enhanced Bottom CTA area with better accessibility -->
                     <footer class="journey-footer bg-white" data-animation="fade-in-up" style="background-color: white !important; color: black !important; padding: 2.5rem; border-radius: 1rem; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15); margin: 3rem auto; max-width: 800px; position: relative; z-index: 10; border: none !important; outline: none !important;">
-                        <h3 class="text-2xl font-bold mb-6" style="color: #1a202c !important; border: none !important;">Ready to transform your business journey?</h3>
+                        <h3 class="text-2xl font-bold mb-6" style="color: #1a202c !important; border: none !important;">Ready to list your business and reach qualified buyers?</h3>
                         <div class="journey-cta-buttons" style="border: none !important;">
-                            <a href="/signup" class="journey-cta-primary" aria-label="Get started with your business valuation" style="border-color: transparent !important;">
-                                Get started today
+                            <a href="/signup" class="journey-cta-primary" aria-label="Get started with your business listing" style="border-color: transparent !important;">
+                                List Your Business Now
                             </a>
-                            <a href="/demo" class="journey-cta-secondary" aria-label="See how our platform works">
+                            <a href="/pricing" class="journey-cta-secondary" aria-label="See our pricing plans">
                                 See how it works
                             </a>
                         </div>
@@ -870,8 +720,7 @@
                 <div class="text-center mb-12 md:mb-16" data-animation="fade-in-up">
                     <h2 class="text-3xl md:text-5xl font-bold mb-6">What Our <span class="text-gradient-animated">Sellers</span> Say</h2>
                     <p class="text-xl text-gray-300 max-w-3xl mx-auto">
-                        Don't just take our word for it - hear from business owners who have transformed 
-                        their operations and achieved growth with Arzani Marketplace.
+                        Don't just take our word for it - hear from business owners who successfully sold their businesses faster and for better prices using our platform.
                     </p>
                 </div>
                 
@@ -1031,32 +880,7 @@
                     </div>
                 </div>
                   <!-- Testimonial Stats -->
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-6 testimonial-stats" data-scroll-animation="staggeredChildren" data-stagger="150">
-                    <div class="stat-item text-center" data-scroll-animation="fadeInUp" data-animation-delay="0">
-                        <p class="text-3xl md:text-4xl font-bold mb-2">
-                            <span data-count-up="95" data-duration="2000">0</span>%
-                        </p>
-                        <p class="text-gray-400 text-sm">Customer satisfaction</p>
-                    </div>
-                    <div class="stat-item text-center" data-scroll-animation="fadeInUp" data-animation-delay="150">
-                        <p class="text-3xl md:text-4xl font-bold mb-2">
-                            <span data-count-up="2500" data-duration="2500">0</span>+
-                        </p>
-                        <p class="text-gray-400 text-sm">Businesses analyzed</p>
-                    </div>
-                    <div class="stat-item text-center" data-scroll-animation="fadeInUp" data-animation-delay="300">
-                        <p class="text-3xl md:text-4xl font-bold mb-2">
-                            <span data-count-up="28" data-duration="1800">0</span>%
-                        </p>
-                        <p class="text-gray-400 text-sm">Avg. valuation increase</p>
-                    </div>
-                    <div class="stat-item text-center" data-scroll-animation="fadeInUp" data-animation-delay="450">
-                        <p class="text-3xl md:text-4xl font-bold mb-2">
-                            <span data-count-up="5" data-duration="2200">0</span>M+
-                        </p>
-                        <p class="text-gray-400 text-sm">Transaction volume</p>
-                    </div>
-                </div>
+                
             </div>
         </section>        <div class="container mx-auto px-4 md:px-6 relative z-10">
             <div class="text-center mb-12 md:mb-16" data-scroll-animation="fadeInUp" data-animation-delay="0">
@@ -1238,36 +1062,36 @@
                     <div class="md:w-2/3" data-scroll-animation="slideInRight" data-animation-delay="200">
                         <div class="space-y-4 faq-accordion" data-scroll-animation="staggeredChildren" data-stagger="100">
                             <div class="faq-item bg-dark-light/40 backdrop-blur-md rounded-xl p-5 border border-gray-800" data-scroll-animation="fadeInUp" data-animation-delay="0">
-                                <div class="faq-question flex justify-between items-center cursor-pointer">
+                                <button class="faq-question w-full flex justify-between items-center text-left">
                                     <h5 class="font-semibold text-xl">What makes Arzani's marketplace different?</h5>
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 faq-icon transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                                     </svg>
-                                </div>
+                                </button>
                                 <div class="faq-answer hidden mt-4 text-gray-400">
                                     <p>Unlike traditional marketplaces, Arzani integrates AI-powered analytics and valuation tools that provide deep insights into business performance, market trends, and growth opportunities. Our platform offers personalized matching, comprehensive due diligence assistance, and data-driven decision support that traditional brokers simply can't match.</p>
                                 </div>
                             </div>
                             
                             <div class="faq-item bg-dark-light/40 backdrop-blur-md rounded-xl p-5 border border-gray-800">
-                                <div class="faq-question flex justify-between items-center cursor-pointer">
+                                <button class="faq-question w-full flex justify-between items-center text-left">
                                     <h5 class="font-semibold text-xl">How long does it take to sell a business on Arzani?</h5>
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 faq-icon transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                                     </svg>
-                                </div>
+                                </button>
                                 <div class="faq-answer hidden mt-4 text-gray-400">
                                     <p>The time to sale varies based on business size, industry, and pricing, but our AI-optimized listings typically sell 37% faster than industry averages. Well-priced businesses with complete documentation sell in 2-6 months, compared to the industry average of 6-12 months. Our analytics help you optimize your listing for faster sale while maintaining value.</p>
                                 </div>
                             </div>
                             
                             <div class="faq-item bg-dark-light/40 backdrop-blur-md rounded-xl p-5 border border-gray-800">
-                                <div class="faq-question flex justify-between items-center cursor-pointer">
+                                <button class="faq-question w-full flex justify-between items-center text-left">
                                     <h5 class="font-semibold text-xl">Can I use Arzani if I'm just researching the market?</h5>
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 faq-icon transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                                     </svg>
-                                </div>
+                                </button>
                                 <div class="faq-answer hidden mt-4 text-gray-400">
                                     <p>Absolutely! We offer a Basic plan specifically for market research purposes. You can access aggregated market data, industry trends, and basic valuation metrics without listing or purchasing a business. This is perfect for entrepreneurs considering an exit in the future or investors researching new sectors.</p>
                                 </div>
@@ -1275,12 +1099,12 @@
                             
                             <!-- New FAQ Item 1 -->
                             <div class="faq-item bg-dark-light/40 backdrop-blur-md rounded-xl p-5 border border-gray-800">
-                                <div class="faq-question flex justify-between items-center cursor-pointer">
+                                <button class="faq-question w-full flex justify-between items-center text-left">
                                     <h5 class="font-semibold text-xl">How accurate are your AI-powered business valuations?</h5>
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 faq-icon transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                                     </svg>
-                                </div>
+                                </button>
                                 <div class="faq-answer hidden mt-4 text-gray-400">
                                     <p>Our AI valuation system combines machine learning with market data from thousands of business sales to provide estimates with 85-90% accuracy compared to final sale prices. The system analyzes over 100 factors including industry trends, growth rates, profitability metrics, and comparable sales data. For maximum accuracy, we recommend completing your full business profile and providing at least 2 years of financial data.</p>
                                 </div>
@@ -1288,12 +1112,12 @@
                             
                             <!-- New FAQ Item 2 -->
                             <div class="faq-item bg-dark-light/40 backdrop-blur-md rounded-xl p-5 border border-gray-800">
-                                <div class="faq-question flex justify-between items-center cursor-pointer">
+                                <button class="faq-question w-full flex justify-between items-center text-left">
                                     <h5 class="font-semibold text-xl">How do you ensure the security and privacy of my business data?</h5>
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 faq-icon transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                                     </svg>
-                                </div>
+                                </button>
                                 <div class="faq-answer hidden mt-4 text-gray-400">
                                     <p>We take security and privacy extremely seriously. All data is encrypted both in transit and at rest using industry-standard protocols. Our platform uses role-based access controls, ensuring only authorized users can access your information. Financial and sensitive business data is compartmentalized and never shared without explicit permission. We comply with GDPR, CCPA, and other relevant data protection regulations, and our system undergoes regular security audits and penetration testing by independent firms.</p>
                                 </div>
@@ -1301,12 +1125,12 @@
                             
                             <!-- New FAQ Item 3 -->
                             <div class="faq-item bg-dark-light/40 backdrop-blur-md rounded-xl p-5 border border-gray-800">
-                                <div class="faq-question flex justify-between items-center cursor-pointer">
+                                <button class="faq-question w-full flex justify-between items-center text-left">
                                     <h5 class="font-semibold text-xl">What subscription plans do you offer and what features are included?</h5>
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 faq-icon transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 faq-icon transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                                     </svg>
-                                </div>
+                                </button>
                                 <div class="faq-answer hidden mt-4 text-gray-400">
                                     <p>We offer three subscription tiers: Basic, Gold, and Platinum. The Basic plan includes business listings, basic AI insights, and marketplace access. The Platinum plan adds advanced valuation tools, detailed market analytics, priority support, and enhanced visibility for listings. Our Platinum plan includes all premium features plus custom API access, white-labeled reports, dedicated account management, and bespoke AI training for your specific business sector. Visit our pricing page for current rates and special offers. All plans start with a 14-day free trial with no credit card required.</p>
                                 </div>
@@ -1333,24 +1157,29 @@
                             Arzani uses AI-powered insights to revolutionize how businesses are bought and sold, making transactions smarter, faster, and more profitable.
                         </p>
                         <div class="flex space-x-4">
-                            <a href="#" class="w-9 h-9 rounded-full flex items-center justify-center bg-dark border border-gray-800 text-gray-400 hover:bg-primary/10 hover:text-white transition-colors">
+                            <a href="https://www.tiktok.com/@arzani.co.uk" class="w-9 h-9 rounded-full flex items-center justify-center bg-dark border border-gray-800 text-gray-400 hover:bg-primary/10 hover:text-white transition-colors">
                                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                    <path fill-rule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54v6.988C18.343 21.128 22 16.991 22 12z" clip-rule="evenodd"/>
+                                    <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/>
                                 </svg>
                             </a>
-                            <a href="#" class="w-9 h-9 rounded-full flex items-center justify-center bg-dark border border-gray-800 text-gray-400 hover:bg-primary/10 hover:text-white transition-colors">
+                            <a href="https://x.com/arzaniuk/" class="w-9 h-9 rounded-full flex items-center justify-center bg-dark border border-gray-800 text-gray-400 hover:bg-primary/10 hover:text-white transition-colors">
                                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                     <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.107 4.107 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.096 4.096 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.109 4.109 0 001.27 5.477A4.07 4.07 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84"/>
                                 </svg>
                             </a>
-                            <a href="#" class="w-9 h-9 rounded-full flex items-center justify-center bg-dark border border-gray-800 text-gray-400 hover:bg-primary/10 hover:text-white transition-colors">
+                            <a href="https://www.instagram.com/arzani.co.uk/" class="w-9 h-9 rounded-full flex items-center justify-center bg-dark border border-gray-800 text-gray-400 hover:bg-primary/10 hover:text-white transition-colors">
                                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                     <path fill-rule="evenodd" d="M12.315 2c2.43 0 2.784.013 3.808.06 1.064.049 1.791.218 2.427.465a4.902 4.902 0 011.772 1.153 4.902 4.902 0 011.153 1.772c.247.636.416 1.363.465 2.427.048 1.067.06 1.407.06 4.123v.08c0 2.643-.012 2.987-.06 4.043-.049 1.064-.218 1.791-.465 2.427a4.902 4.902 0 01-1.153 1.772 4.902 4.902 0 01-1.772 1.153c-.636.247-1.363.416-2.427.465-1.067.048-1.407.06-4.123.06h-.08c-2.643 0-2.987-.012-4.043-.06-1.064-.049-1.791-.218-2.427-.465a4.902 4.902 0 01-1.772-1.153 4.902 4.902 0 01-1.153-1.772c-.247-.636-.416-1.363-.465-2.427-.047-1.024-.06-1.379-.06-3.808v-.63c0-2.43.013-2.784.06-3.808.049-1.064.218-1.791.465-2.427a4.902 4.902 0 011.153-1.772A4.902 4.902 0 015.45 2.525c.636-.247 1.363-.416 2.427-.465C8.901 2.013 9.256 2 11.685 2h.63zm-.081 1.802h-.468c-2.456 0-2.784.011-3.807.058-.975.045-1.504.207-1.857.344-.467.182-.8.398-1.15.748-.35.35-.566.683-.748 1.15-.137.353-.3.882-.344 1.857-.047 1.023-.058 1.351-.058 3.807v.468c0 2.456.011 2.784.058 3.807.045.975.207 1.504.344 1.857.182.466.399.8.748 1.15.35.35.683.566 1.15.748.353.137.882.3 1.857.344 1.054.048 1.37.058 4.041.058h.08c2.597 0 2.917-.01 3.96-.058.976-.045 1.505-.207 1.858-.344.466-.182.8-.398 1.15-.748.35-.35.566-.683.748-1.15.137-.353.3-.882.344-1.857.048-1.055.058-1.37.058-4.041v-.08c0-2.597-.01-2.917-.058-3.96-.045-.976-.207-1.505-.344-1.858a3.097 3.097 0 00-.748-1.15 3.098 3.098 0 00-1.15-.748c-.353-.137-.882-.3-1.857-.344-1.023-.047-1.351-.058-3.807-.058zM12 6.865a5.135 5.135 0 110 10.27 5.135 5.135 0 010-10.27zm0 1.802a3.333 3.333 0 100 6.666 3.333 3.333 0 000-6.666zm5.338-3.205a1.2 1.2 0 110 2.4 1.2 1.2 0 010-2.4z" clip-rule="evenodd"/>
                                 </svg>
                             </a>
-                            <a href="#" class="w-9 h-9 rounded-full flex items-center justify-center bg-dark border border-gray-800 text-gray-400 hover:bg-primary/10 hover:text-white transition-colors">
+                            <a href="https://www.linkedin.com/in/arzani.co.uk/" class="w-9 h-9 rounded-full flex items-center justify-center bg-dark border border-gray-800 text-gray-400 hover:bg-primary/10 hover:text-white transition-colors">
                                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                     <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                                </svg>
+                            </a>
+                            <a href="https://www.facebook.com/share/16tLCq5fxo/?mibextid=wwXIfr" class="w-9 h-9 rounded-full flex items-center justify-center bg-dark border border-gray-800 text-gray-400 hover:bg-primary/10 hover:text-white transition-colors">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clip-rule="evenodd"/>
                                 </svg>
                             </a>
                         </div>
@@ -1431,17 +1260,17 @@
     </div>
 
     <!-- Simplified Cookie Consent Banner -->
-    <div id="cookieConsentBanner" class="fixed bottom-0 left-0 right-0 bg-dark-light p-4 border-t border-gray-700 z-[100] hidden">
+    <div id="cookieConsentBanner" class="fixed bottom-0 left-0 right-0 bg-white p-4 border-t border-gray-300 z-[100] hidden shadow-lg">
         <div class="container mx-auto px-4 md:px-6 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p class="text-sm text-gray-300 text-center md:text-left">
-                We use essential cookies to make our site work. With your consent, we may also use non-essential cookies to improve user experience and analyze website traffic. By clicking “Accept All,” you agree to our website's cookie use as described in our <a href="/cookies" class="text-primary hover:underline">Cookie Policy</a>.
+            <p class="text-sm text-gray-700 text-center md:text-left">
+                We use essential cookies to make our site work. With your consent, we may also use non-essential cookies to improve user experience and analyze website traffic. By clicking “Accept All,” you agree to our website's cookie use as described in our                <a href="/cookies" class="text-blue-600 hover:underline">Cookie Policy</a>.
             </p>
             <div class="flex flex-shrink-0 gap-3">
-                <button id="acceptNecessary" class="btn-secondary text-sm px-4 py-2">Accept Necessary</button>
-                <button id="acceptAllCookies" class="btn-primary text-sm px-4 py-2">Accept All</button>
+                <button id="acceptNecessary" class="border border-gray-300 bg-transparent text-gray-700 hover:bg-gray-50 text-sm px-4 py-2 rounded transition-colors">Accept Necessary</button>
+                <button id="acceptAllCookies" class="text-sm px-4 py-2 rounded text-white hover:opacity-90 transition-opacity" style="background-color: rgb(49 111 212);">Accept All</button>
             </div>
         </div>
-    </div>    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>    <script src="/js/navigation.js"></script>
+    </div>    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>    <script src="/js/navbar2.js"></script>
     <script src="/js/testimonial-carousel.js"></script>
     <script src="/js/ai-features.js"></script>
     <script src="/js/feature-animations.js"></script>
@@ -1451,7 +1280,7 @@
     <script src="/js/ai-hero-animations.js"></script>
 
     <!-- Scripts -->
-    <script src="/js/navigation.js"></script>
+    <script src="/js/navbar2.js"></script>
     <script src="/js/performance-optimized-animations.js"></script>
     <script src="/js/marketplace-landing.js"></script>
     <script src="/js/animations.js"></script>
@@ -1975,6 +1804,163 @@
             
             // Initialize metrics dashboard when page loads
             setTimeout(initMetricsDashboard, 1000);
+        });
+        
+        // Initialize A/B Testing Analytics with Smart Routing Enhancement
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get server-assigned variant and routing information
+            const serverVariant = '<%= typeof abTestVariant !== "undefined" ? abTestVariant : "" %>';
+            const routingMethod = '<%= typeof routingMethod !== "undefined" ? routingMethod : "ab_test" %>';
+            const userRole = '<%= typeof userRole !== "undefined" ? userRole : null %>';
+            
+            // Initialize the analytics tracker with enhanced debugging
+            console.log('🧪 Initializing A/B Test Analytics...');
+            window.abTestAnalytics = new ABTestingAnalytics();
+            
+            // Verify analytics instance
+            console.log('Analytics instance created:', {
+                exists: !!window.abTestAnalytics,
+                variant: window.abTestAnalytics?.variant,
+                sessionId: window.abTestAnalytics?.sessionId,
+                methods: {
+                    trackEvent: typeof window.abTestAnalytics?.trackEvent,
+                    setVariant: typeof window.abTestAnalytics?.setVariant
+                }
+            });
+            
+            // Override variant if server provided one
+            if (serverVariant) {
+                window.abTestAnalytics.setVariant(serverVariant);
+            }
+            
+            // Set up variant-specific styling and get final variant
+            const variant = serverVariant || window.abTestAnalytics.variant;
+            document.body.setAttribute('data-ab-variant', variant);
+            document.body.setAttribute('data-routing-method', routingMethod);
+            if (userRole) {
+                document.body.setAttribute('data-user-role', userRole);
+            }
+            
+            // Track variant exposure with routing method
+            window.abTestAnalytics.trackEvent('variant_exposure', {
+                variant: variant,
+                routing_method: routingMethod,
+                user_role: userRole,
+                page: 'marketplace-landing',
+                timestamp: Date.now()
+            });
+            
+            // Set up CTA click tracking with enhanced error handling
+            const ctaButtons = document.querySelectorAll('.ab-track-cta');
+            console.log(`Found ${ctaButtons.length} CTA buttons for tracking`);
+            
+            ctaButtons.forEach((cta, index) => {
+                console.log(`Setting up CTA ${index + 1}:`, {
+                    text: cta.textContent.trim(),
+                    ctaType: cta.getAttribute('data-cta-type'),
+                    ctaLocation: cta.getAttribute('data-cta-location')
+                });
+                
+                cta.addEventListener('click', function(e) {
+                    try {
+                        const ctaType = this.getAttribute('data-cta-type') || 'unknown';
+                        const ctaText = this.getAttribute('data-cta-text') || this.textContent.trim();
+                        const ctaLocation = this.getAttribute('data-cta-location') || 'unknown';
+                        
+                        // Determine if this is a seller or buyer CTA
+                        const isSeller = ctaType.includes('seller');
+                        const eventType = isSeller ? 'seller_cta_click' : 'buyer_cta_click';
+                        
+                        console.log(`CTA Click Detected:`, {
+                            eventType,
+                            ctaType,
+                            ctaText,
+                            ctaLocation,
+                            variant,
+                            analyticsExists: !!window.abTestAnalytics
+                        });
+                        
+                        if (window.abTestAnalytics) {
+                            window.abTestAnalytics.trackEvent(eventType, {
+                                ctaType: ctaType,
+                                ctaText: ctaText,
+                                ctaLocation: ctaLocation,
+                                href: this.href,
+                                variant: variant
+                            });
+                            console.log(`✅ CTA Event Tracked: ${eventType} - ${ctaText} (${ctaLocation})`);
+                        } else {
+                            console.error('❌ abTestAnalytics not available');
+                        }
+                    } catch (error) {
+                        console.error('❌ Error in CTA click handler:', error);
+                    }
+                });
+            });
+            
+            // Track section viewing using Intersection Observer
+            const sectionObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const sectionName = entry.target.getAttribute('data-section') || 
+                                          entry.target.className.split(' ').find(c => c.includes('section')) ||
+                                          'unknown_section';
+                        
+                        window.abTestAnalytics.trackEvent('section_view', {
+                            section: sectionName,
+                            variant: variant
+                        });
+                    }
+                });
+            }, { threshold: 0.5 });
+            
+            // Observe key sections
+            const sections = document.querySelectorAll('section, .hero-section-video, .business-preview-section-white, .ai-business-section-white');
+            sections.forEach((section, index) => {
+                if (!section.getAttribute('data-section')) {
+                    section.setAttribute('data-section', `section_${index + 1}`);
+                }
+                sectionObserver.observe(section);
+            });
+            
+            // Track pricing interaction
+            const pricingElements = document.querySelectorAll('[href="/pricing"], .pricing-element');
+            pricingElements.forEach(element => {
+                element.addEventListener('click', function() {
+                    window.abTestAnalytics.trackEvent('pricing_viewed', {
+                        variant: variant,
+                        source: 'homepage'
+                    });
+                });
+            });
+            
+            // Track form interactions if any
+            const forms = document.querySelectorAll('form');
+            forms.forEach(form => {
+                form.addEventListener('submit', function() {
+                    window.abTestAnalytics.trackEvent('form_submission', {
+                        formId: this.id || 'unknown',
+                        variant: variant
+                    });
+                });
+                
+                // Track form start
+                const formInputs = form.querySelectorAll('input, textarea, select');
+                let formStarted = false;
+                formInputs.forEach(input => {
+                    input.addEventListener('focus', function() {
+                        if (!formStarted) {
+                            formStarted = true;
+                            window.abTestAnalytics.trackEvent('form_started', {
+                                formId: form.id || 'unknown',
+                                variant: variant
+                            });
+                        }
+                    });
+                });
+            });
+            
+            console.log(`A/B Test Analytics initialized - Variant: ${variant}`);
         });
     </script>
 </body>

@@ -5,7 +5,7 @@
 
 import express from 'express';
 import blogApprovalController from '../controllers/blogApprovalController.js';
-import n8nWorkflowService from '../utils/n8nWorkflowService.js';
+import blogService from '../services/blogService.js';
 import webhookMiddleware from '../middleware/webhookMiddleware.js';
 
 const router = express.Router();
@@ -69,7 +69,7 @@ router.post('/webhook', webhookMiddleware.logWebhookRequest, async (req, res) =>
     
     // Forward the transformed payload to the n8n workflow service
     req.body = transformedPayload;
-    return await n8nWorkflowService.handleWebhook(req, res);
+    return await blogService.handleWebhook(req, res);
     
   } catch (error) {
     console.error('Error handling blog approval webhook:', error);

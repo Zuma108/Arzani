@@ -144,8 +144,127 @@
    
 <!-- Replace existing filter container -->
 <div class="sticky top-0 left-0 right-0 z-10 filter-container">
-    <!-- Replace existing location input with this -->
-    <div class="dropdown location-dropdown">
+    <!-- Mobile Filter Button (hidden on desktop) -->
+    <div class="dropdown mobile-filter-dropdown">
+        <button class="filter-input dropdown-toggle mobile-filter-btn" 
+                type="button" 
+                id="mobileFiltersDropdown" 
+                data-bs-toggle="dropdown" 
+                data-bs-auto-close="outside"
+                aria-expanded="false">
+            <i class="bi bi-funnel-fill"></i> Filters
+        </button>
+        <div class="dropdown-menu mobile-filter-menu" aria-labelledby="mobileFiltersDropdown">
+            <div class="mobile-filter-content">
+                <!-- Location Section -->
+                <div class="mobile-filter-section">
+                    <h6 class="mobile-filter-title">Location</h6>
+                    <input type="text" class="mobile-filter-input" 
+                           id="mobileLocationInput"
+                           placeholder="Enter location">
+                    <div class="mobile-filter-options">
+                        <button class="mobile-location-item">London</button>
+                        <button class="mobile-location-item">Manchester</button>
+                        <button class="mobile-location-item">Birmingham</button>
+                        <button class="mobile-location-item">Leeds</button>
+                        <button class="mobile-location-item">Liverpool</button>
+                    </div>
+                </div>
+                
+                <!-- Industries Section -->
+                <div class="mobile-filter-section">
+                    <h6 class="mobile-filter-title">Industries</h6>
+                    <div class="mobile-filter-options mobile-checkbox-grid">
+                        <label class="mobile-checkbox-item">
+                            <input type="checkbox" class="industry-checkbox mobile-checkbox" value="Agriculture"> Agriculture
+                        </label>
+                        <label class="mobile-checkbox-item">
+                            <input type="checkbox" class="industry-checkbox mobile-checkbox" value="Automotive & Boat"> Automotive & Boat
+                        </label>
+                        <label class="mobile-checkbox-item">
+                            <input type="checkbox" class="industry-checkbox mobile-checkbox" value="Beauty & Personal Care"> Beauty & Personal Care
+                        </label>
+                        <label class="mobile-checkbox-item">
+                            <input type="checkbox" class="industry-checkbox mobile-checkbox" value="Building & Construction"> Building & Construction
+                        </label>
+                        <label class="mobile-checkbox-item">
+                            <input type="checkbox" class="industry-checkbox mobile-checkbox" value="Financial Services"> Financial Services
+                        </label>
+                        <label class="mobile-checkbox-item">
+                            <input type="checkbox" class="industry-checkbox mobile-checkbox" value="Health Care & Fitness"> Health Care & Fitness
+                        </label>
+                        <label class="mobile-checkbox-item">
+                            <input type="checkbox" class="industry-checkbox mobile-checkbox" value="Online & Technology"> Online & Technology
+                        </label>
+                        <label class="mobile-checkbox-item">
+                            <input type="checkbox" class="industry-checkbox mobile-checkbox" value="Restaurants & Food"> Restaurants & Food
+                        </label>
+                        <label class="mobile-checkbox-item">
+                            <input type="checkbox" class="industry-checkbox mobile-checkbox" value="Retail"> Retail
+                        </label>
+                        <label class="mobile-checkbox-item">
+                            <input type="checkbox" class="industry-checkbox mobile-checkbox" value="Service Businesses"> Service Businesses
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Price Range Section -->
+                <div class="mobile-filter-section">
+                    <h6 class="mobile-filter-title">Price Range</h6>
+                    <div class="mobile-filter-options mobile-radio-grid">
+                        <label class="mobile-radio-item">
+                            <input type="radio" name="mobilePrice" value="Under £50k"> Under £50k
+                        </label>
+                        <label class="mobile-radio-item">
+                            <input type="radio" name="mobilePrice" value="£50k - £100k"> £50k - £100k
+                        </label>
+                        <label class="mobile-radio-item">
+                            <input type="radio" name="mobilePrice" value="£100k - £250k"> £100k - £250k
+                        </label>
+                        <label class="mobile-radio-item">
+                            <input type="radio" name="mobilePrice" value="£250k - £500k"> £250k - £500k
+                        </label>
+                        <label class="mobile-radio-item">
+                            <input type="radio" name="mobilePrice" value="£500k - £1M"> £500k - £1M
+                        </label>
+                        <label class="mobile-radio-item">
+                            <input type="radio" name="mobilePrice" value="£1M+"> £1M+
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Revenue Section -->
+                <div class="mobile-filter-section">
+                    <h6 class="mobile-filter-title">Gross Revenue</h6>
+                    <div class="mobile-filter-options mobile-radio-grid">
+                        <label class="mobile-radio-item">
+                            <input type="radio" name="mobileRevenue" value="Under £100k"> Under £100k
+                        </label>
+                        <label class="mobile-radio-item">
+                            <input type="radio" name="mobileRevenue" value="£100k - £500k"> £100k - £500k
+                        </label>
+                        <label class="mobile-radio-item">
+                            <input type="radio" name="mobileRevenue" value="£500k - £1M"> £500k - £1M
+                        </label>
+                        <label class="mobile-radio-item">
+                            <input type="radio" name="mobileRevenue" value="£1M+"> £1M+
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Filter Actions -->
+                <div class="mobile-filter-actions">
+                    <button type="button" class="btn btn-outline-secondary mobile-filter-clear">Clear All</button>
+                    <button type="button" class="btn btn-primary mobile-filter-apply">Apply Filters</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Desktop Filters (hidden on small screens) -->
+    <div class="desktop-filters">
+        <!-- Replace existing location input with this -->
+        <div class="dropdown location-dropdown">
         <input type="text" class="filter-input dropdown-toggle" 
                id="locationInput"
                placeholder="Location" 
@@ -321,18 +440,34 @@
             </label></li>
         </ul>
     </div>
+    </div> <!-- End desktop-filters -->
 </div>
    
     <!-- Marketplace Section -->
     <div class="container mt-5">
       <h1 class="marketplace-heading">Marketplace Listings</h1>
-    <div id="listings-container" class="row row-cols-1 row-cols-md-3 g-4">
-      <!-- The listings will be dynamically loaded via JavaScript -->
-    </div>
-    <div id="pagination">
+      
+      <!-- Horizontal Scroll Container -->
+      <div class="horizontal-marketplace-wrapper">
+        <button class="marketplace-nav-btn marketplace-nav-left" id="scrollLeft" aria-label="Scroll left">
+          <i class="bi bi-chevron-left"></i>
+        </button>
+        
+        <div class="horizontal-listings-container" id="horizontal-listings-container">
+          <div id="listings-container" class="horizontal-listings-scroll">
+            <!-- The listings will be dynamically loaded via JavaScript -->
+          </div>
+        </div>
+        
+        <button class="marketplace-nav-btn marketplace-nav-right" id="scrollRight" aria-label="Scroll right">
+          <i class="bi bi-chevron-right"></i>
+        </button>
+      </div>
+      
+      <div id="pagination">
         <!-- Pagination controls will be loaded here -->
+      </div>
     </div>
-</div>
 
     </div>
     

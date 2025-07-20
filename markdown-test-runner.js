@@ -192,7 +192,7 @@ console.log('Instructions:');
 console.log('1. Open the Arzani-X interface in your browser');
 console.log('2. Get a response from an AI agent');
 console.log('3. Open browser console and paste this:');
-console.log('   fetch("/js/markdown-debug-helper.js").then(r => r.text()).then(t => eval(t))');
+console.log('   fetch("/js/markdown-debug-helper.js").then(r => r.text()).then(t => new Function(t)())');
 console.log('4. The script will analyze the last AI message and provide debugging info');
 console.log('5. To re-render with markdown, run: window.reRenderLastAIMessage()');
 

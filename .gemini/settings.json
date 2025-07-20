@@ -1,0 +1,73 @@
+{
+  "mcpServers": {
+    "myPythonServer": {
+      "command": "python",
+      "args": ["mcp_server.py", "--port", "8080"],
+      "cwd": "./mcp_tools/python",
+      "timeout": 5000
+    },
+    "myNodeServer": {
+      "command": "node",
+      "args": ["mcp_server.js"],
+      "cwd": "./mcp_tools/node"
+    },
+    "myDockerServer": {
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "-e", "API_KEY", "ghcr.io/foo/bar"],
+      "env": {
+        "API_KEY": "$MY_API_TOKEN"
+      }
+    },
+    "marketplace": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres",
+        "postgresql://marketplace_user:Olumide123!@my-marketplace.cfwmyg8aso0q.eu-west-2.rds.amazonaws.com:5432/my_marketplace"
+      ]
+    },
+    "braveSearch": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-brave-search"],
+      "env": {
+        "BRAVE_API_KEY": "$BRAVE_API_KEY"
+      }
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "${workspaceFolder}"
+      ]
+    },
+    "sequentialThinking": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
+    },
+    "firecrawl": {
+      "command": "npx",
+      "args": ["-y", "firecrawl-mcp"],
+      "env": {
+        "FIRECRAWL_API_KEY": "$FIRECRAWL_API_KEY"
+      }
+    },
+    "perplexity": {
+      "command": "npx",
+      "args": ["-y", "server-perplexity-ask"],
+      "env": {
+        "PERPLEXITY_API_KEY": "$PERPLEXITY_API_KEY"
+      }
+    },
+    "dataForSEO": {
+      "command": "npx",
+      "args": ["-y", "dataforseo-mcp-server"],
+      "env": {
+        "DATAFORSEO_USERNAME": "$DATAFORSEO_USERNAME",
+        "DATAFORSEO_PASSWORD": "$DATAFORSEO_PASSWORD",
+        "ENABLED_MODULES": "SERP,KEYWORDS_DATA,ONPAGE,DATAFORSEO_LABS,BUSINESS_DATA,DOMAIN_ANALYTICS,BACKLINKS",
+        "DATAFORSEO_FULL_RESPONSE": "false"
+      }
+    }
+  }
+}

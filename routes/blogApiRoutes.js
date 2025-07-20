@@ -7,7 +7,7 @@ import express from 'express';
 import blogController from '../controllers/blogController.js';
 import { requireAuth } from '../middleware/auth.js';
 import webhookMiddleware from '../middleware/webhookMiddleware.js';
-import n8nWorkflowService from '../utils/n8nWorkflowService.js';
+import blogService from '../services/blogService.js';
 
 const router = express.Router();
 
@@ -40,7 +40,7 @@ router.post('/n8n/webhook', webhookMiddleware.logWebhookRequest, blogController.
 // Add webhook status/debug endpoint
 router.get('/n8n/status', async (req, res) => {
   try {
-    const logs = await n8nWorkflowService.getRecentLogs(10);
+    const logs = await blogService.getRecentLogs(10);
     const webhookRequests = await webhookMiddleware.getRecentWebhookRequests(10);
     
     res.json({

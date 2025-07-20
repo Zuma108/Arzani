@@ -91,12 +91,65 @@ export function attachRootRoute(app) {
   // Add a high-priority handler for the root route
   const existingRoutes = app._router ? app._router.stack : [];
   
-  // Create our root route handler
+  // Create our root route handler with A/B testing
   const rootHandler = (req, res, next) => {
     if (req.path === '/') {
-      return res.render('marketplace-landing', { 
-        title: 'Buy & Sell Businesses | Arzani Marketplace'
-      });
+      // Apply A/B testing logic
+      let variant = req.session?.abTestVariant;
+      let routingMethod = 'ab_test';
+      
+      // If no variant assigned, assign one
+      if (!variant) {
+        const isSellerFirst = Math.random() < 0.5;
+        variant = isSellerFirst ? 'seller_first' : 'buyer_first';
+        if (req.session) {
+          req.session.abTestVariant = variant;
+        }
+        console.log(`A/B Test: User assigned to ${variant} variant (root handler)`);
+      }
+      
+      // Smart routing override: Check if we have a detected or selected role
+      const userRole = req.session?.userRole || req.detectedRole;
+      if (userRole) {
+        // Override A/B test with smart routing
+        variant = userRole === 'buyer' ? 'buyer_first' : 'seller_first';
+        routingMethod = 'smart_routing';
+        
+        // Update session to maintain consistency
+        if (req.session) {
+          req.session.abTestVariant = variant;
+        }
+      }
+      
+      // Track page view
+      const pageViewData = {
+        type: 'page_view',
+        variant: variant,
+        routing_method: routingMethod,
+        user_role: userRole || null,
+        timestamp: new Date().toISOString(),
+        session: req.sessionID || 'anonymous',
+        path: '/'
+      };
+      
+      console.log('Homepage View (Root Handler):', pageViewData);
+      
+      // Serve the appropriate variant
+      if (variant === 'buyer_first') {
+        return res.render('buyer-landing', {
+          title: 'Find Your Perfect Business | Arzani Marketplace',
+          abTestVariant: variant,
+          routingMethod: routingMethod,
+          userRole: userRole || null
+        });
+      } else {
+        return res.render('marketplace-landing', {
+          title: 'Sell Your Business Fast | Arzani Marketplace',
+          abTestVariant: variant,
+          routingMethod: routingMethod,
+          userRole: userRole || null
+        });
+      }
     }
     next();
   };

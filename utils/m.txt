@@ -1,0 +1,1481 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1ERH3cb6WaPTRIQpdCEuwgqE2W6mPqSBSyZf6-2vdQH4",
+          "mode": "list",
+          "cachedResultName": "Google scrape worksheet vape shop",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ERH3cb6WaPTRIQpdCEuwgqE2W6mPqSBSyZf6-2vdQH4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ERH3cb6WaPTRIQpdCEuwgqE2W6mPqSBSyZf6-2vdQH4/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -2880,
+        760
+      ],
+      "id": "6e902bee-c2a4-4d9a-88d5-11d0715c5fe2",
+      "name": "Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "VYvobdzmle3v8iT3",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7c5b576a-3768-4ab1-aa04-0331263e5dcf",
+              "leftValue": "",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -2680,
+        760
+      ],
+      "id": "8710d24a-559f-48f7-95f6-e2e90b6a3e9f",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -2400,
+        720
+      ],
+      "id": "b2606437-2dc7-40d0-9651-9a0f178cae75",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "jsCode": "for (const item of $input.all()) {\n  if (!item.json.email) continue;\n  const parts = item.json.email.split('@');\n  item.json.domain = parts[1] || '';\n  item.json.website = item.json.domain ? `https://${item.json.domain}` : '';\n  item.json.sequence = 'initial';\n  item.json.lastContact = new Date().toISOString();\n}\nreturn $input.all();\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2180,
+        740
+      ],
+      "id": "aee69db7-0be0-4085-b392-fe05d8b42cc6",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.Website }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1960,
+        740
+      ],
+      "id": "bfb08eb1-4a15-40c8-8fc3-45c5e0b5376e",
+      "name": "HTTP Request",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "e4b7f2fb-e3fc-41ea-89f5-efd616bfa607",
+              "leftValue": "=\"parameters\": {\n  \"conditions\": {\n    \"options\": {\n      \"caseSensitive\": false,\n      \"leftValue\": \"={{ $('Code').item.json['Email address'] }}\",\n      \"typeValidation\": \"strict\",\n      \"version\": 2\n    },\n    \"conditions\": [\n      {\n        \"leftValue\": \"={{ $('Code').item.json['Email address'] }}\",\n        \"operator\": {\n          \"type\": \"string\",\n          \"operation\": \"isNotEmpty\"\n        }\n      }\n    ],\n    \"combinator\": \"and\"\n  },\n  \"options\": {}\n}\n",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1380,
+        740
+      ],
+      "id": "e3e8a618-0f2d-43ff-913e-92c00e873b3d",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "jsCode": "for (const item of $input.all()) {\n  // store the entire HTTP Request JSON under websiteAnalysis\n  item.json.websiteAnalysis = $node['HTTP Request'].json;\n}\nreturn $input.all();\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1120,
+        760
+      ],
+      "id": "a947a72d-2666-44cc-9504-fbe2f42c3895",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e86821f1-8892-4f87-a72f-c0f31474fd12",
+              "name": "Edit Fields",
+              "value": "={\n  \"parameters\": {\n    \"values\": {\n      \"string\": [\n        {\n          \"name\": \"firstName\",\n          \"value\": \"={{ $('If').item.json.Name }}\"\n        },\n        {\n          \"name\": \"triggerFeature\",\n          \"value\": \"={{ $json.triggerFeature }}\"\n        }\n      ]\n    },\n    \"options\": {}\n  }\n}\n",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -900,
+        760
+      ],
+      "id": "6522e44b-a9ba-4839-912d-5aa2d45fcc84",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={\n  \"parameters\": {\n    \"prompt\": \"You are an email-outreach assistant that crafts highly-personalised cold emails in HTML. DO NOT include any long dashes in output: -- only single ones. Output ONLY valid JSON matching this schema:\\n{\\n  \\\"subject\\\": \\\"…subject…\\\",\\n  \\\"body\\\": \\\"…body with \\\\n for line breaks…\\\"\\n}\\n\\nTwo variables are available:\\n• {{ $('Code').item.json.Name }} - the recipient’s first name\\n• {{ $('If1').item.json.triggerFeature }} - the feature you pulled from their site\\n\\nUse this exact template (preserve wording, punctuation, caps, single dashes, and HTML tags):\\n\\nSubject: {{ $('If1').item.json.triggerFeature }} → A broker-free sale?\\n\\n<body>\\n<p>Hi {{ $('Code').item.json.Name }} - I noticed your “{{ $('If1').item.json.triggerFeature }}” ethos and wondered if you’ve ever priced a sale without losing 10% to broker fees.</p>\\n<p>Several of our buyers are looking for community-driven cafés with strong ethical positioning - exactly your lane.</p>\\n<p>When I talk to owners, they always hit the same three walls:</p>\\n<ul>\\n  <li>Opaque valuations (every broker gives a different number)</li>\\n  <li>Months of waiting before a real offer</li>\\n  <li>Fees on both sides that erode the final cheque</li>\\n</ul>\\n<p>How Arzani fixes it:</p>\\n<ul>\\n  <li>£75K valuation in 60 sec - no broker fee (saved Millstream Café £8K)</li>\\n  <li>12 UK buyers vetted for ethical-focused venues</li>\\n  <li>Zero listing fees - ever</li>\\n</ul>\\n<p>Would you have 5 mins to check out my webiste to see if we are the right fit for you https://arzani.co.uk? Or reply to this email and I will put you in my calendar.</p>\\n<p>Cheers,<br>Michael<br>Founder, Arzani | 01227 678075<br><a href=\\\\\\\"mailto:hello@arzani.co.uk\\\\\\\">hello@arzani.co.uk</a> • <a href=\\\\\\\"https://arzani.co.uk\\\\\\\">arzani.co.uk</a> • Kent</p>\\n</body>\\\"\",\n    \"options\": {}\n  }\n}\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        -700,
+        760
+      ],
+      "id": "eade8c12-b191-4e6f-b7e6-5eda5b15375f",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Google Sheets').item.json.Email }}",
+        "subject": "={{ $json.subject }}",
+        "message": "={{ $json.body }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -140,
+        800
+      ],
+      "id": "c6c8308c-a70a-4be9-883b-64b7752f7f94",
+      "name": "Gmail",
+      "webhookId": "e4237dbf-746b-4b11-bab1-8496a0349603",
+      "alwaysOutputData": true,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "XF0vT68YHHsAlKcA",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        60,
+        820
+      ],
+      "id": "2083ff1c-80f5-4a5d-90f6-8a728c395231",
+      "name": "Code2"
+    },
+    {
+      "parameters": {
+        "amount": 30
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        260,
+        880
+      ],
+      "id": "11aae499-3665-4d0f-a7e2-72107b217abe",
+      "name": "Wait",
+      "webhookId": "8638989f-ee6b-448c-b185-340f3018f669"
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "days"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -2420,
+        1200
+      ],
+      "id": "73cf3d3b-f65a-46fc-9ced-9091b1d1aec7",
+      "name": "Wait1",
+      "webhookId": "2118c279-9cea-4536-bc35-9506a5a149fd"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -2220,
+        1200
+      ],
+      "id": "781a71ec-9a8f-4a3e-b060-5cff700846f7",
+      "name": "Loop Over Items1"
+    },
+    {
+      "parameters": {
+        "jsCode": "for (const item of $input.all()) {\n  item.json.sequence = 'followup1';\n  item.json.lastContact = new Date().toISOString();\n}\nreturn $input.all();\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2000,
+        1200
+      ],
+      "id": "ab66a63a-ddaf-45aa-ba29-004fea0540a9",
+      "name": "Code3"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.Website }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1800,
+        1200
+      ],
+      "id": "7787420e-0b4e-4a28-b607-1ef22fe49c91",
+      "name": "HTTP Request1",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "e4b7f2fb-e3fc-41ea-89f5-efd616bfa607",
+              "leftValue": "=\"parameters\": {\n  \"conditions\": {\n    \"options\": {\n      \"caseSensitive\": false,\n      \"leftValue\": \"={{ $json.triggerFeature }}\",\n      \"typeValidation\": \"strict\",\n      \"version\": 2\n    },\n    \"conditions\": [\n      {\n        \"leftValue\": \"={{ $json.triggerFeature }}\",\n        \"operator\": {\n          \"type\": \"string\",\n          \"operation\": \"isNotEmpty\"\n        }\n      }\n    ],\n    \"combinator\": \"and\"\n  },\n  \"options\": {}\n}\n",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1180,
+        1200
+      ],
+      "id": "ec7a421a-7f3b-44a9-a2be-bbb476d32d56",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "jsCode": "for (const item of $input.all()) {\n  item.json.websiteAnalysis = $node['HTTP Request1'].json;\n}\nreturn $input.all();\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -920,
+        1220
+      ],
+      "id": "2cef992d-ece7-435a-b4f4-7e515417126e",
+      "name": "Code4"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "33bcbd5a-57b4-4414-a144-12dc7772bce6",
+              "name": "=Edit Fields ",
+              "value": "={\n  \"parameters\": {\n    \"values\": {\n      \"string\": [\n        {\n          \"name\": \"firstName\",\n          \"value\": \"={{ $('Code3').item.json.Name }}\"\n        }\n      ]\n    },\n    \"options\": {}\n  }\n}\n",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -700,
+        1220
+      ],
+      "id": "6d27889f-0f6d-474e-81fd-3e3e082a66a0",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={\n  \"subject\": \"{{ $('Code4').item.json.triggerFeature }} → 3 buyers already asked\",\n  \"body\": \"<p>Hi {{ $('If').item.json.Name }} - I wanted to circle back on the 60-sec valuation snapshot I mentioned after spotting your {{ $('Code4').item.json.triggerFeature }}. Have you had a chance to grab yours yet?</p>\\n<p>Just this week, 3 ethical-focused buyers asked specifically for cafés like yours - your “{{ $('Code4').item.json.triggerFeature }}” really resonates.</p>\\n<p>Here’s why sellers lean on Arzani:</p>\\n<ul>\\n  <li>60-sec valuation snapshot - zero cost, zero commitment</li>\\n  <li>50+ vetted buyers - no more waiting around</li>\\n  <li>Zero commissions, zero brokers</li>\\n</ul>\\n<p>If you’re curious, reply with a time that suits you or <a href=\\\"https://calendly.com/michaeladekoya321/30min\">book 5 min here</a>.</p>\\n<p>Cheers,<br>Michael<br>Founder, Arzani | 01227 678075<br><a href=\\\"mailto:hello@arzani.co.uk\\\">hello@arzani.co.uk</a> • Kent</p>\"\n}\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        -460,
+        1220
+      ],
+      "id": "2bc60eec-f645-4b9e-8d02-3687cb66641e",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Google Sheets').item.json['info@cafedez.com'] }}",
+        "subject": "=Hey {{ $json.subject }}",
+        "message": "={{ $json.body }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        140,
+        1220
+      ],
+      "id": "a685d765-28c1-4440-a7be-64561da48c7a",
+      "name": "Gmail1",
+      "webhookId": "b31e7a97-dab5-4392-8271-f0490f89be1e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "XF0vT68YHHsAlKcA",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "for (const item of $input.all()) {\n  // preserve history of sent sequences\n  item.json.history = item.json.history || [];\n  item.json.history.push({\n    sequence: 'initial',\n    at: item.json.lastContact,\n  });\n}\nreturn $input.all();\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        360,
+        1240
+      ],
+      "id": "70e35fe5-9976-4cfb-9667-fb029341ab12",
+      "name": "Code5"
+    },
+    {
+      "parameters": {
+        "amount": 30
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        600,
+        1320
+      ],
+      "id": "fee2ee5b-1caa-4f35-966d-80d46534bd05",
+      "name": "Wait2",
+      "webhookId": "3e7a9b03-ee88-42fc-8aba-8ce773487ae9"
+    },
+    {
+      "parameters": {
+        "amount": 1,
+        "unit": "days"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -2420,
+        1680
+      ],
+      "id": "0873a173-7e33-49d6-8c26-06cfb036e259",
+      "name": "Wait3",
+      "webhookId": "cb691ae1-7850-4639-8fd3-2b2fa1c10551"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -2240,
+        1680
+      ],
+      "id": "0d349238-4f9a-4f47-9f38-b7a5a61c7a84",
+      "name": "Loop Over Items2"
+    },
+    {
+      "parameters": {
+        "jsCode": "for (const item of $input.all()) {\n  item.json.sequence = 'followup1';\n  item.json.lastContact = new Date().toISOString();\n}\nreturn $input.all();\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1980,
+        1700
+      ],
+      "id": "be5910c7-054c-4ec1-8dba-dd3433ceca0a",
+      "name": "Code6"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Google Sheets').item.json.Website }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1780,
+        1700
+      ],
+      "id": "38907413-f913-4852-97b3-c1076712eee6",
+      "name": "HTTP Request2",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "e4b7f2fb-e3fc-41ea-89f5-efd616bfa607",
+              "leftValue": "=\"parameters\": {\n  \"conditions\": {\n    \"options\": {\n      \"caseSensitive\": false,\n      \"leftValue\": \"={{ $json.triggerFeature }}\",\n      \"typeValidation\": \"strict\",\n      \"version\": 2\n    },\n    \"conditions\": [\n      {\n        \"leftValue\": \"={{ $json.triggerFeature }}\",\n        \"operator\": {\n          \"type\": \"string\",\n          \"operation\": \"isNotEmpty\"\n        }\n      }\n    ],\n    \"combinator\": \"and\"\n  },\n  \"options\": {}\n}\n",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1220,
+        1700
+      ],
+      "id": "420d993f-a6ad-4c80-ad37-3bf251dc9142",
+      "name": "If3"
+    },
+    {
+      "parameters": {
+        "jsCode": "for (const item of $input.all()) {\n  item.json.history = item.json.history || [];\n  item.json.history.push({\n    sequence: 'followup1',\n    at: item.json.lastContact,\n  });\n}\nreturn $input.all();\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -940,
+        1720
+      ],
+      "id": "90516f18-dbdf-4b50-88cc-9022e17d5a42",
+      "name": "Code7"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7dad3203-7884-42d0-9a6e-87fa0ed4f252",
+              "name": "Edit Fields2",
+              "value": "={\n  \"parameters\": {\n    \"values\": {\n      \"string\": [\n        {\n          \"name\": \"firstName\",\n          \"value\": \"={{ $('Code6').item.json.Name }}\"\n        },\n        {\n          \"name\": \"triggerFeature\",\n          \"value\": \"={{ $('If3').item.json.triggerFeature }}\"\n        }\n      ]\n    },\n    \"options\": {}\n  }\n}\n",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -620,
+        1720
+      ],
+      "id": "d7d0779a-03d4-4b48-a844-16f37ae105e5",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={\n  \"parameters\": {\n    \"prompt\": \"You are an email-outreach assistant that crafts highly-personalized cold emails in the exact style below. DO NOT include any long dashes in output: -- only single ones: - . Two variables are available:\\n\\n• `{{ $('Google Sheets').item.json['Ruskin Clothing - Whitstable'] }}` — the recipient’s first name\\n• `{{ $('If3').item.json.triggerFeature }}` - the feature you pulled from their site\\n\\n**Output ONLY valid JSON** with this exact schema (no extra wrapping, no explanations):\\n\\n{\\n  \\\"subject\\\": \\\"<concise subject line>\\\",\\n  \\\"body\\\": \\\"<full email body with \\\\n for line breaks>\\\"\\n}\\n\\nUse exactly this email structure (replace the placeholders with the variables above, preserve punctuation, capitalization and line-breaks):\\n\\nSubject: Final note on {{ $('If3').item.json.triggerFeature }} → Arzani\\n\\n<body>\\n<p>Hi {{ $('Google Sheets').item.json['Ruskin Clothing - Whitstable'] }}—I wanted to circle back on your “{{ $('If3').item.json.triggerFeature }}” before wrapping up.</p>\\n<p>With Arzani you get:</p>\\n<ul>\\n  <li>60-second valuation snapshot, no commitment</li>\\n  <li>50+ UK buyers pre-vetted for ethical-focused venues</li>\\n  <li>Zero hidden fees -fee cap guarantee</li>\\n</ul>\\n<p>If now isn’t right, let me know and I’ll ping you in a few weeks.</p>\\n<p>Otherwise, reply with a time that suits for a quick 5-min walkthrough.</p>\\n<p>Best,<br>Michael<br>Founder, Arzani | 01227 678075<br><a href=\\\\\\\"mailto:hello@arzani.co.uk\\\\\\\">hello@arzani.co.uk</a> • <a href=\\\\\\\"https://arzani.co.uk\\\\\\\">arzani.co.uk</a> • Kent</p>\\n</body>\\\"\"\n  }\n}\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        -320,
+        1720
+      ],
+      "id": "52fa0fbe-8847-4dbb-9d42-d388e0c17616",
+      "name": "AI Agent2"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Google Sheets').item.json['jonny@notorious-brg.com'] }}",
+        "subject": "={{ $json.subject }}",
+        "message": "={{ $json.body }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        240,
+        1760
+      ],
+      "id": "8f4f36f6-4b35-47dd-b1e4-869bdeeef706",
+      "name": "Gmail2",
+      "webhookId": "d89e511e-53fc-4c2d-bf63-324a0493944b",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "XF0vT68YHHsAlKcA",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "for (const item of $input.all()) {\n  item.json.history = item.json.history || [];\n  item.json.history.push({\n    sequence: 'followup1',\n    at: item.json.lastContact,\n  });\n}\nreturn $input.all();\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        1820
+      ],
+      "id": "4568938d-c9bd-4816-83fd-8a967e6aa79a",
+      "name": "Code8"
+    },
+    {
+      "parameters": {
+        "amount": "=30"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        660,
+        1860
+      ],
+      "id": "4cf09c7b-ad8d-4e8e-b6b5-02f2c8edad1b",
+      "name": "Wait4",
+      "webhookId": "cdb029fc-6bb5-4cbb-a157-8633e69815b8"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-pro",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -740,
+        960
+      ],
+      "id": "bbbf43fb-2085-465e-b184-59cca0265f33",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "j9fdyhBkmi15yDB3",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash-preview-04-17",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -460,
+        1380
+      ],
+      "id": "84c126e2-7673-41ad-b719-1d41b430ae4c",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "j9fdyhBkmi15yDB3",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Helper to decode common HTML entities:\nfunction decodeHtmlEntities(str = '') {\n  return str\n    .replace(/&#039;/g, \"'\")\n    .replace(/&quot;/g, '\"')\n    .replace(/&#8211;/g, '–')\n    .replace(/&nbsp;/g, ' ')\n    .replace(/&amp;/g, '&');\n}\n\nfor (const item of $input.all()) {\n  // 1) grab & decode raw HTML\n  let html = decodeHtmlEntities(item.json.data || item.json.body || '');\n\n  // 2) ordered list of feature-spotting patterns:\n  const patterns = [\n    /<h1[^>]*>([\\s\\S]*?)<\\/h1>/i,                                      // main headline\n    /<h2[^>]*class=[\"'][^\"']*(?:tagline|site-description)[^\"']*[\"'][^>]*>([\\s\\S]*?)<\\/h2>/i,  \n    /<meta[^>]*property=[\"']og:description[\"'][^>]*content=[\"']([^\"']+)[\"'][^>]*>/i,\n    /<meta[^>]*name=[\"']description[\"'][^>]*content=[\"']([^\"']+)[\"'][^>]*>/i,\n    /<title[^>]*>([\\s\\S]*?)<\\/title>/i,                                // page title\n    /<p[^>]*>([\\s\\S]*?)<\\/p>/i                                         // first paragraph\n  ];\n\n  let feature = '';\n  for (const re of patterns) {\n    const m = html.match(re);\n    if (m && m[1]) {\n      feature = m[1]\n        .trim()\n        .replace(/<[^>]+>/g, '')     // strip any nested tags\n        .split(/\\r?\\n/)[0];          // only first line\n      break;\n    }\n  }\n\n  // 3) guarantee something\n  item.json.triggerFeature = feature || 'no-feature-found';\n}\n\nreturn $input.all();\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1640,
+        740
+      ],
+      "id": "c8bd96ed-d9a2-461a-bae0-a28a905319ad",
+      "name": "Code9"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1) Grab the raw string from the AI Agent node\nlet raw = items[0].json.output;\n\n// 2) Strip markdown fences and stray backticks/quotes, but leave <br> intact\nraw = raw\n  .trim()\n  // remove ```json (case‐insensitive) at start\n  .replace(/^```json\\s*/i, '')\n  // remove a closing ``` at end\n  .replace(/```$/i, '')\n  // remove any leading/trailing backticks, double quotes or whitespace\n  .replace(/^[`\"\\s]+|[`\"\\s]+$/g, '');\n\n// 3) Parse into an object\nlet parsed;\ntry {\n  parsed = JSON.parse(raw);\n} catch (err) {\n  throw new Error(`Could not parse AI output as JSON: ${err.message}`);\n}\n\n// 4) Validate we got what we need\nif (typeof parsed.subject !== 'string' || typeof parsed.body !== 'string') {\n  throw new Error('Parsed JSON is missing a valid \"subject\" or \"body\" field');\n}\n\n// 5) Convert body text into clean HTML using <p> for paragraphs\nconst formattedBody = parsed.body\n  .split('\\n\\n') // split by double newlines into paragraphs\n  .map(p => `<p>${p.trim().replace(/\\n/g, ' ')}</p>`) // flatten single newlines and wrap in <p>\n  .join('\\n');\n\n// 6) Wrap into minimal HTML structure\nconst htmlBody = `\n<!DOCTYPE html>\n<html>\n  <head>\n    <meta charset=\"UTF-8\">\n    <title>${parsed.subject}</title>\n  </head>\n  <body>\n    ${formattedBody}\n  </body>\n</html>\n`.trim();\n\n// 7) Return formatted result\nreturn [\n  {\n    json: {\n      subject: parsed.subject,\n      body: htmlBody,\n    },\n  },\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -340,
+        780
+      ],
+      "id": "aff4616e-aa6c-4897-b38e-1d79e38a7e8d",
+      "name": "Code10"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Helper to decode common HTML entities:\nfunction decodeHtmlEntities(str = '') {\n  return str\n    .replace(/&#039;/g, \"'\")\n    .replace(/&quot;/g, '\"')\n    .replace(/&#8211;/g, '–')\n    .replace(/&nbsp;/g, ' ')\n    .replace(/&amp;/g, '&');\n}\n\nfor (const item of $input.all()) {\n  // 1) grab & decode raw HTML\n  let html = decodeHtmlEntities(item.json.data || item.json.body || '');\n\n  // 2) ordered list of feature-spotting patterns:\n  const patterns = [\n    /<h1[^>]*>([\\s\\S]*?)<\\/h1>/i,                                      // main headline\n    /<h2[^>]*class=[\"'][^\"']*(?:tagline|site-description)[^\"']*[\"'][^>]*>([\\s\\S]*?)<\\/h2>/i,  \n    /<meta[^>]*property=[\"']og:description[\"'][^>]*content=[\"']([^\"']+)[\"'][^>]*>/i,\n    /<meta[^>]*name=[\"']description[\"'][^>]*content=[\"']([^\"']+)[\"'][^>]*>/i,\n    /<title[^>]*>([\\s\\S]*?)<\\/title>/i,                                // page title\n    /<p[^>]*>([\\s\\S]*?)<\\/p>/i                                         // first paragraph\n  ];\n\n  let feature = '';\n  for (const re of patterns) {\n    const m = html.match(re);\n    if (m && m[1]) {\n      feature = m[1]\n        .trim()\n        .replace(/<[^>]+>/g, '')     // strip any nested tags\n        .split(/\\r?\\n/)[0];          // only first line\n      break;\n    }\n  }\n\n  // 3) guarantee something\n  item.json.triggerFeature = feature || 'no-feature-found';\n}\n\nreturn $input.all();\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1520,
+        1200
+      ],
+      "id": "b2ea0c62-7b2e-41c8-88ab-38cac9c12a41",
+      "name": "Code11"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1) Grab the raw string from the AI Agent node\nlet raw = items[0].json.output;\n\n// 2) Some AI outputs wrap the JSON in markdown fences or stray backticks—strip those out:\nraw = raw\n  .trim()\n  // remove ```json and ``` fences\n  .replace(/^```json\\s*/i, '')\n  .replace(/```$/i, '')\n  // remove any leading/trailing backticks or quotes\n  .replace(/^[`\"\\s]+|[`\"\\s]+$/g, '');\n\n// 3) Parse into an object\nlet parsed;\ntry {\n  parsed = JSON.parse(raw);\n} catch (err) {\n  throw new Error(`Could not parse AI output as JSON: ${err.message}`);\n}\n\n// 4) Validate we got what we need\nif (typeof parsed.subject !== 'string' || typeof parsed.body !== 'string') {\n  throw new Error('Parsed JSON is missing a valid \"subject\" or \"body\" field');\n}\n\n// 5) Return as an array of n8n items\nreturn [\n  {\n    json: {\n      subject: parsed.subject,\n      body: parsed.body,\n    },\n  },\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -100,
+        1220
+      ],
+      "id": "ac828718-75f4-47d0-a317-ebe287ed3047",
+      "name": "Code12"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Helper to decode common HTML entities:\nfunction decodeHtmlEntities(str = '') {\n  return str\n    .replace(/&#039;/g, \"'\")\n    .replace(/&quot;/g, '\"')\n    .replace(/&#8211;/g, '–')\n    .replace(/&nbsp;/g, ' ')\n    .replace(/&amp;/g, '&');\n}\n\nfor (const item of $input.all()) {\n  // 1) grab & decode raw HTML\n  let html = decodeHtmlEntities(item.json.data || item.json.body || '');\n\n  // 2) ordered list of feature-spotting patterns:\n  const patterns = [\n    /<h1[^>]*>([\\s\\S]*?)<\\/h1>/i,                                      // main headline\n    /<h2[^>]*class=[\"'][^\"']*(?:tagline|site-description)[^\"']*[\"'][^>]*>([\\s\\S]*?)<\\/h2>/i,  \n    /<meta[^>]*property=[\"']og:description[\"'][^>]*content=[\"']([^\"']+)[\"'][^>]*>/i,\n    /<meta[^>]*name=[\"']description[\"'][^>]*content=[\"']([^\"']+)[\"'][^>]*>/i,\n    /<title[^>]*>([\\s\\S]*?)<\\/title>/i,                                // page title\n    /<p[^>]*>([\\s\\S]*?)<\\/p>/i                                         // first paragraph\n  ];\n\n  let feature = '';\n  for (const re of patterns) {\n    const m = html.match(re);\n    if (m && m[1]) {\n      feature = m[1]\n        .trim()\n        .replace(/<[^>]+>/g, '')     // strip any nested tags\n        .split(/\\r?\\n/)[0];          // only first line\n      break;\n    }\n  }\n\n  // 3) guarantee something\n  item.json.triggerFeature = feature || 'no-feature-found';\n}\n\nreturn $input.all();\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1520,
+        1700
+      ],
+      "id": "8b3e5dd5-80ab-4a6f-940b-30992d06a3a5",
+      "name": "Code14"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash-preview-04-17",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -300,
+        1880
+      ],
+      "id": "805cee80-f985-4d4a-8816-263e147e6429",
+      "name": "Google Gemini Chat Model2",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "j9fdyhBkmi15yDB3",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "mail",
+        "fromEmail": "hello@arzani.co.uk",
+        "fromName": "Michael",
+        "toEmail": "=notmichaelsfun@gmail.com",
+        "subject": "={{ $json.subject }}",
+        "contentValue": "={{ $json.body }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.sendGrid",
+      "typeVersion": 1,
+      "position": [
+        140,
+        120
+      ],
+      "id": "3832abe4-0ffd-4f1c-9f9d-aa1fc31dc34e",
+      "name": "SendGrid"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1) Grab the raw string from the AI Agent node\nlet raw = items[0].json.output;\n\n// 2) Strip markdown fences and stray backticks/quotes, but leave <br> intact\nraw = raw\n  .trim()\n  // remove ```json (case‐insensitive) at start\n  .replace(/^```json\\s*/i, '')\n  // remove a closing ``` at end\n  .replace(/```$/i, '')\n  // remove any leading/trailing backticks, double quotes or whitespace\n  .replace(/^[`\"\\s]+|[`\"\\s]+$/g, '');\n\n// 3) Parse into an object\nlet parsed;\ntry {\n  parsed = JSON.parse(raw);\n} catch (err) {\n  throw new Error(`Could not parse AI output as JSON: ${err.message}`);\n}\n\n// 4) Validate we got what we need\nif (typeof parsed.subject !== 'string' || typeof parsed.body !== 'string') {\n  throw new Error('Parsed JSON is missing a valid \"subject\" or \"body\" field');\n}\n\n// 5) Wrap the HTML body in a minimal HTML document\nconst htmlBody = `\n<!DOCTYPE html>\n<html>\n  <head>\n    <meta charset=\"UTF-8\">\n    <title>${parsed.subject}</title>\n  </head>\n  <body>\n    ${parsed.body}\n  </body>\n</html>\n`.trim();\n\n// 6) Return as an array of n8n items\nreturn [\n  {\n    json: {\n      subject: parsed.subject,  // unchanged\n      body: htmlBody,           // full HTML with <br> tags preserved\n    },\n  },\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        60,
+        1740
+      ],
+      "id": "c3b0aa47-f5e2-48cf-bca3-5706939f2988",
+      "name": "Code13"
+    },
+    {
+      "parameters": {
+        "resource": "mail",
+        "fromEmail": "hello@arzani.co.uk",
+        "fromName": "Michael",
+        "toEmail": "=notmichaelsfun@gmail.com",
+        "subject": "={{ $json.subject }}",
+        "contentValue": "={{ $json.body }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.sendGrid",
+      "typeVersion": 1,
+      "position": [
+        520,
+        120
+      ],
+      "id": "a87e1e38-640a-4759-9249-189df86e6537",
+      "name": "SendGrid1"
+    },
+    {
+      "parameters": {
+        "resource": "mail",
+        "fromEmail": "hello@arzani.co.uk",
+        "fromName": "Michael",
+        "toEmail": "=notmichaelsfun@gmail.com",
+        "subject": "={{ $json.subject }}",
+        "contentValue": "={{ $json.body }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.sendGrid",
+      "typeVersion": 1,
+      "position": [
+        340,
+        120
+      ],
+      "id": "4025f766-cd19-4d18-8b87-1f396df4f2e4",
+      "name": "SendGrid2"
+    },
+    {
+      "parameters": {
+        "fromEmail": "hello@arzani.co.uk",
+        "toEmail": "michaaldekoy@gmail.com",
+        "subject": "={{ $json.subject }}",
+        "emailFormat": "=html",
+        "html": "={{ $json.body }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        140,
+        280
+      ],
+      "id": "295703d0-d3e0-4f50-bf4c-af1dbe1d2539",
+      "name": "Send Email",
+      "webhookId": "1ea7ec7b-3e27-41ba-be6f-ea86b4af4cef"
+    },
+    {
+      "parameters": {
+        "fromEmail": "hello@arzani.co.uk",
+        "toEmail": "hello@arzani.co.uk",
+        "subject": "={{ $json.subject }}",
+        "html": "={{ $json.body }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        500,
+        280
+      ],
+      "id": "c02e3afd-8d2f-40b7-a652-4887ff9d6ae0",
+      "name": "Send Email3",
+      "webhookId": "b89343f7-dc48-4361-8e54-2ca10ac321e7"
+    },
+    {
+      "parameters": {
+        "fromEmail": "hello@arzani.co.uk",
+        "toEmail": "hello@arzani.co.uk",
+        "subject": "={{ $json.subject }}",
+        "html": "={{ $json.body }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        340,
+        280
+      ],
+      "id": "fa1fb54c-ba26-48ac-97e5-59520dde0e4a",
+      "name": "Send Email4",
+      "webhookId": "9e6f6d63-9e69-42b3-951d-8e382d3c84e6"
+    },
+    {
+      "parameters": {
+        "content": "## Ths are exchangeble email nodes\n** Each node determines whether the email goes to spam, promotion or directly to the recipients inbox",
+        "height": 480,
+        "width": 860
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "88e53041-6279-4c16-b82e-6bc108df75b3",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 35 14 * * 5"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -3260,
+        760
+      ],
+      "id": "82deca57-215a-4b7f-a23e-f210ee9ed0d7",
+      "name": "Schedule Trigger1"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    serverTime: new Date().toISOString(),\n    localTime: new Date().toString()\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3080,
+        760
+      ],
+      "id": "47e0362c-2c40-4618-9649-0e1fcef04cca",
+      "name": "Code15"
+    }
+  ],
+  "connections": {
+    "Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Loop Over Items2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code9",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code10",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail": {
+      "main": [
+        [
+          {
+            "node": "Code2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code2": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items1": {
+      "main": [
+        [
+          {
+            "node": "Wait3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code3": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Code11",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code4": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Code12",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail1": {
+      "main": [
+        [
+          {
+            "node": "Code5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code5": {
+      "main": [
+        [
+          {
+            "node": "Wait2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait2": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait3": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items2": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Code6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code6": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "Code14",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If3": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code7": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent2": {
+      "main": [
+        [
+          {
+            "node": "Code13",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail2": {
+      "main": [
+        [
+          {
+            "node": "Code8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code8": {
+      "main": [
+        [
+          {
+            "node": "Wait4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait4": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code9": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code10": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code11": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code12": {
+      "main": [
+        [
+          {
+            "node": "Gmail1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code14": {
+      "main": [
+        [
+          {
+            "node": "If3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code13": {
+      "main": [
+        [
+          {
+            "node": "Gmail2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Code15",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code15": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "cd9f584cb9b7818e50d597d28564e79fbbbbc698eb10eaa0157df16c1b2c7fe5"
+  }
+}

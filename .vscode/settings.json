@@ -5,5 +5,9 @@
         ".vscode{,/**}"
     ],
     "appService.defaultWebAppToDeploy": "/subscriptions/bb2425dd-930e-49ca-9a94-189a195fb5f9/resourceGroups/my-marketplace/providers/Microsoft.Web/sites/Arzani",
-    "appService.deploySubpath": "."
+    "appService.deploySubpath": ".",
+    "simpleBrowser.focusLockIndicator.enabled": true,
+    "workbench.editorAssociations": {
+        "*.md": "vscode.markdown.preview.editor"
+    }
 }
