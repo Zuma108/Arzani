@@ -19,6 +19,11 @@ document.addEventListener('DOMContentLoaded', function() {
       this.classList.toggle('open', isOpening);
       mobileMenu.classList.toggle('hidden', !isOpening);
       mobileMenu.classList.toggle('open', isOpening);
+      
+      // Add mobile-menu-open class to header when menu is open (for mobile navbar visibility)
+      if (header) {
+        header.classList.toggle('mobile-menu-open', isOpening);
+      }
 
       // Close any open mobile dropdowns when closing the main menu
       if (!isOpening) {
@@ -69,18 +74,28 @@ document.addEventListener('DOMContentLoaded', function() {
     const heroSection = document.querySelector('.hero-section-video');
     const heroHeight = heroSection ? heroSection.offsetHeight : window.innerHeight;
     const scrollY = window.scrollY;
+    const isMobile = window.innerWidth < 1024;
     
-    // Hide navbar when scrolling past the hero section
-    if (scrollY > heroHeight - 100) { // 100px buffer before hero section ends
-      header.style.transform = 'translateY(-100%)';
-      header.style.opacity = '0';
-    } else {
-      header.style.transform = 'translateY(0)';
-      header.style.opacity = '1';
+    if (isMobile) {
+      // Mobile behavior: Show navbar when scrolling starts, hide when at top
+      const isScrolled = scrollY > 50;
+      header.classList.toggle('mobile-scrolled', isScrolled);
       
-      // Apply scrolled styling for background changes within hero section
-      const isScrolled = scrollY > 30;
+      // Apply scrolled styling for background changes
       header.classList.toggle('scrolled', isScrolled);
+    } else {
+      // Desktop behavior: Hide when scrolling past hero section
+      if (scrollY > heroHeight - 100) { // 100px buffer before hero section ends
+        header.style.transform = 'translateY(-100%)';
+        header.style.opacity = '0';
+      } else {
+        header.style.transform = 'translateY(0)';
+        header.style.opacity = '1';
+        
+        // Apply scrolled styling for background changes within hero section
+        const isScrolled = scrollY > 30;
+        header.classList.toggle('scrolled', isScrolled);
+      }
     }
   }
 
@@ -100,6 +115,31 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   window.addEventListener('scroll', throttledScrollHandler);
+
+  // --- Window Resize Handler ---
+  let resizeTimeout;
+  function handleResize() {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+      // Reset navbar appearance when switching between mobile and desktop
+      updateNavbarAppearance();
+      
+      // Close mobile menu if switching to desktop
+      const isMobile = window.innerWidth < 1024;
+      if (!isMobile && mobileMenu && !mobileMenu.classList.contains('hidden')) {
+        mobileMenuBtn.setAttribute('aria-expanded', 'false');
+        mobileMenuBtn.classList.remove('open');
+        mobileMenu.classList.add('hidden');
+        mobileMenu.classList.remove('open');
+        if (header) {
+          header.classList.remove('mobile-menu-open');
+        }
+        closeAllMobileDropdowns();
+      }
+    }, 250);
+  }
+
+  window.addEventListener('resize', handleResize);
 
   // --- Click Outside Logic ---
   document.addEventListener('click', function(event) {
@@ -123,6 +163,9 @@ document.addEventListener('DOMContentLoaded', function() {
         mobileMenuBtn.classList.remove('open');
         mobileMenu.classList.add('hidden');
         mobileMenu.classList.remove('open');
+        if (header) {
+          header.classList.remove('mobile-menu-open');
+        }
         closeAllMobileDropdowns();
       }
     }
@@ -228,6 +271,9 @@ document.addEventListener('DOMContentLoaded', function() {
         mobileMenuBtn.classList.remove('open');
         mobileMenu.classList.add('hidden');
         mobileMenu.classList.remove('open');
+        if (header) {
+          header.classList.remove('mobile-menu-open');
+        }
         closeAllMobileDropdowns();
         mobileMenuBtn.focus();
       }

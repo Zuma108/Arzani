@@ -1,0 +1,303 @@
+/* Mobile Hero Section and Navbar Fixes */
+
+/* Mobile-specific navbar behavior */
+@media (max-width: 1023px) {
+  /* Initially hide navbar on mobile */
+  .header-light {
+    transform: translateY(-100%);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+  }
+  
+  /* Show navbar when scrolling starts or when mobile menu is open */
+  .header-light.mobile-scrolled,
+  .header-light.mobile-menu-open {
+    transform: translateY(0);
+    opacity: 1;
+    background-color: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Adjust hero section when navbar is visible on mobile */
+  .header-light.mobile-scrolled ~ main .hero-section-video,
+  .header-light.mobile-menu-open ~ main .hero-section-video {
+    padding-top: calc(4rem + 1rem); /* Account for navbar height + extra spacing */
+  }
+  
+  .header-light.mobile-scrolled ~ main .hero-section-video .container,
+  .header-light.mobile-menu-open ~ main .hero-section-video .container {
+    min-height: calc(100vh - 5rem);
+    min-height: calc(100dvh - 5rem);
+  }
+  
+  /* Ensure hero section takes full height on mobile */
+  .hero-section-video {
+    min-height: 100vh;
+    min-height: 100dvh; /* Dynamic viewport height for mobile browsers */
+    padding-top: 1rem; /* Safe top padding */
+    padding-bottom: 2rem;
+    display: flex;
+    align-items: center;
+  }
+  
+  /* Optimize hero content positioning for mobile */
+  .hero-section-video .container {
+    height: auto;
+    min-height: calc(100vh - 3rem); /* Account for padding */
+    min-height: calc(100dvh - 3rem);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 2rem; /* Extra top padding to prevent text cutoff */
+    padding-bottom: 2rem;
+    max-width: 100%;
+    width: 100%;
+  }
+  
+  /* Ensure hero text content has proper spacing */
+  .hero-section-video .container > div {
+    margin-top: 1.5rem; /* Push content down from top */
+    width: 100%;
+  }
+  
+  /* Target the hero heading specifically */
+  .hero-section-video h1 {
+    margin-top: 1rem;
+    padding-top: 0.5rem;
+  }
+  
+  /* Ensure CTA buttons have proper spacing */
+  .hero-section-video .flex.flex-col.sm\\:flex-row {
+    margin-top: 2rem;
+  }
+  
+  /* Better burger menu styling for mobile */
+  .navbar__burger {
+    position: relative;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 8px;
+    padding: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+  }
+  
+  .navbar__burger:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
+  }
+  
+  /* Enhanced burger lines with better visibility */
+  .burger-line {
+    width: 18px;
+    height: 2px;
+    background-color: #ffffff;
+    margin: 2px 0;
+    transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    border-radius: 1px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Improved burger animation for X shape */
+  .navbar__burger[aria-expanded="true"] {
+    background: rgba(255, 255, 255, 0.9);
+  }
+  
+  .navbar__burger[aria-expanded="true"] .burger-line {
+    background-color: #1f2937;
+  }
+  
+  .navbar__burger[aria-expanded="true"] .burger-line:first-child {
+    transform: rotate(45deg) translate(3px, 3px);
+  }
+  
+  .navbar__burger[aria-expanded="true"] .burger-line:last-child {
+    transform: rotate(-45deg) translate(3px, -3px);
+  }
+  
+  /* Mobile menu enhancements */
+  .navbar__menu {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    margin-top: 0.75rem;
+    padding: 1rem;
+  }
+  
+  .navbar__menu a {
+    color: #1f2937 !important;
+    font-weight: 500;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+  }
+  
+  .navbar__menu a:hover {
+    background: rgba(49, 111, 212, 0.1);
+    color: #316FD4 !important;
+  }
+  
+  /* Hide Get Started button on mobile */
+  .navbar__menu + div a[href="/signup"],
+  nav .flex.items-center.gap-4 a[href="/signup"] {
+    display: none !important;
+  }
+}
+
+/* Tablet-specific adjustments */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .navbar__burger {
+    width: 36px;
+    height: 36px;
+    padding: 8px;
+  }
+  
+  .burger-line {
+    width: 20px;
+  }
+  
+  .hero-section-video .container {
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+  }
+}
+
+/* Small mobile devices */
+@media (max-width: 480px) {
+  .hero-section-video {
+    /* Use smaller viewport units for very small screens */
+    min-height: 100vh;
+    min-height: calc(100vh - env(safe-area-inset-top));
+    padding-top: max(1.5rem, env(safe-area-inset-top, 1.5rem)); /* Account for notch/status bar */
+  }
+  
+  .hero-section-video .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-top: 2.5rem; /* Extra space for small screens */
+    padding-bottom: 1.5rem;
+    min-height: calc(100vh - 4rem);
+    min-height: calc(100vh - env(safe-area-inset-top, 2rem) - 2rem);
+  }
+  
+  /* Ensure text starts well below any potential navbar or status bar */
+  .hero-section-video .container > div {
+    margin-top: 2rem;
+  }
+  
+  /* Adjust hero text sizes for small screens */
+  .hero-section-video h1 {
+    font-size: 2rem !important;
+    line-height: 2.25rem !important;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+  }
+  
+  .hero-section-video p {
+    font-size: 1rem !important;
+    line-height: 1.5rem !important;
+    margin-top: 1rem;
+  }
+  
+  /* Adjust button spacing for small screens */
+  .hero-section-video .flex.flex-col.sm\\:flex-row {
+    margin-top: 2.5rem;
+  }
+}
+
+/* Desktop behavior remains unchanged */
+@media (min-width: 1024px) {
+  .header-light {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .navbar__burger {
+    border-width: 2px;
+    border-color: #ffffff;
+  }
+  
+  .burger-line {
+    height: 3px;
+    box-shadow: none;
+  }
+  
+  .navbar__menu {
+    border-width: 2px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .header-light,
+  .navbar__burger,
+  .burger-line {
+    transition: none;
+  }
+}
+
+/* Dark mode adjustments for better contrast */
+@media (prefers-color-scheme: dark) {
+  @media (max-width: 1023px) {
+    .navbar__burger {
+      background: rgba(0, 0, 0, 0.3);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+    
+    .navbar__burger:hover {
+      background: rgba(0, 0, 0, 0.5);
+    }
+    
+    .navbar__menu {
+      background: rgba(0, 0, 0, 0.9);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .navbar__menu a {
+      color: #ffffff !important;
+    }
+    
+    .navbar__menu a:hover {
+      background: rgba(49, 111, 212, 0.2);
+      color: #60a5fa !important;
+    }
+  }
+}
+
+/* Landscape orientation adjustments for mobile */
+@media (max-width: 1023px) and (orientation: landscape) {
+  .hero-section-video {
+    min-height: 100vh;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+  
+  .hero-section-video .container {
+    justify-content: center;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+}
+
+/* iOS Safari specific fixes */
+@supports (-webkit-touch-callout: none) {
+  @media (max-width: 1023px) {
+    .hero-section-video {
+      min-height: -webkit-fill-available;
+    }
+  }
+}

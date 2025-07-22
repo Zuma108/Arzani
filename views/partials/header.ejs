@@ -19,6 +19,9 @@
             
             <div class="user-actions flex items-center">
                 <% if (typeof user !== 'undefined' && user) { %>
+                    <!-- Token Balance Widget Container -->
+                    <div id="token-balance-container" class="mr-4"></div>
+                    
                     <!-- Include Role Toggle Component -->
                     <%- include('./role-toggle') %>
                     

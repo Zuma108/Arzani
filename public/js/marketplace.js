@@ -824,32 +824,41 @@ function debounce(func, wait) {
 }
 
 /**
- * Handle Contact Seller button clicks with improved UX
+ * Handle Contact Seller button clicks with token system integration
  */
 function initContactSellerButtons() {
-  document.querySelectorAll('.contact-btn, .contact-seller-btn').forEach(button => {
-    button.addEventListener('click', function(e) {
-      e.preventDefault(); // Prevent default behavior
-      e.stopPropagation(); // Stop event propagation
-      
-      console.log('Contact button clicked'); // Debug output
-      
-      // Check if user is logged in before proceeding
-      const token = localStorage.getItem('token');
-      
-      if (!token) {
-        // Redirect to login with return URL to current page
-        window.location.href = `/login2?returnTo=${encodeURIComponent(window.location.pathname)}`;
-        return;
-      }
-      
-      // Get the business ID from the clicked button
-      const businessId = this.getAttribute('data-business-id');
-      
-      // Updated to navigate to business page first, which will handle the contact flow
-      window.location.href = `/business/${businessId}#contact`;
+  // Initialize the enhanced contact seller manager
+  if (typeof ContactSellerManager !== 'undefined') {
+    const contactManager = new ContactSellerManager();
+    contactManager.init();
+  } else {
+    console.warn('ContactSellerManager not loaded, falling back to basic contact handling');
+    
+    // Fallback to basic contact handling if enhanced system is not available
+    document.querySelectorAll('.contact-btn, .contact-seller-btn').forEach(button => {
+      button.addEventListener('click', function(e) {
+        e.preventDefault(); // Prevent default behavior
+        e.stopPropagation(); // Stop event propagation
+        
+        console.log('Contact button clicked'); // Debug output
+        
+        // Check if user is logged in before proceeding
+        const token = localStorage.getItem('token');
+        
+        if (!token) {
+          // Redirect to login with return URL to current page
+          window.location.href = `/login2?returnTo=${encodeURIComponent(window.location.pathname)}`;
+          return;
+        }
+        
+        // Get the business ID from the clicked button
+        const businessId = this.getAttribute('data-business-id');
+        
+        // Updated to navigate to business page first, which will handle the contact flow
+        window.location.href = `/business/${businessId}#contact`;
+      });
     });
-  });
+  }
   
   // Handle form submission
   const submitContactForm = document.getElementById('submitContactForm');

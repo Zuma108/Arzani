@@ -28,6 +28,8 @@ import threadsApiRoutes from './routes/api/threads.js';
 import buyerRoutes from './routes/api/buyer.js';
 import buyerDashboardRoutes from './routes/api/buyer-dashboard.js';
 import trustRoutes from './routes/api/trust.js';
+import tokenRoutes from './routes/api/tokens.js';
+import webhookRoutes from './routes/webhooks.js';
 
 // Add a simple RateLimiter class implementation
 class RateLimiter {
@@ -1006,6 +1008,8 @@ app.use('/api/threads', threadsApiRoutes); // Add threads API for conversation m
 app.use('/api/buyer', buyerRoutes);
 app.use('/api/buyer-dashboard', buyerDashboardRoutes);
 app.use('/api/trust', trustRoutes);
+app.use('/api/tokens', tokenRoutes); // Token system API
+app.use('/', webhookRoutes); // Stripe webhook handler (must be before body parsing middleware)
 app.use('/payment', paymentRoutes);
 // Add specific CORS middleware for OAuth routes
 app.use('/auth', (req, res, next) => {
@@ -1292,6 +1296,14 @@ app.get('/contact', (req, res) => {
 // NEW Route for FAQ page
 app.get('/faq', (req, res) => {
   res.render('faq');
+});
+
+// Token Purchase page route
+app.get('/purchase-tokens', (req, res) => {
+  res.render('token-purchase', {
+    title: 'Purchase Contact Tokens | Arzani',
+    user: req.user || null
+  });
 });
 
 
@@ -1905,6 +1917,46 @@ app.get('/marketplace2', async (req, res) => {
     }
   });
   
+// Token purchase page route
+app.get('/token-purchase', authDebug.enforceNonChatPage, async (req, res) => {
+  try {
+    res.locals.isChatPage = false;
+    
+    // Check if user is authenticated
+    let userData = null;
+    if (req.user && req.user.userId) {
+      try {
+        const user = await getUserById(req.user.userId);
+        if (user) {
+          userData = {
+            userId: user.id,
+            username: user.username,
+            email: user.email,
+            profile_picture: user.profile_picture || '/images/default-profile.png'
+          };
+        }
+      } catch (error) {
+        console.error('Error fetching user data for token purchase:', error);
+      }
+    }
+    
+    // If not authenticated, redirect to login with return URL
+    if (!userData) {
+      const returnUrl = encodeURIComponent('/token-purchase');
+      return res.redirect(`/login2?returnTo=${returnUrl}`);
+    }
+    
+    res.render('token-purchase', {
+      title: 'Purchase Contact Tokens - Arzani Marketplace',
+      isChatPage: false,
+      user: userData,
+      isAuthenticated: true
+    });
+  } catch (error) {
+    console.error('Error rendering token purchase page:', error);
+    res.status(500).send('Error loading token purchase page');
+  }
+});
 
 app.get('/history', authenticateToken, async (req, res) => {
   try {
