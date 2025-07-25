@@ -28,6 +28,7 @@ import threadsApiRoutes from './routes/api/threads.js';
 import buyerRoutes from './routes/api/buyer.js';
 import buyerDashboardRoutes from './routes/api/buyer-dashboard.js';
 import trustRoutes from './routes/api/trust.js';
+import blogAutomationRoutes from './routes/api/blog-automation.js';
 import tokenRoutes from './routes/api/tokens.js';
 import webhookRoutes from './routes/webhooks.js';
 
@@ -87,6 +88,7 @@ import googleAuthRoutes from './routes/googleAuthRoutes.js';
 import postBusinessValuationRoutes from './routes/postBusinessValuationRoutes.js';
 import { S3Client, ListBucketsCommand } from '@aws-sdk/client-s3'; // Add ListBucketsCommand
 import { uploadToS3 } from './utils/s3.js';
+import { sendNewsletterSubscriptionNotification } from './utils/email.js';
 import { adminAuth } from './middleware/adminAuth.js'; // Add this import
 import profileApi from './routes/api/profileApi.js'; // New profile API
 import voiceRoutes from './routes/voiceRoutes.js'; // Add this import
@@ -1009,6 +1011,8 @@ app.use('/api/buyer', buyerRoutes);
 app.use('/api/buyer-dashboard', buyerDashboardRoutes);
 app.use('/api/trust', trustRoutes);
 app.use('/api/tokens', tokenRoutes); // Token system API
+app.use('/api/blog-automation', blogAutomationRoutes); // Automated blog generation system
+app.use('/api/blog-automation', blogAutomationRoutes); // Automated blog generation system
 app.use('/', webhookRoutes); // Stripe webhook handler (must be before body parsing middleware)
 app.use('/payment', paymentRoutes);
 // Add specific CORS middleware for OAuth routes
@@ -4580,9 +4584,23 @@ app.post('/subscribe', async (req, res) => {
               subscribed_at = CURRENT_TIMESTAMP,
               source = COALESCE($1, source)
           WHERE id = $2
-          RETURNING id`;
+          RETURNING id, email, first_name, last_name, source, subscribed_at`;
         
-        await pool.query(reactivateQuery, [source, checkResult.rows[0].id]);
+        const result = await pool.query(reactivateQuery, [source, checkResult.rows[0].id]);
+        const reactivatedSubscriber = result.rows[0];
+        
+        // Send admin notification for reactivation (don't wait for it to complete)
+        const subscriberName = [reactivatedSubscriber.first_name, reactivatedSubscriber.last_name].filter(Boolean).join(' ') || 'Anonymous';
+        sendNewsletterSubscriptionNotification(
+          reactivatedSubscriber.email,
+          subscriberName + ' (Reactivated)',
+          reactivatedSubscriber.source,
+          reactivatedSubscriber.id,
+          reactivatedSubscriber.subscribed_at
+        ).catch(error => {
+          console.error('Failed to send newsletter reactivation notification:', error);
+        });
+        
         return res.redirect('/subscribe/thank-you?status=reactivated');
       }
     } else {
@@ -4596,7 +4614,7 @@ app.post('/subscribe', async (req, res) => {
           subscribed_at,
           is_active
         ) VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, TRUE)
-        RETURNING id`;
+        RETURNING id, email, first_name, last_name, source, subscribed_at`;
       
       const values = [
         email.toLowerCase().trim(),
@@ -4605,10 +4623,24 @@ app.post('/subscribe', async (req, res) => {
         source
       ];
       
-      await pool.query(insertQuery, values);
+      const result = await pool.query(insertQuery, values);
+      const newSubscriber = result.rows[0];
       
       // Log the subscription
       console.log(`New newsletter subscription: ${email} from source: ${source}`);
+      
+      // Send admin notification (don't wait for it to complete)
+      const subscriberName = [newSubscriber.first_name, newSubscriber.last_name].filter(Boolean).join(' ') || 'Anonymous';
+      sendNewsletterSubscriptionNotification(
+        newSubscriber.email,
+        subscriberName,
+        newSubscriber.source,
+        newSubscriber.id,
+        newSubscriber.subscribed_at
+      ).catch(error => {
+        console.error('Failed to send newsletter subscription notification:', error);
+        // Don't fail the subscription if notification fails
+      });
       
       return res.redirect('/subscribe/thank-you');
     }

@@ -5,6 +5,7 @@
 
 import db from '../db.js';
 import slugify from 'slugify';
+import { getBlogImageForNewPost } from '../utils/blogImageRotation.js';
 
 class BlogModel {
   /**
@@ -352,6 +353,14 @@ class BlogModel {
         postData.slug = `${postData.slug}-${Date.now().toString().slice(-4)}`;
       }
       
+      // Auto-assign hero image if not provided
+      if (!postData.hero_image) {
+        // Get current post count to determine the next image in rotation
+        const countResult = await client.query('SELECT COUNT(*) as count FROM blog_posts');
+        const totalPosts = parseInt(countResult.rows[0].count);
+        postData.hero_image = getBlogImageForNewPost(totalPosts);
+      }
+      
       // Insert post
       const postResult = await client.query(`
         INSERT INTO blog_posts (
@@ -366,7 +375,7 @@ class BlogModel {
         postData.content,
         postData.excerpt || postData.content.substring(0, 150) + '...',
         postData.meta_description || postData.title,
-        postData.hero_image || null,
+        postData.hero_image,
         postData.author_name || 'Arzani Team',
         postData.author_image || null,
         postData.author_bio || null,

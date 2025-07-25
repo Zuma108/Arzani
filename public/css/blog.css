@@ -110,14 +110,86 @@ a.text-primary {
 
 .blog-content a {
   color: #316FD4;
-  text-decoration: none;
-  border-bottom: 1px solid transparent;
-  transition: border-color 0.2s;
+  text-decoration: underline;
+  text-decoration-color: rgba(49, 111, 212, 0.3);
+  text-underline-offset: 3px;
+  transition: all 0.2s ease;
+  font-weight: 500;
 }
 
 .blog-content a:hover {
-  border-bottom-color: #316FD4;
+  color: #2855a9;
+  text-decoration-color: #2855a9;
+  background-color: rgba(49, 111, 212, 0.1);
+  padding: 1px 3px;
+  border-radius: 3px;
+}
+
+/* Specific styles for different link types */
+.blog-content a[href^="http"]:not([href*="arzani"]):after {
+  content: " ↗";
+  font-size: 0.8em;
+  opacity: 0.7;
+}
+
+.blog-content a[href*="arzani"],
+.blog-content a[href^="/"] {
+  color: #041b76;
+  font-weight: 600;
+}
+
+.blog-content a[href*="arzani"]:hover,
+.blog-content a[href^="/"]:hover {
+  background-color: rgba(4, 27, 118, 0.1);
+  color: #030f4d;
+}
+
+/* Enhanced link styling classes */
+.blog-content .internal-link {
+  color: #041b76;
+  font-weight: 600;
   text-decoration: underline;
+  text-decoration-color: rgba(4, 27, 118, 0.3);
+  text-underline-offset: 3px;
+  transition: all 0.2s ease;
+}
+
+.blog-content .internal-link:hover {
+  background-color: rgba(4, 27, 118, 0.1);
+  color: #030f4d;
+  padding: 2px 4px;
+  border-radius: 4px;
+  text-decoration-color: #030f4d;
+}
+
+.blog-content .external-link {
+  color: #316FD4;
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: rgba(49, 111, 212, 0.3);
+  text-underline-offset: 3px;
+}
+
+.blog-content .external-link:hover {
+  background-color: rgba(49, 111, 212, 0.1);
+  color: #2855a9;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.blog-content .external-link:after {
+  content: " ↗";
+  font-size: 0.8em;
+  opacity: 0.7;
+  margin-left: 2px;
+}
+
+.blog-content .content-link {
+  color: #316FD4;
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: rgba(49, 111, 212, 0.3);
+  text-underline-offset: 3px;
 }
 
 .blog-content ul, .blog-content ol {

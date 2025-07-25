@@ -900,4 +900,109 @@ export async function sendWeeklyAnalyticsSummaryEmail(stats) {
   }
 }
 
-export default { sendVerificationEmail, sendPasswordResetEmail, sendWelcomeEmail, sendContactEmail, sendVerificationStatusEmail, sendSignupAnalyticsEmail, sendVerificationSuccessAnalyticsEmail, sendVerificationFailureAnalyticsEmail, sendWeeklyAnalyticsSummaryEmail };
+export async function sendNewsletterSubscriptionNotification(subscriberEmail, subscriberName, source, subscriberId, timestamp = new Date().toISOString()) {
+  console.log('Sending newsletter subscription notification for:', subscriberEmail);
+
+  // Email content with subscriber details
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background-color: #316FD4; color: white; padding: 20px; text-align: center;">
+        <h2>📧 New Newsletter Subscription!</h2>
+      </div>
+      <div style="padding: 20px; border: 1px solid #ddd; border-top: none;">
+        <p><strong>Great news! Someone just subscribed to the Arzani newsletter!</strong></p>
+        
+        <div style="background-color: #f8f9fa; padding: 15px; margin: 20px 0; border-left: 4px solid #316FD4; border-radius: 4px;">
+          <h3 style="margin-top: 0; color: #333;">Subscriber Details</h3>
+          <p><strong>📧 Email:</strong> ${subscriberEmail}</p>
+          <p><strong>👤 Name:</strong> ${subscriberName || 'Not provided'}</p>
+          <p><strong>📍 Source:</strong> ${source || 'website'}</p>
+          <p><strong>🆔 Subscriber ID:</strong> ${subscriberId}</p>
+          <p><strong>🕐 Subscription Time:</strong> ${new Date(timestamp).toLocaleString('en-GB', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            timeZone: 'Europe/London'
+          })}</p>
+        </div>
+        
+        <div style="background-color: #e8f4fd; padding: 15px; margin: 20px 0; border-radius: 4px;">
+          <h3 style="margin-top: 0; color: #316FD4;">Quick Stats</h3>
+          <p>This subscriber can now receive:</p>
+          <ul style="margin: 10px 0; padding-left: 20px;">
+            <li>Weekly business insights newsletters</li>
+            <li>Market trend analysis</li>
+            <li>AI-powered business recommendations</li>
+            <li>Exclusive marketplace updates</li>
+          </ul>
+        </div>
+        
+        <div style="text-align: center; margin: 20px 0;">
+          <a href="https://arzani.co.uk/admin/newsletter" 
+             style="background-color: #316FD4; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">
+            View All Subscribers
+          </a>
+        </div>
+        
+        <p style="color: #666; font-size: 14px; margin-top: 20px;">
+          This is an automated notification. You're receiving this because you're set up to monitor newsletter subscriptions.
+        </p>
+      </div>
+    </div>
+  `;
+
+  try {
+    const adminEmail = process.env.ADMIN_EMAIL || 'hello@arzani.co.uk';
+    
+    if (useSendGrid) {
+      const msg = {
+        to: adminEmail,
+        from: {
+          email: 'hello@arzani.co.uk',
+          name: 'Arzani Newsletter System'
+        },
+        subject: `📧 New Newsletter Subscription - ${subscriberEmail}`,
+        html: htmlContent,
+        tracking_settings: {
+          click_tracking: {
+            enable: true
+          },
+          open_tracking: {
+            enable: true
+          }
+        }
+      };
+
+      const response = await sgMail.send(msg);
+      console.log('Newsletter subscription notification sent successfully via SendGrid');
+      return response;
+    } else {
+      const transporter = getTransporter();
+      const info = await transporter.sendMail({
+        from: '"Arzani Newsletter System" <hello@arzani.co.uk>',
+        to: adminEmail,
+        subject: `📧 New Newsletter Subscription - ${subscriberEmail}`,
+        html: htmlContent
+      });
+      
+      console.log('Newsletter subscription notification sent successfully via Nodemailer:', info.messageId);
+      
+      if (process.env.NODE_ENV === 'development' && info.previewUrl) {
+        console.log('Preview URL:', info.previewUrl);
+      }
+      
+      return info;
+    }
+  } catch (error) {
+    console.error('Failed to send newsletter subscription notification:', error);
+    if (error.response) {
+      console.error(error.response.body);
+    }
+    // Don't throw error - we don't want newsletter subscription to fail if notification fails
+    return null;
+  }
+}
+
+export default { sendVerificationEmail, sendPasswordResetEmail, sendWelcomeEmail, sendContactEmail, sendVerificationStatusEmail, sendSignupAnalyticsEmail, sendVerificationSuccessAnalyticsEmail, sendVerificationFailureAnalyticsEmail, sendWeeklyAnalyticsSummaryEmail, sendNewsletterSubscriptionNotification };

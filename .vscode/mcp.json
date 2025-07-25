@@ -66,6 +66,7 @@
 				"@modelcontextprotocol/server-sequential-thinking"
 			]
 		},
+		
 		"firecrawl": {
 			"type": "stdio",
 			"command": "npx",
@@ -106,6 +107,9 @@
 			"env": {
 				"PERPLEXITY_API_KEY": "${input:perplexity_api_key}"
 			}
+		},
+			"Notion": {
+			"url": "https://mcp.notion.com/mcp"
+			}
 		}
 	}
-}

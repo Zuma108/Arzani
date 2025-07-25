@@ -10,7 +10,7 @@ env:
   EC2_HOST: ${{ secrets.EC2_HOST }}         # Get from secrets instead of hardcoding
   EC2_INSTANCE_ID: ${{ secrets.EC2_INSTANCE_ID }} # Get from secrets instead of hardcoding
   NODE_VERSION: '18.x'                      # matches your engine requirements in package.json
-  RDS_DB_INSTANCE: my-database              # RDS instance identifier
+  RDS_DB_INSTANCE: my-marketplace           # RDS instance identifier (production database)
   RDS_DB_NAME: my_marketplace               # Database name
   RDS_DB_USER: marketplace_user             # Database user
   RDS_BACKUP_RETENTION: 7                   # Days to keep automated backups

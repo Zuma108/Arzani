@@ -1,5 +1,120 @@
 # Arzani Marketplace - AI Coding Assistant Instructions
 
+## MCP (Model Context Protocol) Integration Guidelines
+
+This project is enhanced with multiple MCP servers providing specialized capabilities. Use these guidelines to determine when to leverage each MCP:
+
+### Available MCP Servers & Usage Guidelines
+
+#### 1. **Brave Search MCP** (`@modelcontextprotocol/server-brave-search`)
+**Capabilities:** Web search, news search, local business search
+**When to Use:**
+- User asks for current/recent information not in codebase
+- Researching competitor analysis, market trends
+- Finding documentation for external APIs/libraries
+- Validating business requirements against industry standards
+**When NOT to Use:**
+- Information already available in project files
+- Internal system debugging (use filesystem MCP instead)
+
+#### 2. **Filesystem MCP** (`@modelcontextprotocol/server-filesystem`) 
+**Capabilities:** Secure file operations, reading, writing, directory management
+**When to Use:**
+- Reading/analyzing project files for context
+- Creating/modifying configuration files
+- Exploring project structure and dependencies
+- File operations that VS Code tools don't cover
+**When NOT to Use:**
+- Simple file edits (use built-in editor tools)
+- Operations outside allowed directories
+
+#### 3. **Sequential Thinking MCP** (`@modelcontextprotocol/server-sequential-thinking`)
+**Capabilities:** Structured problem-solving, iterative reasoning, complex analysis
+**When to Use:**
+- Complex architectural decisions requiring step-by-step analysis
+- Debugging multi-component issues (A2A, database, frontend)
+- Planning major feature implementations
+- Analyzing trade-offs in system design
+**When NOT to Use:**
+- Simple coding tasks or straightforward fixes
+- Quick information lookups
+
+#### 4. **Firecrawl MCP** (`firecrawl-mcp`)
+**Capabilities:** Web scraping, crawling, content extraction, search
+**When to Use:**
+- Extracting data from competitor websites for marketplace analysis
+- Scraping product catalogs or pricing information
+- Gathering market research data
+- Extracting structured data from business websites
+**When NOT to Use:**
+- Simple web searches (use Brave MCP)
+- Scraping sites with strict anti-bot policies
+- When data is available via APIs
+
+#### 5. **Pinecone MCP** (`@pinecone-database/mcp`)
+**Capabilities:** Vector database operations, semantic search, embeddings
+**When to Use:**
+- Implementing AI-powered product recommendations
+- Building semantic search for marketplace listings
+- Creating knowledge bases for A2A agents
+- Similarity matching for business profiles
+**When NOT to Use:**
+- Simple text search (use PostgreSQL full-text search)
+- Small datasets that don't require vector operations
+
+#### 6. **Knowledge Graph Memory MCP** (`@modelcontextprotocol/server-memory`)
+**Capabilities:** Persistent memory, entity relationships, conversational context
+**When to Use:**
+- Tracking complex business relationships in marketplace
+- Maintaining context across A2A agent interactions
+- Building user behavior profiles
+- Creating persistent knowledge about market trends
+**When NOT to Use:**
+- Simple data storage (use PostgreSQL)
+- Temporary session data
+
+#### 7. **Perplexity Ask MCP** (`server-perplexity-ask`)
+**Capabilities:** AI-powered research, real-time web search with reasoning
+**When to Use:**
+- Deep research requiring analysis and synthesis
+- Understanding complex business/legal regulations
+- Market analysis requiring multiple sources
+- Technical research for architecture decisions
+**When NOT to Use:**
+- Simple factual queries (use Brave MCP)
+- Information available in project documentation
+
+#### 8. **Notion MCP** (`Notion`)
+**Capabilities:** Workspace management, document creation, database operations
+**When to Use:**
+- Creating project documentation or specifications
+- Managing feature backlogs or requirements
+- Collaborative planning documents
+- Creating user guides or API documentation
+**When NOT to Use:**
+- Code documentation (keep in repository)
+- Temporary notes or quick references
+
+### MCP Decision Framework
+
+**For Research Tasks:**
+1. Internal project info → Filesystem MCP
+2. Current web info → Brave Search MCP  
+3. Deep analysis → Perplexity Ask MCP
+4. Data extraction → Firecrawl MCP
+
+**For Development Tasks:**
+1. Complex planning → Sequential Thinking MCP
+2. File operations → Filesystem MCP
+3. AI features → Pinecone MCP + Knowledge Graph Memory MCP
+4. Documentation → Notion MCP
+
+**For Marketplace-Specific Tasks:**
+- Business intelligence → Perplexity + Firecrawl MCPs
+- Product recommendations → Pinecone MCP
+- User relationship tracking → Knowledge Graph Memory MCP
+- Competitive analysis → Brave Search + Firecrawl MCPs
+
 ## Architecture Overview
 
 This is a **multi-agent business marketplace** built with Node.js/Express, featuring an **Agent-to-Agent (A2A) protocol** for AI service communication. The system implements **A/B testing**, **real-time chat**, and **AI-powered business analytics**.

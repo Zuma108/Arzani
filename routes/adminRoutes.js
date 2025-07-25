@@ -30,6 +30,28 @@ router.get('/verification-review', adminAuth, async (req, res) => {
     }
 });
 
+// GET route to render the blog automation dashboard
+router.get('/blog-automation', adminAuth, async (req, res) => {
+    try {
+        // Generate a fresh token for API calls
+        const token = jwt.sign(
+            { userId: req.user.userId, role: 'admin' }, 
+            process.env.JWT_SECRET, 
+            { expiresIn: '1h' }
+        );
+        
+        // Render the blog automation dashboard
+        res.render('admin/blog-automation-dashboard', {
+            title: 'Blog Automation Dashboard',
+            user: req.user,
+            token: token
+        });
+    } catch (error) {
+        console.error('Error rendering blog automation dashboard:', error);
+        res.status(500).render('error', { message: 'Failed to load blog automation dashboard' });
+    }
+});
+
 // --- API Endpoints ---
 // Note: adminAuth is applied globally in server.js for /api/admin routes,
 // so it doesn't need to be re-applied to individual API endpoints here.

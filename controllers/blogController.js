@@ -49,11 +49,11 @@ const upload = multer({
 
 /**
  * Ensure image URL is properly formatted
- * This helper ensures we have a proper S3 URL for images
+ * This helper ensures we have a proper image URL, respecting local figma design exports
  */
 function ensureProperImageUrl(imageUrl) {
   if (!imageUrl) {
-    return 'https://arzani-images1.s3.eu-west-2.amazonaws.com/blogs/default-blog-hero.jpg';
+    return '/figma design exports/images/blog1.webp'; // Default to first blog image from rotation
   }
   
   // If already a full URL, return it
@@ -61,13 +61,18 @@ function ensureProperImageUrl(imageUrl) {
     return imageUrl;
   }
   
-  // If it's a relative path, convert to S3 URL
+  // If it's a figma design exports path, keep it as is (local images)
+  if (imageUrl.startsWith('/figma design exports/images/')) {
+    return imageUrl;
+  }
+  
+  // If it's a relative path for S3, convert to S3 URL
   if (imageUrl.startsWith('/blogs/') || imageUrl.startsWith('/uploads/blogs/')) {
     return `https://arzani-images1.s3.eu-west-2.amazonaws.com${imageUrl}`;
   }
   
-  // Default image if we can't process it
-  return 'https://arzani-images1.s3.eu-west-2.amazonaws.com/blogs/default-blog-hero.jpg';
+  // Default to first blog image from rotation if we can't process it
+  return '/figma design exports/images/blog1.webp';
 }
 
 /**
@@ -396,7 +401,7 @@ async function previewBlogPost(req, res) {
     // Format author info
     const author = {
       name: post.author_name || 'Arzani Team',
-      avatar: post.author_image || '/figma design exports/images/default-avatar.png',
+      avatar: post.author_image || '/figma design exports/images.webp/arzani-icon-nobackground.png',
       bio: post.author_bio || ''
     };
     

@@ -4,7 +4,7 @@
  */
 
 import express from 'express';
-import blogController from '../controllers/blogController_new.js';
+import blogController from '../controllers/blogController.js';
 import { requireAuth } from '../middleware/auth.js';
 
 const router = express.Router();
