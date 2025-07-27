@@ -19,6 +19,32 @@
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   }
   
+  /* Logo switching for mobile white background */
+  .navbar-logo-white,
+  .navbar-logo-black {
+    transition: opacity 0.3s ease;
+  }
+  
+  /* Default mobile state - show white logo */
+  .navbar-logo-white {
+    display: block;
+  }
+  
+  .navbar-logo-black {
+    display: none;
+  }
+  
+  /* When navbar has white background - show black logo */
+  .header-light.mobile-scrolled .navbar-logo-white,
+  .header-light.mobile-menu-open .navbar-logo-white {
+    display: none;
+  }
+  
+  .header-light.mobile-scrolled .navbar-logo-black,
+  .header-light.mobile-menu-open .navbar-logo-black {
+    display: block;
+  }
+  
   /* Adjust hero section when navbar is visible on mobile */
   .header-light.mobile-scrolled ~ main .hero-section-video,
   .header-light.mobile-menu-open ~ main .hero-section-video {
@@ -126,25 +152,26 @@
   
   /* Mobile menu enhancements */
   .navbar__menu {
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.98) !important;
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15) !important;
     border-radius: 12px;
     margin-top: 0.75rem;
     padding: 1rem;
   }
   
   .navbar__menu a {
-    color: #1f2937 !important;
+    color: #1f2937 !important; /* Dark text for visibility */
     font-weight: 500;
-    padding: 0.75rem 1rem;
+    padding: 0.75rem 1rem !important;
     border-radius: 8px;
     transition: all 0.2s ease;
+    display: block !important;
   }
   
   .navbar__menu a:hover {
-    background: rgba(49, 111, 212, 0.1);
+    background: rgba(49, 111, 212, 0.1) !important;
     color: #316FD4 !important;
   }
   

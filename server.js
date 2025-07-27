@@ -166,6 +166,7 @@ function assignABTestVariant(req, res, next) {
 // Add this import near the top of the file with other imports
 import { attachRootRoute } from './root-route-fix.js';
 import apiAuthRoutes from './routes/api/auth.js'; // Add this import
+import authDebug from './middleware/authDebug.js';
 
 // Import WebSocket service
 import WebSocketService from './services/websocket.js';
@@ -4179,9 +4180,6 @@ app.get('/chat-interface', authenticateUser, async (req, res) => {
     res.status(500).render('error', { message: 'Failed to load enhanced chat interface' });
   }
 });
-
-// Import our specialized auth debugging middleware
-import authDebug from './middleware/authDebug.js';
 
 // Add this code near the top of your middleware section, before other route handlers
 app.use(authDebug.routeDebugger);

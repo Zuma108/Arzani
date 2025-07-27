@@ -20,9 +20,25 @@ document.addEventListener('DOMContentLoaded', function() {
       mobileMenu.classList.toggle('hidden', !isOpening);
       mobileMenu.classList.toggle('open', isOpening);
       
+      // Force visibility styles for production
+      if (isOpening) {
+        mobileMenu.style.backgroundColor = 'white';
+        mobileMenu.style.border = '2px solid rgba(0, 0, 0, 0.1)';
+        mobileMenu.style.boxShadow = '0 10px 40px rgba(0, 0, 0, 0.2)';
+        // Ensure all links are visible
+        const menuLinks = mobileMenu.querySelectorAll('a');
+        menuLinks.forEach(link => {
+          link.style.color = '#1f2937';
+          link.style.fontWeight = '600';
+          link.style.display = 'block';
+        });
+      }
+      
       // Add mobile-menu-open class to header when menu is open (for mobile navbar visibility)
       if (header) {
         header.classList.toggle('mobile-menu-open', isOpening);
+        // Handle logo switching after class change
+        setTimeout(handleMobileLogoSwitch, 50);
       }
 
       // Close any open mobile dropdowns when closing the main menu
@@ -83,6 +99,9 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // Apply scrolled styling for background changes
       header.classList.toggle('scrolled', isScrolled);
+      
+      // Handle logo switching for mobile
+      handleMobileLogoSwitch();
     } else {
       // Desktop behavior: Hide when scrolling past hero section
       if (scrollY > heroHeight - 100) { // 100px buffer before hero section ends
@@ -96,7 +115,40 @@ document.addEventListener('DOMContentLoaded', function() {
         const isScrolled = scrollY > 30;
         header.classList.toggle('scrolled', isScrolled);
       }
+      
+      // Ensure white logo is shown on desktop
+      ensureDesktopLogo();
     }
+  }
+  
+  // Function to handle mobile logo switching
+  function handleMobileLogoSwitch() {
+    const whiteLogo = document.querySelector('.navbar-logo-white');
+    const blackLogo = document.querySelector('.navbar-logo-black');
+    
+    if (!whiteLogo || !blackLogo) return;
+    
+    const hasWhiteBackground = header.classList.contains('mobile-scrolled') || 
+                               header.classList.contains('mobile-menu-open');
+    
+    if (hasWhiteBackground) {
+      whiteLogo.style.display = 'none';
+      blackLogo.style.display = 'block';
+    } else {
+      whiteLogo.style.display = 'block';
+      blackLogo.style.display = 'none';
+    }
+  }
+  
+  // Function to ensure desktop always shows white logo
+  function ensureDesktopLogo() {
+    const whiteLogo = document.querySelector('.navbar-logo-white');
+    const blackLogo = document.querySelector('.navbar-logo-black');
+    
+    if (!whiteLogo || !blackLogo) return;
+    
+    whiteLogo.style.display = 'block';
+    blackLogo.style.display = 'none';
   }
 
   // Initialize navbar appearance on page load
@@ -135,6 +187,13 @@ document.addEventListener('DOMContentLoaded', function() {
           header.classList.remove('mobile-menu-open');
         }
         closeAllMobileDropdowns();
+      }
+      
+      // Handle logo switching on resize
+      if (isMobile) {
+        handleMobileLogoSwitch();
+      } else {
+        ensureDesktopLogo();
       }
     }, 250);
   }

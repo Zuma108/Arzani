@@ -1295,8 +1295,9 @@ Requirements:
       await generateXmlSitemap();
       console.log(`✅ Sitemap updated successfully for post: "${postTitle}"`);
       
-      // Ping search engines about sitemap update
-      await this.notifySearchEngines();
+      // Notify search engines about new blog post using modern APIs
+      const newBlogUrl = `https://www.arzani.co.uk/blog/post/${slug}`;
+      await this.notifySearchEngines(newBlogUrl);
     } catch (error) {
       console.error('⚠️ Error updating sitemap:', error);
       // Don't throw error - sitemap update failure shouldn't break blog generation
@@ -1304,36 +1305,35 @@ Requirements:
   }
 
   /**
-   * Notify search engines about sitemap updates
+   * Notify search engines about sitemap updates using modern APIs
    */
-  async notifySearchEngines() {
+  async notifySearchEngines(newBlogUrl = null) {
     try {
-      const sitemapUrl = 'https://www.arzani.co.uk/sitemap.xml';
+      // Import the modern notification system
+      const { default: ModernSearchNotification } = await import('./modernSearchNotification.js');
+      const notifier = new ModernSearchNotification();
       
-      // List of search engine ping URLs
-      const pingUrls = [
-        `https://www.google.com/ping?sitemap=${encodeURIComponent(sitemapUrl)}`,
-        `https://www.bing.com/ping?sitemap=${encodeURIComponent(sitemapUrl)}`
-      ];
+      console.log('🔔 Using modern search engine notification system...');
       
-      console.log('🔔 Notifying search engines about sitemap update...');
-      
-      for (const pingUrl of pingUrls) {
-        try {
-          const response = await fetch(pingUrl);
-          const searchEngine = pingUrl.includes('google') ? 'Google' : 'Bing';
-          
-          if (response.ok) {
-            console.log(`✅ Successfully notified ${searchEngine} about sitemap update`);
-          } else {
-            console.log(`⚠️ ${searchEngine} ping returned status: ${response.status}`);
-          }
-        } catch (pingError) {
-          console.error(`❌ Error pinging search engine ${pingUrl}:`, pingError.message);
-        }
+      if (newBlogUrl) {
+        // Notify about specific new blog post
+        await notifier.notifyNewBlogPost(newBlogUrl);
+      } else {
+        // General sitemap notification
+        await notifier.notifyComprehensive();
       }
+      
+      console.log('✅ Modern search engine notification completed');
+      
     } catch (error) {
-      console.error('⚠️ Error notifying search engines:', error);
+      console.error('⚠️ Error with modern search notification:', error);
+      
+      // Fallback: Log the deprecated method issue
+      console.log('\n📋 Manual Action Required:');
+      console.log('🔧 Automated ping URLs are deprecated (Google 404, Bing 410)');
+      console.log('📍 Please manually submit sitemap: https://www.arzani.co.uk/sitemap.xml');
+      console.log('🌐 Google: Search Console → Sitemaps');
+      console.log('🌐 Bing: Webmaster Tools → Sitemaps');
     }
   }
 

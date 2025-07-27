@@ -128,9 +128,9 @@ Based on the PRD_Programmatic_Blog_Strategy.md and successful deployment of our 
 
 #### **Pillar Content (4 posts)**
 - [x] **3.1** Business Valuation Guide: Methods, Tools & Expert Tips *(DEPLOYED)*
-- [ ] **3.2** AI vs Traditional Business Valuation Comparison
-- [ ] **3.3** Industry-Specific Business Valuation Methods
-- [ ] **3.4** International Business Valuation Standards
+- [x] **3.2** AI vs Traditional Business Valuation Comparison
+- [x] **3.3** Industry-Specific Business Valuation Methods
+- [x] **3.4** International Business Valuation Standards
 
 #### **Supporting Content (26 posts)**
 - [ ] **3.5** DCF Business Valuation Method Explained
