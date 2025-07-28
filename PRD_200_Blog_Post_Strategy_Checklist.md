@@ -50,11 +50,11 @@ Based on the PRD_Programmatic_Blog_Strategy.md and successful deployment of our 
 - [x] **1.14** Manufacturing Business Acquisition Guide
 - [x] **1.15** Service Business Acquisition Strategies
 - [x] **1.16** Retail Business Acquisition in the Digital Age
-- [ ] **1.17** Restaurant and Hospitality Business Acquisition
-- [ ] **1.18** Healthcare Business Acquisition Regulations
-- [ ] **1.19** Construction Business Acquisition Considerations
-- [ ] **1.20** E-commerce Business Acquisition Guide
-- [ ] **1.21** SaaS Business Acquisition Methodology
+- [x] **1.17** Restaurant and Hospitality Business Acquisition
+- [x] **1.18** Healthcare Business Acquisition Regulations
+- [x] **1.19** Construction Business Acquisition Considerations
+- [x] **1.20** E-commerce Business Acquisition Guide
+- [x] **1.21** SaaS Business Acquisition Methodology
 - [ ] **1.22** Local Business Acquisition for Investors
 - [ ] **1.23** Family Business Acquisition Dynamics
 - [ ] **1.24** Distressed Business Acquisition Opportunities
@@ -104,7 +104,7 @@ Based on the PRD_Programmatic_Blog_Strategy.md and successful deployment of our 
 - [ ] **2.18** Retail Business Sale in Digital Era
 - [ ] **2.19** Restaurant Business Sale Process
 - [ ] **2.20** Healthcare Business Sale Regulations
-- [ ] **2.21** Construction Business Sale Timing
+- [x] **2.21** Construction Business Sale Timing
 - [ ] **2.22** E-commerce Business Sale Valuation
 - [ ] **2.23** SaaS Business Sale Preparation
 - [ ] **2.24** Family Business Sale Dynamics

@@ -111,9 +111,14 @@ jobs:
         mkdir -p dist
         
         # Copy necessary files for deployment (excluding development files)
+        # Exclude all .md files first, then specifically include the PRD file
         rsync -av --exclude='.git' --exclude='.github' --exclude='node_modules' --exclude='tests' \
           --exclude='*.md' --exclude='*.env' --exclude='*.log' . dist/
-          # Create package.json without dev dependencies for production
+        
+        # Specifically include the PRD file that the application needs
+        cp PRD_200_Blog_Post_Strategy_Checklist.md dist/ 2>/dev/null || echo "PRD file not found, skipping"
+        
+        # Create package.json without dev dependencies for production
         jq 'del(.devDependencies)' package.json > dist/package.json
         
         # Create deployment archive

@@ -1295,6 +1295,9 @@ Requirements:
       await generateXmlSitemap();
       console.log(`✅ Sitemap updated successfully for post: "${postTitle}"`);
       
+      // Generate slug from post title to create proper URL
+      const slug = this.createSlug(postTitle);
+      
       // Notify search engines about new blog post using modern APIs
       const newBlogUrl = `https://www.arzani.co.uk/blog/post/${slug}`;
       await this.notifySearchEngines(newBlogUrl);

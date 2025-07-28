@@ -983,33 +983,37 @@
             const pageLinks = document.querySelectorAll('a[href*="page="]');
             pageLinks.forEach(link => {
                 link.addEventListener('click', function(e) {
-                    e.preventDefault();
+                    // Don't prevent default - let normal navigation happen
+                    // Just add visual feedback
                     
-                    // Add loading state
+                    // Add loading state to the grid
                     const blogGrid = document.querySelector('.grid');
                     if (blogGrid) {
-                        blogGrid.style.opacity = '0.6';
-                        blogGrid.style.transform = 'scale(0.98)';
-                        blogGrid.style.transition = 'all 0.3s ease';
+                        blogGrid.style.opacity = '0.8';
+                        blogGrid.style.transition = 'opacity 0.3s ease';
                     }
                     
-                    // Show loading indicator
+                    // Add pressed state to clicked link
+                    this.style.transform = 'scale(0.95)';
+                    this.style.transition = 'transform 0.1s ease';
+                    
+                    // Show brief loading indicator
                     const loadingOverlay = document.createElement('div');
-                    loadingOverlay.className = 'fixed inset-0 bg-white/80 backdrop-blur-sm z-50 flex items-center justify-center';
+                    loadingOverlay.className = 'fixed top-20 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm z-50 px-4 py-2 rounded-full shadow-lg';
                     loadingOverlay.innerHTML = `
-                        <div class="glass-card p-6 rounded-2xl">
-                            <div class="flex items-center space-x-3">
-                                <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                                <span class="text-gray-700 font-medium">Loading articles...</span>
-                            </div>
+                        <div class="flex items-center space-x-2">
+                            <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                            <span class="text-gray-700 text-sm font-medium">Loading...</span>
                         </div>
                     `;
                     document.body.appendChild(loadingOverlay);
                     
-                    // Navigate after brief delay
+                    // Remove loading indicator after navigation starts
                     setTimeout(() => {
-                        window.location.href = this.href;
-                    }, 300);
+                        if (loadingOverlay.parentNode) {
+                            loadingOverlay.remove();
+                        }
+                    }, 2000);
                 });
             });
         }

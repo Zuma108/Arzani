@@ -80,9 +80,13 @@ function ensureProperImageUrl(imageUrl) {
  */
 async function getBlogHomePage(req, res) {
   try {
+    // Get page parameter from query string
+    const page = parseInt(req.query.page) || 1;
+    const limit = 6; // Posts per page
+    
     // Get featured, recent posts and categories using the blog model
     const featuredPostsResult = await blogModel.getAllPosts(1, 3, { is_featured: true });
-    const recentPostsResult = await blogModel.getAllPosts(1, 6);
+    const recentPostsResult = await blogModel.getAllPosts(page, limit);
     const categories = await blogModel.getAllCategories();
     
     // Get pillar posts for the featured content
