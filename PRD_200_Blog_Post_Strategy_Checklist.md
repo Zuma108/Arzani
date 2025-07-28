@@ -39,9 +39,9 @@ Based on the PRD_Programmatic_Blog_Strategy.md and successful deployment of our 
 - [x] **1.5** Digital Business Acquisition in the AI Era
 
 #### **Supporting Content (30 posts)**
-- [ ] **1.6** Due Diligence Checklist: 50 Critical Questions
-- [ ] **1.7** Business Acquisition Financing Options in 2025
-- [ ] **1.8** Legal Considerations for UK Business Acquisitions
+- [x] **1.6** Due Diligence Checklist: 50 Critical Questions
+- [x] **1.7** Business Acquisition Financing Options in 2025
+- [x] **1.8** Legal Considerations for UK Business Acquisitions
 - [ ] **1.9** How to Negotiate Business Purchase Price
 - [ ] **1.10** Post-Acquisition Integration Best Practices
 - [ ] **1.11** Common Business Acquisition Mistakes to Avoid

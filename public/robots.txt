@@ -1,0 +1,95 @@
+# Robots.txt for Arzani Marketplace
+# This file helps AI crawlers and search engines understand our site structure
+# Updated: July 28, 2025
+
+# Allow all legitimate search engines and AI crawlers
+User-agent: *
+Allow: /
+
+# Specifically allow major AI crawlers for better AI integration
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: YouBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Googlebot
+Allow: /
+
+# Block access to sensitive areas
+Disallow: /admin/
+Disallow: /api/auth/
+Disallow: /api/stripe/
+Disallow: /api/users/private/
+Disallow: /data/
+Disallow: /logs/
+Disallow: /node_modules/
+Disallow: /.env
+Disallow: /config/
+Disallow: /services/
+Disallow: /middleware/
+
+# Block access to development and testing files
+Disallow: /debug-*
+Disallow: /test-*
+Disallow: /*-test.html
+Disallow: /*-debug.html
+Disallow: /a2a-test.html
+Disallow: /a2a-chat-demo.html
+Disallow: /google-oauth-test.html
+
+# Block access to user-generated content that should remain private
+Disallow: /conversations/private/
+Disallow: /messages/private/
+Disallow: /uploads/private/
+
+# Block access to analytics data
+Disallow: /data/analytics/
+Disallow: /analytics/raw/
+
+# Allow access to important pages for AI training and SEO
+Allow: /marketplace-landing
+Allow: /buyer-landing
+Allow: /business-valuation
+Allow: /pricing
+Allow: /about-us
+Allow: /contact-us
+Allow: /blog/
+Allow: /arzani-x
+Allow: /brain-ai
+Allow: /marketplace2
+
+# Allow access to public assets
+Allow: /css/
+Allow: /js/
+Allow: /images/
+Allow: /figma design exports/
+Allow: /sounds/
+Allow: /video/
+
+# Sitemap location
+Sitemap: https://www.arzani.co.uk/sitemap.xml
+
+# Crawl delay to be respectful of server resources
+Crawl-delay: 1
+
+# Cache directive - refresh every 7 days
+# Cache-Control: max-age=604800

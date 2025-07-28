@@ -167,6 +167,8 @@ function assignABTestVariant(req, res, next) {
 import { attachRootRoute } from './root-route-fix.js';
 import apiAuthRoutes from './routes/api/auth.js'; // Add this import
 import authDebug from './middleware/authDebug.js';
+import aiCrawlerMonitoring from './middleware/aiCrawlerMonitoring.js';
+import aiCrawlerRoutes from './routes/aiCrawlerRoutes.js';
 
 // Import WebSocket service
 import WebSocketService from './services/websocket.js';
@@ -977,6 +979,9 @@ app.use(session({
 }));
 app.use(cookieParser());
 
+// Add AI crawler monitoring middleware
+app.use(aiCrawlerMonitoring);
+
 // Add development authentication controls middleware (only in development)
 if (process.env.NODE_ENV === 'development') {
   console.log('🔧 Adding development authentication controls middleware');
@@ -1183,6 +1188,8 @@ app.use('/api/subscription', apiSubRoutes);
 app.use('/debug', chatDebugRouter);
 // Register AI routes
 app.use('/api/ai', aiApiRoutes);
+// AI Crawler monitoring routes
+app.use('/', aiCrawlerRoutes);
 // Apply routes
 app.use('/blog', blogRoutes);
 app.use('/api/subscription', subscriptionApiRoutes);

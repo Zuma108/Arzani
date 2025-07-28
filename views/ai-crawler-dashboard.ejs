@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> | Arzani Marketplace</title>
+    <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <%- include('../views/partials/tailwind-setup') %>
+    
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-W50GKB6F3M"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-W50GKB6F3M');
+    </script>
+    
+    <!-- Microsoft Clarity -->
+    <script type="text/javascript">
+        (function(c,l,a,r,i,t,y){
+            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+        })(window, document, "clarity", "script", "slthf5bx9u");
+    </script>
+    
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f8fafc;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        .stat-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+        .crawler-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .openai { background-color: #e6fffa; color: #047857; }
+        .google { background-color: #fef3c7; color: #92400e; }
+        .microsoft { background-color: #dbeafe; color: #1e40af; }
+        .anthropic { background-color: #f3e8ff; color: #7c3aed; }
+        .meta { background-color: #fee2e2; color: #dc2626; }
+        .other { background-color: #f1f5f9; color: #64748b; }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+        .refresh-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: all 0.3s ease;
+        }
+        .refresh-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <%- include('../views/partials/navbar') %>
+    
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 mb-2">🤖 AI Crawler Analytics</h1>
+                    <p class="text-gray-600">Monitor AI bot visits and crawling activity on your website</p>
+                </div>
+                <div class="mt-4 md:mt-0 flex items-center space-x-4">
+                    <select id="daysFilter" class="border border-gray-300 rounded-lg px-3 py-2 bg-white">
+                        <option value="1" <%= days === 1 ? 'selected' : '' %>>Last 24 Hours</option>
+                        <option value="3" <%= days === 3 ? 'selected' : '' %>>Last 3 Days</option>
+                        <option value="7" <%= days === 7 ? 'selected' : '' %>>Last 7 Days</option>
+                        <option value="14" <%= days === 14 ? 'selected' : '' %>>Last 14 Days</option>
+                        <option value="30" <%= days === 30 ? 'selected' : '' %>>Last 30 Days</option>
+                    </select>
+                    <button id="refreshBtn" class="refresh-btn text-white px-4 py-2 rounded-lg">
+                        🔄 Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="stat-card p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Total Visits</p>
+                        <p class="text-2xl font-bold text-gray-900"><%= stats.totalVisits.toLocaleString() %></p>
+                    </div>
+                    <div class="text-blue-500 text-3xl">🔍</div>
+                </div>
+            </div>
+            
+            <div class="stat-card p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Unique Crawlers</p>
+                        <p class="text-2xl font-bold text-gray-900"><%= stats.uniqueCrawlers.length %></p>
+                    </div>
+                    <div class="text-green-500 text-3xl">🤖</div>
+                </div>
+            </div>
+            
+            <div class="stat-card p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Most Active</p>
+                        <p class="text-lg font-bold text-gray-900">
+                            <% if (Object.keys(stats.crawlerBreakdown).length > 0) { %>
+                                <% const mostActive = Object.entries(stats.crawlerBreakdown).sort((a, b) => b[1].visits - a[1].visits)[0]; %>
+                                <%= aiCrawlers[mostActive[0]]?.name || mostActive[0] %>
+                            <% } else { %>
+                                None
+                            <% } %>
+                        </p>
+                    </div>
+                    <div class="text-purple-500 text-3xl">⭐</div>
+                </div>
+            </div>
+            
+            <div class="stat-card p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Pages Crawled</p>
+                        <p class="text-2xl font-bold text-gray-900"><%= Object.keys(stats.topPages).length %></p>
+                    </div>
+                    <div class="text-orange-500 text-3xl">📄</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- Daily Activity Chart -->
+            <div class="stat-card p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Daily Crawler Activity</h3>
+                <div class="chart-container">
+                    <canvas id="dailyActivityChart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Crawler Distribution Chart -->
+            <div class="stat-card p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Crawler Distribution</h3>
+                <div class="chart-container">
+                    <canvas id="crawlerDistributionChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Crawler Breakdown Table -->
+        <div class="stat-card p-6 mb-8">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">AI Crawler Breakdown</h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <thead>
+                        <tr class="border-b border-gray-200">
+                            <th class="text-left py-3 px-4 font-medium text-gray-600">Crawler</th>
+                            <th class="text-left py-3 px-4 font-medium text-gray-600">Company</th>
+                            <th class="text-left py-3 px-4 font-medium text-gray-600">Purpose</th>
+                            <th class="text-right py-3 px-4 font-medium text-gray-600">Visits</th>
+                            <th class="text-right py-3 px-4 font-medium text-gray-600">Last Seen</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (Object.keys(stats.crawlerBreakdown).length === 0) { %>
+                            <tr>
+                                <td colspan="5" class="text-center py-8 text-gray-500">
+                                    No AI crawler activity detected in the selected time period
+                                </td>
+                            </tr>
+                        <% } else { %>
+                            <% Object.entries(stats.crawlerBreakdown).sort((a, b) => b[1].visits - a[1].visits).forEach(([key, data]) => { %>
+                                <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                    <td class="py-3 px-4">
+                                        <div class="flex items-center">
+                                            <span class="crawler-badge <%= data.company.toLowerCase().includes('openai') ? 'openai' : data.company.toLowerCase().includes('google') ? 'google' : data.company.toLowerCase().includes('microsoft') ? 'microsoft' : data.company.toLowerCase().includes('anthropic') ? 'anthropic' : data.company.toLowerCase().includes('meta') ? 'meta' : 'other' %>">
+                                                <%= data.name %>
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-4 text-gray-700"><%= data.company %></td>
+                                    <td class="py-3 px-4 text-gray-600 text-sm"><%= aiCrawlers[key]?.purpose || 'AI model training' %></td>
+                                    <td class="py-3 px-4 text-right font-medium"><%= data.visits.toLocaleString() %></td>
+                                    <td class="py-3 px-4 text-right text-sm text-gray-500">
+                                        <%= new Date(data.lastSeen).toLocaleDateString() %> 
+                                        <%= new Date(data.lastSeen).toLocaleTimeString() %>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Top Pages -->
+        <div class="stat-card p-6 mb-8">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Most Crawled Pages</h3>
+            <div class="space-y-3">
+                <% if (Object.keys(stats.topPages).length === 0) { %>
+                    <p class="text-gray-500 text-center py-4">No page data available</p>
+                <% } else { %>
+                    <% Object.entries(stats.topPages).slice(0, 10).forEach(([page, visits]) => { %>
+                        <div class="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg">
+                            <span class="text-gray-700 font-medium"><%= page %></span>
+                            <span class="text-blue-600 font-semibold"><%= visits %> visits</span>
+                        </div>
+                    <% }); %>
+                <% } %>
+            </div>
+        </div>
+        
+        <!-- Recent Activity -->
+        <div class="stat-card p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Recent Crawler Activity</h3>
+            <div class="space-y-3 max-h-96 overflow-y-auto">
+                <% if (stats.recentVisits.length === 0) { %>
+                    <p class="text-gray-500 text-center py-4">No recent activity</p>
+                <% } else { %>
+                    <% stats.recentVisits.slice(0, 20).forEach(visit => { %>
+                        <div class="flex items-center justify-between py-3 px-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                            <div class="flex items-center space-x-3">
+                                <span class="crawler-badge <%= visit.company.toLowerCase().includes('openai') ? 'openai' : visit.company.toLowerCase().includes('google') ? 'google' : visit.company.toLowerCase().includes('microsoft') ? 'microsoft' : visit.company.toLowerCase().includes('anthropic') ? 'anthropic' : visit.company.toLowerCase().includes('meta') ? 'meta' : 'other' %>">
+                                    <%= visit.crawlerName %>
+                                </span>
+                                <span class="text-gray-700 font-medium"><%= visit.path %></span>
+                            </div>
+                            <div class="text-right text-sm text-gray-500">
+                                <div><%= new Date(visit.timestamp).toLocaleDateString() %></div>
+                                <div><%= new Date(visit.timestamp).toLocaleTimeString() %></div>
+                            </div>
+                        </div>
+                    <% }); %>
+                <% } %>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Chart data from server
+        const dailyStats = <%- JSON.stringify(stats.dailyStats) %>;
+        const crawlerBreakdown = <%- JSON.stringify(stats.crawlerBreakdown) %>;
+        
+        // Daily Activity Chart
+        const dailyCtx = document.getElementById('dailyActivityChart').getContext('2d');
+        const dailyLabels = Object.keys(dailyStats).sort();
+        const dailyData = dailyLabels.map(date => dailyStats[date].visits);
+        
+        new Chart(dailyCtx, {
+            type: 'line',
+            data: {
+                labels: dailyLabels.map(date => new Date(date).toLocaleDateString()),
+                datasets: [{
+                    label: 'Crawler Visits',
+                    data: dailyData,
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Crawler Distribution Chart
+        const distributionCtx = document.getElementById('crawlerDistributionChart').getContext('2d');
+        const crawlerLabels = Object.values(crawlerBreakdown).map(c => c.name);
+        const crawlerData = Object.values(crawlerBreakdown).map(c => c.visits);
+        const colors = [
+            '#667eea', '#764ba2', '#f093fb', '#f5576c',
+            '#4facfe', '#00f2fe', '#43e97b', '#38f9d7',
+            '#ffecd2', '#fcb69f', '#a8edea', '#fed6e3'
+        ];
+        
+        new Chart(distributionCtx, {
+            type: 'doughnut',
+            data: {
+                labels: crawlerLabels,
+                datasets: [{
+                    data: crawlerData,
+                    backgroundColor: colors.slice(0, crawlerLabels.length),
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 15
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Event listeners
+        document.getElementById('daysFilter').addEventListener('change', function() {
+            const days = this.value;
+            window.location.href = `?days=${days}`;
+        });
+        
+        document.getElementById('refreshBtn').addEventListener('click', function() {
+            window.location.reload();
+        });
+        
+        // Auto-refresh every 5 minutes
+        setTimeout(() => {
+            window.location.reload();
+        }, 5 * 60 * 1000);
+    </script>
+</body>
+</html>
