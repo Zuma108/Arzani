@@ -4,7 +4,16 @@
  */
 
 import express from 'express';
-import devAuth from '../utils/dev-auth.js';
+// REMOVED: import devAuth from '../utils/dev-auth.js'; - deleted as part of auth cleanup
+// Create stub to prevent route errors
+const devAuth = {
+  getBypassConfig: () => ({ enabled: false, message: 'Dev auth disabled during cleanup' }),
+  enableAuthBypass: () => console.log('Dev auth bypass disabled'),
+  disableAuthBypass: () => console.log('Dev auth bypass disabled'),
+  toggleAuthBypass: () => false,
+  setBypassPaths: () => console.log('Dev auth paths disabled'),
+  setDefaultUserId: () => console.log('Dev auth user ID disabled')
+};
 
 const router = express.Router();
 

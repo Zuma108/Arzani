@@ -28,16 +28,11 @@ class Auth {
   }
   
   /**
-   * Load token from storage
+   * Load token from storage - SIMPLIFIED
    */
   loadToken() {
-    // Check all possible token sources
-    const storageToken = localStorage.getItem('token');
-    const cookieToken = this.getTokenFromCookie();
-    const metaToken = document.querySelector('meta[name="auth-token"]')?.content;
-    
-    // Use the first available token
-    this.token = storageToken || cookieToken || metaToken || null;
+    // ONLY check localStorage - no competing mechanisms
+    this.token = localStorage.getItem('token');
     
     if (this.token) {
       // Parse token to get user ID and expiry
@@ -48,15 +43,10 @@ class Auth {
         this.tokenExpiry = new Date(tokenData.exp * 1000);
         this.authenticated = new Date() < this.tokenExpiry;
         
-        // Sync token across all storage mechanisms
-        this.syncTokenAcrossStorage(this.token);
-        
-        // Log authentication status for debugging
-        console.log('Auth loaded from storage:', {
+        console.log('Auth loaded from localStorage:', {
           userId: this.userId,
           tokenExpiry: this.tokenExpiry,
-          authenticated: this.authenticated,
-          source: storageToken ? 'localStorage' : (cookieToken ? 'cookie' : 'meta')
+          authenticated: this.authenticated
         });
       } else {
         // Token parsing failed, clear invalid token
@@ -67,21 +57,11 @@ class Auth {
   }
   
   /**
-   * Set up token refresh mechanism
+   * Set up token refresh mechanism - SIMPLIFIED
    */
   setupTokenRefresh() {
-    // Check token expiry and refresh if needed
-    setInterval(() => {
-      if (this.token && this.tokenExpiry) {
-        const now = new Date();
-        const expiresIn = this.tokenExpiry.getTime() - now.getTime();
-        
-        // If token expires in less than 15 minutes, refresh it
-        if (expiresIn < 15 * 60 * 1000 && expiresIn > 0) {
-          this.refreshToken();
-        }
-      }
-    }, 60000); // Check every minute
+    // DISABLED: Remove competing periodic checks that cause redirects
+    console.log('Token refresh disabled to prevent redirect conflicts');
   }
   
   /**
@@ -148,48 +128,12 @@ class Auth {
   }
   
   /**
-   * Set up fetch interceptor to add token to requests
+   * Set up fetch interceptor to add token to requests - SIMPLIFIED
    * @param {string} token - JWT token
    */
   setupFetchInterceptor(token) {
-    if (!token) return;
-    
-    // Save the original fetch function
-    if (!window._originalFetch) {
-      window._originalFetch = window.fetch;
-    }
-    
-    // Override fetch to add auth header
-    window.fetch = (url, options = {}) => {
-      // Skip for certain static resources or external domains
-      if (typeof url === 'string') {
-        // Don't add token to external requests
-        if (!url.startsWith('/') && !url.startsWith(window.location.origin)) {
-          return window._originalFetch(url, options);
-        }
-        
-        // Skip for static resources
-        if (url.match(/\.(css|js|png|jpg|gif|svg|ico|woff|woff2)(\?.*)?$/)) {
-          return window._originalFetch(url, options);
-        }
-      }
-      
-      // Add token to options
-      options = options || {};
-      options.headers = options.headers || {};
-      
-      // Only add token if not already present
-      if (!options.headers['Authorization'] && !options.headers['authorization']) {
-        options.headers['Authorization'] = `Bearer ${token}`;
-      }
-      
-      // Include credentials for same-origin requests
-      if (!options.credentials) {
-        options.credentials = 'same-origin';
-      }
-      
-      return window._originalFetch(url, options);
-    };
+    // DISABLED: Remove fetch hijacking that causes navigation conflicts
+    console.log('Fetch interceptor disabled to prevent navigation conflicts');
   }
   
   /**
@@ -669,7 +613,8 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Call initially and set up an interval to check periodically
   updateAuthUI();
-  setInterval(updateAuthUI, 60000); // Check every minute
+  // Reduce frequency to prevent aggressive redirects after OAuth
+  setInterval(updateAuthUI, 120000); // Check every 2 minutes instead of 1
 });
 
 // When a page loads, immediately check for token and enforce consistency across storage
@@ -828,8 +773,8 @@ document.addEventListener('DOMContentLoaded', function() {
       return;
     }
 
-    // Verify the token with the server
-    fetch('/api/verify-token', {
+    // Verify the token with the server (with better error handling)
+    fetch('/auth/check-token', {
       headers: {
         'Authorization': `Bearer ${validToken}`
       }
@@ -931,3 +876,11 @@ auth.googleSignIn = async function(credential, returnTo) {
     };
   }
 };
+
+// DISABLED: Listen for OAuth token updates - removed to prevent conflicts
+// window.addEventListener('authTokenUpdated', function(event) {...});
+
+// DISABLED: Improved periodic check - removed to prevent redirect loops
+// setInterval(() => {...}, 30000);
+
+console.log('Auth.js cleanup: Disabled competing token sync and periodic checks');

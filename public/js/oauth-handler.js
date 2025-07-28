@@ -109,9 +109,12 @@ class OAuthHandler {
       console.log('OAuth response data:', data);
 
       if (data.success) {
-        // Store token for client-side use
+        // SIMPLIFIED: Store token ONLY in localStorage - no competing sync mechanisms
         if (data.token) {
+          console.log('Storing Google OAuth token (simplified)');
           localStorage.setItem('token', data.token);
+          localStorage.setItem('tokenExpiry', Date.now() + (4 * 60 * 60 * 1000)); // 4 hours
+          console.log('Google OAuth token stored successfully');
         }
         
         // Redirect to specified URL

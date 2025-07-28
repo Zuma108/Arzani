@@ -632,8 +632,110 @@ router.get('/google/callback', async (req, res) => {
     req.session.userId = user.id;
     await new Promise(resolve => req.session.save(resolve));
 
-    // Redirect directly to marketplace2
-    res.redirect(`/marketplace2?token=${token}`);
+    // Redirect to marketplace with token handling page instead of direct token in URL
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Completing Google Sign-in...</title>
+    <style>
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            text-align: center; 
+            padding: 50px; 
+            background: white;
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #333;
+        }
+        
+        .loading-container {
+            background: white;
+            padding: 40px;
+            max-width: 400px;
+            width: 90%;
+        }
+        
+        .arzani-logo {
+            width: 150px;
+            height: auto;
+            margin: 0 auto 30px;
+            display: block;
+            animation: logoFloat 2s ease-in-out infinite;
+        }
+        
+        @keyframes logoFloat {
+            0%, 100% { 
+                transform: translateY(0px);
+                opacity: 0.9;
+            }
+            50% { 
+                transform: translateY(-8px);
+                opacity: 1;
+            }
+        }
+        
+        .loading-dots {
+            display: none;
+        }
+        
+        h2 {
+            color: #333;
+            margin: 20px 0 10px;
+            font-size: 24px;
+            font-weight: 400;
+        }
+        
+        p {
+            display: none;
+        }
+        
+        .success-checkmark {
+            display: none;
+        }
+        
+        .checkmark {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-container">
+        <img src="/images/arzani-logo.png" alt="Arzani" class="arzani-logo">
+        <h2>Completing your sign-in</h2>
+    </div>
+    <script>
+        // Store token in localStorage
+        const token = '${token}';
+        const userId = '${user.id}';
+        
+        if (token) {
+            localStorage.setItem('token', token);
+            localStorage.setItem('userId', userId);
+            
+            // Clear any old auth data
+            localStorage.removeItem('authTokenUpdated');
+            sessionStorage.clear();
+            
+            console.log('Google OAuth: Token stored successfully');
+            
+            // Redirect to marketplace after token is stored
+            setTimeout(() => {
+                window.location.href = '/marketplace2';
+            }, 1000);
+        } else {
+            console.error('No token received from OAuth');
+            window.location.href = '/login2?error=no_token';
+        }
+    </script>
+</body>
+</html>`;
+    
+    res.send(html);
   } catch (error) {
     console.error('Google callback error:', error);
     res.redirect('/login2?error=google_auth_failed');

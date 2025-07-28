@@ -42,14 +42,14 @@ Based on the PRD_Programmatic_Blog_Strategy.md and successful deployment of our 
 - [x] **1.6** Due Diligence Checklist: 50 Critical Questions
 - [x] **1.7** Business Acquisition Financing Options in 2025
 - [x] **1.8** Legal Considerations for UK Business Acquisitions
-- [ ] **1.9** How to Negotiate Business Purchase Price
-- [ ] **1.10** Post-Acquisition Integration Best Practices
-- [ ] **1.11** Common Business Acquisition Mistakes to Avoid
-- [ ] **1.12** Business Acquisition vs Starting from Scratch: ROI Analysis
-- [ ] **1.13** Technology Business Acquisition Trends
-- [ ] **1.14** Manufacturing Business Acquisition Guide
-- [ ] **1.15** Service Business Acquisition Strategies
-- [ ] **1.16** Retail Business Acquisition in the Digital Age
+- [x] **1.9** How to Negotiate Business Purchase Price
+- [x] **1.10** Post-Acquisition Integration Best Practices
+- [x] **1.11** Common Business Acquisition Mistakes to Avoid
+- [x] **1.12** Business Acquisition vs Starting from Scratch: ROI Analysis
+- [x] **1.13** Technology Business Acquisition Trends
+- [x] **1.14** Manufacturing Business Acquisition Guide
+- [x] **1.15** Service Business Acquisition Strategies
+- [x] **1.16** Retail Business Acquisition in the Digital Age
 - [ ] **1.17** Restaurant and Hospitality Business Acquisition
 - [ ] **1.18** Healthcare Business Acquisition Regulations
 - [ ] **1.19** Construction Business Acquisition Considerations

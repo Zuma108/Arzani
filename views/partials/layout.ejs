@@ -1,5 +1,13 @@
 <!DOCTYPE html>
-<html lang="en">
+<h    <!-- Site CSS -->
+    <link rel="stylesheet" href="/css/main.css">
+    
+    <!-- Loading screen CSS -->
+    <link rel="stylesheet" href="/css/loading-icon.css">
+    
+    <!-- AI Assistant styling -->
+    <link rel="stylesheet" href="/css/ai-chatbot.css">
+    <link rel="stylesheet" href="/css/ai-animations.css";ng="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -49,6 +57,15 @@
     <% } %>
 </head>
 <body>
+    <!-- Loading Screen -->
+    <div class="loading-container">
+        <div class="loading-content">
+            <img src="/images/arzani-logo-black.png" alt="Arzani" class="loading-logo">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Loading...</div>
+        </div>
+    </div>
+    
     <!-- Header/Navbar goes here -->
     
     <!-- Main content -->
@@ -62,7 +79,9 @@
     </footer>
     
     <!-- Unified Authentication JS (load before other scripts) -->
-    <script src="/js/auth-unified.js"></script>
+    <!-- REMOVED: auth-unified.js - deleted as part of auth system cleanup -->
+    <script src="/js/auth.js"></script>
+    <script src="/js/oauth-handler.js"></script>
     
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
@@ -73,6 +92,9 @@
     
     <!-- AI Assistant script -->
     <script src="/js/ai-assistant.js"></script>
+    
+    <!-- Loading manager script -->
+    <script src="/js/loading.js"></script>
     
     <!-- Page-specific scripts if needed -->
     <% if (typeof pageScript !== 'undefined') { %>

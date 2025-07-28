@@ -98,7 +98,7 @@ import apiRoutes from './routes/api.js'; // Add this import
 import blogRoutes from './routes/blogRoutes.js'; // Add this import for blog routes
 import blogApiRoutes from './routes/blogApiRoutes.js'; // Add this import
 import adminRoutes from './routes/adminRoutes.js'; // <-- Import admin routes
-import { addDevAuthControls } from './utils/dev-auth.js';
+// REMOVED: import { addDevAuthControls } from './utils/dev-auth.js'; - deleted as part of auth cleanup
 import devRoutes from './routes/dev.js';
 import { stripeWebhookMiddleware, handleStripeWebhook } from './middleware/webhookHandler.js';
 import profileRoutes from './routes/profile.routes.js';
@@ -982,10 +982,10 @@ app.use(cookieParser());
 // Add AI crawler monitoring middleware
 app.use(aiCrawlerMonitoring);
 
-// Add development authentication controls middleware (only in development)
+// REMOVED: Development authentication controls middleware - deleted as part of auth cleanup
 if (process.env.NODE_ENV === 'development') {
-  console.log('🔧 Adding development authentication controls middleware');
-  app.use(addDevAuthControls);
+  console.log('🔧 Development authentication controls disabled - part of auth cleanup');
+  // app.use(addDevAuthControls); - DISABLED
 }
 
 // Add a specific middleware to handle the save-questionnaire endpoint before any auth middleware

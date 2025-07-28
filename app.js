@@ -6,7 +6,7 @@ import authRoutes from './routes/auth.js';
 import path from 'path';
 import { setupWebSocketServer } from './websocket-server.js';
 import http from 'http';
-import { authMiddleware } from './utils/auth-unified.js';
+// REMOVED: import { authMiddleware } from './utils/auth-unified.js'; - deleted file
 import authDebug from './middleware/authDebug.js';
 import bodyParser from 'body-parser';
 import { setupScheduledTasks } from './scheduled-tasks.js';
@@ -142,14 +142,15 @@ app.get('/marketplace', authDebug.enforceNonChatPage, (req, res) => {
   res.redirect('/marketplace2');
 });
 
-app.get('/marketplace2', authDebug.enforceNonChatPage, (req, res) => {
-  res.locals.isChatPage = false;
-  res.render('marketplace2', {
-    title: 'Business Marketplace',
-    isChatPage: false,
-    isMarketplacePage: true
-  });
-});
+// REMOVED: Duplicate marketplace2 route - keeping only the one in server.js
+// app.get('/marketplace2', authDebug.enforceNonChatPage, (req, res) => {
+//   res.locals.isChatPage = false;
+//   res.render('marketplace2', {
+//     title: 'Business Marketplace',
+//     isChatPage: false,
+//     isMarketplacePage: true
+//   });
+// });
 
 // Root route with option to toggle between designs
 app.get('/', (req, res) => {
