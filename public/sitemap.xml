@@ -2,213 +2,351 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://www.arzani.co.uk/</loc>
-    <lastmod>2025-07-28</lastmod>
+    <lastmod>2025-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://www.arzani.co.uk/homepage</loc>
-    <lastmod>2025-07-28</lastmod>
+    <lastmod>2025-07-30</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://www.arzani.co.uk/marketplace-landing</loc>
-    <lastmod>2025-07-28</lastmod>
+    <lastmod>2025-07-30</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://www.arzani.co.uk/seller-questionnaire</loc>
-    <lastmod>2025-07-28</lastmod>
+    <lastmod>2025-07-30</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://www.arzani.co.uk/marketplace2</loc>
-    <lastmod>2025-07-28</lastmod>
+    <lastmod>2025-07-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://www.arzani.co.uk/faq</loc>
-    <lastmod>2025-07-28</lastmod>
+    <lastmod>2025-07-30</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.arzani.co.uk/login</loc>
-    <lastmod>2025-07-28</lastmod>
+    <lastmod>2025-07-30</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://www.arzani.co.uk/signup</loc>
-    <lastmod>2025-07-28</lastmod>
+    <lastmod>2025-07-30</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://www.arzani.co.uk/pricing</loc>
-    <lastmod>2025-07-28</lastmod>
+    <lastmod>2025-07-30</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.arzani.co.uk/terms</loc>
-    <lastmod>2025-07-28</lastmod>
+    <lastmod>2025-07-30</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.4</priority>
   </url>
   <url>
     <loc>https://www.arzani.co.uk/privacy</loc>
-    <lastmod>2025-07-28</lastmod>
+    <lastmod>2025-07-30</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.4</priority>
   </url>
   <url>
     <loc>https://www.arzani.co.uk/cookies</loc>
-    <lastmod>2025-07-28</lastmod>
+    <lastmod>2025-07-30</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.4</priority>
   </url>
   <url>
     <loc>https://www.arzani.co.uk/sitemap</loc>
-    <lastmod>2025-07-28</lastmod>
+    <lastmod>2025-07-30</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
     <loc>https://www.arzani.co.uk/blog</loc>
-    <lastmod>2025-07-28</lastmod>
+    <lastmod>2025-07-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.arzani.co.uk/blog/category/ai-business-tools</loc>
-    <lastmod>2025-07-28</lastmod>
+    <lastmod>2025-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.arzani.co.uk/blog/category/buying-a-business</loc>
-    <lastmod>2025-07-28</lastmod>
+    <lastmod>2025-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.arzani.co.uk/blog/category/selling-a-business</loc>
-    <lastmod>2025-07-28</lastmod>
+    <lastmod>2025-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.arzani.co.uk/blog/category/business-valuation</loc>
-    <lastmod>2025-07-28</lastmod>
+    <lastmod>2025-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.arzani.co.uk/blog/category/buying-advice</loc>
-    <lastmod>2025-07-28</lastmod>
+    <lastmod>2025-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.arzani.co.uk/blog/category/funding</loc>
-    <lastmod>2025-07-28</lastmod>
+    <lastmod>2025-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.arzani.co.uk/blog/category/location-guides</loc>
-    <lastmod>2025-07-28</lastmod>
+    <lastmod>2025-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.arzani.co.uk/blog/category/growth-strategies</loc>
-    <lastmod>2025-07-28</lastmod>
+    <lastmod>2025-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.arzani.co.uk/blog/category/industry-analysis</loc>
-    <lastmod>2025-07-28</lastmod>
+    <lastmod>2025-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.arzani.co.uk/blog/category/market-trends</loc>
-    <lastmod>2025-07-28</lastmod>
+    <lastmod>2025-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.arzani.co.uk/blog/category/selling-advice</loc>
-    <lastmod>2025-07-28</lastmod>
+    <lastmod>2025-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.arzani.co.uk/blog/tag/due-diligence</loc>
-    <lastmod>2025-07-28</lastmod>
+    <lastmod>2025-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://www.arzani.co.uk/blog/tag/ecommerce</loc>
-    <lastmod>2025-07-28</lastmod>
+    <lastmod>2025-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://www.arzani.co.uk/blog/tag/exit-strategy</loc>
-    <lastmod>2025-07-28</lastmod>
+    <lastmod>2025-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://www.arzani.co.uk/blog/tag/retail</loc>
-    <lastmod>2025-07-28</lastmod>
+    <lastmod>2025-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://www.arzani.co.uk/blog/tag/service-business</loc>
-    <lastmod>2025-07-28</lastmod>
+    <lastmod>2025-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://www.arzani.co.uk/blog/tag/sme</loc>
-    <lastmod>2025-07-28</lastmod>
+    <lastmod>2025-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://www.arzani.co.uk/blog/tag/startups</loc>
-    <lastmod>2025-07-28</lastmod>
+    <lastmod>2025-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://www.arzani.co.uk/blog/tag/tech</loc>
-    <lastmod>2025-07-28</lastmod>
+    <lastmod>2025-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://www.arzani.co.uk/blog/tag/uk-market</loc>
-    <lastmod>2025-07-28</lastmod>
+    <lastmod>2025-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://www.arzani.co.uk/blog/tag/valuation</loc>
-    <lastmod>2025-07-28</lastmod>
+    <lastmod>2025-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.arzani.co.uk/blog/business-selling/how-to-value-your-business-for-sale</loc>
+    <lastmod>2025-07-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.arzani.co.uk/blog/business-selling/business-sale-preparation-timeline</loc>
+    <lastmod>2025-07-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.arzani.co.uk/blog/business-selling/when-to-sell-your-business-timing-indicators</loc>
+    <lastmod>2025-07-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.arzani.co.uk/blog/ai-in-business/future-of-ai-in-business-marketplaces</loc>
+    <lastmod>2025-07-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.arzani.co.uk/blog/ai-in-business/complete-guide-to-ai-business-tools-2025</loc>
+    <lastmod>2025-07-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.arzani.co.uk/blog/ai-in-business/ai-revolution-in-business-transactions-partially-deployed</loc>
+    <lastmod>2025-07-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.arzani.co.uk/blog/industry-analysis/ai-transformation-across-uk-industries</loc>
+    <lastmod>2025-07-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.arzani.co.uk/blog/industry-analysis/post-brexit-business-landscape-assessment</loc>
+    <lastmod>2025-07-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.arzani.co.uk/blog/industry-analysis/uk-business-market-comprehensive-analysis-2025</loc>
+    <lastmod>2025-07-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.arzani.co.uk/blog/business-acquisition/exit-strategy-planning-for-acquired-businesses</loc>
+    <lastmod>2025-07-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.arzani.co.uk/blog/business-acquisition/business-acquisition-success-metrics</loc>
+    <lastmod>2025-07-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.arzani.co.uk/blog/business-acquisition/business-acquisition-through-ai-platforms</loc>
+    <lastmod>2025-07-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.arzani.co.uk/blog/business-acquisition/regional-business-acquisition-opportunities</loc>
+    <lastmod>2025-07-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.arzani.co.uk/blog/business-acquisition/business-acquisition-market-timing</loc>
+    <lastmod>2025-07-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.arzani.co.uk/blog/business-acquisition/customer-retention-post-acquisition</loc>
+    <lastmod>2025-07-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.arzani.co.uk/blog/business-acquisition/employee-considerations-in-business-acquisition</loc>
+    <lastmod>2025-07-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.arzani.co.uk/blog/business-acquisition/business-acquisition-insurance-requirements</loc>
+    <lastmod>2025-07-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.arzani.co.uk/blog/business-acquisition/asset-purchase-vs-share-purchase-guide</loc>
+    <lastmod>2025-07-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.arzani.co.uk/blog/business-acquisition/business-acquisition-tax-implications-uk</loc>
+    <lastmod>2025-07-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.arzani.co.uk/blog/business-acquisition/distressed-business-acquisition-opportunities</loc>
+    <lastmod>2025-07-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.arzani.co.uk/blog/business-acquisition/family-business-acquisition-dynamics</loc>
+    <lastmod>2025-07-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.arzani.co.uk/blog/business-acquisition/local-business-acquisition-for-investors</loc>
+    <lastmod>2025-07-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.arzani.co.uk/blog/business-acquisition/retail-business-acquisition-in-the-digital-age</loc>
+    <lastmod>2025-07-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.arzani.co.uk/blog/business-acquisition/service-business-acquisition-strategies</loc>

@@ -51,19 +51,70 @@ class AutomatedBlogGenerator {
         minWords: 4000,
         maxWords: 6000,
         keywordDensity: 1.5,
-        headingStructure: ['h2', 'h3', 'h4']
+        headingStructure: ['h2', 'h3', 'h4'],
+        fleschScore: 60,
+        requiresFAQ: true,
+        minExternalLinks: 7,
+        requiresFramework: true
       },
       supporting: {
-        minWords: 1500,
-        maxWords: 2500,
+        minWords: 2000,
+        maxWords: 3500,
         keywordDensity: 1.2,
-        headingStructure: ['h2', 'h3']
+        headingStructure: ['h2', 'h3'],
+        fleschScore: 60,
+        requiresFAQ: true,
+        minExternalLinks: 5,
+        requiresFramework: true
       },
       tactical: {
-        minWords: 800,
-        maxWords: 1200,
+        minWords: 1800,
+        maxWords: 2500,
         keywordDensity: 1.0,
-        headingStructure: ['h2', 'h3']
+        headingStructure: ['h2', 'h3'],
+        fleschScore: 65,
+        requiresFAQ: true,
+        minExternalLinks: 4,
+        requiresFramework: true
+      }
+    };
+
+    // Generic infographic templates for automation (S3 hosted)
+    this.infographicTemplates = {
+      process: {
+        name: 'Business Process Framework',
+        filename: 'business-process-framework.webp',
+        s3Url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/blogs/business-process-framework.webp',
+        altTemplate: 'Step-by-step business {category} process framework infographic',
+        placement: 'after-intro'
+      },
+      statistics: {
+        name: 'UK Market Statistics',
+        filename: 'uk-market-statistics.webp',
+        s3Url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/blogs/uk-market-statistics.webp',
+        altTemplate: 'UK {category} market statistics and data visualization',
+        placement: 'mid-content'
+      },
+      checklist: {
+        name: 'Business Checklist',
+        filename: 'business-checklist-template.webp',
+        s3Url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/blogs/business-checklist-template.webp',
+        altTemplate: '{category} checklist and key considerations infographic',
+        placement: 'before-conclusion'
+      },
+      timeline: {
+        name: 'Business Timeline',
+        filename: 'business-timeline-template.webp',
+        s3Url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/blogs/business-timeline-template.webp',
+        altTemplate: 'Typical {category} timeline and milestones infographic', 
+        placement: 'mid-content'
+      },
+      comparison: {
+        name: 'Comparison Chart',
+        filename: 'business-comparison-chart.webp',
+        s3Url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/blogs/business-comparison-chart.webp',
+        altTemplate: '{category} comparison chart and analysis infographic',
+        placement: 'after-analysis'
       }
     };
   }
@@ -289,9 +340,22 @@ class AutomatedBlogGenerator {
           word_count: {
             type: "number",
             description: "Approximate word count of the content"
+          },
+          placeholder_validation: {
+            type: "object",
+            properties: {
+              process_placeholder: { type: "boolean", description: "Confirms [IMG_PLACEHOLDER:process:category] is included" },
+              statistics_placeholder: { type: "boolean", description: "Confirms [IMG_PLACEHOLDER:statistics:category] is included" },
+              timeline_placeholder: { type: "boolean", description: "Confirms [IMG_PLACEHOLDER:timeline:category] is included" },
+              checklist_placeholder: { type: "boolean", description: "Confirms [IMG_PLACEHOLDER:checklist:category] is included" },
+              comparison_placeholder: { type: "boolean", description: "Confirms [IMG_PLACEHOLDER:comparison:category] is included" }
+            },
+            required: ["process_placeholder", "statistics_placeholder", "timeline_placeholder", "checklist_placeholder", "comparison_placeholder"],
+            additionalProperties: false,
+            description: "Validation that all 5 required image placeholders are included in content"
           }
         },
-        required: ["content", "meta_description", "key_statistics", "authority_signals", "word_count"],
+        required: ["content", "meta_description", "key_statistics", "authority_signals", "word_count", "placeholder_validation"],
         additionalProperties: false
       };
       
@@ -301,74 +365,73 @@ class AutomatedBlogGenerator {
         messages: [
           {
             role: "developer", // Higher authority role for system instructions
-            content: `# Identity
+            content: `# CRITICAL SYSTEM INSTRUCTIONS
 
-You are an expert SEO content writer and UK business marketplace authority specializing in professional business valuation, market trends, and optimization strategies. You have 15+ years of experience in business acquisitions and have facilitated over £500M in UK business transactions.
+You are an expert SEO content writer and UK business marketplace authority. You MUST follow these formatting requirements EXACTLY.
 
-# E-E-A-T Framework Implementation
+## MANDATORY PLACEHOLDER REQUIREMENT
+YOU MUST INCLUDE EXACTLY THESE 5 PLACEHOLDERS IN YOUR CONTENT:
+1. [IMG_PLACEHOLDER:process:{category}] - After introduction section
+2. [IMG_PLACEHOLDER:statistics:{category}] - Mid-content for data visualization
+3. [IMG_PLACEHOLDER:timeline:{category}] - After case studies section
+4. [IMG_PLACEHOLDER:checklist:{category}] - Before conclusion section  
+5. [IMG_PLACEHOLDER:comparison:{category}] - In comparison/analysis section
 
-## Experience
-- Draw from real marketplace scenarios and specific business cases
-- Reference actual market data from UK business transactions
-- Use first-hand insights from marketplace experience
-- Include realistic case studies (anonymized but credible)
+⚠️ VALIDATION: Content missing ANY placeholder will be rejected and regenerated.
 
-## Expertise  
-- Demonstrate deep knowledge of business valuation methods
-- Reference UK regulations (Companies House, HMRC, FCA guidelines)
-- Use industry-standard terminology correctly
-- Provide step-by-step processes showing understanding
-
-## Authoritativeness
-- Cite authoritative sources (government sites, industry reports, academic studies)
-- Reference specific UK market statistics with proper attribution
-- Mention relevant regulations and compliance requirements
-- Use professional credentialing language
-
-## Trustworthiness
-- Provide accurate, verifiable information
-- Acknowledge limitations and complexity
-- Avoid overpromising results
-- Recommend professional consultation where appropriate
-
-# Content Generation Rules
-
-## Structure Requirements
-- Start directly with content (no HTML document tags)
-- Use proper HTML: <h2>, <h3> for headings, <p> for paragraphs, <ul>/<li> for lists
-- Include 3-5 main sections with strategic subheadings
-- Add realistic examples and case studies in each section
-- Include 1-2 call-to-actions linking to Arzani services
-- End with actionable conclusion
-
-## Authority & Credibility Signals
-- Include specific market data: "In 2024, UK business acquisitions under £5M averaged..."
-- Reference regulations: "Under Companies House requirements..."
-- Use professional examples: "A recent £2.3M acquisition in the Manchester tech sector..."
-- Mention common industry mistakes and solutions
-- Provide concrete numbers and percentages
-
-## Quality Standards
+## CONTENT STRUCTURE REQUIREMENTS
+- Start directly with HTML content (no code blocks)
+- Include Table of Contents with anchor links
+- Create numbered framework (5-7 steps)
+- Include FAQ section before conclusion
+- Use proper HTML tags: <h2>, <h3>, <p>, <ul>, <ol>
 - British English spelling and terminology
-- Written at professional but accessible level
-- Avoid overused phrases: "unlock", "crucial", "delve", "pave the way"
-- Use varied, natural vocabulary demonstrating expertise
+
+## E-E-A-T AUTHORITY SIGNALS
+- Include specific UK market data with sources
+- Reference regulations (Companies House, HMRC, FCA)
+- Use professional examples with realistic numbers
+- Cite authoritative external sources
+- Demonstrate first-hand marketplace experience
+
+## QUALITY REQUIREMENTS
+- ${template.minWords}-${template.maxWords} words minimum
+- Flesch Reading Score ≥ ${template.fleschScore}
+- Avoid overused phrases: "unlock", "crucial", "delve"
 - Never mention AI, artificial generation, or prompts
 
-## Linking Strategy
-- Use /marketplace2 for business listings
-- Use /business-valuation for valuation services  
-- Use /marketplace-landing for general marketplace info
-- Include relevant external links to authoritative sources
+REMEMBER: All 5 image placeholders are MANDATORY and must appear exactly as specified above.`
+          },
+          {
+            role: "system",
+            name: "example_user", 
+            content: "Create a blog post about business acquisition financing"
+          },
+          {
+            role: "system", 
+            name: "example_assistant",
+            content: `<h2>Introduction</h2>
+<p>Business acquisition financing in the UK requires careful planning and strategic approach.</p>
+[IMG_PLACEHOLDER:process:business acquisition]
 
-# Output Requirements
+<h2>Market Analysis</h2>
+<p>Current UK market shows significant opportunities for growth.</p>
+[IMG_PLACEHOLDER:statistics:business acquisition]
 
-Generate a comprehensive blog post with:
-1. Complete HTML content (no code blocks or markers)
-2. SEO-optimized meta description
-3. Key statistics with proper source attribution
-4. List of E-E-A-T authority signals demonstrated
-5. Accurate word count`
+<h2>Case Studies</h2>
+<p>Recent transactions demonstrate successful acquisition strategies.</p>
+[IMG_PLACEHOLDER:timeline:business acquisition]
+
+<h2>Financing Options Comparison</h2>
+<p>Different financing methods offer various advantages.</p>
+[IMG_PLACEHOLDER:comparison:business acquisition]
+
+<h2>Essential Considerations</h2>
+<p>Key factors to evaluate before proceeding.</p>
+[IMG_PLACEHOLDER:checklist:business acquisition]
+
+<h2>Conclusion</h2>
+<p>Strategic financing enables successful acquisitions.</p>`
           },
           {
             role: "user",
@@ -422,77 +485,116 @@ Create a comprehensive ${postInfo.contentType} blog post for the UK business mar
 **Target Length:** ${template.minWords}-${template.maxWords} words
 **Primary Keyword:** ${keywords.primary}
 **Secondary Keywords:** ${keywords.secondary.join(', ')}
+**Readability Target:** Flesch Reading Score ≥ ${template.fleschScore}
+
+**CRITICAL STRUCTURE REQUIREMENTS:**
+1. **Table of Contents** (after introduction): Generate clickable TOC with anchor links
+2. **Numbered Framework** (required): Create a specific step-by-step framework (e.g., "7-Step Negotiation Framework", "5-Phase Due Diligence Process")
+3. **FAQ Section** (before conclusion): Include 5-7 relevant FAQs with detailed answers
+4. **Image Placeholders**: Insert strategic image placeholders for infographics
+5. **Enhanced Author Bio**: Include detailed credentials and expertise markers
 
 **Content Requirements:**
 1. Write for UK business buyers and sellers with demonstrated expertise
 2. Include current 2025 market data and statistics with proper attribution
 3. Provide actionable insights based on first-hand marketplace experience
-4. Use ${template.headingStructure.join(', ')} heading structure
+4. Use ${template.headingStructure.join(', ')} heading structure with keyword modifiers
 5. Include relevant case studies from real UK business transactions (anonymized)
 6. Optimize for SEO with natural keyword placement and E-E-A-T signals
-7. End with a strong call-to-action directing to Arzani marketplace
-8. **IMPORTANT: Include strategic hyperlinks throughout the content**
+7. Target Flesch Reading Score of ${template.fleschScore}+ (shorter sentences, simpler words)
+8. Include minimum ${template.minExternalLinks} external authoritative links
+9. End with a strong call-to-action directing to Arzani marketplace
+10. **IMPORTANT: Include strategic hyperlinks throughout the content**
+11. **CRITICAL: ALWAYS use "arzani.co.uk" domain - NEVER use "arzani.com"**
+
+**MANDATORY CONTENT STRUCTURE:**
+
+**1. INTRODUCTION (150-200 words)**
+- Hook with current market statistic
+- Primary keyword in first 100 words
+- Clear value proposition
+- [IMG_PLACEHOLDER:process:{category}] <!-- Insert after introduction -->
+
+**2. TABLE OF CONTENTS**
+<div class="table-of-contents">
+<h2>Table of Contents</h2>
+<ul>
+<li><a href="#section-1">Section 1 Title</a></li>
+<li><a href="#section-2">Section 2 Title</a></li>
+<!-- Add all sections with proper anchor links -->
+</ul>
+</div>
+
+**3. MAIN CONTENT SECTIONS**
+- Use specific numbered frameworks (e.g., "7-Step Business Valuation Framework")
+- Include keyword modifiers in headings ("strategies", "examples", "steps", "guide")
+- [IMG_PLACEHOLDER:statistics:{category}] <!-- Insert mid-content -->
+- Add proprietary insights from Arzani marketplace data
+- Include UK-specific legal/regulatory references
+
+**4. DETAILED CASE STUDIES (Required)**
+- Minimum 2 anonymized UK business transaction examples
+- Specific numbers and outcomes where possible
+- [IMG_PLACEHOLDER:timeline:{category}] <!-- Insert after case studies -->
+
+**5. FAQ SECTION (Required)**
+<h2 id="faq">Frequently Asked Questions</h2>
+<div class="faq-section">
+<h3>What is a typical multiple for UK SMEs?</h3>
+<p>Detailed answer with current market data...</p>
+<!-- Include 5-7 relevant FAQs with detailed answers -->
+</div>
+[IMG_PLACEHOLDER:checklist:{category}] <!-- Insert before conclusion -->
+
+**6. CONCLUSION & CTA**
+- Summarize key takeaways
+- Educational CTA paired with commercial CTA
+- Link to relevant resources
 
 **E-E-A-T Requirements:**
-• Experience: Include specific examples like "In our experience facilitating £50M+ in business transactions..." or "We've observed that businesses in the hospitality sector typically..."
-• Expertise: Demonstrate deep knowledge with technical details, regulatory references, and industry-standard practices
-• Authoritativeness: Cite authoritative sources (Companies House, ONS, industry reports) and use proper attribution
-• Trustworthiness: Acknowledge limitations, recommend professional consultation where appropriate, avoid overpromising
+• **Experience**: Include specific examples like "In our experience facilitating £50M+ in business transactions..." or "We've observed that businesses in the hospitality sector typically..."
+• **Expertise**: Demonstrate deep knowledge with technical details, regulatory references, and industry-standard practices
+• **Authoritativeness**: Cite authoritative sources (Companies House, ONS, industry reports, academic research) and use proper attribution
+• **Trustworthiness**: Acknowledge limitations, recommend professional consultation where appropriate, include disclosure of commercial affiliation
 
 **CRITICAL HTML FORMATTING REQUIREMENTS:**
-- Use <h2> tags for main section headings
-- Use <h3> tags for subsection headings
+- Use <h2 id="section-id"> tags for main section headings with anchor IDs
+- Use <h3> tags for subsection headings with keyword modifiers
 - Use <h4> tags for sub-subsection headings if needed
-- Wrap ALL paragraphs in <p> tags
+- Wrap ALL paragraphs in <p> tags (max 25 words per sentence for readability)
 - Use <ul> and <li> tags for unordered lists
 - Use <ol> and <li> tags for ordered/numbered lists
 - Use <strong> tags for bold text emphasis
 - Use <em> tags for italic emphasis
 - Use <a href="URL"> tags for all links with proper URLs
+- Add proper anchor links: <a href="#section-id">Jump to Section</a>
 - Do NOT use markdown syntax (no **, ##, -, etc.)
 - Do NOT use plain text formatting
 
-**HTML Structure Example:**
-<h2>Main Section Heading</h2>
-<p>Opening paragraph with <strong>important points</strong> and <a href="https://example.com">relevant links</a>.</p>
-<h3>Subsection Heading</h3>
-<p>Content paragraph explaining key concepts.</p>
-<ul>
-<li>First bullet point with details</li>
-<li>Second bullet point with <em>emphasis</em></li>
-<li>Third bullet point</li>
-</ul>
-<p>Concluding paragraph for this section.</p>
+**ENHANCED LINKING STRATEGY:**
+- Link to ${template.minExternalLinks}+ external authoritative sources (gov.uk, ons.gov.uk, companieshouse.gov.uk, academic papers)
+- Reference related business concepts for internal linking opportunities
+- Use natural anchor text with keyword variations
+- Include contextual links to Arzani marketplace features (ALWAYS use arzani.co.uk domain)
+- Add "nofollow" for commercial links where appropriate
+- **DOMAIN REQUIREMENT: All Arzani links must use "arzani.co.uk" NOT "arzani.com"**
 
-**SEO Structure:**
-- Introduction with primary keyword in first 100 words
-- Clear heading hierarchy (${template.headingStructure.join(' > ')})
-- Keyword density target: ${template.keywordDensity}%
-- Include FAQ section if supporting/tactical content
-- Add relevant internal linking opportunities
+**READABILITY OPTIMIZATION:**
+- Target Flesch Reading Score ≥ ${template.fleschScore}
+- Keep sentences under 25 words
+- Use simple, clear language while maintaining expertise
+- Break up long paragraphs
+- Use bullet points and numbered lists for clarity
+- Add transition sentences between sections
 
-**Linking Strategy:**
-- Link to external authoritative sources (government sites, industry reports)
-- Reference related business concepts that could link to other pages
-- Use natural anchor text like "business for sale", "marketplace", "due diligence"
-- Include at least 3-5 relevant links throughout the content
-- Link to the Arzani marketplace where contextually appropriate
-
-**Content Style:**
-- Professional but accessible tone demonstrating marketplace expertise
-- UK spelling and terminology
-- Current market references (2025)
-- Evidence-based claims with proper source attribution
-- Action-oriented advice based on real experience
-- **Use proper HTML tags with href attributes for all links**
-
-**Authority Demonstrations (Include at least 2-3 of these):**
+**Authority Demonstrations (Include at least 3-4 of these):**
 • Market Data: "Based on our analysis of 1,200+ UK business transactions in 2024..."
 • Regulatory References: "Under Companies House filing requirements..." or "Following FCA guidance..."
 • Case Studies: "A recent £1.8M acquisition in the Leeds manufacturing sector demonstrated..."
 • Professional Insights: "In our experience facilitating business sales across 15 UK regions..."
 • Industry Statistics: "According to our quarterly marketplace report, tech businesses valued between £500K-£2M show..."
 • Expert Analysis: "Our valuation team has observed that hospitality businesses typically..."
+• Academic Citations: "Research from Cambridge Business School indicates..."
 
 **First-Hand Experience Examples:**
 • Transaction Examples: "We recently facilitated the sale of a Birmingham-based logistics company where..."
@@ -500,7 +602,35 @@ Create a comprehensive ${postInfo.contentType} blog post for the UK business mar
 • Professional Observations: "Our due diligence process has revealed that businesses with strong digital presence..."
 • Success Stories: "A manufacturing client increased their business value by 34% after implementing our recommendations..."
 
-**IMPORTANT:** Generate ONLY the HTML content body. Do NOT include <html>, <head>, or <body> tags. Start directly with the content using proper HTML tags as shown in the example above.
+**🔥 CRITICAL: IMAGE PLACEHOLDER SYSTEM (MANDATORY) 🔥**
+
+⚠️ FAILURE TO INCLUDE ALL 5 PLACEHOLDERS WILL RESULT IN CONTENT REJECTION ⚠️
+
+COPY THESE EXACT PLACEHOLDERS INTO YOUR CONTENT:
+
+✅ [IMG_PLACEHOLDER:process:${postInfo.category}] ← REQUIRED after introduction
+✅ [IMG_PLACEHOLDER:statistics:${postInfo.category}] ← REQUIRED in main content  
+✅ [IMG_PLACEHOLDER:timeline:${postInfo.category}] ← REQUIRED after case studies
+✅ [IMG_PLACEHOLDER:checklist:${postInfo.category}] ← REQUIRED before conclusion
+✅ [IMG_PLACEHOLDER:comparison:${postInfo.category}] ← REQUIRED in analysis section
+
+🚨 VALIDATION CHECKPOINT: Your content must contain all 5 placeholders exactly as shown above 🚨
+
+**MANDATORY CONTENT ELEMENTS (ALL REQUIRED):**
+📋 Table of Contents with anchor links
+🔢 Numbered framework (5-7 steps)  
+❓ 5 FAQ questions before conclusion
+🖼️ ALL 5 image placeholders included
+📊 Case studies section
+🎯 Conclusion with CTA
+
+**SUCCESS CRITERIA:**
+- Content includes ALL 5 placeholders verbatim
+- Placeholders use the exact category: "${postInfo.category}"
+- HTML formatting is clean and proper
+- Word count meets ${template.minWords}-${template.maxWords} requirement
+
+Generate ONLY the HTML content body. Do NOT include <html>, <head>, or <body> tags.
 `;
   }
 
@@ -612,6 +742,15 @@ Provide keywords that match actual search patterns for business buyers, sellers,
     // Apply content cleaning and optimization
     content = this.cleanAndValidateContent(content);
     
+    // Optimize for readability (Flesch score target)
+    content = this.optimizeReadability(content, template.fleschScore);
+    
+    // Auto-inject image placeholders if AI didn't include them (fallback system)
+    content = this.injectMissingPlaceholders(content, keywords.primary);
+    
+    // Process image placeholders with generic infographics
+    content = this.processImagePlaceholders(content, keywords.primary, structuredData.title || 'Business Guide');
+    
     // Add strategic internal links with correct URLs
     content = await this.addInternalLinksFixed(content, keywords);
     
@@ -623,13 +762,18 @@ Provide keywords that match actual search patterns for business buyers, sellers,
     const metaDescription = structuredData.meta_description || 
                            await this.generateMetaDescription(content, keywords.primary);
     
-    // Generate schema markup with enhanced data
+    // Generate enhanced schema markup with FAQ data
+    const faqSchema = this.generateFAQSchema(content);
     const schemaMarkup = this.generateEnhancedSchemaMarkup(
       keywords.primary, 
       metaDescription, 
       wordCount,
-      structuredData.key_statistics || []
+      structuredData.key_statistics || [],
+      faqSchema
     );
+
+    // Validate content meets minimum requirements
+    const contentValidation = this.validateContentQuality(content, template);
 
     return {
       content,
@@ -637,12 +781,237 @@ Provide keywords that match actual search patterns for business buyers, sellers,
       readingTime,
       metaDescription,
       schemaMarkup,
+      faqSchema,
       keywords,
       keyStatistics: structuredData.key_statistics || [],
       authoritySignals: structuredData.authority_signals || [],
-      structured: true, // Flag indicating this came from structured output
-      eeatCompliant: (structuredData.authority_signals || []).length >= 2 // E-E-A-T compliance indicator
+      structured: true,
+      eeatCompliant: (structuredData.authority_signals || []).length >= 3,
+      contentValidation,
+      fleschScore: this.estimateFleschScore(content),
+      externalLinks: this.countExternalLinks(content),
+      internalLinks: this.countInternalLinks(content),
+      hasTableOfContents: content.includes('table-of-contents'),
+      hasFAQSection: content.includes('faq-section'),
+      hasNumberedFramework: this.hasNumberedFramework(content)
     };
+  }
+
+  /**
+   * Process image placeholders and insert generic infographics
+   */
+  processImagePlaceholders(content, category, title) {
+    console.log('🖼️ Processing image placeholders for automated infographics...');
+    
+    // Replace image placeholders with actual HTML
+    let processedContent = content;
+    
+    Object.keys(this.infographicTemplates).forEach(templateKey => {
+      const template = this.infographicTemplates[templateKey];
+      
+      // Create flexible regex to match different category formats
+      // Match: [IMG_PLACEHOLDER:process:business acquisition] OR [IMG_PLACEHOLDER:process:Business Acquisition]
+      const placeholderRegex = new RegExp(`\\[IMG_PLACEHOLDER:${templateKey}:[^\\]]+\\]`, 'gi');
+      const matches = processedContent.match(placeholderRegex);
+      
+      if (matches && matches.length > 0) {
+        // Use the first match to get the exact placeholder text
+        const placeholder = matches[0];
+        
+        const altText = template.altTemplate
+          .replace('{category}', category.toLowerCase())
+          .replace('{title}', title.toLowerCase());
+        
+        const imageHtml = `
+<div class="blog-infographic" style="text-align: center; margin: 2rem 0;">
+  <img src="${template.s3Url}" 
+       alt="${altText}"
+       class="responsive-infographic"
+       style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"
+       loading="lazy"
+       crossorigin="anonymous">
+  <p class="image-caption" style="font-size: 0.9rem; color: #666; margin-top: 0.5rem; font-style: italic;">
+    ${template.name} - ${altText}
+  </p>
+</div>`;
+        
+        // Replace all instances of this placeholder type
+        processedContent = processedContent.replace(placeholderRegex, imageHtml);
+        console.log(`✅ Inserted ${template.name} infographic (matched: ${placeholder})`);
+      }
+    });
+    
+    // Remove any remaining placeholders that weren't processed
+    processedContent = processedContent.replace(/\[IMG_PLACEHOLDER:[^\]]+\]/g, '');
+    
+    return processedContent;
+  }
+
+  /**
+   * Auto-inject image placeholders if AI didn't include them (fallback system)
+   */
+  injectMissingPlaceholders(content, category) {
+    console.log('🔍 Checking for missing image placeholders...');
+    
+    // Check if content already has IMG_PLACEHOLDER tags
+    const existingPlaceholders = content.match(/\[IMG_PLACEHOLDER:[^\]]+\]/g) || [];
+    
+    if (existingPlaceholders.length >= 3) {
+      console.log(`✅ Found ${existingPlaceholders.length} existing placeholders - no injection needed`);
+      return content;
+    }
+    
+    console.log(`⚠️ Only found ${existingPlaceholders.length} placeholders - injecting missing ones...`);
+    
+    // Define strategic injection points
+    const injectionPoints = [
+      {
+        placeholder: `[IMG_PLACEHOLDER:process:${category}]`,
+        pattern: /<h2[^>]*>.*?<\/h2>\s*<p>/i,
+        description: 'after first section header'
+      },
+      {
+        placeholder: `[IMG_PLACEHOLDER:statistics:${category}]`,
+        pattern: /<h2[^>]*>.*?(analysis|data|statistics|market).*?<\/h2>/i,
+        description: 'in analysis/statistics section'
+      },
+      {
+        placeholder: `[IMG_PLACEHOLDER:timeline:${category}]`,
+        pattern: /<h2[^>]*>.*?(case studies?|examples?|timeline).*?<\/h2>/i,
+        description: 'after case studies section'
+      },
+      {
+        placeholder: `[IMG_PLACEHOLDER:checklist:${category}]`,
+        pattern: /<h2[^>]*[^>]*faq[^>]*>.*?<\/div>/i,
+        description: 'before conclusion'
+      },
+      {
+        placeholder: `[IMG_PLACEHOLDER:comparison:${category}]`,
+        pattern: /<h2[^>]*>.*?(comparison|framework|step).*?<\/h2>/i,
+        description: 'in framework/comparison section'
+      }
+    ];
+    
+    let modifiedContent = content;
+    let injectedCount = 0;
+    
+    // Inject placeholders at strategic points
+    injectionPoints.forEach(injection => {
+      // Skip if this type already exists
+      if (existingPlaceholders.some(p => p.includes(injection.placeholder.split(':')[1]))) {
+        return;
+      }
+      
+      const match = modifiedContent.match(injection.pattern);
+      if (match && injectedCount < 5) {
+        const insertPoint = match.index + match[0].length;
+        modifiedContent = 
+          modifiedContent.slice(0, insertPoint) + 
+          '\n' + injection.placeholder + '\n' + 
+          modifiedContent.slice(insertPoint);
+        
+        console.log(`✅ Injected ${injection.placeholder.split(':')[1]} placeholder ${injection.description}`);
+        injectedCount++;
+      }
+    });
+    
+    // Fallback: inject at least 2 placeholders in safe locations
+    if (injectedCount === 0) {
+      console.log('🔧 Using fallback injection strategy...');
+      
+      // Inject after first paragraph
+      const firstParagraph = modifiedContent.match(/<\/p>/);
+      if (firstParagraph) {
+        const insertPoint = firstParagraph.index + firstParagraph[0].length;
+        modifiedContent = 
+          modifiedContent.slice(0, insertPoint) + 
+          `\n[IMG_PLACEHOLDER:process:${category}]\n` + 
+          modifiedContent.slice(insertPoint);
+        injectedCount++;
+      }
+      
+      // Inject before conclusion
+      const conclusion = modifiedContent.match(/<h2[^>]*>.*?(conclusion|summary)/i);
+      if (conclusion && injectedCount < 3) {
+        modifiedContent = 
+          modifiedContent.slice(0, conclusion.index) + 
+          `[IMG_PLACEHOLDER:checklist:${category}]\n` + 
+          modifiedContent.slice(conclusion.index);
+        injectedCount++;
+      }
+    }
+    
+    console.log(`📊 Placeholder injection complete: ${injectedCount} added`);
+    return modifiedContent;
+  }
+
+  /**
+   * Generate enhanced FAQ section with structured data
+   */
+  generateFAQSchema(content) {
+    console.log('📝 Generating FAQ structured data...');
+    
+    // Extract FAQ sections from content
+    const faqRegex = /<h3>([^<]+\?[^<]*)<\/h3>\s*<p>([^<]+(?:<[^>]+>[^<]*<\/[^>]+>[^<]*)*)<\/p>/gi;
+    const faqs = [];
+    let match;
+    
+    while ((match = faqRegex.exec(content)) !== null) {
+      faqs.push({
+        question: match[1].trim(),
+        answer: match[2].replace(/<[^>]+>/g, '').trim()
+      });
+    }
+    
+    if (faqs.length === 0) return null;
+    
+    return {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": faqs.map(faq => ({
+        "@type": "Question",
+        "name": faq.question,
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": faq.answer
+        }
+      }))
+    };
+  }
+
+  /**
+   * Optimize content for readability (Flesch score improvement)
+   */
+  optimizeReadability(content, targetScore = 60) {
+    console.log(`📖 Optimizing content readability (target Flesch score: ${targetScore}+)...`);
+    
+    // Split into sentences and analyze
+    let optimizedContent = content;
+    
+    // Break up long sentences (over 25 words)
+    const sentenceRegex = /<p>([^<]+(?:<[^>]+>[^<]*<\/[^>]+>[^<]*)*)<\/p>/gi;
+    
+    optimizedContent = optimizedContent.replace(sentenceRegex, (match, sentence) => {
+      // Count words in sentence (excluding HTML tags)
+      const words = sentence.replace(/<[^>]+>/g, '').split(/\s+/).filter(word => word.length > 0);
+      
+      if (words.length > 25) {
+        // Try to split long sentences at logical break points
+        let splitSentence = sentence
+          .replace(/,\s+and\s+/gi, '. Additionally, ')
+          .replace(/,\s+but\s+/gi, '. However, ')
+          .replace(/,\s+which\s+/gi, '. This ')
+          .replace(/;\s+/gi, '. ')
+          .replace(/\s+therefore\s+/gi, '. Therefore, ')
+          .replace(/\s+however\s+/gi, '. However, ');
+        
+        return `<p>${splitSentence}</p>`;
+      }
+      
+      return match;
+    });
+    
+    return optimizedContent;
   }
 
   /**
@@ -673,12 +1042,169 @@ Provide keywords that match actual search patterns for business buyers, sellers,
     // Fix internal links to use correct URLs
     cleanContent = cleanContent
       .replace(/href="\/marketplace"/g, 'href="/marketplace2"')
-      .replace(/href="www\.arzani\.co\.uk\/marketplace"/g, 'href="www.arzani.co.uk/marketplace2"');
+      .replace(/href="www\.arzani\.co\.uk\/marketplace"/g, 'href="www.arzani.co.uk/marketplace2"')
+      .replace(/href="https?:\/\/(?:www\.)?arzani\.com/g, 'href="https://www.arzani.co.uk')
+      .replace(/arzani\.com/g, 'arzani.co.uk');
 
     // Add proper CSS classes to existing links
     cleanContent = this.enhanceLinkStyling(cleanContent);
 
     return cleanContent;
+  }
+
+  /**
+   * Validate content quality against template requirements
+   */
+  validateContentQuality(content, template) {
+    const wordCount = content.split(/\s+/).length;
+    const externalLinks = this.countExternalLinks(content);
+    const fleschScore = this.estimateFleschScore(content);
+    
+    const validation = {
+      wordCountMet: wordCount >= template.minWords,
+      externalLinksMet: externalLinks >= template.minExternalLinks,
+      readabilityMet: fleschScore >= template.fleschScore,
+      hasFAQ: template.requiresFAQ ? content.includes('faq-section') : true,
+      hasFramework: template.requiresFramework ? this.hasNumberedFramework(content) : true,
+      hasTOC: content.includes('table-of-contents'),
+      score: 0
+    };
+    
+    // Calculate overall quality score
+    validation.score = [
+      validation.wordCountMet,
+      validation.externalLinksMet,
+      validation.readabilityMet,
+      validation.hasFAQ,
+      validation.hasFramework,
+      validation.hasTOC
+    ].filter(Boolean).length / 6 * 100;
+    
+    return validation;
+  }
+
+  /**
+   * Count external links in content
+   */
+  countExternalLinks(content) {
+    const externalLinkRegex = /<a[^>]+href=["']https?:\/\/(?!arzani\.co\.uk)[^"']+["'][^>]*>/gi;
+    const matches = content.match(externalLinkRegex);
+    return matches ? matches.length : 0;
+  }
+
+  /**
+   * Count internal links in content  
+   */
+  countInternalLinks(content) {
+    const internalLinkRegex = /<a[^>]+href=["'](?:\/|https?:\/\/arzani\.co\.uk)[^"']*["'][^>]*>/gi;
+    const matches = content.match(internalLinkRegex);
+    return matches ? matches.length : 0;
+  }
+
+  /**
+   * Check if content has numbered framework
+   */
+  hasNumberedFramework(content) {
+    const frameworkRegex = /\d+[-.]\s*(?:step|phase|stage|framework|process)/gi;
+    return frameworkRegex.test(content);
+  }
+
+  /**
+   * Estimate Flesch Reading Score (simplified calculation)
+   */
+  estimateFleschScore(content) {
+    // Remove HTML tags for analysis
+    const plainText = content.replace(/<[^>]+>/g, ' ');
+    const sentences = plainText.split(/[.!?]+/).filter(s => s.trim().length > 0);
+    const words = plainText.split(/\s+/).filter(w => w.length > 0);
+    const syllables = words.reduce((total, word) => {
+      return total + this.countSyllables(word);
+    }, 0);
+    
+    if (sentences.length === 0 || words.length === 0) return 0;
+    
+    const avgWordsPerSentence = words.length / sentences.length;
+    const avgSyllablesPerWord = syllables / words.length;
+    
+    // Flesch Reading Ease formula
+    const fleschScore = 206.835 - (1.015 * avgWordsPerSentence) - (84.6 * avgSyllablesPerWord);
+    
+    return Math.round(Math.max(0, Math.min(100, fleschScore)));
+  }
+
+  /**
+   * Count syllables in a word (simplified)
+   */
+  countSyllables(word) {
+    word = word.toLowerCase();
+    if (word.length <= 3) return 1;
+    word = word.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/, '');
+    word = word.replace(/^y/, '');
+    const matches = word.match(/[aeiouy]{1,2}/g);
+    return matches ? matches.length : 1;
+  }
+
+  /**
+   * Generate content improvement recommendations
+   */
+  generateContentRecommendations(validation, fleschScore) {
+    const recommendations = [];
+    
+    if (!validation.wordCountMet) {
+      recommendations.push({
+        priority: 'high',
+        type: 'word_count',
+        message: 'Content is too short. Add more detailed analysis, case studies, or examples.',
+        action: 'Expand content to meet minimum word count requirements'
+      });
+    }
+    
+    if (!validation.externalLinksMet) {
+      recommendations.push({
+        priority: 'medium',
+        type: 'external_links',
+        message: 'Add more external authoritative sources to improve E-E-A-T signals.',
+        action: 'Include links to gov.uk, ONS, Companies House, or industry reports'
+      });
+    }
+    
+    if (!validation.readabilityMet) {
+      recommendations.push({
+        priority: 'high',
+        type: 'readability',
+        message: `Flesch score (${fleschScore}) is below target. Simplify language and shorten sentences.`,
+        action: 'Break up long sentences and use simpler vocabulary'
+      });
+    }
+    
+    if (!validation.hasFAQ) {
+      recommendations.push({
+        priority: 'medium',
+        type: 'faq_section',
+        message: 'Add FAQ section to capture featured snippets and improve user experience.',
+        action: 'Include 5-7 relevant FAQs with detailed answers'
+      });
+    }
+    
+    if (!validation.hasFramework) {
+      recommendations.push({
+        priority: 'medium',
+        type: 'framework',
+        message: 'Add numbered framework or step-by-step guide for better structure.',
+        action: 'Include specific numbered process (e.g., "5-Step Framework")'
+      });
+    }
+    
+    if (!validation.hasTOC) {
+      recommendations.push({
+        priority: 'low',
+        type: 'table_of_contents',
+        message: 'Add table of contents for better navigation and user experience.',
+        action: 'Include clickable TOC with anchor links to sections'
+      });
+    }
+    
+    return recommendations;
   }
 
   /**
@@ -971,7 +1497,7 @@ Requirements:
   /**
    * Generate enhanced schema markup with E-E-A-T signals for structured content
    */
-  generateEnhancedSchemaMarkup(title, description, wordCount, keyStatistics = []) {
+  generateEnhancedSchemaMarkup(title, description, wordCount, keyStatistics = [], faqSchema = null) {
     const baseSchema = {
       "@context": "https://schema.org",
       "@type": "BlogPosting",
@@ -1027,6 +1553,11 @@ Requirements:
         "value": stat.statistic,
         "source": stat.source
       }));
+    }
+
+    // Create combined schema array if FAQ data exists
+    if (faqSchema) {
+      return JSON.stringify([baseSchema, faqSchema]);
     }
 
     return JSON.stringify(baseSchema);
@@ -1650,9 +2181,31 @@ Requirements:
       `;
       const weekResult = await client.query(weekQuery);
       const weeklyPosts = parseInt(weekResult.rows[0].weekly);
+
+      // Get quality metrics for recent posts
+      const qualityQuery = `
+        SELECT 
+          AVG(CASE WHEN word_count >= 2000 THEN 1 ELSE 0 END) * 100 as quality_score,
+          AVG(word_count) as avg_word_count,
+          COUNT(CASE WHEN content LIKE '%faq-section%' THEN 1 END) as posts_with_faq,
+          COUNT(CASE WHEN content LIKE '%table-of-contents%' THEN 1 END) as posts_with_toc,
+          COUNT(*) as total_analyzed
+        FROM blog_posts 
+        WHERE status = 'Published' 
+        AND created_at >= NOW() - INTERVAL '30 days'
+      `;
+      const qualityResult = await client.query(qualityQuery);
+      const qualityMetrics = qualityResult.rows[0];
       
       // Get uncompleted posts from checklist
       const nextPost = await this.parseChecklistForNextPost();
+
+      // Calculate content quality percentage
+      const contentQualityScore = Math.round(
+        ((qualityMetrics.posts_with_faq / qualityMetrics.total_analyzed) * 30) +
+        ((qualityMetrics.posts_with_toc / qualityMetrics.total_analyzed) * 30) +
+        (Math.min(qualityMetrics.avg_word_count / 2000, 1) * 40)
+      );
       
       return {
         totalPosts,
@@ -1660,7 +2213,27 @@ Requirements:
         isGenerating: this.isGenerating,
         nextPost: nextPost ? nextPost.title : 'All posts completed',
         systemStatus: 'Active',
-        lastGenerated: new Date().toISOString()
+        lastGenerated: new Date().toISOString(),
+        qualityMetrics: {
+          averageWordCount: Math.round(qualityMetrics.avg_word_count || 0),
+          postsWithFAQ: parseInt(qualityMetrics.posts_with_faq || 0),
+          postsWithTOC: parseInt(qualityMetrics.posts_with_toc || 0),
+          contentQualityScore: contentQualityScore,
+          totalAnalyzed: parseInt(qualityMetrics.total_analyzed || 0)
+        },
+        templates: {
+          pillar: `${this.seoTemplates.pillar.minWords}-${this.seoTemplates.pillar.maxWords} words`,
+          supporting: `${this.seoTemplates.supporting.minWords}-${this.seoTemplates.supporting.maxWords} words`, 
+          tactical: `${this.seoTemplates.tactical.minWords}-${this.seoTemplates.tactical.maxWords} words`
+        },
+        infographics: {
+          available: Object.keys(this.infographicTemplates).length,
+          types: Object.keys(this.infographicTemplates),
+          s3Bucket: 'arzani-images1',
+          s3Region: 'eu-west-2',
+          baseUrl: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/blogs/',
+          status: 'Active - S3 Hosted'
+        }
       };
       
     } catch (error) {
@@ -1671,7 +2244,14 @@ Requirements:
         isGenerating: false,
         nextPost: 'Error retrieving status',
         systemStatus: 'Error',
-        lastGenerated: null
+        lastGenerated: null,
+        qualityMetrics: {
+          averageWordCount: 0,
+          postsWithFAQ: 0,
+          postsWithTOC: 0,
+          contentQualityScore: 0,
+          totalAnalyzed: 0
+        }
       };
     } finally {
       client.release();
