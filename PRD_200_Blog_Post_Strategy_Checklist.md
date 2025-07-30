@@ -92,7 +92,7 @@ Based on the PRD_Programmatic_Blog_Strategy.md and successful deployment of our 
 - [x] **2.6** Business Sale Preparation Timeline
 - [x] **2.7** How to Value Your Business for Sale
 - [x] **2.8** Business Sale Documentation Requirements
-- [ ] **2.9** Finding the Right Business Buyer
+- [x] **2.9** Finding the Right Business Buyer
 - [ ] **2.10** Business Sale Negotiation Strategies
 - [ ] **2.11** Business Sale Tax Planning UK
 - [ ] **2.12** Employee Communication During Business Sale
