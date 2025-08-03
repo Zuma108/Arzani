@@ -181,7 +181,7 @@ jobs:
         # Use official Node.js runtime
         FROM node:20-alpine
         
-        # Install system dependencies for canvas and native modules
+        # Install system dependencies for canvas, native modules, and health checks
         RUN apk add --no-cache \
             cairo-dev \
             pango-dev \
@@ -191,12 +191,14 @@ jobs:
             build-base \
             python3 \
             make \
-            g++
+            g++ \
+            curl \
+            dumb-init
         
         # Create app directory
         WORKDIR /app
         
-        # Copy package files
+        # Copy package files first for better Docker layer caching
         COPY production/package*.json ./
         
         # Install app dependencies
@@ -206,19 +208,24 @@ jobs:
         COPY production/ .
         
         # Create non-root user
-        RUN addgroup -g 1001 -S nodejs
-        RUN adduser -S nodejs -u 1001
+        RUN addgroup -g 1001 -S nodejs && \
+            adduser -S nodejs -u 1001
         
         # Change ownership of the app directory
         RUN chown -R nodejs:nodejs /app
+        
+        # Switch to non-root user
         USER nodejs
         
         # Expose port
         EXPOSE 8080
         
-        # Health check
-        HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-          CMD curl -f http://localhost:8080/health || exit 1
+        # Add health check that doesn't rely on curl
+        HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+          CMD node -e "require('http').get('http://localhost:8080/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) }).on('error', () => process.exit(1))"
+        
+        # Use dumb-init to handle signals properly
+        ENTRYPOINT ["dumb-init", "--"]
         
         # Start the application
         CMD ["node", "server.js"]
@@ -227,31 +234,68 @@ jobs:
     # Build and push Docker image
     - name: Build and push Docker image
       run: |
+        # Validate required environment variables
+        if [ -z "${{ env.PROJECT_ID }}" ]; then
+          echo "❌ ERROR: PROJECT_ID is empty or not set"
+          echo "Please ensure GCP_PROJECT_ID secret is configured in GitHub repository settings"
+          exit 1
+        fi
+        
+        if [ -z "${{ env.REGISTRY }}" ]; then
+          echo "❌ ERROR: REGISTRY is empty or not set"
+          exit 1
+        fi
+        
+        if [ -z "${{ env.IMAGE_NAME }}" ]; then
+          echo "❌ ERROR: IMAGE_NAME is empty or not set"
+          exit 1
+        fi
+        
         # Debug environment variables
+        echo "🔍 Environment Variables Debug:"
         echo "PROJECT_ID: ${{ env.PROJECT_ID }}"
         echo "REGISTRY: ${{ env.REGISTRY }}"
         echo "IMAGE_NAME: ${{ env.IMAGE_NAME }}"
         echo "GITHUB_SHA: ${{ github.sha }}"
         
-        # Construct image URI
+        # Construct image URI with validation
         IMAGE_URI="${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+        LATEST_URI="${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}:latest"
+        
+        echo "🐳 Docker Image URIs:"
         echo "IMAGE_URI: $IMAGE_URI"
+        echo "LATEST_URI: $LATEST_URI"
         
         # Verify Docker authentication
+        echo "🔐 Configuring Docker authentication..."
         gcloud auth configure-docker ${{ env.REGISTRY }} --quiet
         
-        # Build image
-        echo "Building Docker image..."
-        docker build -t $IMAGE_URI .
+        # Verify production directory exists and has content
+        echo "📁 Verifying production directory..."
+        ls -la production/ | head -10
+        echo "📦 Production package.json main field:"
+        grep -A1 -B1 '"main"' production/package.json || echo "No main field found"
+        
+        # Build image with explicit platform for Cloud Run compatibility
+        echo "🏗️ Building Docker image for linux/amd64 platform..."
+        docker build --platform linux/amd64 -t $IMAGE_URI .
+        
+        # Verify the image was built successfully
+        echo "✅ Verifying Docker image was built..."
+        docker images | grep ${{ env.IMAGE_NAME }} || echo "⚠️ No images found with name pattern"
+        
+        # Test basic container functionality
+        echo "🧪 Testing Docker image..."
+        docker run --rm $IMAGE_URI node --version
         
         # Push image
-        echo "Pushing Docker image..."
+        echo "📤 Pushing Docker image..."
         docker push $IMAGE_URI
         
         # Also tag as latest
-        echo "Tagging and pushing as latest..."
-        docker tag $IMAGE_URI ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}:latest
-        docker push ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}:latest
+        echo "🏷️ Tagging and pushing as latest..."
+        docker tag $IMAGE_URI $LATEST_URI
+        docker push $LATEST_URI
         
         # Export for later steps
         echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV
