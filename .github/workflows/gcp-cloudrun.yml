@@ -6,21 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  PROJECT_ID: ${{ secrets.        cat > Dockerfile << 'EOF'
-        # Use official Node.js runtime
-        FROM node:20-alpine
-        
-        # Install system dependencies for canvas
-        RUN apk add --no-cache \
-            cairo-dev \
-            pango-dev \
-            jpeg-dev \
-            giflib-dev \
-            librsvg-dev \
-            build-base \
-            python3 \
-            make \
-            g++}}
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   REGION: europe-west2                      # London region equivalent
   SERVICE_NAME: arzani-marketplace
   NODE_VERSION: '20.x'                      # Updated to latest LTS
