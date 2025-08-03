@@ -90,9 +90,13 @@ jobs:
 
     # Create optimized production build
     - name: Prepare production files
+      shell: bash
       run: |
         # Create production directory
         mkdir -p production
+        
+        # Enable extended globbing for bash
+        shopt -s extglob
         
         # Copy application files (exclude dev dependencies and unnecessary files)
         cp -r !(node_modules|tests|.git|.github|*.md|*.log|production) production/ 2>/dev/null || true
