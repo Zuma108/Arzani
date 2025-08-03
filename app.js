@@ -4,7 +4,7 @@ import voiceRoutes from './routes/voiceRoutes.js';
 import chatRoutes from './routes/chatRoutes.js';
 import authRoutes from './routes/auth.js';
 import path from 'path';
-import { setupWebSocketServer } from './websocket-server.js';
+// import { setupWebSocketServer } from './websocket-server.js'; // COMMENTED OUT - file doesn't exist
 import http from 'http';
 // REMOVED: import { authMiddleware } from './utils/auth-unified.js'; - deleted file
 import authDebug from './middleware/authDebug.js';
@@ -291,7 +291,7 @@ app.use((err, req, res, next) => {
 const server = http.createServer(app);
 
 // Set up WebSocket server
-setupWebSocketServer(app, server);
+// setupWebSocketServer(app, server); // COMMENTED OUT - websocket-server.js doesn't exist
 
 // Set up scheduled tasks (e.g., analytics reports)
 setupScheduledTasks();

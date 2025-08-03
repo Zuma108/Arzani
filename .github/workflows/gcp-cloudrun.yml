@@ -152,22 +152,8 @@ jobs:
           CMD curl -f http://localhost:8080/health || exit 1
         
         # Start the application
-        CMD ["npm", "start"]
+        CMD ["node", "server.js"]
         EOF
-
-    # Add health check endpoint
-    - name: Add health check endpoint
-      run: |
-        # Check if health endpoint exists, if not add it
-        if ! grep -q "/health" production/server.js; then
-          # Add health check before the catch-all route
-          sed -i '/app.get.*\*.*function/i \
-        // Health check endpoint for Cloud Run\
-        app.get("/health", (req, res) => {\
-          res.status(200).json({ status: "healthy", timestamp: new Date().toISOString() });\
-        });\
-        ' production/server.js
-        fi
 
     # Build and push Docker image
     - name: Build and push Docker image

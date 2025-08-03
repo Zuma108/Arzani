@@ -2641,6 +2641,15 @@ app.get('/market-trends', authenticateToken, async (req, res) => {
 // Move the market trends API route here
 app.use('/api/market', authenticateToken, marketTrendsRoutes);
 
+// Health check endpoint for Cloud Run
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'healthy', 
+    timestamp: new Date().toISOString(),
+    service: 'arzani-marketplace',
+    version: '1.0.0'
+  });
+});
 
 // Modify the catch-all route to exclude /chat AND /professional-verification
 app.get('*', (req, res, next) => {  // Don't redirect specific server-rendered pages or API calls to index.html
