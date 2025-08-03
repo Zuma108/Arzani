@@ -67,6 +67,11 @@ jobs:
       run: |
         npm install --no-bin-links --production=false
         
+    # Fix TailwindCSS CLI permissions
+    - name: Make Tailwind CLI executable
+      run: |
+        chmod +x ./node_modules/.bin/tailwindcss || echo "TailwindCSS binary not found, skipping chmod"
+        
     # Run tests
     - name: Run tests
       run: |
