@@ -9,7 +9,7 @@ env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   REGION: europe-west2                      # London region equivalent
   SERVICE_NAME: arzani-marketplace
-  NODE_VERSION: '18.x'
+  NODE_VERSION: '20.x'                      # Updated to latest LTS
   
   # Database configuration for Google Cloud SQL
   DB_INSTANCE: arzani-marketplace-db-v17
@@ -38,11 +38,12 @@ jobs:
         node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
 
-    # Install system dependencies for canvas
+    # Install system dependencies for canvas and native modules
     - name: Install system dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev
+        sudo apt-get install -y python3 make g++ node-gyp
 
     # Authenticate to Google Cloud
     - name: Authenticate to Google Cloud
@@ -66,6 +67,14 @@ jobs:
     - name: Install dependencies
       run: |
         npm install --no-bin-links --production=false
+        
+    # Fix permissions for native modules
+    - name: Fix native module permissions
+      run: |
+        # Set proper permissions for bcrypt and other native modules
+        chmod -R 755 node_modules/ || echo "No node_modules to fix permissions"
+        # Ensure all binaries are executable
+        find node_modules/.bin -type f -exec chmod +x {} \; || echo "No .bin directory found"
         
     # Fix TailwindCSS CLI permissions
     - name: Make Tailwind CLI executable
@@ -108,6 +117,10 @@ jobs:
         # Install only production dependencies
         cd production && npm ci --only=production --no-bin-links
         
+        # Fix permissions for production node_modules
+        chmod -R 755 node_modules/ || echo "No node_modules to fix permissions"
+        find node_modules/.bin -type f -exec chmod +x {} \; || echo "No .bin directory found"
+        
         # Remove unnecessary files to reduce image size
         rm -rf production/node_modules/.cache
         rm -rf production/tests
@@ -119,9 +132,9 @@ jobs:
       run: |
         cat > Dockerfile << 'EOF'
         # Use official Node.js runtime
-        FROM node:18-alpine
+        FROM node:20-alpine
         
-        # Install system dependencies for canvas
+        # Install system dependencies for canvas and native modules
         RUN apk add --no-cache \
             cairo-dev \
             pango-dev \
