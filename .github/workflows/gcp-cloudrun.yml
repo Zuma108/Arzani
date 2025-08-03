@@ -131,6 +131,29 @@ jobs:
       env:
         NODE_ENV: production
 
+    # Debug: Check workspace contents before production build
+    - name: Debug workspace contents
+      run: |
+        echo "🔍 Debugging workspace contents before production build..."
+        echo "📂 Current directory: $(pwd)"
+        echo "📋 Root directory contents:"
+        ls -la | head -20
+        echo ""
+        echo "📄 Looking for critical files:"
+        [ -f "package.json" ] && echo "✅ package.json found" || echo "❌ package.json NOT found"
+        [ -f "server.js" ] && echo "✅ server.js found" || echo "❌ server.js NOT found"
+        [ -f "app.js" ] && echo "✅ app.js found" || echo "⚠️ app.js not found (optional)"
+        [ -f "db.js" ] && echo "✅ db.js found" || echo "⚠️ db.js not found (optional)"
+        echo ""
+        echo "📁 Checking for directories:"
+        for dir in public views routes middleware libs services scripts migrations utils socket; do
+          if [ -d "$dir" ]; then
+            echo "✅ $dir directory found"
+          else
+            echo "⚠️ $dir directory not found"
+          fi
+        done
+
     # Create optimized production build
     - name: Prepare production files
       shell: bash
@@ -139,18 +162,57 @@ jobs:
         
         echo "🔨 Starting production build preparation..."
         
+        # Show current directory and contents for debugging
+        echo "📂 Current working directory: $(pwd)"
+        echo "📋 Files in root directory:"
+        ls -la | head -20
+        
         # Create production directory
         mkdir -p production
         echo "✅ Created production directory"
         
-        # First, copy all files and directories except exclusions
-        echo "📁 Copying application files..."
+        # Verify essential files exist before copying
+        echo "🔍 Checking for essential files..."
         
-        # Copy package files first
+        if [ ! -f "package.json" ]; then
+          echo "❌ ERROR: package.json not found in root directory"
+          echo "📋 Available files:"
+          ls -la *.json 2>/dev/null || echo "No JSON files found"
+          exit 1
+        fi
+        
+        if [ ! -f "server.js" ]; then
+          echo "❌ ERROR: server.js not found in root directory"
+          echo "📋 Available JS files:"
+          ls -la *.js 2>/dev/null || echo "No JS files found"
+          exit 1
+        fi
+        
+        echo "✅ Essential files verified"
+        
+        # Copy package files first (critical files)
+        echo "📦 Copying package files..."
         cp package*.json production/
-        echo "✅ Copied package files"
+        echo "✅ Copied package*.json files"
+        
+        # Copy server.js (main application file)
+        echo "🖥️ Copying server.js..."
+        cp server.js production/
+        echo "✅ Copied server.js"
+        
+        # Copy other essential root files
+        echo "📄 Copying other essential files..."
+        for file in app.js db.js config.js; do
+          if [ -f "$file" ]; then
+            cp "$file" production/
+            echo "✅ Copied $file"
+          else
+            echo "⚠️ Optional file $file not found, skipping"
+          fi
+        done
         
         # Copy application directories
+        echo "📁 Copying application directories..."
         for dir in public views routes middleware libs services scripts migrations utils socket; do
           if [ -d "$dir" ]; then
             cp -r "$dir" production/
@@ -160,57 +222,64 @@ jobs:
           fi
         done
         
-        # Copy essential files
-        for file in server.js app.js db.js config.js PRD_200_Blog_Post_Strategy_Checklist.md; do
-          if [ -f "$file" ]; then
-            cp "$file" production/
-            echo "✅ Copied $file"
-          else
-            echo "⚠️ File $file not found, skipping"
-          fi
-        done
+        # Copy any additional JavaScript files in root
+        echo "📜 Copying additional JavaScript files..."
+        find . -maxdepth 1 -name "*.js" -not -name "server.js" -not -path "./node_modules/*" -not -path "./.git/*" -not -path "./production/*" -exec cp {} production/ \; 2>/dev/null || true
+        echo "✅ Copied additional JavaScript files"
         
-        # Copy any JavaScript files in root (but not node_modules or .git)
-        find . -maxdepth 1 -name "*.js" -not -path "./node_modules/*" -not -path "./.git/*" -exec cp {} production/ \;
-        echo "✅ Copied root JavaScript files"
+        # CRITICAL: Verify production directory has required files
+        echo "🔍 Verifying production build..."
         
-        # Verify production directory was created and has content
         if [ ! -d "production" ]; then
-          echo "❌ Production directory creation failed"
+          echo "❌ CRITICAL ERROR: Production directory was not created"
           exit 1
         fi
         
         if [ ! -f "production/package.json" ]; then
-          echo "❌ package.json not found in production directory"
+          echo "❌ CRITICAL ERROR: package.json not found in production directory"
+          echo "📋 Production directory contents:"
+          ls -la production/
           exit 1
         fi
         
         if [ ! -f "production/server.js" ]; then
-          echo "❌ server.js not found in production directory"
+          echo "❌ CRITICAL ERROR: server.js not found in production directory"
+          echo "📋 Production directory contents:"
+          ls -la production/
           exit 1
         fi
         
+        echo "✅ Production build verification successful"
         echo "📊 Production directory contents:"
         ls -la production/ | head -20
         
         # Move to production directory for dependency installation
         cd production
         
-        # Remove postinstall script to prevent build issues in production
+        # Backup and modify package.json to remove postinstall script
         if [ -f "package.json" ]; then
-          # Create a backup and remove postinstall
           cp package.json package.json.backup
+          echo "📋 Removing postinstall script from package.json..."
           node -e "
-            const pkg = JSON.parse(require('fs').readFileSync('package.json', 'utf8'));
-            delete pkg.scripts.postinstall;
-            require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2));
+            try {
+              const pkg = JSON.parse(require('fs').readFileSync('package.json', 'utf8'));
+              if (pkg.scripts && pkg.scripts.postinstall) {
+                delete pkg.scripts.postinstall;
+                require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2));
+                console.log('✅ Removed postinstall script');
+              } else {
+                console.log('⚠️ No postinstall script found');
+              }
+            } catch (e) {
+              console.log('⚠️ Could not modify package.json:', e.message);
+            }
           "
-          echo "✅ Removed postinstall script from production package.json"
         fi
         
         # Install only production dependencies
         echo "📦 Installing production dependencies..."
         npm ci --only=production --silent
+        echo "✅ Installed production dependencies"
         
         # Fix permissions for production node_modules
         if [ -d "node_modules" ]; then
@@ -235,7 +304,11 @@ jobs:
         
         echo "✅ Production build preparation completed successfully"
         echo "📊 Final production directory size:"
-        du -sh production/
+        du -sh production/ 2>/dev/null || echo "Could not calculate size"
+        
+        echo "🎯 Final verification - critical files present:"
+        [ -f "production/package.json" ] && echo "✅ production/package.json" || echo "❌ production/package.json MISSING"
+        [ -f "production/server.js" ] && echo "✅ production/server.js" || echo "❌ production/server.js MISSING"
 
     # Create Dockerfile for Cloud Run
     - name: Create Dockerfile
