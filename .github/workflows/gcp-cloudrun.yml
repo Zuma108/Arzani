@@ -113,32 +113,40 @@ jobs:
     - name: Prepare production files
       shell: bash
       run: |
+        set -e  # Exit on any error
+        
         # Create production directory
         mkdir -p production
+        echo "✅ Created production directory"
         
         # Enable extended globbing for bash
         shopt -s extglob
         
         # Copy application files (exclude dev dependencies and unnecessary files)
         cp -r !(node_modules|tests|.git|.github|*.md|*.log|production) production/ 2>/dev/null || true
+        echo "✅ Copied application files"
         
         # Copy essential files that were excluded by pattern
         cp package*.json production/
         cp PRD_200_Blog_Post_Strategy_Checklist.md production/ 2>/dev/null || echo "PRD file not found"
+        echo "✅ Copied essential files"
+        
+        # Move to production directory and install dependencies
+        cd production
         
         # Install only production dependencies
-        cd production && npm ci --only=production
+        npm ci --only=production
+        echo "✅ Installed production dependencies"
         
-        # Fix permissions for production node_modules (run from inside production directory)
-        cd production
+        # Fix permissions for production node_modules
         if [ -d "node_modules" ]; then
           chmod -R 755 node_modules/
-          echo "Fixed production node_modules permissions"
+          echo "✅ Fixed production node_modules permissions"
         fi
         
         if [ -d "node_modules/.bin" ]; then
           find node_modules/.bin -type f -exec chmod +x {} \;
-          echo "Fixed production binary permissions"
+          echo "✅ Fixed production binary permissions"
         fi
         
         # Return to root directory for cleanup
@@ -149,6 +157,7 @@ jobs:
         rm -rf production/tests
         find production -name "*.test.js" -delete
         find production -name "*.spec.js" -delete
+        echo "✅ Cleaned up production build"
 
     # Create Dockerfile for Cloud Run
     - name: Create Dockerfile

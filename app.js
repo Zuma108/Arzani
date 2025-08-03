@@ -252,8 +252,8 @@ app.use((req, res, next) => {
     return next();
   }
   
-  // Use our standardized auth middleware with appropriate options
-  return authMiddleware({ required: true })(req, res, next);
+  // Use requireAuth middleware instead of authMiddleware
+  return requireAuth(req, res, next);
 });
 
 // Mount routes
@@ -262,8 +262,11 @@ app.use('/users', userRoutes);
 app.use('/', contactRoutes);
 
 // Add admin routes with admin-specific middleware
-app.use('/admin', authMiddleware({ required: true, adminRequired: true }), (req, res, next) => {
-  // This middleware will only be reached if the user is authenticated as an admin
+app.use('/admin', requireAuth, (req, res, next) => {
+  // Check if user is admin
+  if (!req.user || !req.user.isAdmin) {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
   next();
 });
 
