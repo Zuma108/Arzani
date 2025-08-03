@@ -10,6 +10,7 @@ import http from 'http';
 import authDebug from './middleware/authDebug.js';
 import bodyParser from 'body-parser';
 import { setupScheduledTasks } from './scheduled-tasks.js';
+import { authenticateToken, requireAuth } from './middleware/auth.js';
 dotenv.config();
 
 const app = express();
@@ -37,7 +38,7 @@ app.use(bodyParser.json({ limit: '15mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '15mb' }));
 
 // For multer, if you're using it for file uploads
-const multer = require('multer');
+import multer from 'multer';
 const upload = multer({
   limits: {
     fileSize: 15 * 1024 * 1024, // 15 MB in bytes
@@ -58,8 +59,8 @@ app.use((req, res, next) => {
     next();
 });
 
-const checkoutRouter = require('./routes/checkout');
-const stripeRoutes = require('./routes/stripe-routes');
+import checkoutRouter from './routes/checkout.js';
+import stripeRoutes from './routes/stripe-routes.js';
 import stripeImportedRoutes from './routes/stripe.js';
 import submitBusinessRoutes from './routes/api/submit-business.js';
 import sitemapRoutes from './routes/sitemap.js';
@@ -71,7 +72,7 @@ import aiApiRoutes from './routes/api/ai.js';
 import analyticsApiRoutes from './routes/api/analytics.js';
 
 // Import the verification routes
-const verificationRoutes = require('./routes/verificationRoutes');
+import verificationRoutes from './routes/verificationRoutes.js';
 
 // Import routes
 import businessRoutes from './routes/businessRoutes.js';
@@ -87,7 +88,7 @@ import imageRoutes from './routes/imageRoutes.js';
 import businessListingsRoutes from './routes/api/businessListings.js';
 
 // Import contact routes
-const contactRoutes = require('./routes/contact');
+import contactRoutes from './routes/contact.js';
 
 // Debug middleware for all requests - helps trace authentication issues
 app.use((req, res, next) => {
