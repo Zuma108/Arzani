@@ -246,7 +246,7 @@ const businessAuth = async (req, res, next) => {
 // 2. Configuration
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const PORT = process.env.PORT || 5000; // Update default port to 8080 for Azure
+const PORT = process.env.PORT || 8080; // Updated for Google Cloud Run compatibility
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;
@@ -2642,13 +2642,39 @@ app.get('/market-trends', authenticateToken, async (req, res) => {
 app.use('/api/market', authenticateToken, marketTrendsRoutes);
 
 // Health check endpoint for Cloud Run
-app.get('/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'healthy', 
-    timestamp: new Date().toISOString(),
-    service: 'arzani-marketplace',
-    version: '1.0.0'
-  });
+app.get('/health', async (req, res) => {
+  try {
+    // Basic health check
+    const healthData = {
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      service: 'arzani-marketplace',
+      version: '1.0.0',
+      port: PORT,
+      environment: process.env.NODE_ENV || 'development',
+      uptime: process.uptime()
+    };
+    
+    // Optional: Check database connectivity (don't let it fail the health check)
+    try {
+      await pool.query('SELECT 1');
+      healthData.database = 'connected';
+    } catch (dbError) {
+      console.warn('Database health check warning:', dbError.message);
+      healthData.database = 'warning';
+      healthData.database_error = dbError.message;
+    }
+    
+    res.status(200).json(healthData);
+  } catch (error) {
+    console.error('Health check error:', error);
+    res.status(503).json({
+      status: 'unhealthy',
+      timestamp: new Date().toISOString(),
+      service: 'arzani-marketplace',
+      error: error.message
+    });
+  }
 });
 
 // Modify the catch-all route to exclude /chat AND /professional-verification
@@ -3590,20 +3616,28 @@ app.use(async (req, res, next) => {
     console.log('Checking blog database tables...');
     await setupBlogDatabase();
 
-    // Start server with updated port handling
-    server.listen(PORT, '0.0.0.0', () => { // Add host binding for Azure
-      console.log(`Server is running on port ${PORT}`);
-      console.log(`Application URL: http://0.0.0.0:${PORT}`);
-      console.log('=== INSTALLATION AND STARTUP COMPLETE ==='); // Add this clear success message
+    // Start server with updated port handling for Google Cloud Run
+    server.listen(PORT, '0.0.0.0', () => {
+      console.log('=== ARZANI MARKETPLACE SERVER STARTED ===');
+      console.log(`✅ Server is running on port ${PORT}`);
+      console.log(`🌐 Application URL: http://0.0.0.0:${PORT}`);
+      console.log(`🏥 Health check: http://0.0.0.0:${PORT}/health`);
+      console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log('=== SERVER STARTUP COMPLETE ===');
       
       // Log startup information
       const now = new Date();
-      console.log(`Server started at: ${now.toISOString()}`);
-      console.log(`Local time: ${now.toLocaleString()}`);
+      console.log(`🕐 Server started at: ${now.toISOString()}`);
+      console.log(`📍 Local time: ${now.toLocaleString()}`);
+      
+      // Signal to Cloud Run that the container is ready
+      console.log('🚀 Container ready to receive traffic');
     });
   } catch (error) {
-    console.error('Server startup error:', error);
-    console.error('Failed to start server:', error.message);
+    console.error('💥 SERVER STARTUP ERROR:', error);
+    console.error('📋 Error details:', error.message);
+    console.error('📊 Stack trace:', error.stack);
+    console.error('🔧 Failed to start server - exiting process');
     process.exit(1);
   }
 })();

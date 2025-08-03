@@ -137,43 +137,80 @@ jobs:
       run: |
         set -e  # Exit on any error
         
+        echo "🔨 Starting production build preparation..."
+        
         # Create production directory
         mkdir -p production
         echo "✅ Created production directory"
         
-        # Enable extended globbing for bash
-        shopt -s extglob
+        # First, copy all files and directories except exclusions
+        echo "📁 Copying application files..."
         
-        # Copy application files (exclude dev dependencies and unnecessary files)
-        cp -r !(node_modules|tests|.git|.github|*.md|*.log|production) production/ 2>/dev/null || true
-        echo "✅ Copied application files"
-        
-        # Ensure critical directories are copied (in case glob pattern missed them)
-        cp -r scripts production/ 2>/dev/null || echo "⚠️ Scripts directory not found"
-        cp -r migrations production/ 2>/dev/null || echo "⚠️ Migrations directory not found"
-        echo "✅ Copied critical directories"
-        
-        # Copy essential files that were excluded by pattern
+        # Copy package files first
         cp package*.json production/
-        cp PRD_200_Blog_Post_Strategy_Checklist.md production/ 2>/dev/null || echo "PRD file not found"
-        echo "✅ Copied essential files"
+        echo "✅ Copied package files"
         
-        # Verify production directory exists before proceeding
+        # Copy application directories
+        for dir in public views routes middleware libs services scripts migrations utils socket; do
+          if [ -d "$dir" ]; then
+            cp -r "$dir" production/
+            echo "✅ Copied $dir directory"
+          else
+            echo "⚠️ Directory $dir not found, skipping"
+          fi
+        done
+        
+        # Copy essential files
+        for file in server.js app.js db.js config.js PRD_200_Blog_Post_Strategy_Checklist.md; do
+          if [ -f "$file" ]; then
+            cp "$file" production/
+            echo "✅ Copied $file"
+          else
+            echo "⚠️ File $file not found, skipping"
+          fi
+        done
+        
+        # Copy any JavaScript files in root (but not node_modules or .git)
+        find . -maxdepth 1 -name "*.js" -not -path "./node_modules/*" -not -path "./.git/*" -exec cp {} production/ \;
+        echo "✅ Copied root JavaScript files"
+        
+        # Verify production directory was created and has content
         if [ ! -d "production" ]; then
-          echo "❌ Production directory was not created successfully"
+          echo "❌ Production directory creation failed"
           exit 1
         fi
         
-        # Move to production directory and install dependencies
+        if [ ! -f "production/package.json" ]; then
+          echo "❌ package.json not found in production directory"
+          exit 1
+        fi
+        
+        if [ ! -f "production/server.js" ]; then
+          echo "❌ server.js not found in production directory"
+          exit 1
+        fi
+        
+        echo "📊 Production directory contents:"
+        ls -la production/ | head -20
+        
+        # Move to production directory for dependency installation
         cd production
         
-        # Remove postinstall script to prevent it from running in production
-        sed -i '/"postinstall":/d' package.json
-        echo "✅ Removed postinstall script from production package.json"
+        # Remove postinstall script to prevent build issues in production
+        if [ -f "package.json" ]; then
+          # Create a backup and remove postinstall
+          cp package.json package.json.backup
+          node -e "
+            const pkg = JSON.parse(require('fs').readFileSync('package.json', 'utf8'));
+            delete pkg.scripts.postinstall;
+            require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2));
+          "
+          echo "✅ Removed postinstall script from production package.json"
+        fi
         
         # Install only production dependencies
-        npm ci --only=production
-        echo "✅ Installed production dependencies"
+        echo "📦 Installing production dependencies..."
+        npm ci --only=production --silent
         
         # Fix permissions for production node_modules
         if [ -d "node_modules" ]; then
@@ -186,21 +223,25 @@ jobs:
           echo "✅ Fixed production binary permissions"
         fi
         
-        # Return to root directory for cleanup
+        # Return to root directory
         cd ..
         
-        # Remove unnecessary files to reduce image size
-        rm -rf production/node_modules/.cache
-        rm -rf production/tests
-        find production -name "*.test.js" -delete
-        find production -name "*.spec.js" -delete
-        echo "✅ Cleaned up production build"
+        # Clean up unnecessary files to reduce image size
+        echo "🧹 Cleaning up production build..."
+        rm -rf production/node_modules/.cache 2>/dev/null || true
+        find production -name "*.test.js" -delete 2>/dev/null || true
+        find production -name "*.spec.js" -delete 2>/dev/null || true
+        find production -name "test" -type d -exec rm -rf {} + 2>/dev/null || true
+        
+        echo "✅ Production build preparation completed successfully"
+        echo "📊 Final production directory size:"
+        du -sh production/
 
     # Create Dockerfile for Cloud Run
     - name: Create Dockerfile
       run: |
         cat > Dockerfile << 'EOF'
-        # Use official Node.js runtime
+        # Use official Node.js runtime with long-term support
         FROM node:20-alpine
         
         # Install system dependencies for canvas, native modules, and health checks
@@ -217,41 +258,48 @@ jobs:
             curl \
             dumb-init
         
-        # Create app directory
+        # Set the working directory
         WORKDIR /app
         
         # Copy package files first for better Docker layer caching
         COPY production/package*.json ./
         
         # Install app dependencies
-        RUN npm ci --only=production && npm cache clean --force
+        RUN npm ci --only=production --silent && npm cache clean --force
         
-        # Copy app source
+        # Copy app source code
         COPY production/ .
         
-        # Create non-root user
+        # Create non-root user for security
         RUN addgroup -g 1001 -S nodejs && \
             adduser -S nodejs -u 1001
         
-        # Change ownership of the app directory
+        # Change ownership of the app directory to nodejs user
         RUN chown -R nodejs:nodejs /app
         
         # Switch to non-root user
         USER nodejs
         
-        # Expose port
+        # Expose the port that Cloud Run expects
         EXPOSE 8080
         
-        # Add health check that doesn't rely on curl
-        HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-          CMD node -e "require('http').get('http://localhost:8080/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) }).on('error', () => process.exit(1))"
+        # Add health check
+        HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+          CMD curl -f http://localhost:8080/health || exit 1
         
-        # Use dumb-init to handle signals properly
+        # Set environment variable for Cloud Run
+        ENV NODE_ENV=production
+        ENV PORT=8080
+        
+        # Use dumb-init to handle signals properly in containers
         ENTRYPOINT ["dumb-init", "--"]
         
         # Start the application
         CMD ["node", "server.js"]
         EOF
+        
+        echo "✅ Dockerfile created successfully"
+        cat Dockerfile
 
     # Build and push Docker image
     - name: Build and push Docker image
@@ -353,36 +401,59 @@ jobs:
       run: |
         echo "🔍 Verifying all required environment variables are available..."
         
-        # Check required secrets
+        # Track missing variables
         missing_vars=""
+        required_vars="DB_PASSWORD JWT_SECRET STRIPE_SECRET_KEY OPENAI_API_KEY"
         
-        if [ -z "${{ secrets.DB_PASSWORD }}" ]; then
-          missing_vars="$missing_vars DB_PASSWORD"
-        fi
+        # Check each required secret (using indirect variable access for security)
+        for var in $required_vars; do
+          case $var in
+            "DB_PASSWORD")
+              if [ -z "${{ secrets.DB_PASSWORD }}" ]; then
+                missing_vars="$missing_vars $var"
+              fi
+              ;;
+            "JWT_SECRET")
+              if [ -z "${{ secrets.JWT_SECRET }}" ]; then
+                missing_vars="$missing_vars $var"
+              fi
+              ;;
+            "STRIPE_SECRET_KEY")
+              if [ -z "${{ secrets.STRIPE_SECRET_KEY }}" ]; then
+                missing_vars="$missing_vars $var"
+              fi
+              ;;
+            "OPENAI_API_KEY")
+              if [ -z "${{ secrets.OPENAI_API_KEY }}" ]; then
+                missing_vars="$missing_vars $var"
+              fi
+              ;;
+          esac
+        done
         
-        if [ -z "${{ secrets.JWT_SECRET }}" ]; then
-          missing_vars="$missing_vars JWT_SECRET"
-        fi
-        
-        if [ -z "${{ secrets.STRIPE_SECRET_KEY }}" ]; then
-          missing_vars="$missing_vars STRIPE_SECRET_KEY"
-        fi
-        
-        if [ -z "${{ secrets.OPENAI_API_KEY }}" ]; then
-          missing_vars="$missing_vars OPENAI_API_KEY"
-        fi
-        
+        # Report results
         if [ -n "$missing_vars" ]; then
-          echo "❌ Missing required environment variables: $missing_vars"
-          echo "Please set these in GitHub repository secrets:"
+          echo "❌ Missing required environment variables:$missing_vars"
+          echo ""
+          echo "🔧 To fix this issue:"
+          echo "1. Go to your GitHub repository"
+          echo "2. Click on 'Settings' tab"
+          echo "3. Click on 'Secrets and variables' → 'Actions'"
+          echo "4. Add the following repository secrets:"
           for var in $missing_vars; do
-            echo "  • $var"
+            echo "   • $var"
           done
+          echo ""
+          echo "💡 Required values:"
+          echo "   • DB_PASSWORD: Password for your PostgreSQL database"
+          echo "   • JWT_SECRET: Secret key for JWT token signing (generate a strong random string)"
+          echo "   • STRIPE_SECRET_KEY: Your Stripe secret key from Stripe dashboard"
+          echo "   • OPENAI_API_KEY: Your OpenAI API key from OpenAI platform"
           exit 1
         fi
         
         echo "✅ All required environment variables are available"
-        echo "🔒 Using GitHub Secrets instead of .env.production file (secure!)"
+        echo "🔒 Using GitHub Secrets for secure environment variable management"
 
     # Deploy to Cloud Run
     - name: Deploy to Cloud Run
