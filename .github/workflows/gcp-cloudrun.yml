@@ -256,42 +256,27 @@ jobs:
     # Build and push Docker image
     - name: Build and push Docker image
       run: |
-        # Re-check environment variables after potential correction
-        echo "🔍 Final Environment Variables Check:"
+        # Hardcoded image configuration (no environment variables needed)
+        PROJECT_ID="cool-mile-437217-s2"
+        REGISTRY="europe-west2-docker.pkg.dev"
+        IMAGE_NAME="arzani-marketplace"
+        GITHUB_SHA="${{ github.sha }}"
+        
+        # Construct image URIs manually
+        IMAGE_URI="${REGISTRY}/${PROJECT_ID}/${IMAGE_NAME}:${GITHUB_SHA}"
+        LATEST_URI="${REGISTRY}/${PROJECT_ID}/${IMAGE_NAME}:latest"
+        
+        echo "🐳 Docker Image Configuration (Hardcoded):"
         echo "PROJECT_ID: $PROJECT_ID"
-        echo "REGISTRY: ${{ env.REGISTRY }}"
-        echo "IMAGE_NAME: ${{ env.IMAGE_NAME }}"
-        echo "GITHUB_SHA: ${{ github.sha }}"
-        
-        # Validate required environment variables
-        if [ -z "$PROJECT_ID" ]; then
-          echo "❌ ERROR: PROJECT_ID is still empty after all attempts"
-          echo "Manual fallback: Using known project ID"
-          export PROJECT_ID="cool-mile-437217-s2"
-          echo "PROJECT_ID=$PROJECT_ID" >> $GITHUB_ENV
-        fi
-        
-        if [ -z "${{ env.REGISTRY }}" ]; then
-          echo "❌ ERROR: REGISTRY is empty or not set"
-          exit 1
-        fi
-        
-        if [ -z "${{ env.IMAGE_NAME }}" ]; then
-          echo "❌ ERROR: IMAGE_NAME is empty or not set"
-          exit 1
-        fi
-        
-        # Construct image URI with validation
-        IMAGE_URI="${{ env.REGISTRY }}/$PROJECT_ID/${{ env.IMAGE_NAME }}:${{ github.sha }}"
-        LATEST_URI="${{ env.REGISTRY }}/$PROJECT_ID/${{ env.IMAGE_NAME }}:latest"
-        
-        echo "🐳 Docker Image URIs:"
+        echo "REGISTRY: $REGISTRY"
+        echo "IMAGE_NAME: $IMAGE_NAME"
+        echo "GITHUB_SHA: $GITHUB_SHA"
         echo "IMAGE_URI: $IMAGE_URI"
         echo "LATEST_URI: $LATEST_URI"
         
         # Verify Docker authentication
         echo "🔐 Configuring Docker authentication..."
-        gcloud auth configure-docker ${{ env.REGISTRY }} --quiet
+        gcloud auth configure-docker ${REGISTRY} --quiet
         
         # Verify production directory exists and has content
         echo "📁 Verifying production directory..."
@@ -301,27 +286,27 @@ jobs:
         
         # Build image with explicit platform for Cloud Run compatibility
         echo "🏗️ Building Docker image for linux/amd64 platform..."
-        docker build --platform linux/amd64 -t $IMAGE_URI .
+        docker build --platform linux/amd64 -t ${IMAGE_URI} .
         
         # Verify the image was built successfully
         echo "✅ Verifying Docker image was built..."
-        docker images | grep ${{ env.IMAGE_NAME }} || echo "⚠️ No images found with name pattern"
+        docker images | grep ${IMAGE_NAME} || echo "⚠️ No images found with name pattern"
         
         # Test basic container functionality
         echo "🧪 Testing Docker image..."
-        docker run --rm $IMAGE_URI node --version
+        docker run --rm ${IMAGE_URI} node --version
         
         # Push image
         echo "📤 Pushing Docker image..."
-        docker push $IMAGE_URI
+        docker push ${IMAGE_URI}
         
         # Also tag as latest
         echo "🏷️ Tagging and pushing as latest..."
-        docker tag $IMAGE_URI $LATEST_URI
-        docker push $LATEST_URI
+        docker tag ${IMAGE_URI} ${LATEST_URI}
+        docker push ${LATEST_URI}
         
-        # Export for later steps
-        echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV
+        # Export for later steps (use hardcoded values)
+        echo "IMAGE_URI=${IMAGE_URI}" >> $GITHUB_ENV
         echo "✅ Docker build and push completed successfully"
 
     # Check/Create Cloud SQL instance
