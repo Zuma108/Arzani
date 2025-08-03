@@ -402,7 +402,6 @@ jobs:
           --concurrency=100 \
           --add-cloudsql-instances=${{ env.DB_CONNECTION_NAME }} \
           --set-env-vars="NODE_ENV=production" \
-          --set-env-vars="PORT=8080" \
           --set-env-vars="DATABASE_URL=postgresql://${{ env.DB_USER }}:${{ secrets.DB_PASSWORD }}@localhost:5432/${{ env.DB_NAME }}?host=/cloudsql/${{ env.DB_CONNECTION_NAME }}" \
           --set-env-vars="JWT_SECRET=${{ secrets.JWT_SECRET }}" \
           --set-env-vars="STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}" \
