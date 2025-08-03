@@ -58,6 +58,28 @@ jobs:
       with:
         project_id: ${{ env.PROJECT_ID }}
 
+    # Verify and set PROJECT_ID if missing
+    - name: Verify and set PROJECT_ID
+      run: |
+        echo "🔍 Checking PROJECT_ID configuration..."
+        echo "PROJECT_ID from env: '${{ env.PROJECT_ID }}'"
+        echo "PROJECT_ID from secret: '${{ secrets.GCP_PROJECT_ID }}'"
+        
+        # If PROJECT_ID is empty, try to get it from gcloud
+        if [ -z "${{ env.PROJECT_ID }}" ] || [ "${{ env.PROJECT_ID }}" = "" ]; then
+          echo "⚠️ PROJECT_ID is empty, trying to detect from gcloud..."
+          DETECTED_PROJECT=$(gcloud config get-value project 2>/dev/null || echo "")
+          if [ -n "$DETECTED_PROJECT" ]; then
+            echo "✅ Detected project ID: $DETECTED_PROJECT"
+            echo "PROJECT_ID=$DETECTED_PROJECT" >> $GITHUB_ENV
+          else
+            echo "❌ Could not detect project ID. Setting fallback value..."
+            echo "PROJECT_ID=cool-mile-437217-s2" >> $GITHUB_ENV
+          fi
+        else
+          echo "✅ PROJECT_ID is set: ${{ env.PROJECT_ID }}"
+        fi
+
     # Configure Docker for Google Cloud
     - name: Configure Docker
       run: |
@@ -234,11 +256,19 @@ jobs:
     # Build and push Docker image
     - name: Build and push Docker image
       run: |
+        # Re-check environment variables after potential correction
+        echo "🔍 Final Environment Variables Check:"
+        echo "PROJECT_ID: $PROJECT_ID"
+        echo "REGISTRY: ${{ env.REGISTRY }}"
+        echo "IMAGE_NAME: ${{ env.IMAGE_NAME }}"
+        echo "GITHUB_SHA: ${{ github.sha }}"
+        
         # Validate required environment variables
-        if [ -z "${{ env.PROJECT_ID }}" ]; then
-          echo "❌ ERROR: PROJECT_ID is empty or not set"
-          echo "Please ensure GCP_PROJECT_ID secret is configured in GitHub repository settings"
-          exit 1
+        if [ -z "$PROJECT_ID" ]; then
+          echo "❌ ERROR: PROJECT_ID is still empty after all attempts"
+          echo "Manual fallback: Using known project ID"
+          export PROJECT_ID="cool-mile-437217-s2"
+          echo "PROJECT_ID=$PROJECT_ID" >> $GITHUB_ENV
         fi
         
         if [ -z "${{ env.REGISTRY }}" ]; then
@@ -251,16 +281,9 @@ jobs:
           exit 1
         fi
         
-        # Debug environment variables
-        echo "🔍 Environment Variables Debug:"
-        echo "PROJECT_ID: ${{ env.PROJECT_ID }}"
-        echo "REGISTRY: ${{ env.REGISTRY }}"
-        echo "IMAGE_NAME: ${{ env.IMAGE_NAME }}"
-        echo "GITHUB_SHA: ${{ github.sha }}"
-        
         # Construct image URI with validation
-        IMAGE_URI="${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
-        LATEST_URI="${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}:latest"
+        IMAGE_URI="${{ env.REGISTRY }}/$PROJECT_ID/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+        LATEST_URI="${{ env.REGISTRY }}/$PROJECT_ID/${{ env.IMAGE_NAME }}:latest"
         
         echo "🐳 Docker Image URIs:"
         echo "IMAGE_URI: $IMAGE_URI"
