@@ -259,16 +259,18 @@ jobs:
         # Hardcoded image configuration (no environment variables needed)
         PROJECT_ID="cool-mile-437217-s2"
         REGISTRY="europe-west2-docker.pkg.dev"
+        REPO_NAME="arzani-marketplace"
         IMAGE_NAME="arzani-marketplace"
         GITHUB_SHA="${{ github.sha }}"
         
-        # Construct image URIs manually
-        IMAGE_URI="${REGISTRY}/${PROJECT_ID}/${IMAGE_NAME}:${GITHUB_SHA}"
-        LATEST_URI="${REGISTRY}/${PROJECT_ID}/${IMAGE_NAME}:latest"
+        # Construct image URIs manually with correct Artifact Registry format
+        IMAGE_URI="${REGISTRY}/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:${GITHUB_SHA}"
+        LATEST_URI="${REGISTRY}/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:latest"
         
         echo "🐳 Docker Image Configuration (Hardcoded):"
         echo "PROJECT_ID: $PROJECT_ID"
         echo "REGISTRY: $REGISTRY"
+        echo "REPO_NAME: $REPO_NAME"
         echo "IMAGE_NAME: $IMAGE_NAME"
         echo "GITHUB_SHA: $GITHUB_SHA"
         echo "IMAGE_URI: $IMAGE_URI"
