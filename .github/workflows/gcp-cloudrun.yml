@@ -131,6 +131,12 @@ jobs:
         cp PRD_200_Blog_Post_Strategy_Checklist.md production/ 2>/dev/null || echo "PRD file not found"
         echo "✅ Copied essential files"
         
+        # Verify production directory exists before proceeding
+        if [ ! -d "production" ]; then
+          echo "❌ Production directory was not created successfully"
+          exit 1
+        fi
+        
         # Move to production directory and install dependencies
         cd production
         
