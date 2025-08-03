@@ -227,18 +227,35 @@ jobs:
     # Build and push Docker image
     - name: Build and push Docker image
       run: |
-        # Build image
+        # Debug environment variables
+        echo "PROJECT_ID: ${{ env.PROJECT_ID }}"
+        echo "REGISTRY: ${{ env.REGISTRY }}"
+        echo "IMAGE_NAME: ${{ env.IMAGE_NAME }}"
+        echo "GITHUB_SHA: ${{ github.sha }}"
+        
+        # Construct image URI
         IMAGE_URI="${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+        echo "IMAGE_URI: $IMAGE_URI"
+        
+        # Verify Docker authentication
+        gcloud auth configure-docker ${{ env.REGISTRY }} --quiet
+        
+        # Build image
+        echo "Building Docker image..."
         docker build -t $IMAGE_URI .
         
         # Push image
+        echo "Pushing Docker image..."
         docker push $IMAGE_URI
         
         # Also tag as latest
+        echo "Tagging and pushing as latest..."
         docker tag $IMAGE_URI ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}:latest
         docker push ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}:latest
         
+        # Export for later steps
         echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV
+        echo "✅ Docker build and push completed successfully"
 
     # Check/Create Cloud SQL instance
     - name: Setup Cloud SQL database
