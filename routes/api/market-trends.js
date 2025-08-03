@@ -4,7 +4,7 @@ import { authenticateToken } from '../../middleware/auth.js';
 import { adminAuth } from '../../middleware/adminAuth.js'; // Add this import
 import PDFDocument from 'pdfkit';
 import ExcelJS from 'exceljs';
-import { Parser as CsvParser } from 'json2csv';
+import { format as csvFormat } from '@fast-csv/format';
 // Fix the Chart.js import path - it needs the full file path
 import Chart from 'chart.js/auto/auto.js';
 import { ChartJSNodeCanvas } from 'chartjs-node-canvas';
@@ -747,15 +747,20 @@ async function exportPDF(res, data, filters, options = {}) {
 function exportCSV(res, data) {
   // Prepare data for CSV - update field names if needed
   const fields = ['date_listed', 'industry', 'location', 'avg_price', 'avg_multiple', 'listings_count'];
-  const opts = { fields };
   
   try {
-    const parser = new CsvParser(opts);
-    const csv = parser.parse(data);
-    
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', `attachment; filename=market_trends_${new Date().toISOString().split('T')[0]}.csv`);
-    res.status(200).send(csv);
+    
+    const stream = csvFormat({ headers: fields });
+    stream.pipe(res);
+    
+    // Write data rows
+    data.forEach(row => {
+      stream.write(row);
+    });
+    
+    stream.end();
   } catch (err) {
     res.status(500).json({ error: 'Failed to generate CSV' });
   }

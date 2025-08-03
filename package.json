@@ -42,6 +42,15 @@
     "dev:multiprocess": "concurrently \"npm run dev\" \"node services/orchestrator/index.js\" \"node services/broker/index.js\" \"node services/legal/index.js\" \"node services/finance/index.js\"",
     "setup:a2a": "node scripts/a2a-setup.js"
   },
+  "overrides": {
+    "rimraf": "^5.0.7",
+    "glob": "^10.4.5",
+    "inflight": "npm:@isaacs/cliui@^8.0.2",
+    "npmlog": "npm:proc-log@^4.2.0",
+    "gauge": "npm:are-we-there-yet@^4.0.2",
+    "are-we-there-yet": "^4.0.2",
+    "fstream": "npm:tar@^7.4.3"
+  },
   "engines": {
     "node": ">=18.0.0"
   },
@@ -59,7 +68,7 @@
     "better-sqlite3": "^11.5.0",
     "body-parser": "^1.20.3",
     "canvas": "^3.1.0",
-    "chart.js": "^3.9.1",
+    "chart.js": "^4.4.7",
     "chartjs-node-canvas": "^4.1.6",
     "compression": "^1.8.0",
     "concurrently": "^9.1.0",
@@ -74,7 +83,8 @@
     "google-auth-library": "^8.9.0",
     "googleapis": "^144.0.0",
     "helmet": "^8.1.0",
-    "json2csv": "^5.0.7",
+    "@fast-csv/parse": "^5.0.0",
+    "@fast-csv/format": "^5.0.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",

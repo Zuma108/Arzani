@@ -6,7 +6,21 @@ on:
   workflow_dispatch:
 
 env:
-  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  PROJECT_ID: ${{ secrets.        cat > Dockerfile << 'EOF'
+        # Use official Node.js runtime
+        FROM node:20-alpine
+        
+        # Install system dependencies for canvas
+        RUN apk add --no-cache \
+            cairo-dev \
+            pango-dev \
+            jpeg-dev \
+            giflib-dev \
+            librsvg-dev \
+            build-base \
+            python3 \
+            make \
+            g++}}
   REGION: europe-west2                      # London region equivalent
   SERVICE_NAME: arzani-marketplace
   NODE_VERSION: '20.x'                      # Updated to latest LTS
@@ -66,20 +80,32 @@ jobs:
     # Install dependencies
     - name: Install dependencies
       run: |
-        npm install --no-bin-links --production=false
+        npm ci --production=false
         
     # Fix permissions for native modules
     - name: Fix native module permissions
       run: |
         # Set proper permissions for bcrypt and other native modules
-        chmod -R 755 node_modules/ || echo "No node_modules to fix permissions"
+        if [ -d "node_modules" ]; then
+          chmod -R 755 node_modules/
+          echo "Fixed node_modules permissions"
+        fi
+        
         # Ensure all binaries are executable
-        find node_modules/.bin -type f -exec chmod +x {} \; || echo "No .bin directory found"
+        if [ -d "node_modules/.bin" ]; then
+          find node_modules/.bin -type f -exec chmod +x {} \;
+          echo "Fixed binary permissions"
+        fi
         
     # Fix TailwindCSS CLI permissions
     - name: Make Tailwind CLI executable
       run: |
-        chmod +x ./node_modules/.bin/tailwindcss || echo "TailwindCSS binary not found, skipping chmod"
+        if [ -f "./node_modules/.bin/tailwindcss" ]; then
+          chmod +x ./node_modules/.bin/tailwindcss
+          echo "TailwindCSS binary made executable"
+        else
+          echo "TailwindCSS binary not found, will use npx"
+        fi
         
     # Run tests
     - name: Run tests
@@ -115,11 +141,18 @@ jobs:
         cp PRD_200_Blog_Post_Strategy_Checklist.md production/ 2>/dev/null || echo "PRD file not found"
         
         # Install only production dependencies
-        cd production && npm ci --only=production --no-bin-links
+        cd production && npm ci --only=production
         
         # Fix permissions for production node_modules
-        chmod -R 755 node_modules/ || echo "No node_modules to fix permissions"
-        find node_modules/.bin -type f -exec chmod +x {} \; || echo "No .bin directory found"
+        if [ -d "node_modules" ]; then
+          chmod -R 755 node_modules/
+          echo "Fixed production node_modules permissions"
+        fi
+        
+        if [ -d "node_modules/.bin" ]; then
+          find node_modules/.bin -type f -exec chmod +x {} \;
+          echo "Fixed production binary permissions"
+        fi
         
         # Remove unnecessary files to reduce image size
         rm -rf production/node_modules/.cache
