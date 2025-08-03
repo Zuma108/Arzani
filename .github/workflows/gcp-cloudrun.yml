@@ -145,6 +145,10 @@ jobs:
         # Move to production directory and install dependencies
         cd production
         
+        # Remove postinstall script to prevent it from running in production
+        sed -i '/"postinstall":/d' package.json
+        echo "✅ Removed postinstall script from production package.json"
+        
         # Install only production dependencies
         npm ci --only=production
         echo "✅ Installed production dependencies"
