@@ -126,6 +126,11 @@ jobs:
         cp -r !(node_modules|tests|.git|.github|*.md|*.log|production) production/ 2>/dev/null || true
         echo "✅ Copied application files"
         
+        # Ensure critical directories are copied (in case glob pattern missed them)
+        cp -r scripts production/ 2>/dev/null || echo "⚠️ Scripts directory not found"
+        cp -r migrations production/ 2>/dev/null || echo "⚠️ Migrations directory not found"
+        echo "✅ Copied critical directories"
+        
         # Copy essential files that were excluded by pattern
         cp package*.json production/
         cp PRD_200_Blog_Post_Strategy_Checklist.md production/ 2>/dev/null || echo "PRD file not found"
