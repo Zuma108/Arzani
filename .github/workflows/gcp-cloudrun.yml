@@ -129,7 +129,8 @@ jobs:
         # Install only production dependencies
         cd production && npm ci --only=production
         
-        # Fix permissions for production node_modules
+        # Fix permissions for production node_modules (run from inside production directory)
+        cd production
         if [ -d "node_modules" ]; then
           chmod -R 755 node_modules/
           echo "Fixed production node_modules permissions"
@@ -139,6 +140,9 @@ jobs:
           find node_modules/.bin -type f -exec chmod +x {} \;
           echo "Fixed production binary permissions"
         fi
+        
+        # Return to root directory for cleanup
+        cd ..
         
         # Remove unnecessary files to reduce image size
         rm -rf production/node_modules/.cache
@@ -248,6 +252,42 @@ jobs:
         # Get connection name for Cloud Run
         CONNECTION_NAME=$(gcloud sql instances describe ${{ env.DB_INSTANCE }} --format="value(connectionName)")
         echo "DB_CONNECTION_NAME=$CONNECTION_NAME" >> $GITHUB_ENV
+
+    # Verify environment variables are present
+    - name: Check required environment variables
+      run: |
+        echo "🔍 Verifying all required environment variables are available..."
+        
+        # Check required secrets
+        missing_vars=""
+        
+        if [ -z "${{ secrets.DB_PASSWORD }}" ]; then
+          missing_vars="$missing_vars DB_PASSWORD"
+        fi
+        
+        if [ -z "${{ secrets.JWT_SECRET }}" ]; then
+          missing_vars="$missing_vars JWT_SECRET"
+        fi
+        
+        if [ -z "${{ secrets.STRIPE_SECRET_KEY }}" ]; then
+          missing_vars="$missing_vars STRIPE_SECRET_KEY"
+        fi
+        
+        if [ -z "${{ secrets.OPENAI_API_KEY }}" ]; then
+          missing_vars="$missing_vars OPENAI_API_KEY"
+        fi
+        
+        if [ -n "$missing_vars" ]; then
+          echo "❌ Missing required environment variables: $missing_vars"
+          echo "Please set these in GitHub repository secrets:"
+          for var in $missing_vars; do
+            echo "  • $var"
+          done
+          exit 1
+        fi
+        
+        echo "✅ All required environment variables are available"
+        echo "🔒 Using GitHub Secrets instead of .env.production file (secure!)"
 
     # Deploy to Cloud Run
     - name: Deploy to Cloud Run

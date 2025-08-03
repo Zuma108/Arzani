@@ -40,7 +40,9 @@
     "gcp:logs": "gcloud run services logs read arzani-marketplace --region=europe-west2",
     "gcp:deploy": "gcloud run services update arzani-marketplace --region=europe-west2",
     "dev:multiprocess": "concurrently \"npm run dev\" \"node services/orchestrator/index.js\" \"node services/broker/index.js\" \"node services/legal/index.js\" \"node services/finance/index.js\"",
-    "setup:a2a": "node scripts/a2a-setup.js"
+    "setup:a2a": "node scripts/a2a-setup.js",
+    "check:env": "node scripts/check-env-variables.js",
+    "deploy:check": "npm run check:env && npm run build"
   },
   "overrides": {
     "rimraf": "^5.0.7",

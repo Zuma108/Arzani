@@ -66,7 +66,7 @@ import submitBusinessRoutes from './routes/api/submit-business.js';
 import sitemapRoutes from './routes/sitemap.js';
 
 // Import our new API routes
-import businessApiRoutes from './routes/api/businessApi.js';
+import businessApiRoutes from './routes/api/profileApi.js'; // Fixed: was businessApi.js
 import debugApiRoutes from './routes/api/debug.js';
 import aiApiRoutes from './routes/api/ai.js';
 import analyticsApiRoutes from './routes/api/analytics.js';
