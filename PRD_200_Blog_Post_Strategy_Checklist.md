@@ -93,9 +93,9 @@ Based on the PRD_Programmatic_Blog_Strategy.md and successful deployment of our 
 - [x] **2.7** How to Value Your Business for Sale
 - [x] **2.8** Business Sale Documentation Requirements
 - [x] **2.9** Finding the Right Business Buyer
-- [ ] **2.10** Business Sale Negotiation Strategies
-- [ ] **2.11** Business Sale Tax Planning UK
-- [ ] **2.12** Employee Communication During Business Sale
+- [x] **2.10** Business Sale Negotiation Strategies
+- [x] **2.11** Business Sale Tax Planning UK
+- [x] **2.12** Employee Communication During Business Sale
 - [ ] **2.13** Customer Retention During Sale Process
 - [ ] **2.14** Business Sale Confidentiality Management
 - [ ] **2.15** Technology Business Sale Considerations

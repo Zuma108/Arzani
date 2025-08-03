@@ -14,6 +14,9 @@ RUN apk add --no-cache \
     pango-dev \
     giflib-dev
 
+# Copy scripts for postinstall hook
+COPY scripts ./scripts
+
 # Install production dependencies with unsafe-perm
 RUN npm ci --only=production --unsafe-perm
 
@@ -22,10 +25,10 @@ COPY . .
 
 # Set environment variables
 ENV NODE_ENV=production
-ENV PORT=3000
+ENV PORT=8080
 
 # Expose the port
-EXPOSE 3000
+EXPOSE 8080
 
 # Start the application
-CMD ["node", "server.js"]
+CMD ["node", "app.js"]

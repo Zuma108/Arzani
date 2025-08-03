@@ -33,7 +33,129 @@
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: #a8a8a8;
 }
-    box-shadow: 0 6px 20px rgba(49, 111, 212, 0.3);
+
+/* CTA Buttons - Blue with white text */
+.btn-cta, .cta-button {
+    background-color: var(--primary-blue);
+    color: white;
+    padding: 0.875rem 1.75rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-block;
+    border: 2px solid var(--primary-blue);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(4, 27, 118, 0.3);
+}
+
+.btn-cta:hover, .cta-button:hover {
+    background-color: #0329a8;
+    border-color: #0329a8;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(4, 27, 118, 0.4);
+}
+
+.btn-cta:active, .cta-button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 10px rgba(4, 27, 118, 0.3);
+}
+
+/* Send Message Button Specific */
+.send-message-btn {
+    background-color: var(--primary-blue);
+    color: white;
+    padding: 0.75rem 2rem;
+    border-radius: 0.375rem;
+    font-weight: 600;
+    border: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(4, 27, 118, 0.3);
+}
+
+.send-message-btn:hover {
+    background-color: #0329a8;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(4, 27, 118, 0.4);
+}
+
+/* Email CTA Link */
+.email-cta {
+    background-color: var(--primary-blue);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.375rem;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(4, 27, 118, 0.3);
+}
+
+.email-cta:hover {
+    background-color: #0329a8;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(4, 27, 118, 0.4);
+    text-decoration: none;
+}
+
+/* Primary Button - Main CTA styling (used by navbar and main CTAs) */
+.btn-primary {
+    background-color: #316FD4;
+    color: white;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #316FD4;
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(49, 111, 212, 0.3);
+}
+
+.btn-primary:hover {
+    background-color: #2563eb;
+    border-color: #2563eb;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(49, 111, 212, 0.4);
+    text-decoration: none;
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 10px rgba(49, 111, 212, 0.3);
+}
+
+.btn-primary:focus {
+    outline: none;
+    ring: 2px;
+    ring-color: rgba(49, 111, 212, 0.5);
+    ring-offset: 2px;
+}
+
+/* Disabled state for btn-primary (for form submissions) */
+.btn-primary:disabled {
+    background-color: #6b7280;
+    border-color: #6b7280;
+    color: #9ca3af;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.btn-primary:disabled:hover {
+    background-color: #6b7280;
+    border-color: #6b7280;
+    color: #9ca3af;
+    transform: none;
+    box-shadow: none;
 }
 
 .btn-secondary {

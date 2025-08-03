@@ -4,7 +4,6 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import valuationService from '../services/valuationService.js';
 import valuationController from '../controllers/valuationController.js';
-import valuationPaymentController from '../controllers/valuationPaymentController.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -74,131 +73,78 @@ router.post('/save-data', async (req, res) => {
     }
 });
 
-// FOR OTHER PAGES: We can still use the payment verification middleware
-// but with a fallback - check if they've accessed the basics page first
-const verifyQuestionnaireAccess = async (req, res, next) => {
-    console.log('Verifying questionnaire access:', {
-        sessionExists: !!req.session,
-        sessionData: req.session ? {
-            accessedQuestionnaire: req.session.accessedQuestionnaire,
-            paymentComplete: req.session.paymentComplete
-        } : null,
-        cookies: req.cookies || {},
-        headers: {
-            referer: req.headers.referer || 'none'
-        }
-    });
-    
-    // Check multiple indicators of payment completion
-    if (req.session && (req.session.accessedQuestionnaire || req.session.paymentComplete)) {
-        console.log('Access granted via session flags');
-        return next();
-    }
-    
-    // Check for the backup cookie
-    if (req.cookies && req.cookies.valuation_payment_complete === 'true') {
-        console.log('Access granted via cookie');
-        
-        // Also set session flag for future requests
-        if (req.session) {
-            req.session.accessedQuestionnaire = true;
-            req.session.paymentComplete = true;
-            req.session.save();
-        }
-        
-        return next();
-    }
-    
-    // Check local storage via query param (set by frontend)
-    if (req.query.payment_verified === 'true') {
-        console.log('Access granted via query parameter');
-        
-        if (req.session) {
-            req.session.accessedQuestionnaire = true;
-            req.session.paymentComplete = true;
-            req.session.save();
-        }
-        
-        return next();
-    }
-    
-    // Otherwise use the standard payment verification
-    console.log('No quick verification methods succeeded, trying full payment verification');
-    return valuationPaymentController.verifyPayment(req, res, next);
-};
-
 // Route for the email page
-router.get('/email', verifyQuestionnaireAccess, (req, res) => {
+router.get('/email', (req, res) => {
     res.render('seller-questionnaire-email', {
         title: 'Seller Questionnaire - Your Email'
     });
 });
 
 // Route for the form page (business details)
-router.get('/form', verifyQuestionnaireAccess, (req, res) => {
+router.get('/form', (req, res) => {
     res.render('seller-questionnaire-form', {
         title: 'Seller Questionnaire - Business Details'
     });
 });
 
 // Route for the location page
-router.get('/location', verifyQuestionnaireAccess, (req, res) => {
+router.get('/location', (req, res) => {
     res.render('seller-questionnaire-location', {
         title: 'Seller Questionnaire - Business Location'
     });
 });
 
 // Route for the revenue page
-router.get('/revenue', verifyQuestionnaireAccess, (req, res) => {
+router.get('/revenue', (req, res) => {
     res.render('seller-questionnaire-revenue', {
         title: 'Seller Questionnaire - Yearly Revenue'
     });
 });
 
 // Route for the EBITDA page
-router.get('/ebitda', verifyQuestionnaireAccess, (req, res) => {
+router.get('/ebitda', (req, res) => {
     res.render('seller-questionnaire-ebitda', {
         title: 'Seller Questionnaire - EBITDA'
     });
 });
 
 // Route for the Cash on Cash return page
-router.get('/cash-on-cash', verifyQuestionnaireAccess, (req, res) => {
+router.get('/cash-on-cash', (req, res) => {
     res.render('seller-questionnaire-cash-on-cash', {
         title: 'Seller Questionnaire - Cash on Cash Return'
     });
 });
 
 // Route for the FFE page
-router.get('/ffe', verifyQuestionnaireAccess, (req, res) => {
+router.get('/ffe', (req, res) => {
     res.render('seller-questionnaire-ffe', {
         title: 'Seller Questionnaire - FFE Value'
     });
 });
 
 // Route for growth projections
-router.get('/growth', verifyQuestionnaireAccess, (req, res) => {
+router.get('/growth', (req, res) => {
     res.render('seller-questionnaire-growth', {
         title: 'Seller Questionnaire - Growth Projections'
     });
 });
 
 // Route for debts and liabilities
-router.get('/debts', verifyQuestionnaireAccess, (req, res) => {
+router.get('/debts', (req, res) => {
     res.render('seller-questionnaire-debts', {
         title: 'Seller Questionnaire - Debts & Liabilities'
     });
 });
 
 // Route for business valuation
-router.get('/valuation', verifyQuestionnaireAccess, (req, res) => {
+router.get('/valuation', (req, res) => {
     res.render('seller-questionnaire-valuation', {
         title: 'Seller Questionnaire - Business Valuation'
     });
 });
 
 // Route for the thank you page
-router.get('/thank-you', verifyQuestionnaireAccess, (req, res) => {
+router.get('/thank-you', (req, res) => {
     res.render('seller-questionnaire-thank-you', {
         title: 'Thank You'
     });
@@ -209,13 +155,13 @@ router.get('/signup', (req, res) => {
     res.redirect('/signup');
 });
 
-// Default route - redirect to payment page instead of basics
+// Default route - redirect to basics page since questionnaire is now free
 router.get('/', (req, res) => {
-    res.redirect('/valuation-payment');
+    res.redirect('/seller-questionnaire/basics');
 });
 
-// API endpoint to calculate business valuation
-router.post('/api/business/calculate-valuation', verifyQuestionnaireAccess, async (req, res) => {
+// API endpoint to calculate business valuation - now free access
+router.post('/api/business/calculate-valuation', async (req, res) => {
     try {
         const businessData = req.body;
         

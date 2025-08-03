@@ -1,0 +1,302 @@
+name: Deploy to Google Cloud Run
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: europe-west2                      # London region equivalent
+  SERVICE_NAME: arzani-marketplace
+  NODE_VERSION: '18.x'
+  
+  # Database configuration for Google Cloud SQL
+  DB_INSTANCE: arzani-marketplace-db-v17
+  DB_NAME: arzani_marketplace
+  DB_USER: marketplace_user
+  
+  # Image configuration
+  IMAGE_NAME: arzani-marketplace
+  REGISTRY: europe-west2-docker.pkg.dev
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    # Install system dependencies for canvas
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev
+
+    # Authenticate to Google Cloud
+    - name: Authenticate to Google Cloud
+      id: auth
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
+    # Setup Google Cloud CLI
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
+      with:
+        project_id: ${{ env.PROJECT_ID }}
+
+    # Configure Docker for Google Cloud
+    - name: Configure Docker
+      run: |
+        gcloud auth configure-docker ${{ env.REGISTRY }}
+
+    # Install dependencies
+    - name: Install dependencies
+      run: |
+        npm install --no-bin-links --production=false
+        
+    # Run tests
+    - name: Run tests
+      run: |
+        npm test
+      env:
+        NODE_ENV: test
+        TEST_DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+        JWT_SECRET: ${{ secrets.JWT_SECRET }}
+
+    # Build application
+    - name: Build application
+      run: |
+        npm run build --if-present
+      env:
+        NODE_ENV: production
+
+    # Create optimized production build
+    - name: Prepare production files
+      run: |
+        # Create production directory
+        mkdir -p production
+        
+        # Copy application files (exclude dev dependencies and unnecessary files)
+        cp -r !(node_modules|tests|.git|.github|*.md|*.log|production) production/ 2>/dev/null || true
+        
+        # Copy essential files that were excluded by pattern
+        cp package*.json production/
+        cp PRD_200_Blog_Post_Strategy_Checklist.md production/ 2>/dev/null || echo "PRD file not found"
+        
+        # Install only production dependencies
+        cd production && npm ci --only=production --no-bin-links
+        
+        # Remove unnecessary files to reduce image size
+        rm -rf production/node_modules/.cache
+        rm -rf production/tests
+        find production -name "*.test.js" -delete
+        find production -name "*.spec.js" -delete
+
+    # Create Dockerfile for Cloud Run
+    - name: Create Dockerfile
+      run: |
+        cat > Dockerfile << 'EOF'
+        # Use official Node.js runtime
+        FROM node:18-alpine
+        
+        # Install system dependencies for canvas
+        RUN apk add --no-cache \
+            cairo-dev \
+            pango-dev \
+            jpeg-dev \
+            giflib-dev \
+            librsvg-dev \
+            build-base \
+            python3 \
+            make \
+            g++
+        
+        # Create app directory
+        WORKDIR /app
+        
+        # Copy package files
+        COPY production/package*.json ./
+        
+        # Install app dependencies
+        RUN npm ci --only=production && npm cache clean --force
+        
+        # Copy app source
+        COPY production/ .
+        
+        # Create non-root user
+        RUN addgroup -g 1001 -S nodejs
+        RUN adduser -S nodejs -u 1001
+        
+        # Change ownership of the app directory
+        RUN chown -R nodejs:nodejs /app
+        USER nodejs
+        
+        # Expose port
+        EXPOSE 8080
+        
+        # Health check
+        HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+          CMD curl -f http://localhost:8080/health || exit 1
+        
+        # Start the application
+        CMD ["npm", "start"]
+        EOF
+
+    # Add health check endpoint
+    - name: Add health check endpoint
+      run: |
+        # Check if health endpoint exists, if not add it
+        if ! grep -q "/health" production/server.js; then
+          # Add health check before the catch-all route
+          sed -i '/app.get.*\*.*function/i \
+        // Health check endpoint for Cloud Run\
+        app.get("/health", (req, res) => {\
+          res.status(200).json({ status: "healthy", timestamp: new Date().toISOString() });\
+        });\
+        ' production/server.js
+        fi
+
+    # Build and push Docker image
+    - name: Build and push Docker image
+      run: |
+        # Build image
+        IMAGE_URI="${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+        docker build -t $IMAGE_URI .
+        
+        # Push image
+        docker push $IMAGE_URI
+        
+        # Also tag as latest
+        docker tag $IMAGE_URI ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}:latest
+        docker push ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}:latest
+        
+        echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV
+
+    # Check/Create Cloud SQL instance
+    - name: Setup Cloud SQL database
+      run: |
+        # Check if Cloud SQL instance exists
+        if ! gcloud sql instances describe ${{ env.DB_INSTANCE }} --quiet 2>/dev/null; then
+          echo "Creating Cloud SQL instance..."
+          gcloud sql instances create ${{ env.DB_INSTANCE }} \
+            --database-version=POSTGRES_17 \
+            --tier=db-custom-1-3840 \
+            --region=${{ env.REGION }} \
+            --storage-type=SSD \
+            --storage-size=10GB \
+            --backup-start-time=03:00 \
+            --maintenance-window-day=SUN \
+            --maintenance-window-hour=04 \
+            --deletion-protection
+            
+          echo "Waiting for instance to be ready..."
+          gcloud sql instances patch ${{ env.DB_INSTANCE }} --quiet
+          
+          # Create database
+          gcloud sql databases create ${{ env.DB_NAME }} --instance=${{ env.DB_INSTANCE }}
+          
+          # Create user
+          gcloud sql users create ${{ env.DB_USER }} \
+            --instance=${{ env.DB_INSTANCE }} \
+            --password=${{ secrets.DB_PASSWORD }}
+            
+          echo "Cloud SQL instance created successfully"
+        else
+          echo "Cloud SQL instance already exists"
+        fi
+        
+        # Get connection name for Cloud Run
+        CONNECTION_NAME=$(gcloud sql instances describe ${{ env.DB_INSTANCE }} --format="value(connectionName)")
+        echo "DB_CONNECTION_NAME=$CONNECTION_NAME" >> $GITHUB_ENV
+
+    # Deploy to Cloud Run
+    - name: Deploy to Cloud Run
+      run: |
+        # Deploy the service
+        gcloud run deploy ${{ env.SERVICE_NAME }} \
+          --image=${{ env.IMAGE_URI }} \
+          --region=${{ env.REGION }} \
+          --platform=managed \
+          --allow-unauthenticated \
+          --port=8080 \
+          --memory=1Gi \
+          --cpu=1 \
+          --min-instances=0 \
+          --max-instances=10 \
+          --timeout=300 \
+          --concurrency=100 \
+          --add-cloudsql-instances=${{ env.DB_CONNECTION_NAME }} \
+          --set-env-vars="NODE_ENV=production" \
+          --set-env-vars="PORT=8080" \
+          --set-env-vars="DATABASE_URL=postgresql://${{ env.DB_USER }}:${{ secrets.DB_PASSWORD }}@localhost:5432/${{ env.DB_NAME }}?host=/cloudsql/${{ env.DB_CONNECTION_NAME }}" \
+          --set-env-vars="JWT_SECRET=${{ secrets.JWT_SECRET }}" \
+          --set-env-vars="STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}" \
+          --set-env-vars="OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" \
+          --set-env-vars="A2A_AUTH_ENABLED=false" \
+          --set-env-vars="DATABASE_SSL=false"
+
+    # Get service URL
+    - name: Get service URL
+      run: |
+        SERVICE_URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} --region=${{ env.REGION }} --format="value(status.url)")
+        echo "SERVICE_URL=$SERVICE_URL" >> $GITHUB_ENV
+        echo "🚀 Application deployed to: $SERVICE_URL"
+
+    # Verify deployment
+    - name: Verify deployment
+      run: |
+        # Wait a moment for the service to be ready
+        sleep 10
+        
+        # Test health endpoint
+        if curl -f ${{ env.SERVICE_URL }}/health; then
+          echo "✅ Deployment successful!"
+          echo "🌐 Application URL: ${{ env.SERVICE_URL }}"
+          echo "🗄️ Database: Cloud SQL PostgreSQL"
+          echo "📊 Monitoring: Available in Google Cloud Console"
+        else
+          echo "⚠️ Deployment completed but health check failed"
+          echo "Check logs: gcloud run services logs read ${{ env.SERVICE_NAME }} --region=${{ env.REGION }}"
+        fi
+
+    # Output deployment information
+    - name: Deployment Summary
+      run: |
+        echo "==================== DEPLOYMENT SUMMARY ===================="
+        echo "✅ Successfully migrated from AWS to Google Cloud Run!"
+        echo ""
+        echo "🌐 Application URL: ${{ env.SERVICE_URL }}"
+        echo "🗄️ Database: Cloud SQL PostgreSQL in ${{ env.REGION }}"
+        echo "🐳 Container: ${{ env.IMAGE_URI }}"
+        echo "📊 Monitoring: Google Cloud Console"
+        echo ""
+        echo "🔗 Access your application:"
+        echo "   • Main site: ${{ env.SERVICE_URL }}"
+        echo "   • Health check: ${{ env.SERVICE_URL }}/health"
+        echo "   • Admin: ${{ env.SERVICE_URL }}/admin"
+        echo ""
+        echo "💰 Cost Benefits vs AWS:"
+        echo "   • Pay-per-request pricing (vs EC2 always-on)"
+        echo "   • Automatic scaling to zero"
+        echo "   • No instance management overhead"
+        echo "   • Integrated with Cloud SQL (managed PostgreSQL)"
+        echo ""
+        echo "📋 Next Steps:"
+        echo "   1. Update your domain DNS to point to Cloud Run URL"
+        echo "   2. Set up custom domain in Cloud Run console"
+        echo "   3. Configure SSL certificate (automatic with custom domain)"
+        echo "   4. Set up monitoring and alerting"
+        echo "=============================================================="

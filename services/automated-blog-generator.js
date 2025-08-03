@@ -125,6 +125,14 @@ class AutomatedBlogGenerator {
   async initialize() {
     console.log('🚀 Initializing Automated Blog Generation System...');
     
+    // Check if automation is disabled for cost optimization
+    if (await this.isAutomationDisabled()) {
+      console.log('⚠️  Blog automation is disabled for cost optimization');
+      console.log('💰 To reduce RDS costs, automated posting is currently stopped');
+      console.log('🔧 To re-enable: remove ./data/AUTOMATION_STOPPED.flag file');
+      return;
+    }
+    
     // Schedule content generation - 6 posts per day at optimal times
     this.scheduleContentGeneration();
     
@@ -151,6 +159,12 @@ class AutomatedBlogGenerator {
 
     schedules.forEach((schedule, index) => {
       cron.schedule(schedule, async () => {
+        // Check if automation is still enabled before generating
+        if (await this.isAutomationDisabled()) {
+          console.log(`⚠️  Skipping scheduled generation #${index + 1} - automation disabled`);
+          return;
+        }
+        
         console.log(`⏰ Running scheduled content generation #${index + 1}`);
         await this.generateNextBlogPost();
       });
@@ -2259,9 +2273,51 @@ Requirements:
   }
 
   /**
+   * Check if automation is disabled for cost optimization
+   */
+  async isAutomationDisabled() {
+    try {
+      // Check for stop flag file
+      const stopFlagPath = path.join(__dirname, '../data/AUTOMATION_STOPPED.flag');
+      await fs.access(stopFlagPath);
+      return true; // File exists, automation is disabled
+    } catch (error) {
+      // File doesn't exist, automation is enabled
+      return false;
+    }
+  }
+
+  /**
+   * Check database automation settings
+   */
+  async isAutomationEnabledInDB() {
+    try {
+      const result = await pool.query(`
+        SELECT enabled FROM automation_settings 
+        WHERE service_name = 'blog_generation'
+      `);
+      
+      if (result.rows.length === 0) {
+        return true; // Default to enabled if no setting exists
+      }
+      
+      return result.rows[0].enabled;
+    } catch (error) {
+      console.error('Error checking automation settings:', error);
+      return true; // Default to enabled on error
+    }
+  }
+
+  /**
    * Manual trigger for immediate content generation (for testing)
    */
   async generateImmediately() {
+    // Check if automation is disabled
+    if (await this.isAutomationDisabled()) {
+      console.log('⚠️  Cannot generate: Blog automation is disabled for cost optimization');
+      return;
+    }
+    
     console.log('🚀 Manual trigger: Generating blog post immediately...');
     await this.generateNextBlogPost();
   }
