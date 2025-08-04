@@ -331,7 +331,7 @@ const io = new SocketIOServer(server, {
   cors: {
     origin: process.env.NODE_ENV === 'production' 
       ? 'https://arzani.co.uk' 
-      : ['http://localhost:5000', 'http://localhost:3000'],
+      : [`http://localhost:${PORT}`, 'http://localhost:3000', 'http://localhost:5000'],
     methods: ['GET', 'POST'],
     credentials: true
   }
@@ -881,6 +881,7 @@ const corsOptions = {
     
     // List of allowed origins
     const allowedOrigins = [
+      `http://localhost:${PORT}`,
       'http://localhost:3000',
       'http://localhost:5000',
       'https://arzani.co.uk',
@@ -902,11 +903,12 @@ const corsOptions = {
         console.log('Allowed origins:', allowedOrigins);
         
         // In production, be more lenient for requests from the same domain
-        if (process.env.NODE_ENV === 'production' && origin && 
+        if (process.env.NODE_ENV === 'production' && origin && typeof origin === 'string' && 
             (origin.includes('arzani.co.uk') || origin.endsWith('arzani.co.uk'))) {
           console.log('Allowing production origin:', origin);
           callback(null, true);
         } else {
+          console.log('CORS blocked - origin not allowed:', origin);
           callback(new Error('Not allowed by CORS'));
         }
       }
@@ -934,6 +936,7 @@ app.use('/', valuationPaymentRoutes);
 // Add specific CORS headers for API routes
 app.use('/api', (req, res, next) => {
   const allowedOrigins = [
+    `http://localhost:${PORT}`,
     'http://localhost:3000',
     'http://localhost:5000',
     'https://arzani.co.uk',
@@ -1022,6 +1025,7 @@ app.use('/payment', paymentRoutes);
 // Add specific CORS middleware for OAuth routes
 app.use('/auth', (req, res, next) => {
   const allowedOrigins = [
+    `http://localhost:${PORT}`,
     'http://localhost:3000',
     'http://localhost:5000',
     'https://arzani.co.uk',
@@ -2359,6 +2363,7 @@ app.post('/api/business/track', authenticateToken, async (req, res) => {
 app.get('/api/business/history', authenticateToken, async (req, res) => {
     // Add CORS headers for API routes
     const allowedOrigins = [
+        `http://localhost:${PORT}`,
         'http://localhost:3000',
         'http://localhost:5000',
         'https://arzani.co.uk',
