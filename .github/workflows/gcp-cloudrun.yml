@@ -183,7 +183,7 @@ jobs:
           CMD curl -f http://localhost:8080/health || exit 1
         
         # Environment
-        ENV NODE_ENV=production PORT=8080
+        ENV NODE_ENV=production
         
         # Start application
         EXPOSE 8080
