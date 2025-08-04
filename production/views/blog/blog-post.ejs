@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= blog.seo_title || blog.title %> | Arzani</title>
+    <meta name="description" content="<%= blog.meta_description || blog.excerpt %>">
+    <meta name="keywords" content="<%= blog.seo_keywords || blog.target_keyword %>">
+    
+    <!-- Open Graph metadata for social sharing -->
+    <meta property="og:title" content="<%= blog.seo_title || blog.title %> | Arzani">
+    <meta property="og:description" content="<%= blog.meta_description || blog.excerpt %>">
+    <meta property="og:image" content="<%= blog.hero_image %>">
+    <meta property="og:url" content="<%= `https://arzani.co.uk/blog/${blog.content_category}/${blog.slug}` %>">
+    <meta property="og:type" content="article">
+    
+    <!-- Twitter Card metadata -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="<%= blog.seo_title || blog.title %> | Arzani">
+    <meta name="twitter:description" content="<%= blog.meta_description || blog.excerpt %>">
+    <meta name="twitter:image" content="<%= blog.hero_image %>">
+    
+    <!-- Canonical URL to prevent duplicate content issues -->
+    <link rel="canonical" href="<%= `https://arzani.co.uk/blog/${blog.content_category}/${blog.slug}` %>">
+    
+    <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">
+    <link rel="stylesheet" href="/css/modern.css">
+    <link rel="stylesheet" href="/css/blog.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#316FD4',
+                        dark: '#141414',
+                        'dark-light': '#1E1E1E'
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Schema.org markup for structured data -->
+    <script type="application/ld+json">
+        <%- blog.schema_markup %>
+    </script>
+    
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-W50GKB6F3M"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-W50GKB6F3M');
+    </script>
+      <!-- Modern Blog Navigation Styles -->
+    <style>
+        /* Enhanced Modern Navbar */
+        .modern-navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.04);
+        }
+        
+        .modern-navbar.scrolled {
+            background: rgba(255, 255, 255, 0.98);
+            box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.12);
+        }
+        
+        /* Enhanced Navigation Links */
+        .nav-link {
+            position: relative;
+            font-weight: 500;
+            color: #374151;
+            transition: all 0.2s ease;
+            padding: 0.5rem 0;
+        }
+        
+        .nav-link:hover {
+            color: #316FD4;
+        }
+        
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #316FD4, #2856B3);
+            transition: width 0.3s ease;
+            border-radius: 1px;
+        }
+        
+        .nav-link:hover::after {
+            width: 100%;
+        }
+        
+        /* Enhanced Reading Progress Bar */
+        .reading-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #316FD4, #2856B3);
+            width: 0%;
+            z-index: 100;
+            transition: width 0.1s ease;
+        }
+        
+        /* Modern Glass Morphism Effects */
+        .glass-card {
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .glass-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 48px 0 rgba(31, 38, 135, 0.5);
+        }
+        
+        /* Modern Grid Background Pattern */
+        .bg-grid-pattern {
+            background-image: 
+                linear-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(59, 130, 246, 0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        
+        /* Modern Button Styles */
+        .btn-primary {
+            background: linear-gradient(135deg, #316FD4, #2856B3);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 16px 0 rgba(49, 111, 212, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px 0 rgba(49, 111, 212, 0.4);
+            text-decoration: none;
+            color: white;
+        }
+        
+        /* Enhanced Prose Styles */
+        .prose {
+            max-width: none;
+            color: #374151;
+            line-height: 1.8;
+        }
+        
+        .prose h1 {
+            color: #111827;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+        }
+        
+        .prose h2 {
+            color: #111827;
+            font-weight: 700;
+            margin-top: 3rem;
+            margin-bottom: 1.5rem;
+            font-size: 1.875rem;
+            line-height: 1.2;
+            position: relative;
+            padding-left: 1rem;
+        }
+        
+        .prose h2::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 80%;
+            background: linear-gradient(135deg, #316FD4, #2856B3);
+            border-radius: 2px;
+        }
+        
+        .prose h3 {
+            color: #111827;
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+            line-height: 1.3;
+        }
+        
+        .prose p {
+            margin-bottom: 1.5rem;
+            text-align: justify;
+        }
+        
+        .prose ul, .prose ol {
+            margin: 1.5rem 0;
+            padding-left: 2rem;
+        }
+        
+        .prose li {
+            margin-bottom: 0.75rem;
+            line-height: 1.7;
+        }
+        
+        /* Enhanced Link Styling for Blog Content */
+        .prose a {
+            color: #316FD4;
+            text-decoration: none;
+            font-weight: 500;
+            position: relative;
+            transition: all 0.3s ease;
+            background: linear-gradient(120deg, rgba(49, 111, 212, 0.1) 0%, rgba(49, 111, 212, 0.15) 100%);
+            padding: 2px 6px;
+            border-radius: 4px;
+            border-bottom: 2px solid rgba(49, 111, 212, 0.3);
+        }
+        
+        .prose a:hover {
+            color: #2856B3;
+            background: linear-gradient(120deg, rgba(49, 111, 212, 0.15) 0%, rgba(49, 111, 212, 0.2) 100%);
+            border-bottom-color: #316FD4;
+            transform: translateY(-1px);
+        }
+        
+        /* Internal Link Styling */
+        .prose a.internal-link {
+            background: linear-gradient(120deg, rgba(49, 111, 212, 0.1) 0%, rgba(49, 111, 212, 0.15) 100%);
+            border-bottom: 2px solid rgba(49, 111, 212, 0.3);
+        }
+        
+        .prose a.internal-link:hover {
+            background: linear-gradient(120deg, rgba(49, 111, 212, 0.15) 0%, rgba(49, 111, 212, 0.2) 100%);
+            border-bottom-color: #316FD4;
+        }
+        
+        /* External Link Styling */
+        .prose a.external-link {
+            color: #059669;
+            background: linear-gradient(120deg, rgba(5, 150, 105, 0.1) 0%, rgba(5, 150, 105, 0.15) 100%);
+            border-bottom: 2px solid rgba(5, 150, 105, 0.3);
+        }
+        
+        .prose a.external-link:hover {
+            color: #047857;
+            background: linear-gradient(120deg, rgba(5, 150, 105, 0.15) 0%, rgba(5, 150, 105, 0.2) 100%);
+            border-bottom-color: #059669;
+        }
+        
+        .prose a.external-link::after {
+            content: "↗";
+            font-size: 0.8em;
+            margin-left: 4px;
+            opacity: 0.7;
+        }
+        
+        /* Business Term Link Styling */
+        .prose a.business-term {
+            background: linear-gradient(120deg, rgba(251, 191, 36, 0.1) 0%, rgba(251, 191, 36, 0.15) 100%);
+            color: #D97706;
+            border-bottom: 2px solid rgba(217, 119, 6, 0.3);
+            font-weight: 600;
+        }
+        
+        .prose a.business-term:hover {
+            background: linear-gradient(120deg, rgba(251, 191, 36, 0.15) 0%, rgba(251, 191, 36, 0.2) 100%);
+            color: #B45309;
+            border-bottom-color: #D97706;
+        }
+        
+        .prose blockquote {
+            border-left: 4px solid #316FD4;
+            padding-left: 1.5rem;
+            margin: 2rem 0;
+            font-style: italic;
+            color: #4B5563;
+            background: rgba(49, 111, 212, 0.05);
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            position: relative;
+        }
+        
+        .prose blockquote::before {
+            content: '"';
+            font-size: 4rem;
+            color: rgba(49, 111, 212, 0.2);
+            position: absolute;
+            top: -0.5rem;
+            left: 1rem;
+            font-family: Georgia, serif;
+        }
+        
+        /* Enhanced Table of Contents */
+        .toc-link {
+            display: block;
+            padding: 0.75rem 1rem;
+            color: #6B7280;
+            text-decoration: none;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+            line-height: 1.4;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .toc-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(49, 111, 212, 0.1), transparent);
+            transition: left 0.5s;
+        }
+        
+        .toc-link:hover::before {
+            left: 100%;
+        }
+        
+        .toc-link:hover {
+            color: #316FD4;
+            background: rgba(49, 111, 212, 0.1);
+            transform: translateX(4px);
+            text-decoration: none;
+        }
+        
+        .toc-link.toc-h3 {
+            padding-left: 2rem;
+            font-size: 0.8125rem;
+            color: #9CA3AF;
+        }
+        
+        .toc-link.toc-h3:hover {
+            color: #316FD4;
+        }
+        
+        /* Enhanced Card Styles */
+        .card {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.12);
+            transform: translateY(-4px);
+        }
+        
+        /* Author Section Enhancement */
+        .author-avatar {
+            width: 4rem;
+            height: 4rem;
+            border-radius: 50%;
+            border: 3px solid #F3F4F6;
+            box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .author-avatar:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 24px 0 rgba(0, 0, 0, 0.15);
+        }
+        
+        /* Modern Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+        
+        .animate-fade-in-up {
+            animation: fadeInUp 0.6s ease-out;
+        }
+        
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        /* Responsive Enhancements */
+        @media (max-width: 768px) {
+            .glass-card {
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+            }
+            
+            .prose h2 {
+                font-size: 1.5rem;
+                margin-top: 2rem;
+            }
+            
+            .prose h3 {
+                font-size: 1.25rem;
+            }
+        }
+        
+        /* Line Clamp Utilities */
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .line-clamp-3 {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body class="bg-white text-gray-900 font-sans">
+    <!-- Reading Progress Bar -->
+    <div class="reading-progress" id="readingProgress"></div>
+    
+    <!-- Modern Navigation Header -->
+    <header class="modern-navbar fixed w-full top-0 z-50" id="navbar">
+        <nav class="container mx-auto px-4 lg:px-8 py-4">
+            <%- include('../partials/navbar') %>
+        </nav>
+    </header>
+    
+    <div class="page-wrapper">
+        <!-- Modern Blog Post Hero Section -->
+        <section class="hero-section relative pt-20 lg:pt-24 pb-8 lg:pb-12 overflow-hidden">
+            <!-- Modern Background with Gradient -->
+            <div class="absolute inset-0 bg-gradient-to-br from-gray-50 via-blue-50/30 to-indigo-50/20"></div>
+            <div class="absolute inset-0 bg-grid-pattern opacity-5"></div>
+            
+            <div class="container mx-auto px-4 md:px-6 relative z-10">
+                <!-- Modern Asymmetrical Layout -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+                    <!-- Main Content - Larger on Desktop -->
+                    <div class="lg:col-span-8">
+                        <!-- Enhanced Breadcrumb Navigation -->
+                        <nav class="breadcrumb mb-8" aria-label="Breadcrumb">
+                            <div class="flex items-center space-x-2 text-sm">
+                                <a href="/blog" class="text-gray-500 hover:text-primary transition-all duration-200 hover:scale-105 font-medium">
+                                    <span>Blog</span>
+                                </a>
+                                <svg class="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                                <% if (blog.content_category) { %>
+                                <a href="/blog/<%= blog.content_category.toLowerCase().replace(/\s+/g, '-') %>" 
+                                   class="text-gray-500 hover:text-primary transition-all duration-200 hover:scale-105 font-medium">
+                                    <%= blog.content_category.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') %>
+                                </a>
+                                <svg class="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                                <% } %>
+                                <span class="text-gray-400 font-medium truncate max-w-xs">
+                                    <%= blog.title.length > 40 ? blog.title.substring(0, 40) + '...' : blog.title %>
+                                </span>
+                            </div>
+                        </nav>
+                        
+                        <!-- Modern Article Header with Gradient Text -->
+                        <div class="mb-8">
+                            <h1 class="text-4xl md:text-5xl lg:text-6xl font-black mb-6 leading-[1.1] tracking-tight">
+                                <span class="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-700 bg-clip-text text-transparent">
+                                    <%= blog.title %>
+                                </span>
+                            </h1>
+                            
+                            <!-- Article Excerpt/Description -->
+                            <% if (blog.excerpt || blog.meta_description) { %>
+                            <p class="text-xl md:text-2xl text-gray-600 leading-relaxed font-light max-w-4xl">
+                                <%= blog.excerpt || blog.meta_description %>
+                            </p>
+                            <% } %>
+                        </div>
+                        
+                        <!-- Enhanced Author and Meta Information -->
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-10 p-6 bg-white/70 backdrop-blur-sm rounded-2xl border border-gray-200/50 shadow-sm">
+                            <div class="flex items-center mb-4 sm:mb-0">
+                                <% 
+                                // Enhanced author object with Arzani branding
+                                const authorData = blog.author || {};
+                                const authorName = authorData.name || blog.author_name || 'Arzani Team';
+                                const authorBio = authorData.bio || blog.author_bio || 'Expert business marketplace insights from the Arzani team.';
+                                const authorAvatar = authorData.avatar || blog.author_image || '/figma design exports/images.webp/arzani-icon-nobackground.png';
+                                %>
+                                <div class="relative group">
+                                    <img src="<%= authorAvatar %>" 
+                                        alt="<%= authorName %>" 
+                                        class="w-14 h-14 rounded-full mr-4 ring-3 ring-white shadow-lg group-hover:scale-105 transition-transform duration-200"
+                                        onerror="this.onerror=null; this.src='/figma design exports/images.webp/arzani-icon-nobackground.png';">
+                                    <div class="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white"></div>
+                                </div>
+                                <div>
+                                    <p class="font-bold text-gray-900 text-lg mb-1"><%= authorName %></p>
+                                    <p class="text-sm text-gray-600 max-w-xs">
+                                        <%= authorBio.length > 50 ? authorBio.substring(0, 50) + '...' : authorBio %>
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <!-- Enhanced Meta Information -->
+                            <div class="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+                                <div class="flex items-center">
+                                    <svg class="w-4 h-4 mr-2 text-primary" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    <span class="font-medium">
+                                        <%= new Date(blog.publish_date || blog.created_at).toLocaleDateString('en-GB', { 
+                                            day: 'numeric', 
+                                            month: 'long', 
+                                            year: 'numeric' 
+                                        }) %>
+                                    </span>
+                                </div>
+                                <div class="flex items-center">
+                                    <svg class="w-4 h-4 mr-2 text-primary" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    <span class="font-medium"><%= blog.reading_time || blog.read_time || '5' %> min read</span>
+                                </div>
+                                <% if (blog.view_count && blog.view_count > 0) { %>
+                                <div class="flex items-center">
+                                    <svg class="w-4 h-4 mr-2 text-primary" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
+                                        <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    <span class="font-medium"><%= blog.view_count %> views</span>
+                                </div>
+                                <% } %>
+                            </div>
+                        </div>
+                        
+                        <!-- Modern Hero Image -->
+                        <% if (blog.hero_image && !blog.hero_image.includes('default-blog-hero.jpg')) { %>
+                        <div class="relative group mb-8">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                            <img src="<%= blog.hero_image %>" 
+                                alt="<%= blog.title %>" 
+                                class="w-full h-[400px] md:h-[500px] object-cover rounded-3xl shadow-2xl group-hover:scale-[1.02] transition-transform duration-500"
+                                onerror="this.style.display='none';">
+                            <div class="absolute inset-0 ring-1 ring-black/10 rounded-3xl"></div>
+                        </div>
+                        <% } %>
+                    </div>
+                    
+                    <!-- Modern Sidebar - Compact and Elegant -->
+                    <div class="lg:col-span-4">
+                        <div class="sticky top-28 space-y-6">
+                            <!-- Enhanced Table of Contents -->
+                            <div class="glass-card bg-white/80 backdrop-blur-lg p-6 rounded-2xl border border-gray-200/50 shadow-lg">
+                                <div class="flex items-center mb-4">
+                                    <svg class="w-5 h-5 mr-2 text-primary" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    <h3 class="text-lg font-bold text-gray-900">Contents</h3>
+                                </div>
+                                <div id="tableOfContents" class="space-y-2">
+                                    <!-- Dynamically populated by JavaScript -->
+                                </div>
+                                <div id="emptyToc" class="hidden text-gray-500 text-sm italic">
+                                    Article sections will appear here
+                                </div>
+                            </div>
+                            
+                            <!-- Modern Article Stats -->
+                            <div class="glass-card bg-white/80 backdrop-blur-lg p-6 rounded-2xl border border-gray-200/50 shadow-lg">
+                                <h3 class="text-lg font-bold text-gray-900 mb-4">Article Stats</h3>
+                                <div class="space-y-3">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-gray-600">Reading Time</span>
+                                        <span class="font-semibold text-primary"><%= blog.reading_time || blog.read_time || '5' %> min</span>
+                                    </div>
+                                    <% if (blog.view_count && blog.view_count > 0) { %>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-gray-600">Views</span>
+                                        <span class="font-semibold text-primary"><%= blog.view_count %></span>
+                                    </div>
+                                    <% } %>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-gray-600">Published</span>
+                                        <span class="font-semibold text-gray-700">
+                                            <%= new Date(blog.publish_date || blog.created_at).toLocaleDateString('en-GB', { 
+                                                month: 'short', 
+                                                year: 'numeric' 
+                                            }) %>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Enhanced Blog Post Content -->
+        <section class="content-section py-8 lg:py-12">
+            <div class="container mx-auto px-4 md:px-6">
+                <div class="flex flex-col lg:flex-row gap-8">
+                    <!-- Main Content -->
+                    <div class="lg:w-2/3">
+                        <!-- Article Content -->
+                        <article class="prose prose-lg max-w-none blog-content">
+                            <%- blog.content %>
+                            
+                            <!-- CTA Section -->
+                            <% if (blog.cta_text && blog.cta_link) { %>
+                            <div class="my-12 p-6 bg-primary bg-opacity-5 rounded-xl border border-primary border-opacity-20">
+                                <h3 class="text-2xl font-bold text-gray-900 mb-3">Ready to take the next step?</h3>
+                                <p class="mb-6 text-gray-700"><%= blog.cta_text %></p>
+                                <a href="<%= blog.cta_link %>" class="btn-primary inline-block">
+                                    <%= blog.cta_type === 'marketplace' ? 'Explore Marketplace' : (blog.cta_type === 'valuation' ? 'Get Free Valuation' : 'Learn More') %>
+                                </a>
+                            </div>
+                            <% } %>
+                            
+                            <!-- Tags -->
+                            <% if (blog.tags && blog.tags.length > 0) { %>
+                            <div class="flex flex-wrap gap-2 mt-8 mb-8">
+                                <% blog.tags.forEach(tag => { %>
+                                <a href="/blog/tag/<%= tag.slug %>" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-sm text-gray-700 transition-colors">
+                                    <%= tag.name %>
+                                </a>
+                                <% }) %>
+                            </div>
+                            <% } %>
+                            
+                            <!-- Author Bio Section -->
+                            <div class="mt-16 p-6 bg-gray-50 rounded-xl">
+                                <div class="flex items-start">
+                                    <img src="<%= blog.author.avatar || '/figma design exports/images/default-avatar.png' %>" 
+                                        alt="<%= blog.author.name %>" 
+                                        class="w-16 h-16 rounded-full mr-4 border border-gray-200">
+                                    <div>
+                                        <h3 class="text-xl font-bold mb-2">About <%= blog.author.name %></h3>
+                                        <p class="text-gray-700"><%= blog.author.bio || 'Expert contributor at Arzani Business Marketplace.' %></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
+                        
+                        <!-- Related Posts Section -->
+                        <% if (blog.relatedPosts && blog.relatedPosts.length > 0) { %>
+                        <div class="mt-16">
+                            <h3 class="text-2xl font-bold mb-6">Related Articles</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <% blog.relatedPosts.forEach(relatedPost => { %>
+                                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-transform hover:shadow-md hover:-translate-y-1">
+                                    <a href="/blog/<%= relatedPost.content_category || 'buying-a-business' %>/<%= relatedPost.slug %>">
+                                        <img src="<%= relatedPost.hero_image || 'https://arzani-images1.s3.eu-west-2.amazonaws.com/blogs/default-blog-hero.jpg' %>" 
+                                            alt="<%= relatedPost.title %>" 
+                                            class="w-full h-48 object-cover"
+                                            onerror="this.onerror=null; this.src='https://arzani-images1.s3.eu-west-2.amazonaws.com/blogs/default-blog-hero.jpg';">
+                                        <div class="p-4">
+                                            <h4 class="text-lg font-bold mb-2 line-clamp-2"><%= relatedPost.title %></h4>
+                                            <p class="text-gray-600 text-sm line-clamp-3"><%= relatedPost.excerpt %></p>
+                                        </div>
+                                    </a>
+                                </div>
+                                <% }) %>
+                            </div>
+                        </div>
+                        <% } %>
+                        
+                        <!-- Parent Pillar Content Section -->
+                        <% if (blog.parentPillar) { %>
+                        <div class="mt-16 p-6 bg-primary bg-opacity-5 rounded-xl">
+                            <h3 class="text-2xl font-bold mb-3">Read the Complete Guide</h3>
+                            <p class="mb-6">This article is part of our comprehensive guide on <%= blog.parentPillar.title.toLowerCase().includes('guide') ? blog.parentPillar.title.split('guide')[0].trim() : blog.parentPillar.title %>.</p>
+                            <a href="/blog/<%= blog.parentPillar.content_category || 'buying-a-business' %>/<%= blog.parentPillar.slug %>" class="btn-primary inline-block">
+                                Read Full Guide
+                            </a>
+                        </div>
+                        <% } %>
+                    </div>
+                    
+                    <!-- Right Sidebar for Desktop -->
+                    <div class="lg:w-1/3 hidden lg:block">
+                        <!-- Enhanced Categories Widget -->
+                        <div class="glass-card bg-white/80 backdrop-blur-lg p-6 rounded-2xl border border-gray-200/50 shadow-lg mb-6">
+                            <div class="flex items-center mb-4">
+                                <svg class="w-5 h-5 mr-2 text-primary" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"></path>
+                                </svg>
+                                <h3 class="text-lg font-bold text-gray-900">Explore Topics</h3>
+                            </div>
+                            <div class="space-y-2">
+                                <% if (categories && categories.length > 0) { %>
+                                <% 
+                                // Filter categories to only show those with published posts and valid data
+                                const validCategories = categories.filter(category => {
+                                    const hasValidData = category && (category.name || category);
+                                    const hasPublishedPosts = category.post_count && parseInt(category.post_count) > 0;
+                                    return hasValidData && hasPublishedPosts;
+                                });
+                                %>
+                                <% if (validCategories.length > 0) { %>
+                                <% validCategories.slice(0, 8).forEach(category => { %>
+                                <a href="/blog/<%= category.slug || (category.name || category).toLowerCase().replace(/\s+/g, '-') %>" 
+                                   class="flex items-center justify-between p-3 rounded-xl hover:bg-gradient-to-r hover:from-primary/5 hover:to-primary/10 transition-all duration-200 group border border-transparent hover:border-primary/20">
+                                    <div class="flex items-center">
+                                        <div class="w-2 h-2 bg-gradient-to-r from-primary to-primary-dark rounded-full mr-3 group-hover:scale-125 transition-transform duration-200"></div>
+                                        <span class="text-gray-700 group-hover:text-primary transition-colors font-medium">
+                                            <%= category.name || category %>
+                                        </span>
+                                    </div>
+                                    <span class="bg-gradient-to-r from-gray-100 to-gray-200 group-hover:from-primary group-hover:to-primary-dark group-hover:text-white px-2 py-1 rounded-full text-xs font-semibold transition-all duration-200">
+                                        <%= category.post_count || '0' %>
+                                    </span>
+                                </a>
+                                <% }) %>
+                                <% } else { %>
+                                <div class="text-gray-500 text-sm italic p-3 bg-gray-50 rounded-xl">
+                                    Exploring business topics...
+                                </div>
+                                <% } %>
+                                <% } else { %>
+                                <div class="text-gray-500 text-sm italic p-3 bg-gray-50 rounded-xl">
+                                    Business topics will appear here
+                                </div>
+                                <% } %>
+                            </div>
+                        </div>
+                        
+                        <!-- Enhanced Newsletter Signup -->
+                        <div class="glass-card bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white p-6 rounded-2xl shadow-xl mb-6 relative overflow-hidden">
+                            <!-- Animated Background -->
+                            <div class="absolute inset-0 bg-gradient-to-r from-primary/20 to-transparent opacity-50"></div>
+                            <div class="relative z-10">
+                                <div class="flex items-center mb-3">
+                                    <div class="p-2 bg-white/10 rounded-lg mr-3">
+                                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
+                                            <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
+                                        </svg>
+                                    </div>
+                                    <h3 class="text-lg font-bold">Business Insights</h3>
+                                </div>
+                                <p class="mb-4 text-gray-300 leading-relaxed text-sm">
+                                    Get expert insights on business acquisition, valuation, and marketplace trends.
+                                </p>
+                                <form action="/subscribe" method="POST" class="space-y-3">
+                                    <input type="email" name="email" placeholder="Enter your email" required 
+                                        class="w-full px-4 py-3 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-white/40 transition-all">
+                                    <button type="submit" class="w-full bg-white text-gray-900 py-3 rounded-xl font-semibold hover:bg-gray-100 transition-all duration-200 hover:scale-[1.02]">
+                                        Subscribe Now
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        
+                        <!-- Enhanced CTA Widget -->
+                        <div class="glass-card bg-gradient-to-br from-primary via-primary-dark to-blue-700 text-white p-6 rounded-2xl shadow-xl relative overflow-hidden">
+                            <!-- Animated Background Pattern -->
+                            <div class="absolute inset-0 opacity-10">
+                                <div class="absolute top-0 right-0 w-32 h-32 bg-white rounded-full -translate-y-16 translate-x-16"></div>
+                                <div class="absolute bottom-0 left-0 w-24 h-24 bg-white rounded-full translate-y-12 -translate-x-12"></div>
+                            </div>
+                            <div class="relative z-10">
+                                <div class="flex items-center mb-3">
+                                    <div class="p-2 bg-white/20 rounded-lg mr-3">
+                                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"></path>
+                                        </svg>
+                                    </div>
+                                    <h3 class="text-lg font-bold">Ready to Sell?</h3>
+                                </div>
+                                <p class="mb-4 text-blue-100 leading-relaxed text-sm">
+                                    Get an AI-powered business valuation in minutes.
+                                </p>
+                                <a href="/business-valuation" class="block w-full bg-white text-primary text-center py-3 px-4 rounded-xl font-semibold hover:bg-gray-50 transition-all duration-200 hover:scale-[1.02] shadow-lg">
+                                    Get Valuated
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <%- include('../partials/footer') %>
+    </div>
+
+    <!-- Simplified Cookie Consent Banner -->
+    <div id="cookieConsentBanner" class="fixed bottom-0 left-0 right-0 bg-dark-light p-4 border-t border-gray-700 z-[100] hidden">
+        <div class="container mx-auto px-4 md:px-6 flex flex-col md:flex-row items-center justify-between gap-4">
+            <p class="text-white text-sm">We use cookies to enhance your experience. By continuing, you agree to our <a href="/privacy-policy" class="underline">Privacy Policy</a>.</p>
+            <div class="flex gap-2">
+                <button id="acceptCookies" class="bg-primary hover:bg-primary-dark text-white px-4 py-1 rounded text-sm transition-colors">Accept</button>
+                <button id="declineCookies" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-1 rounded text-sm transition-colors">Decline</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/navigation.js"></script>
+    <script src="/js/blog-post.js"></script>
+    <script src="/js/cookie-banner.js"></script>
+    
+    <script>
+        // Enhanced Table of Contents with Smooth Animations
+        document.addEventListener('DOMContentLoaded', function() {
+            const article = document.querySelector('article');
+            const tableOfContents = document.getElementById('tableOfContents');
+            const emptyToc = document.getElementById('emptyToc');
+            
+            if (article && tableOfContents) {
+                // Get all headings (h2, h3) from the article
+                const headings = article.querySelectorAll('h2, h3');
+                
+                if (headings.length === 0) {
+                    if (emptyToc) emptyToc.classList.remove('hidden');
+                    return;
+                }
+                
+                // Create TOC entries with enhanced styling
+                headings.forEach((heading, index) => {
+                    // Add ID to heading if not present
+                    if (!heading.id) {
+                        heading.id = `heading-${index}`;
+                    }
+                    
+                    const tocItem = document.createElement('a');
+                    tocItem.href = `#${heading.id}`;
+                    tocItem.classList.add('block', 'py-2', 'px-3', 'rounded-lg', 'hover:bg-gradient-to-r', 'hover:from-primary/5', 'hover:to-primary/10', 'hover:text-primary', 'transition-all', 'duration-200', 'border-l-2', 'border-transparent', 'hover:border-primary/30');
+                    
+                    // Add padding for h3 to create hierarchy
+                    if (heading.tagName === 'H3') {
+                        tocItem.classList.add('ml-4', 'text-sm', 'text-gray-600');
+                    } else {
+                        tocItem.classList.add('font-medium', 'text-gray-700');
+                    }
+                    
+                    tocItem.textContent = heading.textContent;
+                    
+                    // Add smooth scroll behavior
+                    tocItem.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        heading.scrollIntoView({ 
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    });
+                    
+                    tableOfContents.appendChild(tocItem);
+                });
+            }
+            
+            // Enhanced Reading Progress with Animation
+            const readingProgress = document.getElementById('readingProgress');
+            if (readingProgress) {
+                // Add gradient background
+                readingProgress.classList.add('bg-gradient-to-r', 'from-primary', 'to-primary-dark');
+                
+                let ticking = false;
+                function updateProgress() {
+                    const windowHeight = window.innerHeight;
+                    const fullHeight = document.body.scrollHeight;
+                    const scrolled = window.pageYOffset;
+                    
+                    const percentScrolled = Math.min((scrolled / (fullHeight - windowHeight)) * 100, 100);
+                    readingProgress.style.width = `${percentScrolled}%`;
+                    ticking = false;
+                }
+                
+                window.addEventListener('scroll', function() {
+                    if (!ticking) {
+                        requestAnimationFrame(updateProgress);
+                        ticking = true;
+                    }
+                });
+            }
+            
+            // Enhanced Business Term Link Classification
+            const articleContent = document.querySelector('.prose');
+            if (articleContent) {
+                const businessTerms = [
+                    'valuation', 'acquisition', 'due diligence', 'EBITDA', 'cash flow',
+                    'revenue', 'profit margin', 'ROI', 'market analysis', 'business model',
+                    'competitive advantage', 'scalability', 'exit strategy', 'investment',
+                    'equity', 'debt financing', 'venture capital', 'private equity',
+                    'merger', 'consolidation', 'market share', 'growth rate'
+                ];
+                
+                // Create regex pattern for business terms
+                const termPattern = new RegExp(`\\b(${businessTerms.join('|')})\\b`, 'gi');
+                
+                // Function to wrap business terms
+                function highlightBusinessTerms(node) {
+                    if (node.nodeType === Node.TEXT_NODE) {
+                        const text = node.textContent;
+                        if (termPattern.test(text)) {
+                            const span = document.createElement('span');
+                            span.innerHTML = text.replace(termPattern, '<span class="business-term text-primary font-semibold hover:text-primary-dark transition-colors duration-200 cursor-help" title="Business terminology">$1</span>');
+                            node.parentNode.replaceChild(span, node);
+                        }
+                    } else if (node.nodeType === Node.ELEMENT_NODE && node.tagName !== 'SCRIPT' && node.tagName !== 'STYLE') {
+                        Array.from(node.childNodes).forEach(highlightBusinessTerms);
+                    }
+                }
+                
+                // Apply highlighting
+                Array.from(articleContent.children).forEach(highlightBusinessTerms);
+            }
+            
+            // Enhanced Interactive Elements with Micro-animations
+            function addInteractiveEffects() {
+                // Animate cards on scroll
+                const observerOptions = {
+                    threshold: 0.1,
+                    rootMargin: '0px 0px -50px 0px'
+                };
+                
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('animate-slide-up');
+                            entry.target.style.opacity = '1';
+                            entry.target.style.transform = 'translateY(0)';
+                        }
+                    });
+                }, observerOptions);
+                
+                // Observe all glass cards
+                document.querySelectorAll('.glass-card').forEach(card => {
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateY(20px)';
+                    card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                    observer.observe(card);
+                });
+                
+                // Add hover effects to category links
+                document.querySelectorAll('[class*="group"]').forEach(element => {
+                    element.addEventListener('mouseenter', function() {
+                        this.style.transform = 'translateY(-2px)';
+                    });
+                    
+                    element.addEventListener('mouseleave', function() {
+                        this.style.transform = 'translateY(0)';
+                    });
+                });
+            }
+            
+            // Initialize interactive effects
+            addInteractiveEffects();
+            
+            // Enhanced Author Section Animations
+            const authorSection = document.querySelector('.author-section');
+            if (authorSection) {
+                const authorAvatar = authorSection.querySelector('img');
+                if (authorAvatar) {
+                    authorAvatar.addEventListener('mouseenter', function() {
+                        this.style.transform = 'scale(1.05) rotate(2deg)';
+                    });
+                    
+                    authorAvatar.addEventListener('mouseleave', function() {
+                        this.style.transform = 'scale(1) rotate(0deg)';
+                    });
+                }
+            }
+            
+            // Enhanced Newsletter Form Interaction
+            const newsletterForm = document.querySelector('form[action="/subscribe"]');
+            if (newsletterForm) {
+                const emailInput = newsletterForm.querySelector('input[type="email"]');
+                const submitButton = newsletterForm.querySelector('button[type="submit"]');
+                
+                if (emailInput && submitButton) {
+                    emailInput.addEventListener('focus', function() {
+                        this.parentNode.classList.add('ring-2', 'ring-white/30');
+                    });
+                    
+                    emailInput.addEventListener('blur', function() {
+                        this.parentNode.classList.remove('ring-2', 'ring-white/30');
+                    });
+                    
+                    submitButton.addEventListener('click', function(e) {
+                        if (emailInput.value && emailInput.checkValidity()) {
+                            this.innerHTML = '<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-900 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Subscribing...';
+                        }
+                    });
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Payment</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Load Stripe.js with proper attributes -->
+    <script src="https://js.stripe.com/v3/"
+            crossorigin="anonymous"
+            referrerpolicy="origin"
+            fetchpriority="high"
+            integrity="sha384-"></script>
+</head>
+<body>
+    <%- body %>
+    <!-- Load local scripts -->
+    <script src="/js/checkout.js" 
+            defer 
+            crossorigin="anonymous"
+            fetchpriority="high"></script>
+</body>
+</html>

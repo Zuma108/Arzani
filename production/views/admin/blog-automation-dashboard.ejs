@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog Automation Dashboard | Arzani Admin</title>
+    <link rel="stylesheet" href="/css/modern.css">
+    <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .dashboard-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #3B82F6;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-active { background-color: #10B981; }
+        .status-inactive { background-color: #EF4444; }
+        .status-generating { background-color: #F59E0B; }
+        
+        .metric-large {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #1F2937;
+            margin: 0.5rem 0;
+        }
+        
+        .metric-label {
+            color: #6B7280;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #E5E7EB;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3B82F6, #10B981);
+            transition: width 0.3s ease;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 1.5rem;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-primary {
+            background-color: #3B82F6;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2563EB;
+        }
+        
+        .btn-secondary {
+            background-color: #F3F4F6;
+            color: #374151;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #E5E7EB;
+        }
+        
+        .btn-success {
+            background-color: #10B981;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #059669;
+        }
+        
+        .btn-warning {
+            background-color: #F59E0B;
+            color: white;
+        }
+        
+        .btn-warning:hover {
+            background-color: #D97706;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        
+        .alert {
+            padding: 1rem;
+            border-radius: 6px;
+            margin: 1rem 0;
+            display: none;
+        }
+        
+        .alert-success {
+            background-color: #D1FAE5;
+            color: #065F46;
+            border: 1px solid #A7F3D0;
+        }
+        
+        .alert-error {
+            background-color: #FEE2E2;
+            color: #991B1B;
+            border: 1px solid #FECACA;
+        }
+        
+        .log-container {
+            background-color: #F9FAFB;
+            border: 1px solid #E5E7EB;
+            border-radius: 6px;
+            padding: 1rem;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+        }
+        
+        .log-entry {
+            margin-bottom: 0.5rem;
+            padding: 0.25rem 0;
+        }
+        
+        .log-timestamp {
+            color: #6B7280;
+            margin-right: 1rem;
+        }
+        
+        .next-post-info {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin: 1rem 0;
+        }
+        
+        .category-breakdown {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .category-item {
+            background: #F8FAFC;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .category-count {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #3B82F6;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <img src="/figma design exports/images.webp/arzani-icon-nobackground.png" alt="Arzani" class="h-8 w-8 mr-3">
+                    <h1 class="text-xl font-semibold text-gray-900">Blog Automation Dashboard</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/admin" class="text-gray-600 hover:text-gray-900">Admin Panel</a>
+                    <a href="/blog" class="text-gray-600 hover:text-gray-900">View Blog</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Status Alerts -->
+        <div id="success-alert" class="alert alert-success">
+            <span id="success-message"></span>
+        </div>
+        <div id="error-alert" class="alert alert-error">
+            <span id="error-message"></span>
+        </div>
+
+        <!-- Main Dashboard Grid -->
+        <div class="dashboard-grid">
+            <!-- System Status Card -->
+            <div class="dashboard-card">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">System Status</h3>
+                <div class="flex items-center mb-3">
+                    <span id="status-indicator" class="status-indicator status-active"></span>
+                    <span id="system-status" class="font-medium">Loading...</span>
+                </div>
+                <div class="text-sm text-gray-600 mb-2">
+                    Generation Status: <span id="generation-status" class="font-medium">Checking...</span>
+                </div>
+                <div class="text-sm text-gray-600">
+                    Last Updated: <span id="last-updated">Never</span>
+                </div>
+            </div>
+
+            <!-- Total Posts Card -->
+            <div class="dashboard-card">
+                <div class="metric-label">Total Published Posts</div>
+                <div id="total-posts" class="metric-large">0</div>
+                <div class="text-sm text-gray-600">
+                    This week: <span id="weekly-posts" class="font-medium">0</span>
+                </div>
+            </div>
+
+            <!-- Progress Card -->
+            <div class="dashboard-card">
+                <div class="metric-label">Checklist Progress</div>
+                <div id="progress-percentage" class="metric-large">0%</div>
+                <div class="progress-bar">
+                    <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
+                </div>
+                <div class="text-sm text-gray-600">
+                    <span id="completed-posts">0</span> of <span id="total-checklist">200</span> completed
+                </div>
+            </div>
+        </div>
+
+        <!-- Next Post Info -->
+        <div id="next-post-card" class="next-post-info">
+            <h3 class="text-lg font-semibold mb-2">🎯 Next Post to Generate</h3>
+            <div class="text-xl font-medium mb-1" id="next-post-title">Loading...</div>
+            <div class="text-sm opacity-90">
+                Category: <span id="next-post-category">-</span> | 
+                Type: <span id="next-post-type">-</span>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="dashboard-card">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Manual Controls</h3>
+            <div class="action-buttons">
+                <button id="generate-now-btn" class="btn btn-primary">
+                    🚀 Generate Post Now
+                </button>
+                <button id="update-interlinking-btn" class="btn btn-secondary">
+                    🔗 Update Interlinking
+                </button>
+                <button id="seo-audit-btn" class="btn btn-warning">
+                    📊 Run SEO Audit
+                </button>
+                <button id="refresh-status-btn" class="btn btn-secondary">
+                    🔄 Refresh Status
+                </button>
+            </div>
+            
+            <div class="action-buttons" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #E5E7EB;">
+                <button id="start-system-btn" class="btn btn-success" style="display: none;">
+                    ▶️ Start System
+                </button>
+                <button id="stop-system-btn" class="btn btn-warning">
+                    ⏹️ Stop System
+                </button>
+            </div>
+        </div>
+
+        <!-- Category Breakdown -->
+        <div class="dashboard-card">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Content Categories</h3>
+            <div class="category-breakdown" id="category-breakdown">
+                <!-- Categories will be populated dynamically -->
+            </div>
+        </div>
+
+        <!-- Activity Log -->
+        <div class="dashboard-card">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
+            <div id="activity-log" class="log-container">
+                <div class="log-entry">
+                    <span class="log-timestamp">[Loading...]</span>
+                    <span>Initializing dashboard...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class BlogAutomationDashboard {
+            constructor() {
+                this.isLoading = false;
+                this.refreshInterval = null;
+                this.initialize();
+            }
+
+            async initialize() {
+                console.log('🚀 Initializing Blog Automation Dashboard...');
+                
+                // Set up event listeners
+                this.setupEventListeners();
+                
+                // Initial status load
+                await this.refreshStatus();
+                
+                // Start auto-refresh every 30 seconds
+                this.startAutoRefresh();
+                
+                this.addLogEntry('Dashboard initialized successfully');
+            }
+
+            setupEventListeners() {
+                document.getElementById('generate-now-btn').addEventListener('click', () => this.generateNow());
+                document.getElementById('update-interlinking-btn').addEventListener('click', () => this.updateInterlinking());
+                document.getElementById('seo-audit-btn').addEventListener('click', () => this.runSEOAudit());
+                document.getElementById('refresh-status-btn').addEventListener('click', () => this.refreshStatus());
+                document.getElementById('start-system-btn').addEventListener('click', () => this.startSystem());
+                document.getElementById('stop-system-btn').addEventListener('click', () => this.stopSystem());
+            }
+
+            async refreshStatus() {
+                if (this.isLoading) return;
+                
+                try {
+                    this.isLoading = true;
+                    this.setLoadingState(true);
+                    
+                    // Get system status
+                    const statusResponse = await fetch('/api/blog-automation/status');
+                    const statusData = await statusResponse.json();
+                    
+                    if (statusData.success) {
+                        this.updateStatusDisplay(statusData.data);
+                    }
+                    
+                    // Get checklist progress
+                    const progressResponse = await fetch('/api/blog-automation/checklist-progress');
+                    const progressData = await progressResponse.json();
+                    
+                    if (progressData.success) {
+                        this.updateProgressDisplay(progressData.data);
+                    }
+                    
+                    this.addLogEntry('Status refreshed successfully');
+                    
+                } catch (error) {
+                    console.error('Error refreshing status:', error);
+                    this.showError('Failed to refresh status: ' + error.message);
+                    this.addLogEntry('Error refreshing status: ' + error.message);
+                } finally {
+                    this.isLoading = false;
+                    this.setLoadingState(false);
+                }
+            }
+
+            updateStatusDisplay(status) {
+                // System status
+                document.getElementById('system-status').textContent = status.systemStatus || 'Unknown';
+                document.getElementById('generation-status').textContent = status.isGenerating ? 'Generating...' : 'Idle';
+                document.getElementById('last-updated').textContent = new Date().toLocaleString();
+                
+                // Status indicator
+                const indicator = document.getElementById('status-indicator');
+                indicator.className = 'status-indicator';
+                if (status.systemStatus === 'Active') {
+                    indicator.classList.add(status.isGenerating ? 'status-generating' : 'status-active');
+                } else {
+                    indicator.classList.add('status-inactive');
+                }
+                
+                // Post counts
+                document.getElementById('total-posts').textContent = status.totalPosts || 0;
+                document.getElementById('weekly-posts').textContent = status.weeklyPosts || 0;
+            }
+
+            updateProgressDisplay(progress) {
+                // Progress metrics
+                document.getElementById('progress-percentage').textContent = progress.percentage + '%';
+                document.getElementById('progress-fill').style.width = progress.percentage + '%';
+                document.getElementById('completed-posts').textContent = progress.completed;
+                document.getElementById('total-checklist').textContent = progress.total;
+                
+                // Next post info
+                document.getElementById('next-post-title').textContent = progress.nextPost || 'All posts completed';
+                document.getElementById('next-post-category').textContent = progress.nextCategory || '-';
+                document.getElementById('next-post-type').textContent = progress.nextContentType || '-';
+                
+                // Hide next post card if all completed
+                const nextPostCard = document.getElementById('next-post-card');
+                if (progress.nextPost === 'All posts completed') {
+                    nextPostCard.style.background = 'linear-gradient(135deg, #10B981 0%, #059669 100%)';
+                    document.getElementById('next-post-title').textContent = '🎉 All Posts Completed!';
+                }
+            }
+
+            async generateNow() {
+                try {
+                    this.setButtonLoading('generate-now-btn', true);
+                    
+                    const response = await fetch('/api/blog-automation/generate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.showSuccess('Blog generation triggered successfully! Check back in a few minutes.');
+                        this.addLogEntry('Manual blog generation triggered');
+                        
+                        // Refresh status in 5 seconds
+                        setTimeout(() => this.refreshStatus(), 5000);
+                    } else {
+                        this.showError(data.error || 'Failed to trigger blog generation');
+                    }
+                    
+                } catch (error) {
+                    console.error('Error triggering generation:', error);
+                    this.showError('Failed to trigger blog generation: ' + error.message);
+                } finally {
+                    this.setButtonLoading('generate-now-btn', false);
+                }
+            }
+
+            async updateInterlinking() {
+                try {
+                    this.setButtonLoading('update-interlinking-btn', true);
+                    
+                    const response = await fetch('/api/blog-automation/update-interlinking', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.showSuccess('Interlinking update triggered successfully!');
+                        this.addLogEntry('Interlinking analysis update triggered');
+                    } else {
+                        this.showError(data.error || 'Failed to trigger interlinking update');
+                    }
+                    
+                } catch (error) {
+                    console.error('Error updating interlinking:', error);
+                    this.showError('Failed to update interlinking: ' + error.message);
+                } finally {
+                    this.setButtonLoading('update-interlinking-btn', false);
+                }
+            }
+
+            async runSEOAudit() {
+                try {
+                    this.setButtonLoading('seo-audit-btn', true);
+                    
+                    const response = await fetch('/api/blog-automation/seo-audit', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.showSuccess('SEO audit triggered successfully!');
+                        this.addLogEntry('SEO audit triggered');
+                    } else {
+                        this.showError(data.error || 'Failed to trigger SEO audit');
+                    }
+                    
+                } catch (error) {
+                    console.error('Error running SEO audit:', error);
+                    this.showError('Failed to run SEO audit: ' + error.message);
+                } finally {
+                    this.setButtonLoading('seo-audit-btn', false);
+                }
+            }
+
+            async startSystem() {
+                try {
+                    this.setButtonLoading('start-system-btn', true);
+                    
+                    const response = await fetch('/api/blog-automation/start', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.showSuccess('Blog automation system started successfully!');
+                        this.addLogEntry('System started');
+                        await this.refreshStatus();
+                    } else {
+                        this.showError(data.error || 'Failed to start system');
+                    }
+                    
+                } catch (error) {
+                    console.error('Error starting system:', error);
+                    this.showError('Failed to start system: ' + error.message);
+                } finally {
+                    this.setButtonLoading('start-system-btn', false);
+                }
+            }
+
+            async stopSystem() {
+                if (!confirm('Are you sure you want to stop the automated blog generation system?')) {
+                    return;
+                }
+                
+                try {
+                    this.setButtonLoading('stop-system-btn', true);
+                    
+                    const response = await fetch('/api/blog-automation/stop', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.showSuccess('Blog automation system stopped successfully!');
+                        this.addLogEntry('System stopped');
+                        await this.refreshStatus();
+                    } else {
+                        this.showError(data.error || 'Failed to stop system');
+                    }
+                    
+                } catch (error) {
+                    console.error('Error stopping system:', error);
+                    this.showError('Failed to stop system: ' + error.message);
+                } finally {
+                    this.setButtonLoading('stop-system-btn', false);
+                }
+            }
+
+            startAutoRefresh() {
+                // Refresh every 30 seconds
+                this.refreshInterval = setInterval(() => {
+                    if (!this.isLoading) {
+                        this.refreshStatus();
+                    }
+                }, 30000);
+            }
+
+            stopAutoRefresh() {
+                if (this.refreshInterval) {
+                    clearInterval(this.refreshInterval);
+                    this.refreshInterval = null;
+                }
+            }
+
+            setLoadingState(loading) {
+                const dashboard = document.querySelector('.max-w-7xl');
+                if (loading) {
+                    dashboard.classList.add('loading');
+                } else {
+                    dashboard.classList.remove('loading');
+                }
+            }
+
+            setButtonLoading(buttonId, loading) {
+                const button = document.getElementById(buttonId);
+                if (loading) {
+                    button.disabled = true;
+                    button.innerHTML = '⏳ Processing...';
+                } else {
+                    button.disabled = false;
+                    // Restore original text based on button ID
+                    const originalTexts = {
+                        'generate-now-btn': '🚀 Generate Post Now',
+                        'update-interlinking-btn': '🔗 Update Interlinking',
+                        'seo-audit-btn': '📊 Run SEO Audit',
+                        'refresh-status-btn': '🔄 Refresh Status',
+                        'start-system-btn': '▶️ Start System',
+                        'stop-system-btn': '⏹️ Stop System'
+                    };
+                    button.innerHTML = originalTexts[buttonId] || 'Action';
+                }
+            }
+
+            showSuccess(message) {
+                const alert = document.getElementById('success-alert');
+                const messageEl = document.getElementById('success-message');
+                messageEl.textContent = message;
+                alert.style.display = 'block';
+                
+                setTimeout(() => {
+                    alert.style.display = 'none';
+                }, 5000);
+            }
+
+            showError(message) {
+                const alert = document.getElementById('error-alert');
+                const messageEl = document.getElementById('error-message');
+                messageEl.textContent = message;
+                alert.style.display = 'block';
+                
+                setTimeout(() => {
+                    alert.style.display = 'none';
+                }, 8000);
+            }
+
+            addLogEntry(message) {
+                const logContainer = document.getElementById('activity-log');
+                const timestamp = new Date().toLocaleTimeString();
+                
+                const logEntry = document.createElement('div');
+                logEntry.className = 'log-entry';
+                logEntry.innerHTML = `
+                    <span class="log-timestamp">[${timestamp}]</span>
+                    <span>${message}</span>
+                `;
+                
+                // Add to top of log
+                logContainer.insertBefore(logEntry, logContainer.firstChild);
+                
+                // Keep only last 20 entries
+                const entries = logContainer.querySelectorAll('.log-entry');
+                if (entries.length > 20) {
+                    entries[entries.length - 1].remove();
+                }
+            }
+        }
+
+        // Initialize dashboard when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            window.dashboard = new BlogAutomationDashboard();
+        });
+
+        // Clean up on page unload
+        window.addEventListener('beforeunload', () => {
+            if (window.dashboard) {
+                window.dashboard.stopAutoRefresh();
+            }
+        });
+    </script>
+</body>
+</html>

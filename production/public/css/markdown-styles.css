@@ -1,0 +1,415 @@
+/* Enhanced Markdown Rendering Styles for Arzani-X */
+/* Ensures compatibility with Tailwind CSS and proper rendering */
+
+/* Base Styles - Higher specificity to override Tailwind */
+.message-content {
+    line-height: 1.6 !important;
+    color: #374151 !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+    font-size: 1rem !important;
+}
+
+/* Override Tailwind's prose styles for better control */
+.message-content.prose {
+    max-width: none !important;
+    color: #374151 !important;
+}
+
+.message-content.prose * {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+/* Reset and rebuild spacing properly */
+.message-content > * {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.message-content > * + * {
+    margin-top: 1rem;
+}
+
+/* Headings - Override Tailwind prose with higher specificity */
+.message-content h1,
+.message-content.prose h1 {
+    font-size: 1.5rem !important; /* text-2xl */
+    font-weight: 700 !important; /* font-bold */
+    color: #1f2937 !important; /* text-gray-800 */
+    margin-top: 1.5rem !important; /* mt-6 */
+    margin-bottom: 1rem !important; /* mb-4 */
+    padding-bottom: 0.5rem !important; /* pb-2 */
+    border-bottom: 1px solid #e5e7eb !important; /* border-b border-gray-200 */
+    line-height: 1.2 !important;
+}
+
+.message-content h2,
+.message-content.prose h2 {
+    font-size: 1.25rem !important; /* text-xl */
+    font-weight: 700 !important; /* font-bold */
+    color: #1f2937 !important; /* text-gray-800 */
+    margin-top: 1.25rem !important; /* mt-5 */
+    margin-bottom: 0.75rem !important; /* mb-3 */
+    line-height: 1.2 !important;
+}
+
+.message-content h3,
+.message-content.prose h3 {
+    font-size: 1.125rem !important; /* text-lg */
+    font-weight: 600 !important; /* font-semibold */
+    color: #374151 !important; /* text-gray-700 */
+    margin-top: 1rem !important; /* mt-4 */
+    margin-bottom: 0.5rem !important; /* mb-2 */
+    line-height: 1.2 !important;
+}
+
+.message-content h4,
+.message-content.prose h4 {
+    font-size: 1rem !important; /* text-base */
+    font-weight: 600 !important; /* font-semibold */
+    color: #374151 !important; /* text-gray-700 */
+    margin-top: 0.75rem !important; /* mt-3 */
+    margin-bottom: 0.5rem !important; /* mb-2 */
+    line-height: 1.2 !important;
+}
+
+.message-content h5,
+.message-content.prose h5 {
+    font-size: 0.875rem !important; /* text-sm */
+    font-weight: 600 !important; /* font-semibold */
+    color: #4b5563 !important; /* text-gray-600 */
+    margin-top: 0.5rem !important; /* mt-2 */
+    margin-bottom: 0.25rem !important; /* mb-1 */
+    line-height: 1.2 !important;
+}
+
+.message-content h6,
+.message-content.prose h6 {
+    font-size: 0.75rem !important; /* text-xs */
+    font-weight: 600 !important; /* font-semibold */
+    color: #4b5563 !important; /* text-gray-600 */
+    margin-top: 0.5rem !important; /* mt-2 */
+    margin-bottom: 0.25rem !important; /* mb-1 */
+    text-transform: uppercase !important; /* uppercase */
+    letter-spacing: 0.025em !important; /* tracking-wide */
+    line-height: 1.2 !important;
+}
+
+/* Table Styles - Unified for markdown-renderer.js and fallback */
+.message-content .overflow-x-auto,
+.message-content.prose .overflow-x-auto {
+    overflow-x: auto !important;
+    margin-top: 1.5rem !important; /* my-6 */
+    margin-bottom: 1.5rem !important;
+}
+
+.message-content table,
+.message-content.prose table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    background-color: white !important;
+    border-radius: 0.5rem !important; /* rounded-lg */
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important; /* shadow-sm */
+    overflow: hidden !important;
+    margin: 1rem 0 !important;
+    border: 1px solid #e5e7eb !important;
+}
+
+.message-content thead,
+.message-content.prose thead {
+    background-color: #f9fafb !important; /* bg-gray-50 */
+    border-bottom: 1px solid #e5e7eb !important; /* border-b border-gray-200 */
+}
+
+.message-content tbody,
+.message-content.prose tbody {
+    /* divide-y divide-gray-200 handled by individual tr borders */
+}
+
+.message-content tbody tr,
+.message-content.prose tbody tr {
+    border-bottom: 1px solid #e5e7eb !important; /* divide-y divide-gray-200 */
+}
+
+.message-content tr:hover,
+.message-content.prose tr:hover {
+    background-color: #f9fafb !important; /* hover:bg-gray-50 */
+    transition: background-color 0.2s !important; /* transition-colors */
+}
+
+.message-content th,
+.message-content.prose th {
+    padding: 0.75rem 1rem !important; /* px-4 py-3 */
+    text-align: left !important;
+    font-size: 0.75rem !important; /* text-xs */
+    font-weight: 600 !important; /* font-semibold */
+    color: #374151 !important; /* text-gray-700 */
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important; /* tracking-wider */
+    background-color: #f9fafb !important;
+}
+
+.message-content td,
+.message-content.prose td {
+    padding: 0.75rem 1rem !important; /* px-4 py-3 */
+    font-size: 0.875rem !important; /* text-sm */
+    color: #1f2937 !important; /* text-gray-900 */
+    vertical-align: top !important;
+}
+
+/* List Styles */
+.message-content ul {
+    list-style-type: disc; /* list-disc */
+    list-style-position: inside; /* list-inside */
+    padding-left: 1rem; /* pl-4 */
+    margin-top: 1rem; /* my-4 */
+    margin-bottom: 1rem;
+}
+
+.message-content ol {
+    list-style-type: decimal; /* list-decimal */
+    list-style-position: inside; /* list-inside */
+    padding-left: 1rem; /* pl-4 */
+    margin-top: 1rem; /* my-4 */
+    margin-bottom: 1rem;
+}
+
+.message-content li {
+    color: #1f2937; /* text-gray-800 */
+    line-height: 1.625; /* leading-relaxed */
+    margin-top: 0.5rem; /* space-y-2 */
+}
+
+/* Blockquote and Callout Styles */
+.message-content blockquote {
+    border-left: 4px solid #d1d5db; /* border-l-4 border-gray-300 */
+    padding-left: 1rem; /* pl-4 */
+    padding-right: 1rem; /* pr-4 */
+    padding-top: 0.5rem; /* py-2 */
+    padding-bottom: 0.5rem;
+    margin-top: 1rem; /* my-4 */
+    margin-bottom: 1rem;
+    background-color: #f9fafb; /* bg-gray-50 */
+    color: #4b5563; /* text-gray-700 */
+    font-style: italic;
+    border-top-right-radius: 0.5rem; /* rounded-r-lg */
+    border-bottom-right-radius: 0.5rem;
+}
+
+/* Callout Colors */
+.message-content .border-blue-200 {
+    border-color: #bfdbfe; /* border-blue-200 */
+    background-color: #eff6ff; /* bg-blue-50 */
+    color: #1e40af; /* text-blue-800 */
+}
+
+.message-content .border-yellow-200 {
+    border-color: #fef08a; /* border-yellow-200 */
+    background-color: #fefce8; /* bg-yellow-50 */
+    color: #854d0e; /* text-yellow-800 */
+}
+
+.message-content .border-red-200 {
+    border-color: #fecaca; /* border-red-200 */
+    background-color: #fef2f2; /* bg-red-50 */
+    color: #991b1b; /* text-red-800 */
+}
+
+.message-content .border-green-200 {
+    border-color: #bbf7d0; /* border-green-200 */
+    background-color: #f0fdf4; /* bg-green-50 */
+    color: #166534; /* text-green-800 */
+}
+
+.message-content .border-l-4 {
+    border-left-width: 4px;
+    padding: 1rem; /* p-4 */
+    margin-top: 1rem; /* my-4 */
+    margin-bottom: 1rem;
+    border-top-right-radius: 0.5rem; /* rounded-r-lg */
+    border-bottom-right-radius: 0.5rem;
+}
+
+/* Flex Layout */
+.message-content .flex {
+    display: flex;
+}
+
+.message-content .items-start {
+    align-items: flex-start;
+}
+
+.message-content .justify-between {
+    justify-content: space-between;
+}
+
+.message-content .items-center {
+    align-items: center;
+}
+
+.message-content .text-lg {
+    font-size: 1.125rem;
+}
+
+.message-content .mr-2 {
+    margin-right: 0.5rem;
+}
+
+.message-content .flex-1 {
+    flex: 1 1 0%;
+}
+
+/* Paragraph Styles */
+.message-content p {
+    color: #1f2937; /* text-gray-800 */
+    line-height: 1.625; /* leading-relaxed */
+    margin-top: 0.75rem; /* my-3 */
+    margin-bottom: 0.75rem;
+}
+
+/* Code Styles */
+.message-content code {
+    background-color: #f3f4f6; /* bg-gray-100 */
+    color: #1f2937; /* text-gray-800 */
+    padding-left: 0.5rem; /* px-2 */
+    padding-right: 0.5rem;
+    padding-top: 0.25rem; /* py-1 */
+    padding-bottom: 0.25rem;
+    border-radius: 0.25rem; /* rounded */
+    font-size: 0.875rem; /* text-sm */
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; /* font-mono */
+    border: 1px solid #e5e7eb; /* border */
+}
+
+/* Code Block Styles */
+.message-content .relative {
+    position: relative;
+}
+
+.message-content .group {
+    position: relative; /* Used for group hover effects */
+}
+
+.message-content .my-4 {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+.message-content .bg-gray-900 {
+    background-color: #111827; /* bg-gray-900 */
+}
+
+.message-content .text-gray-100 {
+    color: #f3f4f6; /* text-gray-100 */
+}
+
+.message-content .rounded-t-lg {
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+}
+
+.message-content .px-4 {
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+.message-content .py-2 {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+}
+
+.message-content .text-xs {
+    font-size: 0.75rem;
+}
+
+.message-content .font-mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.message-content .text-gray-400 {
+    color: #9ca3af; /* text-gray-400 */
+}
+
+/* Copy Code Button */
+.message-content .copy-code-btn {
+    opacity: 0; /* opacity-0 */
+    background-color: #374151; /* bg-gray-700 */
+    color: white;
+    padding: 0.25rem 0.5rem; /* px-2 py-1 */
+    border-radius: 0.25rem; /* rounded */
+    font-size: 0.75rem; /* text-xs */
+    transition: all 0.2s; /* transition-all */
+}
+
+.message-content .group:hover .copy-code-btn {
+    opacity: 1; /* group-hover:opacity-100 */
+}
+
+.message-content .copy-code-btn:hover {
+    background-color: #4b5563; /* hover:bg-gray-600 */
+}
+
+.message-content pre {
+    background-color: #1f2937; /* bg-gray-800 */
+    color: #f3f4f6; /* text-gray-100 */
+    padding: 1rem; /* p-4 */
+    border-bottom-left-radius: 0.5rem; /* rounded-b-lg */
+    border-bottom-right-radius: 0.5rem;
+    overflow-x: auto;
+    margin: 1rem 0;
+}
+
+.message-content pre code {
+    background-color: transparent;
+    color: inherit;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    font-size: inherit;
+}
+
+/* Horizontal Rule */
+.message-content hr {
+    margin-top: 2rem; /* my-8 */
+    margin-bottom: 2rem;
+    border: 0;
+    height: 1px;
+    background-image: linear-gradient(to right, transparent, #d1d5db, transparent); /* from-transparent via-gray-300 to-transparent */
+}
+
+/* Strong, Emphasis */
+.message-content strong {
+    font-weight: 600; /* font-semibold */
+    color: #111827; /* text-gray-900 */
+}
+
+.message-content em {
+    font-style: italic;
+}
+
+/* Copy function for code blocks */
+function copyCodeToClipboard(button) {
+    const pre = button.parentElement.nextElementSibling;
+    const code = pre.querySelector('code');
+    const text = code.innerText;
+    
+    navigator.clipboard.writeText(text).then(() => {
+        const originalText = button.innerText;
+        button.innerText = 'Copied!';
+        button.style.backgroundColor = '#10b981'; /* green-500 */
+        
+        setTimeout(() => {
+            button.innerText = originalText;
+            button.style.backgroundColor = '';
+        }, 2000);
+    }).catch(err => {
+        console.error('Could not copy text: ', err);
+        button.innerText = 'Failed!';
+        button.style.backgroundColor = '#ef4444'; /* red-500 */
+        
+        setTimeout(() => {
+            button.innerText = 'Copy';
+            button.style.backgroundColor = '';
+        }, 2000);
+    });
+}

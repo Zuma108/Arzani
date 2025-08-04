@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="auth-token" content="<%= locals.token || '' %>">
+    <title>Admin Verification Review</title>
+    <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8f9fa; }
+        .container { max-width: 1200px; }
+        .card { margin-bottom: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.08); border: none; border-radius: 12px; }
+        .card-header { background-color: #1A237E; color: white; font-weight: 600; border-top-left-radius: 12px; border-top-right-radius: 12px; }
+        .table th { background-color: #E8EAF6; color: #1A237E; }
+        .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.8rem; }
+        .loading-spinner { display: none; }
+        .toast-container { z-index: 1100; }
+        .sidebar {
+            width: 280px;
+            min-height: 100vh;
+        }
+        .main-content {
+            margin-left: 280px;
+        }
+        @media (max-width: 991.98px) {
+            .main-content {
+                margin-left: 0;
+            }
+        }
+        .verification-card {
+            margin-bottom: 1.5rem;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            transition: all 0.3s ease;
+        }
+        .verification-card:hover {
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+        .document-preview {
+            max-height: 200px;
+            object-fit: contain;
+            cursor: pointer;
+        }
+        .status-badge {
+            font-size: 0.8rem;
+            padding: 0.25rem 0.5rem;
+        }
+        .status-pending {
+            background-color: #ffc107;
+        }
+        .status-approved {
+            background-color: #28a745;
+        }
+        .status-rejected {
+            background-color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/admin-sidebar') %>
+
+    <div class="main-content" style="margin-left: 280px; padding: 2rem;">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h2">Professional Verification Requests</h1>
+                <div>
+                    <button class="btn btn-outline-secondary" id="refreshBtn">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-md-3 mb-3 mb-md-0">
+                    <div class="card text-white bg-primary">
+                        <div class="card-body">
+                            <h5 class="card-title">Pending</h5>
+                            <h2 class="mb-0" id="pendingCount">0</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3 mb-md-0">
+                    <div class="card text-white bg-success">
+                        <div class="card-body">
+                            <h5 class="card-title">Approved</h5>
+                            <h2 class="mb-0" id="approvedCount">0</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3 mb-md-0">
+                    <div class="card text-white bg-danger">
+                        <div class="card-body">
+                            <h5 class="card-title">Rejected</h5>
+                            <h2 class="mb-0" id="rejectedCount">0</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-white bg-info">
+                        <div class="card-body">
+                            <h5 class="card-title">Total</h5>
+                            <h2 class="mb-0" id="totalCount">0</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <ul class="nav nav-tabs card-header-tabs" id="requestsTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending" type="button" role="tab" aria-controls="pending" aria-selected="true">
+                                Pending <span class="badge bg-warning text-dark" id="pendingBadge">0</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="approved-tab" data-bs-toggle="tab" data-bs-target="#approved" type="button" role="tab" aria-controls="approved" aria-selected="false">
+                                Approved <span class="badge bg-success text-white" id="approvedBadge">0</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="rejected-tab" data-bs-toggle="tab" data-bs-target="#rejected" type="button" role="tab" aria-controls="rejected" aria-selected="false">
+                                Rejected <span class="badge bg-danger text-white" id="rejectedBadge">0</span>
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body p-0">
+                    <div class="tab-content" id="requestsTabContent">
+                        <div class="tab-pane fade show active" id="pending" role="tabpanel" aria-labelledby="pending-tab">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0" id="pendingTable">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>User</th>
+                                            <th>Type</th>
+                                            <th>Date</th>
+                                            <th class="text-end">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="pendingTableBody">
+                                        <tr>
+                                            <td colspan="5" class="text-center py-4">Loading pending requests...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="approved" role="tabpanel" aria-labelledby="approved-tab">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0" id="approvedTable">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>User</th>
+                                            <th>Type</th>
+                                            <th>Approved Date</th>
+                                            <th>Approved By</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="approvedTableBody">
+                                        <tr>
+                                            <td colspan="5" class="text-center py-4">Loading approved requests...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="rejected" role="tabpanel" aria-labelledby="rejected-tab">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0" id="rejectedTable">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>User</th>
+                                            <th>Type</th>
+                                            <th>Rejected Date</th>
+                                            <th>Reason</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="rejectedTableBody">
+                                        <tr>
+                                            <td colspan="5" class="text-center py-4">Loading rejected requests...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="requestModal" tabindex="-1" aria-labelledby="requestModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="requestModalLabel">Verification Request Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="requestModalBody">
+                    <div class="text-center py-5">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-danger" id="rejectBtn">Reject</button>
+                    <button type="button" class="btn btn-success" id="approveBtn">Approve</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="rejectReasonModal" tabindex="-1" aria-labelledby="rejectReasonModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="rejectReasonModalLabel">Rejection Reason</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="rejectForm">
+                        <div class="mb-3">
+                            <label for="rejectReason" class="form-label">Reason for rejection</label>
+                            <textarea class="form-control" id="rejectReason" rows="3" placeholder="Please provide a reason for rejecting this verification request"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmRejectBtn">Confirm Rejection</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let requests = [];
+        let currentRequest = null;
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            setupEventListeners();
+            await loadVerificationRequests();
+        });
+
+        function setupEventListeners() {
+            document.getElementById('refreshBtn').addEventListener('click', loadVerificationRequests);
+            document.getElementById('approveBtn').addEventListener('click', () => approveRequest(currentRequest.id));
+            document.getElementById('rejectBtn').addEventListener('click', showRejectModal);
+            document.getElementById('confirmRejectBtn').addEventListener('click', () => {
+                const reason = document.getElementById('rejectReason').value;
+                rejectRequest(currentRequest.id, reason);
+            });
+
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('sidebar');
+            const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+
+            if (sidebarToggle && sidebar && sidebarBackdrop) {
+                sidebarToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('show');
+                    sidebarBackdrop.classList.toggle('show');
+                });
+
+                sidebarBackdrop.addEventListener('click', function() {
+                    sidebar.classList.remove('show');
+                    sidebarBackdrop.classList.remove('show');
+                });
+            }
+        }
+
+        async function loadVerificationRequests() {
+            try {
+                const token = document.querySelector('meta[name="auth-token"]')?.content || 
+                              localStorage.getItem('token') || 
+                              sessionStorage.getItem('token');
+                
+                if (!token) {
+                    console.error('No authentication token available');
+                    showToast('Authentication required. Please log in again.', 'danger');
+                    
+                    setTimeout(() => {
+                        window.location.href = '/login2?returnTo=' + encodeURIComponent(window.location.pathname);
+                    }, 2000);
+                    return;
+                }
+
+                console.log('Using auth token (first 10 chars):', token.substring(0, 10) + '...');
+
+                const response = await fetch('/api/admin/verification-requests', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
+
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    console.error('Response is not JSON:', contentType);
+                    throw new Error('Server returned non-JSON response. Please reload the page or log in again.');
+                }
+
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.message || `Server error: ${response.status}`);
+                }
+                
+                if (!data.success) {
+                    throw new Error(data.message || 'Failed to load verification requests');
+                }
+                
+                requests = data.requests || [];
+                updateUI(requests);
+            } catch (error) {
+                console.error('Error loading verification requests:', error);
+                showToast('Error loading requests: ' + error.message, 'danger');
+                
+                if (error.message.includes('Authentication') || 
+                    error.message.includes('log in') ||
+                    error.message.includes('session')) {
+                    
+                    setTimeout(() => {
+                        window.location.href = '/login2?returnTo=' + encodeURIComponent(window.location.pathname);
+                    }, 3000);
+                }
+            }
+        }
+
+        function updateUI(requests) {
+            const pendingRequests = requests.filter(r => r.status === 'pending');
+            const approvedRequests = requests.filter(r => r.status === 'approved');
+            const rejectedRequests = requests.filter(r => r.status === 'rejected');
+
+            document.getElementById('pendingCount').textContent = pendingRequests.length;
+            document.getElementById('approvedCount').textContent = approvedRequests.length;
+            document.getElementById('rejectedCount').textContent = rejectedRequests.length;
+            document.getElementById('totalCount').textContent = requests.length;
+
+            document.getElementById('pendingBadge').textContent = pendingRequests.length;
+            document.getElementById('approvedBadge').textContent = approvedRequests.length;
+            document.getElementById('rejectedBadge').textContent = rejectedRequests.length;
+
+            updateTable('pendingTableBody', pendingRequests, renderPendingRow);
+            updateTable('approvedTableBody', approvedRequests, renderApprovedRow);
+            updateTable('rejectedTableBody', rejectedRequests, renderRejectedRow);
+        }
+
+        function updateTable(tableId, data, rowRenderer) {
+            const tableBody = document.getElementById(tableId);
+
+            if (data.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="5" class="text-center py-4">No requests found</td></tr>`;
+                return;
+            }
+
+            tableBody.innerHTML = '';
+            data.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = rowRenderer(item);
+                tableBody.appendChild(row);
+            });
+        }
+
+        function renderPendingRow(request) {
+            return `
+                <td>${request.id}</td>
+                <td>${escapeHtml(request.username)}</td>
+                <td>${formatProfessionalType(request.professional_type)}</td>
+                <td>${formatDate(request.submitted_at)}</td>
+                <td class="text-end">
+                    <button class="btn btn-sm btn-primary view-request-btn" data-request-id="${request.id}">
+                        <i class="fas fa-eye"></i> Review
+                    </button>
+                </td>
+            `;
+        }
+
+        function renderApprovedRow(request) {
+            return `
+                <td>${request.id}</td>
+                <td>${escapeHtml(request.username)}</td>
+                <td>${formatProfessionalType(request.professional_type)}</td>
+                <td>${formatDate(request.reviewed_at)}</td>
+                <td>${request.reviewed_by || 'System'}</td>
+            `;
+        }
+
+        function renderRejectedRow(request) {
+            return `
+                <td>${request.id}</td>
+                <td>${escapeHtml(request.username)}</td>
+                <td>${formatProfessionalType(request.professional_type)}</td>
+                <td>${formatDate(request.reviewed_at)}</td>
+                <td>${escapeHtml(request.review_notes) || 'No reason provided'}</td>
+            `;
+        }
+
+        function showRequestDetails(requestId) {
+            currentRequest = requests.find(r => r.id === requestId);
+            if (!currentRequest) return;
+
+            const approveBtn = document.getElementById('approveBtn');
+            const rejectBtn = document.getElementById('rejectBtn');
+
+            if (currentRequest.status === 'pending') {
+                approveBtn.style.display = 'block';
+                rejectBtn.style.display = 'block';
+            } else {
+                approveBtn.style.display = 'none';
+                rejectBtn.style.display = 'none';
+            }
+
+            const modalBody = document.getElementById('requestModalBody');
+
+            let documents = [];
+            try {
+                if (currentRequest.documents) {
+                    documents = typeof currentRequest.documents === 'string' 
+                        ? JSON.parse(currentRequest.documents) 
+                        : currentRequest.documents;
+                } else if (currentRequest.verification_documents) {
+                    documents = typeof currentRequest.verification_documents === 'string' 
+                        ? JSON.parse(currentRequest.verification_documents) 
+                        : currentRequest.verification_documents;
+                }
+            } catch (e) {
+                console.error('Error parsing documents:', e);
+            }
+
+            modalBody.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5 class="fw-bold">User Information</h5>
+                        <table class="table table-borderless">
+                            <tr>
+                                <th width="30%">Username:</th>
+                                <td>${escapeHtml(currentRequest.username)}</td>
+                            </tr>
+                            <tr>
+                                <th>Email:</th>
+                                <td>${escapeHtml(currentRequest.email)}</td>
+                            </tr>
+                            <tr>
+                                <th>Professional Type:</th>
+                                <td>${formatProfessionalType(currentRequest.professional_type)}</td>
+                            </tr>
+                            <tr>
+                                <th>License Number:</th>
+                                <td>${currentRequest.license_number || 'Not provided'}</td>
+                            </tr>
+                            <tr>
+                                <th>Submitted:</th>
+                                <td>${formatDate(currentRequest.submitted_at || currentRequest.request_date)}</td>
+                            </tr>
+                            <tr>
+                                <th>Status:</th>
+                                <td>
+                                    <span class="badge status-badge status-${currentRequest.status}">
+                                        ${currentRequest.status.toUpperCase()}
+                                    </span>
+                                </td>
+                            </tr>
+                        </table>
+                        
+                        ${currentRequest.description ? `
+                            <h5 class="fw-bold mt-4">Description</h5>
+                            <p>${escapeHtml(currentRequest.description)}</p>
+                        ` : ''}
+                    </div>
+                    <div class="col-md-6">
+                        <h5 class="fw-bold">Verification Documents</h5>
+                        ${documents.length > 0 ? `
+                            <div class="row">
+                                ${documents.map(doc => `
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card">
+                                            <div class="card-body p-2 text-center">
+                                                <a href="${doc.url}" target="_blank">
+                                                    <img src="${doc.url}" class="document-preview img-thumbnail mb-2" 
+                                                         alt="${escapeHtml(doc.originalName || 'Document')}">
+                                                </a>
+                                                <p class="mb-0 small">${escapeHtml(doc.originalName || 'Document')}</p>
+                                                ${doc.size ? `<small class="text-muted">${formatFileSize(doc.size)}</small>` : ''}
+                                            </div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : '<p>No documents provided</p>'}
+                    </div>
+                </div>
+            `;
+
+            const modal = new bootstrap.Modal(document.getElementById('requestModal'));
+            modal.show();
+
+            document.querySelectorAll('.document-preview').forEach(img => {
+                img.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    window.open(e.target.parentElement.href, '_blank');
+                });
+            });
+        }
+
+        function showRejectModal() {
+            document.getElementById('rejectReason').value = '';
+            const modal = new bootstrap.Modal(document.getElementById('rejectReasonModal'));
+            modal.show();
+        }
+
+        async function approveRequest(requestId) {
+            try {
+                const token = document.querySelector('meta[name="auth-token"]')?.content || localStorage.getItem('token');
+                if (!token) {
+                    throw new Error('No authentication token available');
+                }
+
+                const response = await fetch(`/api/admin/verification-requests/${requestId}/approve`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ status: 'approved' })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to approve request: ${response.status}`);
+                }
+
+                const data = await response.json();
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to approve request');
+                }
+
+                bootstrap.Modal.getInstance(document.getElementById('requestModal')).hide();
+                await loadVerificationRequests();
+                showToast('Request approved successfully', 'success');
+            } catch (error) {
+                console.error('Error approving request:', error);
+                showToast('Error approving request: ' + error.message, 'danger');
+            }
+        }
+
+        async function rejectRequest(requestId, reason) {
+            try {
+                const token = document.querySelector('meta[name="auth-token"]')?.content || localStorage.getItem('token');
+                if (!token) {
+                    throw new Error('No authentication token available');
+                }
+
+                const response = await fetch(`/api/admin/verification-requests/${requestId}/reject`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        status: 'rejected',
+                        notes: reason
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to reject request: ${response.status}`);
+                }
+
+                const data = await response.json();
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to reject request');
+                }
+
+                bootstrap.Modal.getInstance(document.getElementById('rejectReasonModal')).hide();
+                bootstrap.Modal.getInstance(document.getElementById('requestModal')).hide();
+                await loadVerificationRequests();
+                showToast('Request rejected successfully', 'success');
+            } catch (error) {
+                console.error('Error rejecting request:', error);
+                showToast('Error rejecting request: ' + error.message, 'danger');
+            }
+        }
+
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.view-request-btn')) {
+                const requestId = parseInt(e.target.closest('.view-request-btn').dataset.requestId);
+                showRequestDetails(requestId);
+            }
+        });
+
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            return new Date(dateString).toLocaleDateString(undefined, { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function formatFileSize(bytes) {
+            if (!bytes) return '';
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            if (bytes === 0) return '0 Bytes';
+            const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
+            return Math.round(bytes / Math.pow(1024, i), 2) + ' ' + sizes[i];
+        }
+
+        function formatProfessionalType(type) {
+            if (!type) return 'Unknown';
+            return type.split('_').map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1)
+            ).join(' ');
+        }
+
+        function escapeHtml(unsafe) {
+            if (!unsafe) return '';
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function showToast(message, type = 'info') {
+            let toastContainer = document.querySelector('.toast-container');
+            if (!toastContainer) {
+                toastContainer = document.createElement('div');
+                toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+                document.body.appendChild(toastContainer);
+            }
+
+            const toastId = 'toast-' + Date.now();
+            const toast = document.createElement('div');
+            toast.className = `toast align-items-center text-white bg-${type} border-0`;
+            toast.setAttribute('role', 'alert');
+            toast.setAttribute('aria-live', 'assertive');
+            toast.setAttribute('aria-atomic', 'true');
+            toast.setAttribute('id', toastId);
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            `;
+
+            toastContainer.appendChild(toast);
+
+            const bsToast = new bootstrap.Toast(toast, {
+                autohide: true,
+                delay: 5000
+            });
+
+            bsToast.show();
+
+            toast.addEventListener('hidden.bs.toast', function() {
+                toast.remove();
+            });
+        }
+    </script>
+</body>
+</html>

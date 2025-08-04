@@ -1,0 +1,97 @@
+{
+  "name": "Arzani Legal Agent",
+  "description": "A specialist agent that provides legal expertise for business transactions, NDAs, and compliance matters in the Arzani Marketplace",
+  "version": "1.0.0",
+  "contact": {
+    "url": "https://arzani.co.uk/legal",
+    "email": "hello@arzani.co.uk"
+  },
+  "capabilities": {
+    "tasks/send": {
+      "description": "Provides expert legal guidance, document generation, and compliance analysis for business transactions",
+      "examples": [
+        {
+          "description": "Generate an NDA document",
+          "params": {
+            "task": {
+              "id": "3d4e5f6a-7b8c-9d0e-1f2a-3b4c5d6e7f8a"
+            },
+            "message": {
+              "parts": [
+                {
+                  "type": "text",
+                  "text": "I need an NDA for discussing the potential sale of my eCommerce business with a prospective buyer."
+                }
+              ]
+            }
+          }
+        },
+        {
+          "description": "Check regulatory compliance",
+          "params": {
+            "task": {
+              "id": "4e5f6a7b-8c9d-0e1f-2a3b-4c5d6e7f8a9b"
+            },
+            "message": {
+              "parts": [
+                {
+                  "type": "text",
+                  "text": "What regulatory considerations should I be aware of when selling my financial services business?"
+                },
+                {
+                  "type": "data",
+                  "data": {
+                    "jurisdiction": "California, USA",
+                    "industry": "Financial Services",
+                    "clientTypes": ["individuals", "small businesses"]
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  },
+  "human_support": {
+    "available": true,
+    "email": "hello@arzani.co.uk",
+    "escalation_description": "For complex legal matters, licensing issues, or regulatory concerns, a human legal advisor can be contacted at hello@arzani.co.uk"
+  },
+  "domain_specialties": [
+    "non-disclosure agreements",
+    "business transaction law",
+    "regulatory compliance",
+    "intellectual property",
+    "contract review"
+  ],
+  "artifacts": [
+    {
+      "type": "nda_document",
+      "mimetype": "application/pdf",
+      "description": "Non-Disclosure Agreement document"
+    },
+    {
+      "type": "legal_assessment",
+      "mimetype": "application/pdf",
+      "description": "Legal risk assessment report"
+    },
+    {
+      "type": "compliance_checklist",
+      "mimetype": "application/json",
+      "description": "Regulatory compliance checklist for specific industries"
+    }
+  ],
+  "data_sources": [
+    {
+      "name": "US Securities Laws",
+      "version": "2025-Q1",
+      "description": "Current US federal securities regulations"
+    },
+    {
+      "name": "State Business Regulations",
+      "version": "2025-Q1",
+      "description": "Business regulations for all 50 US states"
+    }
+  ]
+}

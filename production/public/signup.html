@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+
+    <title>Sign Up</title> <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">
+    <!-- Add meta tag for site environment -->
+    <meta name="site-environment" content="production">
+    <meta name="production-domain" content="www.arzani.co.uk">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-blue': '#316FD4',
+                        'primary': {
+                            DEFAULT: '#3B82F6',
+                            light: '#93C5FD',
+                            dark: '#1D4ED8',
+                        },
+                        'secondary': {
+                            DEFAULT: '#10B981',
+                            light: '#6EE7B7',
+                            dark: '#047857',
+                        }
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'Segoe UI', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom clip path for the sculpted image panel with circular notch */
+        .image-panel-clippath {
+            clip-path: polygon(
+                0% 0%, 
+                calc(100% - 50px) 0%, 
+                calc(100% - 35px) 5px, 
+                calc(100% - 25px) 15px, 
+                calc(100% - 20px) 25px, 
+                calc(100% - 15px) 35px, 
+                calc(100% - 5px) 50px, 
+                100% 65px, 
+                100% calc(100% - 35px), 
+                calc(100% - 15px) calc(100% - 15px),
+                calc(100% - 35px) 100%, 
+                0% 100%
+            );
+        }
+        
+        /* Mobile version of clip path */
+        @media (max-width: 768px) {
+            .image-panel-clippath {
+                clip-path: polygon(
+                    0% 0%, 
+                    calc(100% - 50px) 0%, 
+                    calc(100% - 35px) 5px, 
+                    calc(100% - 25px) 15px, 
+                    calc(100% - 20px) 25px, 
+                    calc(100% - 15px) 35px, 
+                    calc(100% - 5px) 50px, 
+                    100% 65px, 
+                    100% 100%, 
+                    0% 100%
+                );
+            }
+        }
+        
+        /* Custom gradient backgrounds */
+        .bg-signup-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .bg-yellow-gradient {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+        }
+        
+        .bg-yellow-gradient:hover {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+        
+        .bg-button-gradient {
+            background: linear-gradient(135deg, #316FD4 0%, #4A90E2 100%);
+        }
+        
+        .bg-button-gradient:hover {
+            background: linear-gradient(135deg, #2859b8 0%, #3d7bc8 100%);
+        }
+        
+        /* Password feedback items styling */
+        .feedback-item {
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 50px;
+            background-color: #f0f0f0;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .feedback-item.valid {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .feedback-item.invalid {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .feedback-icon {
+            font-size: 10px;
+        }
+    </style>
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-W50GKB6F3M"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-W50GKB6F3M');
+    </script>
+</head>
+<body class="font-sans m-0 p-0 bg-gray-100 text-gray-800 min-h-screen flex justify-center items-center">
+    <!-- Outer cream border frame -->
+    <div class="bg-amber-50 rounded-3xl p-6 shadow-2xl max-w-7xl m-5 relative flex md:flex-row flex-col min-h-[700px] md:min-h-auto">
+        
+        <!-- White form container (left side only) -->
+        <section class="bg-white rounded-2xl p-8 md:w-[400px] md:flex-shrink-0 w-full flex flex-col justify-center md:px-8 px-6 md:mr-6 mb-6 md:mb-0 shadow-sm">
+            <div class="mb-6">
+                <h1 class="text-3xl text-gray-900 mb-6 font-semibold">Create an account</h1>
+            </div>
+
+            <div class="text-left">
+                <div id="signup-error" class="px-5 py-4 mb-5 border border-transparent rounded-2xl shadow-sm text-red-800 bg-red-100 border-red-200 hidden"></div>
+                
+                <!-- OAuth buttons container -->
+                <div id="oauth-buttons-container"></div>
+                
+                <form id="signup-form">
+                    <div class="mb-4 relative">
+                        <input class="w-full py-3 px-5 border border-gray-200 rounded-full text-base box-border transition-all duration-200 bg-gray-50 shadow-inner focus:border-primary-blue focus:outline-none focus:ring-4 focus:ring-primary-blue/10 focus:bg-white focus:-translate-y-0.5" type="text" id="username" name="username" required autocomplete="username" placeholder="Full name">
+                        <label class="absolute -top-2.5 left-4 text-xs bg-white px-2 text-gray-600 font-medium rounded-xl" for="username">Full name</label>
+                        <div class="text-xs text-red-500 flex items-center gap-1 mt-1 pl-1 hidden" id="username-error">
+                            <img class="w-3.5 h-3.5" src="/images/error_icon.svg" alt="Error Icon">Username must be at least 3 characters
+                        </div>
+                    </div>
+
+                    <div class="mb-4 relative">
+                        <input class="w-full py-3 px-5 border border-gray-200 rounded-full text-base box-border transition-all duration-200 bg-gray-50 shadow-inner focus:border-primary-blue focus:outline-none focus:ring-4 focus:ring-primary-blue/10 focus:bg-white focus:-translate-y-0.5" type="email" id="email" name="email" required autocomplete="email" placeholder="Email">
+                        <label class="absolute -top-2.5 left-4 text-xs bg-white px-2 text-gray-600 font-medium rounded-xl" for="email">Email</label>
+                        <div class="text-xs text-red-500 flex items-center gap-1 mt-1 pl-1 hidden" id="email-error">
+                            <img class="w-3.5 h-3.5" src="/images/error_icon.svg" alt="Error Icon">Please enter a valid email address
+                        </div>
+                    </div>
+
+                    <div class="mb-4 relative">
+                        <input class="w-full py-3 px-5 border border-gray-200 rounded-full text-base box-border transition-all duration-200 bg-gray-50 shadow-inner focus:border-primary-blue focus:outline-none focus:ring-4 focus:ring-primary-blue/10 focus:bg-white focus:-translate-y-0.5" type="password" id="password" name="password" required minlength="6" autocomplete="new-password" placeholder="Password">
+                        <label class="absolute -top-2.5 left-4 text-xs bg-white px-2 text-gray-600 font-medium rounded-xl" for="password">Password</label>
+                        <div class="text-xs text-red-500 flex items-center gap-1 mt-1 pl-1 hidden" id="password-error">
+                            <img class="w-3.5 h-3.5" src="/images/error_icon.svg" alt="Error Icon">Password must be at least 6 characters
+                        </div>
+                    </div>
+
+                    <!-- Modern password strength indicator -->
+                    <div class="-mt-2 mb-3">
+                        <div class="h-1.5 w-full bg-gray-200 rounded-full mb-2 overflow-hidden">
+                            <div id="password-strength-bar" class="h-full w-0 rounded-full transition-all duration-300"></div>
+                        </div>
+                        <div id="password-strength-text" class="text-xs text-gray-600"></div>
+                        <div id="password-feedback" class="flex flex-wrap gap-2 mt-2">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="flex items-start mb-4">
+                            <input type="checkbox" id="terms" name="terms" required class="mt-0.5 mr-2.5 accent-primary-blue">
+                            <label for="terms" class="text-xs text-gray-600 leading-5">
+                                By signing up, you agree to our <a href="/terms" class="text-primary-blue no-underline transition-colors duration-200 hover:text-blue-700 hover:underline">Terms & Conditions</a>
+                            </label>
+                        </div>
+                        <div class="text-xs text-red-500 flex items-center gap-1 mt-1 pl-1 hidden" id="terms-error">
+                            <img class="w-3.5 h-3.5" src="/images/error_icon.svg" alt="Error Icon">You must agree to the terms and conditions
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full py-3 px-5 bg-button-gradient text-white border-0 rounded-full cursor-pointer text-sm font-semibold transition-all duration-300 mb-4 shadow-lg shadow-primary-blue/30 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary-blue/40 disabled:bg-gray-300 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none" id="signup-button">Submit</button>
+                </form>
+                
+                <div class="text-center mt-4 text-sm text-gray-600">
+                    Have any account? <a href="#" id="login-link" class="text-primary-blue no-underline transition-colors duration-200 hover:text-blue-700 hover:underline">Sign in</a>
+                </div>
+                
+                <div id="resend-container" class="mt-3 border-t border-gray-200 pt-3 text-center hidden">
+                    Didn't receive the verification email? <button id="resend-email-btn" class="bg-transparent border-0 text-primary-blue cursor-pointer text-sm underline p-0 hover:text-blue-700">Resend</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Image panel extends to border edge -->
+        <div class="md:flex-1 md:min-w-[600px] w-full bg-gray-50 bg-cover bg-center bg-no-repeat relative rounded-2xl md:order-none order-first md:h-auto h-64 image-panel-clippath min-h-[650px]" style="background-image: url('/figma design exports/images/login-signup.webp'); background-size: cover; background-position: center;">
+        </div>
+    </div>
+
+    <script src="/js/signup-handler.js"></script>
+    <script src="/js/oauth-handler.js"></script>
+    
+    <!-- Add Google Client ID meta tag -->
+    <meta name="google-client-id" content="1089717985687-94dcvpkpjp7s1m4eo8t5ifrjlhf80g8c.apps.googleusercontent.com">
+</body>
+</html>

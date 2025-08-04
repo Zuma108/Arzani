@@ -1,0 +1,114 @@
+<!-- Blog Post Enhanced Interlinking Partial -->
+<!-- Include this file at the bottom of the blog-post_new.ejs template -->
+
+<% if (blog.semantic_relationships || blog.content_links) { %>
+<!-- Enhanced Interlinking - Related Content Section -->
+<section class="related-content-section mt-12 mb-16 border-t border-gray-200 pt-10">
+    <div class="container mx-auto px-4">
+        <h3 class="text-2xl font-semibold text-gray-800 mb-6">Related Content</h3>
+        
+        <% if (blog.semantic_relationships && blog.semantic_relationships.length > 0) { %>
+        <div class="semantic-relationships mb-8">
+            <h4 class="text-lg font-medium text-gray-700 mb-4">You Might Also Be Interested In</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <% 
+                // Sort by relationship strength (descending)
+                const sortedRelationships = blog.semantic_relationships.sort((a, b) => b.strength - a.strength);
+                // Take top 4 relationships
+                const topRelationships = sortedRelationships.slice(0, 4); 
+                
+                topRelationships.forEach(relationship => { 
+                %>
+                <a href="/blog/<%= relationship.post.content_category %>/<%= relationship.post.slug %>" 
+                   class="flex items-start p-4 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors">
+                    <div class="flex-1">
+                        <h5 class="font-medium text-gray-800 mb-1"><%= relationship.post.title %></h5>
+                        <p class="text-sm text-gray-600 line-clamp-2"><%= relationship.post.excerpt %></p>
+                        <div class="flex items-center mt-2">
+                            <span class="text-xs text-primary font-medium">
+                                <%= relationship.relationship_type.charAt(0).toUpperCase() + relationship.relationship_type.slice(1) %> Content
+                            </span>
+                            <% if (relationship.shared_keywords && relationship.shared_keywords.length > 0) { %>
+                            <span class="mx-2 text-gray-300">•</span>
+                            <span class="text-xs text-gray-500">
+                                Shared topics: <%= relationship.shared_keywords.slice(0, 2).join(', ') %>
+                            </span>
+                            <% } %>
+                        </div>
+                    </div>
+                </a>
+                <% }); %>
+            </div>
+        </div>
+        <% } %>
+        
+        <% if (blog.user_journey_position && blog.next_in_journey) { %>
+        <!-- User Journey Progression -->
+        <div class="user-journey mb-8 p-5 bg-blue-50 rounded-lg border border-blue-100">
+            <h4 class="text-lg font-medium text-blue-800 mb-2">Continue Your Learning Journey</h4>
+            <p class="text-blue-600 mb-4">
+                You're at the "<%= blog.user_journey_position %>" stage. Ready for the next step?
+            </p>
+            <a href="<%= blog.next_in_journey %>" 
+               class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
+                Next Article
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+            </a>
+        </div>
+        <% } %>
+        
+        <!-- Topics Explorer -->
+        <div class="topics-explorer">
+            <h4 class="text-lg font-medium text-gray-700 mb-4">Explore Related Topics</h4>
+            <div class="flex flex-wrap gap-2">
+                <% if (blog.primary_keywords) { %>
+                    <% blog.primary_keywords.forEach(keyword => { %>
+                        <a href="/blog/search?q=<%= encodeURIComponent(keyword) %>" 
+                           class="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-full text-sm transition-colors">
+                            <%= keyword %>
+                        </a>
+                    <% }); %>
+                <% } %>
+                
+                <% if (blog.semantic_keywords) { %>
+                    <% blog.semantic_keywords.forEach(keyword => { %>
+                        <a href="/blog/search?q=<%= encodeURIComponent(keyword) %>" 
+                           class="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-full text-sm transition-colors">
+                            <%= keyword %>
+                        </a>
+                    <% }); %>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</section>
+<% } %>
+
+<!-- Content Link Metrics (Visible only to admins) -->
+<% if (locals.isAdmin && blog.link_metrics) { %>
+<div class="admin-metrics mt-8 mb-12 p-4 bg-gray-100 rounded-lg text-sm">
+    <h4 class="font-bold mb-2">Link Metrics (Admin Only)</h4>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div>
+            <span class="block text-gray-600">Inbound Links:</span>
+            <span class="font-medium"><%= blog.link_metrics.inbound_link_count %></span>
+        </div>
+        <div>
+            <span class="block text-gray-600">Outbound Links:</span>
+            <span class="font-medium"><%= blog.link_metrics.outbound_link_count %></span>
+        </div>
+        <div>
+            <span class="block text-gray-600">Link Equity Score:</span>
+            <span class="font-medium"><%= blog.link_metrics.link_equity_score.toFixed(2) %></span>
+        </div>
+        <div>
+            <span class="block text-gray-600">Orphaned:</span>
+            <span class="font-medium <%= blog.link_metrics.orphan_status ? 'text-red-600' : 'text-green-600' %>">
+                <%= blog.link_metrics.orphan_status ? 'Yes' : 'No' %>
+            </span>
+        </div>
+    </div>
+</div>
+<% } %>

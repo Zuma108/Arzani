@@ -1,0 +1,661 @@
+/* GitHub-style animation effects for the marketplace */
+
+/* Base styles for containers */
+.journey-step-visual.glow-effect {
+  position: relative;
+  overflow: hidden;
+  transform: translateZ(0);
+  transition: all 0.5s cubic-bezier(0.3, 0, 0.2, 1);
+  isolation: isolate; /* Create a new stacking context */
+  z-index: 1; /* Ensure proper stacking context */
+}
+
+/* Special handling for images to ensure glow effects work properly */
+.journey-step-visual.glow-effect img {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: auto;
+}
+
+/* Particle system */
+.github-particle-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.github-particle {
+  position: absolute;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.6);
+  pointer-events: none;
+  z-index: 1;
+  animation: particle-float 20s infinite ease-in-out;
+  will-change: transform, opacity; /* Performance optimization */
+}
+
+/* Star-shaped particles for Create section */
+.journey-step:nth-child(3) .github-particle.star-particle {
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  background: linear-gradient(45deg, rgba(52, 211, 153, 0.8), rgba(14, 165, 233, 0.8));
+  animation: star-particle-float 15s infinite ease-in-out, star-particle-pulse 8s infinite alternate ease-in-out;
+  will-change: transform, opacity, filter;
+}
+
+@keyframes star-particle-float {
+  0%, 100% {
+    transform: translateY(0) translateX(0) rotate(var(--rotation, 0deg));
+    opacity: 0.3;
+  }
+  20% {
+    transform: translateY(-25px) translateX(10px) rotate(calc(var(--rotation, 0deg) + 72deg));
+    opacity: 0.7;
+  }
+  40% {
+    transform: translateY(-15px) translateX(25px) rotate(calc(var(--rotation, 0deg) + 144deg));
+    opacity: 0.9;
+  }
+  60% {
+    transform: translateY(5px) translateX(15px) rotate(calc(var(--rotation, 0deg) + 216deg));
+    opacity: 0.7;
+  }
+  80% {
+    transform: translateY(15px) translateX(-10px) rotate(calc(var(--rotation, 0deg) + 288deg));
+    opacity: 0.5;
+  }
+}
+
+@keyframes star-particle-pulse {
+  0% {
+    filter: drop-shadow(0 0 2px rgba(52, 211, 153, 0.3));
+    scale: 0.8;
+  }
+  50% {
+    filter: drop-shadow(0 0 6px rgba(14, 165, 233, 0.6));
+    scale: 1.2;
+  }
+  100% {
+    filter: drop-shadow(0 0 4px rgba(56, 189, 248, 0.4));
+    scale: 1;
+  }
+}
+
+/* Code-shaped particles for Evaluate section */
+.journey-step:nth-child(5) .github-particle.code-particle {
+  background-color: transparent;
+  font-family: monospace;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: auto !important;
+  height: auto !important;
+  padding: 2px;
+}
+
+.journey-step:nth-child(5) .github-particle.code-particle span {
+  color: rgba(244, 114, 182, 0.9);
+  font-weight: bold;
+  white-space: nowrap;
+  text-shadow: 0 0 5px rgba(192, 38, 211, 0.5);
+  transform: rotate(var(--rotation, 0deg));
+  transition: transform 0.5s ease;
+  animation: code-particle-pulse 8s infinite alternate ease-in-out;
+}
+
+@keyframes code-particle-pulse {
+  0% {
+    opacity: 0.4;
+    transform: scale(0.8) rotate(var(--rotation, 0deg));
+    text-shadow: 0 0 3px rgba(192, 38, 211, 0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2) rotate(calc(var(--rotation, 0deg) + 180deg));
+    text-shadow: 0 0 8px rgba(244, 114, 182, 0.7);
+  }
+  100% {
+    opacity: 0.6;
+    transform: scale(1) rotate(calc(var(--rotation, 0deg) + 360deg));
+    text-shadow: 0 0 5px rgba(236, 72, 153, 0.5);
+  }
+}
+
+@keyframes particle-float {
+  0%, 100% {
+    transform: translateY(0) translateX(0) rotate(var(--rotation, 0deg));
+    opacity: 0.2;
+  }
+  25% {
+    transform: translateY(-30px) translateX(15px) rotate(calc(var(--rotation, 0deg) + 45deg));
+    opacity: 0.5;
+  }
+  50% {
+    transform: translateY(-15px) translateX(30px) rotate(calc(var(--rotation, 0deg) + 90deg));
+    opacity: 0.8;
+  }
+  75% {
+    transform: translateY(10px) translateX(-20px) rotate(calc(var(--rotation, 0deg) + 135deg));
+    opacity: 0.5;
+  }
+}
+
+/* Glow effects similar to GitHub */
+.github-glow-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+.github-primary-glow {
+  position: absolute;
+  width: 80%;
+  height: 80%;
+  top: 10%;
+  left: 10%;
+  background: radial-gradient(
+    circle,
+    rgba(139, 92, 246, 0.5) 0%,
+    rgba(79, 70, 229, 0.3) 30%,
+    rgba(67, 56, 202, 0.1) 70%,
+    transparent 100%
+  );
+  border-radius: 50%;
+  filter: blur(20px);
+  opacity: 0;
+  animation: primary-glow-pulse 8s infinite alternate ease-in-out;
+  transform: translateZ(0);
+  will-change: transform, opacity, filter;
+  mix-blend-mode: screen;
+}
+
+/* Custom glow for Create step (green-blue) */
+.github-primary-glow.create-glow,
+.journey-step:nth-child(3) .github-primary-glow {
+  background: radial-gradient(
+    circle at 40% 40%,
+    rgba(52, 211, 153, 0.7) 0%,
+    rgba(14, 165, 233, 0.5) 30%,
+    rgba(56, 189, 248, 0.2) 70%,
+    transparent 100%
+  );
+  animation: create-glow-pulse 10s infinite alternate ease-in-out;
+}
+
+/* Custom glow for Evaluate step (purple-pink) */
+.github-primary-glow.evaluate-glow,
+.journey-step:nth-child(5) .github-primary-glow {
+  background: radial-gradient(
+    circle at 60% 40%,
+    rgba(192, 38, 211, 0.7) 0%,
+    rgba(236, 72, 153, 0.5) 30%,
+    rgba(244, 114, 182, 0.2) 70%,
+    transparent 100%
+  );
+  animation: evaluate-glow-pulse 12s infinite alternate ease-in-out;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  opacity: 0.6; /* Start with some visibility */
+}
+
+/* Specific enhancement for the Evaluate section image */
+.journey-step:nth-child(5) .journey-step-visual.glow-effect {
+  position: relative;
+  overflow: visible; /* Allow glow to extend beyond the container */
+  border-radius: 0.75rem;
+}
+
+/* Add outer glow specifically for Evaluate section */
+.journey-step:nth-child(5) .journey-step-visual.glow-effect::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  right: -10px;
+  bottom: -10px;
+  border-radius: 1rem;
+  background: linear-gradient(
+    45deg,
+    rgba(192, 38, 211, 0.4),
+    rgba(236, 72, 153, 0.5),
+    rgba(244, 114, 182, 0.6),
+    rgba(236, 72, 153, 0.5),
+    rgba(192, 38, 211, 0.4)
+  );
+  background-size: 400% 400%;
+  z-index: 0;
+  animation: evaluateBorderGlow 6s infinite linear;
+  filter: blur(12px);
+  opacity: 0.8;
+  transition: opacity 0.5s ease;
+}
+
+.github-secondary-glow {
+  position: absolute;
+  width: 30%;
+  height: 30%;
+  background: radial-gradient(
+    circle,
+    rgba(168, 85, 247, 0.4) 0%,
+    rgba(139, 92, 246, 0.2) 50%,
+    transparent 100%
+  );
+  border-radius: 50%;
+  filter: blur(15px);
+  opacity: 0;
+  animation: secondary-glow-pulse 10s infinite alternate ease-in-out;
+  transform: translateZ(0);
+  will-change: transform, opacity;
+  mix-blend-mode: screen;
+}
+
+/* Custom secondary glows for Create step */
+.github-secondary-glow.create-secondary {
+  background: radial-gradient(
+    circle,
+    rgba(52, 211, 153, 0.5) 0%,
+    rgba(14, 165, 233, 0.3) 50%,
+    transparent 100%
+  );
+}
+
+/* Custom secondary glows for Evaluate step */
+.github-secondary-glow.evaluate-secondary {
+  background: radial-gradient(
+    circle,
+    rgba(192, 38, 211, 0.5) 0%,
+    rgba(236, 72, 153, 0.3) 50%,
+    transparent 100%
+  );
+}
+
+@keyframes primary-glow-pulse {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+}
+
+@keyframes create-glow-pulse {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translate(-5%, 5%);
+    filter: blur(15px);
+  }
+  40% {
+    opacity: 0.8;
+    transform: scale(1.15) translate(5%, 0%);
+    filter: blur(25px);
+  }
+  70% {
+    opacity: 0.6;
+    transform: scale(1.05) translate(0%, -5%);
+    filter: blur(20px);
+  }
+  100% {
+    opacity: 0.5;
+    transform: scale(0.9) translate(-3%, 3%);
+    filter: blur(18px);
+  }
+}
+
+@keyframes evaluate-glow-pulse {
+  0% {
+    opacity: 0;
+    transform: scale(0.85) translate(5%, -5%);
+    filter: blur(15px);
+  }
+  30% {
+    opacity: 0.75;
+    transform: scale(1.2) translate(-3%, 0%);
+    filter: blur(30px);
+  }
+  60% {
+    opacity: 0.65;
+    transform: scale(1.1) translate(0%, 5%);
+    filter: blur(25px);
+  }
+  100% {
+    opacity: 0.55;
+    transform: scale(0.95) translate(3%, -3%);
+    filter: blur(20px);
+  }
+}
+
+@keyframes secondary-glow-pulse {
+  0% {
+    opacity: 0;
+    transform: scale(0.5) translateY(10px);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.2) translateY(-10px);
+  }
+  100% {
+    opacity: 0.3;
+    transform: scale(0.9) translateY(5px);
+  }
+}
+
+/* Specific animation for Evaluate section border glow */
+@keyframes evaluateBorderGlow {
+  0% {
+    background-position: 0% 50%;
+    opacity: 0.5;
+  }
+  25% {
+    background-position: 50% 75%;
+    opacity: 0.8;
+  }
+  50% {
+    background-position: 100% 50%;
+    opacity: 0.9;
+  }
+  75% {
+    background-position: 50% 25%;
+    opacity: 0.8;
+  }
+  100% {
+    background-position: 0% 50%;
+    opacity: 0.5;
+  }
+}
+
+/* GitHub-style floating animation */
+.github-float-animation {
+  animation: github-float 12s infinite ease-in-out;
+  animation-delay: var(--float-delay, 0s);
+}
+
+/* Custom animation variants for different steps */
+.github-float-animation.create-step-animation {
+  animation: github-float-create 15s infinite ease-in-out;
+  animation-delay: var(--float-delay, 0s);
+}
+
+.github-float-animation.evaluate-step-animation {
+  animation: github-float-evaluate 18s infinite ease-in-out;
+  animation-delay: var(--float-delay, 0s);
+}
+
+@keyframes github-float {
+  0%, 100% {
+    transform: translateY(0px) translateZ(0);
+  }
+  25% {
+    transform: translateY(-10px) translateZ(0) rotate(0.5deg);
+  }
+  50% {
+    transform: translateY(-5px) translateZ(0) rotate(-0.5deg);
+  }
+  75% {
+    transform: translateY(-8px) translateZ(0) rotate(0.2deg);
+  }
+}
+
+@keyframes github-float-create {
+  0%, 100% {
+    transform: translateY(0px) translateZ(0) scale(1);
+    filter: brightness(1);
+  }
+  30% {
+    transform: translateY(-12px) translateZ(0) rotate(0.7deg) scale(1.01);
+    filter: brightness(1.05);
+  }
+  60% {
+    transform: translateY(-6px) translateZ(0) rotate(-0.6deg) scale(1.005);
+    filter: brightness(1.02);
+  }
+  80% {
+    transform: translateY(-9px) translateZ(0) rotate(0.3deg) scale(1.008);
+    filter: brightness(1.03);
+  }
+}
+
+@keyframes github-float-evaluate {
+  0%, 100% {
+    transform: translateY(0px) translateZ(0) rotate(0deg);
+  }
+  20% {
+    transform: translateY(-8px) translateZ(0) rotate(0.4deg);
+  }
+  40% {
+    transform: translateY(-5px) translateZ(0) rotate(-0.3deg) translateX(3px);
+  }
+  65% {
+    transform: translateY(-10px) translateZ(0) rotate(0.2deg) translateX(-3px);
+  }
+  85% {
+    transform: translateY(-7px) translateZ(0) rotate(-0.1deg);
+  }
+}
+
+/* Hover effects */
+.journey-step-visual.glow-effect.github-hover-active .github-primary-glow {
+  opacity: 0.9;
+  filter: blur(25px);
+  animation-duration: 3s;
+  transform: scale(1.2);
+  transition: transform 0.5s cubic-bezier(0.3, 0, 0.2, 1), opacity 0.5s ease, filter 0.5s ease;
+}
+
+.journey-step-visual.glow-effect.github-hover-active .github-secondary-glow {
+  opacity: 0.7;
+  filter: blur(20px);
+  animation-duration: 2s;
+  transition: transform 0.5s cubic-bezier(0.3, 0, 0.2, 1), opacity 0.5s ease, filter 0.5s ease;
+}
+
+.journey-step-visual.glow-effect.github-hover-active {
+  transform: translateZ(0) scale(1.03) translateY(-7px);
+  transition: transform 0.5s cubic-bezier(0.3, 0, 0.2, 1);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* Custom hover effects for Create step */
+.journey-step:nth-child(3) .journey-step-visual.glow-effect.github-hover-active .github-primary-glow {
+  opacity: 0.95;
+  filter: blur(30px);
+}
+
+.journey-step:nth-child(3) .journey-step-visual.glow-effect.github-hover-active .github-particle.star-particle {
+  animation-duration: 8s;
+  filter: drop-shadow(0 0 8px rgba(52, 211, 153, 0.7));
+}
+
+/* Custom hover effects for Evaluate step */
+.journey-step:nth-child(5) .journey-step-visual.glow-effect.github-hover-active .github-primary-glow {
+  opacity: 0.95;
+  filter: blur(30px);
+}
+
+.journey-step:nth-child(5) .journey-step-visual.glow-effect.github-hover-active .github-particle.code-particle span {
+  color: rgba(244, 114, 182, 1);
+  text-shadow: 0 0 10px rgba(192, 38, 211, 0.8);
+  animation-duration: 5s;
+}
+
+/* Particle burst on hover */
+.particle-burst-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.burst-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background-color: rgba(168, 85, 247, 0.8);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: burst-out 1s forwards cubic-bezier(0.1, 0.5, 0.2, 1);
+  will-change: transform, opacity;
+}
+
+/* Custom burst particles */
+.burst-particle.star-burst {
+  background-color: rgba(52, 211, 153, 0.8);
+  animation: star-burst-out 1.2s forwards cubic-bezier(0.2, 0.6, 0.3, 1);
+}
+
+.burst-particle.code-burst {
+  background-color: rgba(192, 38, 211, 0.8);
+  animation: code-burst-out 1.3s forwards cubic-bezier(0.15, 0.55, 0.25, 1);
+}
+
+.burst-particle.star-burst svg,
+.burst-particle.code-burst span {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: rotate-burst 1.5s forwards cubic-bezier(0.1, 0.6, 0.2, 1);
+}
+
+@keyframes burst-out {
+  0% {
+    transform: translate(0, 0) scale(0);
+    opacity: 0.8;
+  }
+  100% {
+    transform: 
+      translate(
+        calc(cos(var(--angle)) * var(--distance)), 
+        calc(sin(var(--angle)) * var(--distance))
+      )
+      scale(1);
+    opacity: 0;
+  }
+}
+
+@keyframes star-burst-out {
+  0% {
+    transform: translate(0, 0) scale(0) rotate(0deg);
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: 
+      translate(
+        calc(cos(var(--angle)) * var(--distance)), 
+        calc(sin(var(--angle)) * var(--distance))
+      )
+      scale(1.2) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+@keyframes code-burst-out {
+  0% {
+    transform: translate(0, 0) scale(0) rotate(0deg);
+    opacity: 0.9;
+  }
+  40% {
+    opacity: 0.9;
+    transform: 
+      translate(
+        calc(cos(var(--angle)) * var(--distance) * 0.4), 
+        calc(sin(var(--angle)) * var(--distance) * 0.4)
+      )
+      scale(0.8) rotate(180deg);
+  }
+  100% {
+    transform: 
+      translate(
+        calc(cos(var(--angle)) * var(--distance)), 
+        calc(sin(var(--angle)) * var(--distance))
+      )
+      scale(1.1) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+@keyframes rotate-burst {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(720deg);
+  }
+}
+
+/* Make sure elements stay above the glow effects */
+.journey-step-visual.glow-effect iframe,
+.journey-step-visual.glow-effect img {
+  position: relative;
+  z-index: 2;
+}
+
+/* Animation activation state */
+.journey-step-visual.glow-effect.github-animation-active .github-particle {
+  animation-play-state: running;
+}
+
+.journey-step-visual.glow-effect:not(.github-animation-active) .github-particle {
+  animation-play-state: paused;
+}
+
+.journey-step-visual.glow-effect.github-animation-active .github-primary-glow,
+.journey-step-visual.glow-effect.github-animation-active .github-secondary-glow {
+  animation-play-state: running;
+}
+
+.journey-step-visual.glow-effect:not(.github-animation-active) .github-primary-glow,
+.journey-step-visual.glow-effect:not(.github-animation-active) .github-secondary-glow {
+  animation-play-state: paused;
+}
+
+/* Reduced motion settings */
+.reduced-motion .github-particle {
+  animation-duration: 30s !important;
+}
+
+.reduced-motion .github-primary-glow,
+.reduced-motion .github-secondary-glow {
+  animation-duration: 15s !important;
+  filter: blur(10px) !important;
+}
+
+.reduced-motion .github-float-animation {
+  animation-duration: 20s !important;
+  animation-name: github-float-reduced !important;
+}
+
+@keyframes github-float-reduced {
+  0%, 100% {
+    transform: translateY(0px) translateZ(0);
+  }
+  50% {
+    transform: translateY(-5px) translateZ(0);
+  }
+}

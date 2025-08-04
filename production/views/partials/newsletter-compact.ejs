@@ -1,0 +1,86 @@
+<!-- Compact Newsletter Signup Component for Sidebars -->
+<div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+    <h4 class="text-lg font-bold mb-3 text-gray-900">Stay Updated</h4>
+    <p class="text-gray-700 text-sm mb-4">Get the latest business insights and market trends delivered to your inbox.</p>
+    <form action="/subscribe" method="POST" class="space-y-3" id="compact-newsletter-form">
+        <input type="email" name="email" placeholder="Your email address" required
+               class="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+        <input type="hidden" name="source" value="<%= typeof newsletterSource !== 'undefined' ? newsletterSource : 'sidebar' %>">
+        <button type="submit" class="w-full btn-primary">Subscribe</button>
+    </form>
+    <p class="text-xs text-gray-500 mt-2">
+        We respect your privacy. Unsubscribe at any time.
+    </p>
+    <!-- Status message div for feedback -->
+    <div id="compact-newsletter-status" class="mt-3 text-sm hidden"></div>
+</div>
+
+<!-- Compact Newsletter form JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const compactForm = document.getElementById('compact-newsletter-form');
+    const compactStatusDiv = document.getElementById('compact-newsletter-status');
+    
+    if (compactForm) {
+        compactForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const submitButton = this.querySelector('button[type="submit"]');
+            const originalText = submitButton.textContent;
+            
+            // Update button state
+            submitButton.disabled = true;
+            submitButton.textContent = 'Subscribing...';
+            
+            // Hide previous status messages
+            compactStatusDiv.classList.add('hidden');
+            
+            fetch('/subscribe', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.redirected) {
+                    // Handle redirect responses
+                    if (response.url.includes('/subscribe/thank-you')) {
+                        showCompactStatus('Thank you for subscribing!', 'success');
+                        compactForm.reset();
+                    } else if (response.url.includes('/subscribe/error')) {
+                        showCompactStatus('Error subscribing. Please try again.', 'error');
+                    }
+                } else {
+                    return response.text();
+                }
+            })
+            .then(data => {
+                if (data && !data.includes('thank-you')) {
+                    showCompactStatus('Successfully subscribed!', 'success');
+                    compactForm.reset();
+                }
+            })
+            .catch(error => {
+                console.error('Newsletter subscription error:', error);
+                showCompactStatus('Error subscribing. Please try again.', 'error');
+            })
+            .finally(() => {
+                submitButton.disabled = false;
+                submitButton.textContent = originalText;
+            });
+        });
+    }
+    
+    function showCompactStatus(message, type) {
+        compactStatusDiv.textContent = message;
+        compactStatusDiv.className = `mt-3 text-sm ${type === 'success' ? 'text-green-600' : 'text-red-600'}`;
+        compactStatusDiv.classList.remove('hidden');
+        
+        // Auto-hide success messages after 5 seconds
+        if (type === 'success') {
+            setTimeout(() => {
+                compactStatusDiv.classList.add('hidden');
+            }, 5000);
+        }
+    }
+});
+</script>

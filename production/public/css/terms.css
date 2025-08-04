@@ -1,0 +1,160 @@
+/* Additional custom styles for terms page */
+.prose {
+    max-width: 65ch;
+    margin: 0 auto;
+}
+
+.prose h2 {
+    color: var(--accent-color);
+    margin-top: 2em;
+    margin-bottom: 1em;
+}
+
+.prose h3 {
+    color: var(--accent-color);
+    margin-top: 1.5em;
+    margin-bottom: 0.75em;
+}
+
+.prose p {
+    margin-bottom: 1.25em;
+    line-height: 1.7;
+}
+
+.prose ul {
+    margin-left: 1.5em;
+    margin-bottom: 1.25em;
+}
+
+.prose li {
+    margin-bottom: 0.5em;
+}
+
+/* Custom spacing for mobile */
+@media (max-width: 640px) {
+    .prose {
+        padding: 0 1rem;
+    }
+}
+
+/* Terms page specific styles */
+.terms-content {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #2c3e50;
+}
+
+.terms-content section {
+    margin-bottom: 3rem;
+}
+
+.terms-content h2 {
+    color: #1a365d;
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.terms-content h3 {
+    color: #2d3748;
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin: 1.5rem 0 1rem;
+}
+
+.terms-content p {
+    margin-bottom: 1.25rem;
+}
+
+.terms-content ul {
+    margin-bottom: 1.5rem;
+    padding-left: 1.5rem;
+}
+
+.terms-content li {
+    margin-bottom: 0.75rem;
+}
+
+.terms-content .alert {
+    background-color: #f8fafc;
+    border-left: 4px solid #3182ce;
+    padding: 1.5rem;
+    margin: 2rem 0;
+}
+
+.terms-content a {
+    color: #3182ce;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.terms-content a:hover {
+    color: #2c5282;
+    text-decoration: underline;
+}
+
+/* Responsive padding adjustments */
+@media (max-width: 768px) {
+    .terms-content {
+        font-size: 1rem;
+    }
+
+    .terms-content h2 {
+        font-size: 1.6rem;
+    }
+
+    .terms-content h3 {
+        font-size: 1.3rem;
+    }
+}
+
+/* Add extra bottom spacing */
+.container {
+    margin-bottom: 6rem !important;
+}
+
+/* Modern styling for notice boxes */
+.bg-gray-50 {
+    background-color: #f8fafc;
+    border-radius: 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s;
+}
+
+.bg-gray-50:hover {
+    transform: translateY(-2px);
+}
+
+/* Improved section spacing */
+section {
+    padding: 2rem 0;
+}
+
+/* Enhanced typography for better readability */
+.text-gray-700 {
+    color: #374151;
+    font-size: 1.05rem;
+    line-height: 1.75;
+}
+
+/* Better visibility for important notices */
+.bg-blue-50 {
+    background-color: #ebf5ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    margin: 2rem 0;
+}
+
+/* Improved list styling */
+.list-disc {
+    list-style-type: disc;
+    padding-left: 2rem;
+}
+
+.list-disc li::marker {
+    color: #3182ce;
+}

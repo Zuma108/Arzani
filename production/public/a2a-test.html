@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A2A Integration Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-8">A2A Integration Test Suite</h1>
+        
+        <!-- Agent Status Panel -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4">Agent Status</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="text-center">
+                    <div id="orchestratorStatus" class="w-4 h-4 mx-auto mb-2 rounded-full bg-yellow-400"></div>
+                    <div class="text-sm font-medium">Orchestrator</div>
+                    <div class="text-xs text-gray-500">Port 5001</div>
+                </div>
+                <div class="text-center">
+                    <div id="brokerStatus" class="w-4 h-4 mx-auto mb-2 rounded-full bg-yellow-400"></div>
+                    <div class="text-sm font-medium">Broker</div>
+                    <div class="text-xs text-gray-500">Port 5002</div>
+                </div>
+                <div class="text-center">
+                    <div id="legalStatus" class="w-4 h-4 mx-auto mb-2 rounded-full bg-yellow-400"></div>
+                    <div class="text-sm font-medium">Legal</div>
+                    <div class="text-xs text-gray-500">Port 5003</div>
+                </div>
+                <div class="text-center">
+                    <div id="financeStatus" class="w-4 h-4 mx-auto mb-2 rounded-full bg-yellow-400"></div>
+                    <div class="text-sm font-medium">Finance</div>
+                    <div class="text-xs text-gray-500">Port 5004</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Controls -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4">A2A Communication Test</h2>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2">Select Agent:</label>
+                <select id="agentSelector" class="w-full p-2 border rounded-lg">
+                    <option value="orchestrator">Orchestrator</option>
+                    <option value="broker">Broker</option>
+                    <option value="legal">Legal</option>
+                    <option value="finance">Finance</option>
+                </select>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2">Test Message:</label>
+                <input id="testMessage" type="text" placeholder="Enter test message..." 
+                       value="What services do you provide?" 
+                       class="w-full p-2 border rounded-lg">
+            </div>
+            
+            <button id="sendTest" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                Send Test Message
+            </button>
+            
+            <button id="checkHealth" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 ml-2">
+                Check Agent Health
+            </button>
+        </div>
+
+        <!-- Results -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-xl font-semibold mb-4">Test Results</h2>
+            <div id="results" class="space-y-4 max-h-96 overflow-y-auto">
+                <div class="text-gray-500">Click "Check Agent Health" or "Send Test Message" to see results...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class A2ATestSuite {
+            constructor() {
+                this.agentUrls = {
+                    orchestrator: 'http://localhost:5001',
+                    broker: 'http://localhost:5002',
+                    legal: 'http://localhost:5003',
+                    finance: 'http://localhost:5004'
+                };
+                this.initializeUI();
+                this.checkAllAgents();
+            }
+
+            initializeUI() {
+                document.getElementById('sendTest').addEventListener('click', () => this.sendTestMessage());
+                document.getElementById('checkHealth').addEventListener('click', () => this.checkAllAgents());
+            }
+
+            async checkAllAgents() {
+                this.addResult('🔍 Checking agent health...', 'info');
+                
+                for (const [name, url] of Object.entries(this.agentUrls)) {
+                    try {
+                        const response = await fetch(`${url}/.well-known/agent.json`);
+                        if (response.ok) {
+                            const agentInfo = await response.json();
+                            this.updateAgentStatus(name, 'online');
+                            this.addResult(`✅ ${name}: ${agentInfo.name}`, 'success');
+                        } else {
+                            this.updateAgentStatus(name, 'offline');
+                            this.addResult(`❌ ${name}: HTTP ${response.status}`, 'error');
+                        }
+                    } catch (error) {
+                        this.updateAgentStatus(name, 'offline');
+                        this.addResult(`❌ ${name}: ${error.message}`, 'error');
+                    }
+                }
+            }
+
+            async sendTestMessage() {
+                const selectedAgent = document.getElementById('agentSelector').value;
+                const message = document.getElementById('testMessage').value;
+                
+                if (!message.trim()) {
+                    this.addResult('❌ Please enter a test message', 'error');
+                    return;
+                }
+
+                this.addResult(`🚀 Sending to ${selectedAgent}: "${message}"`, 'info');
+
+                try {
+                    const taskPayload = {
+                        jsonrpc: '2.0',
+                        method: 'tasks/send',
+                        params: {
+                            task: {
+                                id: this.generateUUID(),
+                                state: 'submitted'
+                            },
+                            message: {
+                                parts: [{ type: 'text', text: message }],
+                                role: 'user'
+                            }
+                        },
+                        id: Date.now().toString()
+                    };
+
+                    const response = await fetch(`${this.agentUrls[selectedAgent]}/a2a/tasks/send`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(taskPayload)
+                    });
+
+                    if (response.ok) {
+                        const result = await response.json();
+                        const responseText = result.result?.message?.parts?.[0]?.text || 'No response text';
+                        this.addResult(`✅ Response: ${responseText.substring(0, 200)}${responseText.length > 200 ? '...' : ''}`, 'success');
+                    } else {
+                        const errorText = await response.text();
+                        this.addResult(`❌ HTTP ${response.status}: ${errorText}`, 'error');
+                    }
+                } catch (error) {
+                    this.addResult(`❌ Error: ${error.message}`, 'error');
+                }
+            }
+
+            updateAgentStatus(agentName, status) {
+                const statusElement = document.getElementById(`${agentName}Status`);
+                if (statusElement) {
+                    statusElement.classList.remove('bg-green-400', 'bg-red-400', 'bg-yellow-400');
+                    switch(status) {
+                        case 'online':
+                            statusElement.classList.add('bg-green-400');
+                            break;
+                        case 'offline':
+                            statusElement.classList.add('bg-red-400');
+                            break;
+                        default:
+                            statusElement.classList.add('bg-yellow-400');
+                    }
+                }
+            }
+
+            addResult(message, type) {
+                const results = document.getElementById('results');
+                const div = document.createElement('div');
+                div.className = `p-3 rounded-lg text-sm ${
+                    type === 'success' ? 'bg-green-100 text-green-800' :
+                    type === 'error' ? 'bg-red-100 text-red-800' :
+                    'bg-blue-100 text-blue-800'
+                }`;
+                div.innerHTML = `<span class="text-xs text-gray-500">[${new Date().toLocaleTimeString()}]</span> ${message}`;
+                results.appendChild(div);
+                results.scrollTop = results.scrollHeight;
+            }
+
+            generateUUID() {
+                return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                    const r = Math.random() * 16 | 0;
+                    const v = c == 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                });
+            }
+        }
+
+        // Initialize test suite when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            window.testSuite = new A2ATestSuite();
+        });
+    </script>
+</body>
+</html>

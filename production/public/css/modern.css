@@ -1,0 +1,233 @@
+/* 
+ * Legacy CSS file - Now using Tailwind CSS for unified styling
+ * This file is kept for compatibility but styles have been moved to Tailwind
+ * All pages now use consistent Tailwind-based design from buyer-dashboard.ejs
+ */
+
+/* Only keeping non-conflicting utility styles */
+:root {
+    --primary-blue: #041b76;
+    --primary-dark: #121212;
+    --dark-light: #1a1a1a;
+    --text-light: #f8f9fa;
+    --text-dark: #212529;
+    --text-muted: #6c757d;
+    --border-color: #343a40;
+}
+
+/* Custom scrollbar for chat areas - non-conflicting with Tailwind */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* CTA Buttons - Blue with white text */
+.btn-cta, .cta-button {
+    background-color: var(--primary-blue);
+    color: white;
+    padding: 0.875rem 1.75rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-block;
+    border: 2px solid var(--primary-blue);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(4, 27, 118, 0.3);
+}
+
+.btn-cta:hover, .cta-button:hover {
+    background-color: #0329a8;
+    border-color: #0329a8;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(4, 27, 118, 0.4);
+}
+
+.btn-cta:active, .cta-button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 10px rgba(4, 27, 118, 0.3);
+}
+
+/* Send Message Button Specific */
+.send-message-btn {
+    background-color: var(--primary-blue);
+    color: white;
+    padding: 0.75rem 2rem;
+    border-radius: 0.375rem;
+    font-weight: 600;
+    border: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(4, 27, 118, 0.3);
+}
+
+.send-message-btn:hover {
+    background-color: #0329a8;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(4, 27, 118, 0.4);
+}
+
+/* Email CTA Link */
+.email-cta {
+    background-color: var(--primary-blue);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.375rem;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(4, 27, 118, 0.3);
+}
+
+.email-cta:hover {
+    background-color: #0329a8;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(4, 27, 118, 0.4);
+    text-decoration: none;
+}
+
+/* Primary Button - Main CTA styling (used by navbar and main CTAs) */
+.btn-primary {
+    background-color: #316FD4;
+    color: white;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #316FD4;
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(49, 111, 212, 0.3);
+}
+
+.btn-primary:hover {
+    background-color: #2563eb;
+    border-color: #2563eb;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(49, 111, 212, 0.4);
+    text-decoration: none;
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 10px rgba(49, 111, 212, 0.3);
+}
+
+.btn-primary:focus {
+    outline: none;
+    ring: 2px;
+    ring-color: rgba(49, 111, 212, 0.5);
+    ring-offset: 2px;
+}
+
+/* Disabled state for btn-primary (for form submissions) */
+.btn-primary:disabled {
+    background-color: #6b7280;
+    border-color: #6b7280;
+    color: #9ca3af;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.btn-primary:disabled:hover {
+    background-color: #6b7280;
+    border-color: #6b7280;
+    color: #9ca3af;
+    transform: none;
+    box-shadow: none;
+}
+
+.btn-secondary {
+    background-color: var(--dark-light);
+    border: 1px solid var(--border-color);
+    color: var(--text-light);
+    padding: 0.875rem 1.75rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+    background-color: var(--border-color);
+    border-color: #495057;
+}
+
+/* Cards */
+.feature-card, .testimonial-card {
+    background-color: var(--dark-light);
+    border: 1px solid var(--border-color);
+    border-radius: 1rem;
+    padding: 2rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.feature-card:hover, .testimonial-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    border-color: var(--primary-blue);
+}
+
+/* FAQ Section */
+.faq-item {
+    background-color: var(--dark-light);
+    border: 1px solid var(--border-color);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.faq-question {
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1.125rem;
+}
+
+.faq-answer {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.5s ease-in-out;
+    color: var(--text-muted);
+}
+
+/* Footer */
+footer {
+    background-color: #000000;
+    border-top: 1px solid var(--border-color);
+    padding: 4rem 0;
+}
+
+footer a:hover {
+    color: var(--primary-blue);
+}
+
+/* Utility Classes */
+.text-gradient-animated {
+    background: linear-gradient(90deg, #316FD4, #4A90E2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-fill-color: transparent;
+}
+

@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="auth-token" content="<%= locals.token || '' %>">
+    <title><%= title %></title>
+    <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#041b76',
+                        secondary: '#f7f5f2',
+                        accent: '#064fa3',
+                        'text-primary': '#363309',
+                        'gray-850': '#1f2937',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-in-out',
+                        'slide-up': 'slideUp 0.3s ease-out',
+                        'pulse-slow': 'pulse 3s infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .logo-img {
+            width: 140px;
+            height: auto;
+            border-radius: 8px;
+            object-fit: contain;
+        }
+        
+        /* Custom animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Custom scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+        
+        /* Dark mode scrollbar */
+        .dark .custom-scrollbar::-webkit-scrollbar-track {
+            background: #374151;
+        }
+        
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #6B7280;
+        }
+        
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #9CA3AF;
+        }
+        
+        /* Sidebar transition styles */
+        .sidebar-transition {
+            transition: width 0.3s ease, transform 0.3s ease;
+        }
+        
+        .content-transition {
+            transition: margin-left 0.3s ease, width 0.3s ease;
+        }
+        
+        /* Mobile responsive sidebar */
+        @media (max-width: 768px) {
+            #sidebar {
+                transform: translateX(-100%);
+            }
+            
+            #sidebar.translate-x-0 {
+                transform: translateX(0);
+            }
+            
+            #content {
+                margin-left: 0 !important;
+            }
+        }
+        
+        /* Animation initialization */
+        .animate-fade-in, .animate-slide-up {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        
+        /* Dark mode enhancements */
+        .dark {
+            color-scheme: dark;
+        }
+        
+        .dark .bg-white {
+            background-color: #1F2937;
+        }
+        
+        .dark .text-gray-800 {
+            color: #F9FAFB;
+        }
+        
+        .dark .text-gray-700 {
+            color: #E5E7EB;
+        }
+        
+        .dark .text-gray-600 {
+            color: #D1D5DB;
+        }
+        
+        .dark .text-gray-500 {
+            color: #9CA3AF;
+        }
+        
+        .dark .border-gray-300 {
+            border-color: #4B5563;
+        }
+        
+        .dark .border-gray-200 {
+            border-color: #374151;
+        }
+        
+        .dark .hover\:bg-gray-100:hover {
+            background-color: #374151;
+        }
+        
+        .dark .shadow-lg {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.15);
+        }
+        
+        /* Professional type card styles */
+        .professional-type-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .professional-type-card.selected {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(4, 27, 118, 0.2);
+        }
+        
+        /* Document upload area styles */
+        .document-upload-area.dragover {
+            border-color: #064fa3;
+            background-color: rgba(4, 27, 118, 0.05);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans antialiased dark:bg-gray-900 transition-colors duration-300">
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <div id="sidebar" class="bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 h-screen sidebar-transition fixed z-40 w-64 md:w-20 xl:w-64 shadow-lg">
+            <div class="flex flex-col h-full">
+                <!-- Logo -->
+                <div class="flex items-center justify-center h-16 border-b border-gray-200 dark:border-gray-700 px-4">
+                    <a href="/" class="flex items-center justify-center">
+                        <img src="/figma design exports/logos/Arzani-logo.png" alt="Arzani.co.uk" class="logo-img">
+                    </a>
+                    <button id="sidebarCollapse" class="md:hidden xl:flex ml-auto text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- Navigation Menu -->
+                <nav class="flex-grow py-6 px-4 overflow-y-auto custom-scrollbar">
+                    <ul class="space-y-2">
+                        <li>
+                            <a href="/marketplace2" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                <i class="fas fa-store h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
+                                <span class="hidden md:hidden xl:block">Marketplace</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/market-trends" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                <i class="fas fa-chart-line h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
+                                <span class="hidden md:hidden xl:block">Market Trends</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/chat" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                <i class="fas fa-comments h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
+                                <span class="hidden md:hidden xl:block">Chat</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/profile" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                <i class="fas fa-user-circle h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
+                                <span class="hidden md:hidden xl:block">My Profile</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/saved-searches" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                <i class="fas fa-bookmark h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
+                                <span class="hidden md:hidden xl:block">Saved Searches</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/history" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                <i class="fas fa-history h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
+                                <span class="hidden md:hidden xl:block">History</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/professional-verification" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors bg-blue-50 dark:bg-blue-900/20">
+                                <i class="fas fa-user-check h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
+                                <span class="hidden md:hidden xl:block">Professional Verification</span>
+                            </a>
+                        </li>
+                        <% if (locals.user && locals.user.is_verified_professional) { %>
+                        <li>
+                            <a href="/professional-dashboard" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                <i class="fas fa-tachometer-alt h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
+                                <span class="hidden md:hidden xl:block">Professional Dashboard</span>
+                            </a>
+                        </li>
+                        <% } %>
+                        <% if (locals.user && locals.user.role === 'admin') { %>
+                        <li>
+                            <a href="/admin/verification-review" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                <i class="fas fa-user-shield h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
+                                <span class="hidden md:hidden xl:block">Admin Verification</span>
+                            </a>
+                        </li>
+                        <% } %>
+                    </ul>
+                    
+                    <div class="pt-6 mt-6 border-t border-gray-200 dark:border-gray-700">
+                        <ul class="space-y-2">
+                            <li>
+                                <a href="/pricing" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                    <i class="fas fa-crown h-6 w-6 mr-3 text-gray-500 dark:text-gray-400"></i>
+                                    <span class="hidden md:hidden xl:block">Upgrade</span>
+                                </a>
+                            </li>
+                            <li>
+                                <button id="themeToggle" class="w-full flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                    <i id="lightIcon" class="fas fa-sun h-6 w-6 mr-3 text-gray-500 dark:text-gray-400"></i>
+                                    <i id="darkIcon" class="fas fa-moon h-6 w-6 mr-3 text-gray-500 dark:text-gray-400 hidden"></i>
+                                    <span class="hidden md:hidden xl:block">Toggle Theme</span>
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+                
+                <!-- User Profile Section -->
+                <div class="border-t border-gray-200 dark:border-gray-700 p-4">
+                    <div class="flex items-center">
+                        <div class="h-10 w-10 rounded-full bg-gradient-to-r from-primary to-secondary flex items-center justify-center text-white font-medium">
+                            <%= (locals.user && locals.user.username) ? locals.user.username.charAt(0).toUpperCase() : 'U' %>
+                        </div>
+                        <div class="ml-3 hidden md:hidden xl:block">
+                            <p class="text-sm font-medium text-gray-700 dark:text-gray-300"><%= (locals.user && locals.user.username) ? locals.user.username : 'User' %></p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400"><%= (locals.user && locals.user.subscription) ? locals.user.subscription : 'Free' %> Plan</p>
+                        </div>
+                        <button id="signOutBtn" class="ml-auto hidden md:hidden xl:block text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div id="content" class="flex-1 overflow-y-auto content-transition ml-0 md:ml-20 xl:ml-64">
+            <!-- Top Navbar -->
+            <nav class="bg-white dark:bg-gray-800 shadow-md sticky top-0 z-30">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="flex items-center justify-between h-16">
+                        <!-- Left side - Hamburger and Page Title -->
+                        <div class="flex items-center">
+                            <button id="sidebarToggle" class="md:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 mr-4">
+                                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                                </svg>
+                            </button>
+                            <h1 class="text-xl font-semibold text-gray-800 dark:text-white">Professional Verification</h1>
+                        </div>
+                        
+                        <!-- Right side - Breadcrumb -->
+                        <nav class="hidden md:flex" aria-label="Breadcrumb">
+                            <ol class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
+                                <li><a href="/marketplace2" class="hover:text-gray-700 dark:hover:text-gray-200">Home</a></li>
+                                <li><i class="fas fa-chevron-right text-xs"></i></li>
+                                <li><a href="/profile" class="hover:text-gray-700 dark:hover:text-gray-200">My Profile</a></li>
+                                <li><i class="fas fa-chevron-right text-xs"></i></li>
+                                <li class="text-gray-700 dark:text-gray-300">Professional Verification</li>
+                            </ol>
+                        </nav>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Page Content -->
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Page Content -->
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <!-- Page Header -->
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Professional Verification</h2>
+                    <p class="text-gray-600 dark:text-gray-400">Complete the steps below to gain access to professional features.</p>
+                </div>
+
+                <!-- Verification App -->
+                <div id="verification-app" class="space-y-6">
+                    <!-- Status View -->
+                    <div id="status-view" class="hidden">
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 text-center">
+                            <div class="status-container">
+                                <div class="mb-6">
+                                    <div id="status-icon" class="mx-auto w-16 h-16 rounded-full flex items-center justify-center text-white text-2xl"></div>
+                                </div>
+                                <h2 id="status-message" class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Verification Status</h2>
+                                <p id="status-details" class="text-gray-600 dark:text-gray-400 mb-6">Loading status...</p>
+                                <div class="flex justify-center space-x-4">
+                                    <button onclick="window.location.href='/profile'" class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-accent transition-colors">
+                                        Go to Profile
+                                    </button>
+                                    <button id="goToDashboardBtn" class="hidden bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors" onclick="window.location.href='/professional-dashboard'">
+                                        Go to Dashboard
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Verification View -->
+                    <div id="verification-view">
+                        <!-- Progress Steps -->
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6">
+                            <div class="mb-6">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="flex items-center">
+                                        <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-medium" id="step-indicator-1">1</div>
+                                        <span class="ml-3 text-sm font-medium text-gray-900 dark:text-white" id="step-label-1">Select Type</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <div class="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400 flex items-center justify-center text-sm font-medium" id="step-indicator-2">2</div>
+                                        <span class="ml-3 text-sm font-medium text-gray-500 dark:text-gray-400" id="step-label-2">Upload Documents</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <div class="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400 flex items-center justify-center text-sm font-medium" id="step-indicator-3">3</div>
+                                        <span class="ml-3 text-sm font-medium text-gray-500 dark:text-gray-400" id="step-label-3">Create Profile</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <div class="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400 flex items-center justify-center text-sm font-medium" id="step-indicator-4">4</div>
+                                        <span class="ml-3 text-sm font-medium text-gray-500 dark:text-gray-400" id="step-label-4">Review & Submit</span>
+                                    </div>
+                                </div>
+                                <!-- Progress Bar -->
+                                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                    <div id="progress-bar" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 25%"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 1: Select Professional Type -->
+                        <div id="step-1-content" class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                            <!-- Info Box -->
+                            <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+                                <div class="flex items-start">
+                                    <i class="fas fa-info-circle text-blue-600 dark:text-blue-400 mt-1 mr-3"></i>
+                                    <div>
+                                        <h3 class="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2">Why Verify?</h3>
+                                        <p class="text-blue-800 dark:text-blue-200">Professional verification grants access to specialized tools for business advisors, brokers, accountants, and other professionals in the business transaction ecosystem.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Select Your Professional Type</h3>
+                            
+                            <!-- Professional Types Grid -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                                <div class="professional-type-card bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-lg p-4 cursor-pointer hover:border-primary hover:bg-primary/5 dark:hover:bg-primary/10 transition-all" onclick="selectProfessionalType('business_broker', this)">
+                                    <div class="text-center">
+                                        <div class="w-12 h-12 mx-auto mb-3 bg-primary/10 dark:bg-primary/20 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-handshake text-primary text-xl"></i>
+                                        </div>
+                                        <div class="font-medium text-gray-900 dark:text-white">Business Broker</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="professional-type-card bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-lg p-4 cursor-pointer hover:border-primary hover:bg-primary/5 dark:hover:bg-primary/10 transition-all" onclick="selectProfessionalType('accountant', this)">
+                                    <div class="text-center">
+                                        <div class="w-12 h-12 mx-auto mb-3 bg-primary/10 dark:bg-primary/20 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-calculator text-primary text-xl"></i>
+                                        </div>
+                                        <div class="font-medium text-gray-900 dark:text-white">Accountant</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="professional-type-card bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-lg p-4 cursor-pointer hover:border-primary hover:bg-primary/5 dark:hover:bg-primary/10 transition-all" onclick="selectProfessionalType('lawyer', this)">
+                                    <div class="text-center">
+                                        <div class="w-12 h-12 mx-auto mb-3 bg-primary/10 dark:bg-primary/20 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-gavel text-primary text-xl"></i>
+                                        </div>
+                                        <div class="font-medium text-gray-900 dark:text-white">Lawyer</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="professional-type-card bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-lg p-4 cursor-pointer hover:border-primary hover:bg-primary/5 dark:hover:bg-primary/10 transition-all" onclick="selectProfessionalType('business_consultant', this)">
+                                    <div class="text-center">
+                                        <div class="w-12 h-12 mx-auto mb-3 bg-primary/10 dark:bg-primary/20 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-briefcase text-primary text-xl"></i>
+                                        </div>
+                                        <div class="font-medium text-gray-900 dark:text-white">Business Consultant</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="professional-type-card bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-lg p-4 cursor-pointer hover:border-primary hover:bg-primary/5 dark:hover:bg-primary/10 transition-all" onclick="selectProfessionalType('financial_advisor', this)">
+                                    <div class="text-center">
+                                        <div class="w-12 h-12 mx-auto mb-3 bg-primary/10 dark:bg-primary/20 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-piggy-bank text-primary text-xl"></i>
+                                        </div>
+                                        <div class="font-medium text-gray-900 dark:text-white">Financial Advisor</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="professional-type-card bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-lg p-4 cursor-pointer hover:border-primary hover:bg-primary/5 dark:hover:bg-primary/10 transition-all" onclick="selectProfessionalType('other', this)">
+                                    <div class="text-center">
+                                        <div class="w-12 h-12 mx-auto mb-3 bg-primary/10 dark:bg-primary/20 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-user-tie text-primary text-xl"></i>
+                                        </div>
+                                        <div class="font-medium text-gray-900 dark:text-white">Other Professional</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex justify-end">
+                                <button id="next-step-1-button" class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-accent transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed" onclick="nextStep(1)" disabled>
+                                    Continue <i class="fas fa-arrow-right ml-2"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Upload Documents -->
+                        <div id="step-2-content" class="hidden bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                            <form id="verification-form">
+                                <div class="space-y-6">
+                                    <!-- License Number -->
+                                    <div>
+                                        <label for="license-number" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">License/Registration Number (Optional)</label>
+                                        <input type="text" id="license-number" name="licenseNumber" 
+                                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white" 
+                                               placeholder="e.g., CPA #12345, Bar #67890">
+                                    </div>
+
+                                    <!-- Additional Information -->
+                                    <div>
+                                        <label for="verification-notes" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Additional Information (Optional)</label>
+                                        <textarea id="verification-notes" name="verificationNotes" rows="3" 
+                                                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white" 
+                                                  placeholder="Provide context, links to professional profiles (LinkedIn), or other relevant details."></textarea>
+                                    </div>
+
+                                    <!-- Document Upload -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Upload Verification Documents</label>
+                                        <div id="document-upload-area" class="document-upload-area border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center cursor-pointer hover:border-primary hover:bg-primary/5 dark:hover:bg-primary/10 transition-all">
+                                            <input type="file" id="document-input" class="hidden" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
+                                            <div class="space-y-2">
+                                                <div class="w-12 h-12 mx-auto bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                                                    <i class="fas fa-cloud-upload-alt text-gray-500 dark:text-gray-400 text-xl"></i>
+                                                </div>
+                                                <p class="text-gray-700 dark:text-gray-300 font-medium">Drag & drop files here or click to browse</p>
+                                                <p class="text-sm text-gray-500 dark:text-gray-400">Required: Proof of identity & professional status (e.g., license, certification, business registration). Max 5MB per file.</p>
+                                            </div>
+                                        </div>
+                                        <div id="document-list" class="mt-4 space-y-2"></div>
+                                    </div>
+                                </div>
+
+                                <div class="flex justify-between mt-8">
+                                    <button type="button" class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors" onclick="prevStep(2)">
+                                        <i class="fas fa-arrow-left mr-2"></i> Back
+                                    </button>
+                                    <button type="button" id="next-step-2-button" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed" onclick="nextStep(2)" disabled>
+                                        Create Profile <i class="fas fa-arrow-right ml-2"></i>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Step 3: Professional Profile -->
+                        <div id="step-3-content" class="hidden bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">Create Your Professional Profile</h3>
+                            
+                            <form id="profile-form" class="space-y-6">
+                                <!-- Professional Picture -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Professional Picture
+                                    </label>
+                                    <div class="flex items-center space-x-6">
+                                        <div id="picture-preview" class="w-24 h-24 rounded-full bg-gray-100 dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 flex items-center justify-center overflow-hidden">
+                                            <i class="fas fa-user text-2xl text-gray-400"></i>
+                                        </div>
+                                        <div>
+                                            <input type="file" id="professional-picture-input" accept="image/*" class="hidden">
+                                            <button type="button" id="picture-upload-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                                                Upload Picture
+                                            </button>
+                                            <p class="text-sm text-gray-500 mt-1">JPG, PNG (Max 2MB)</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Bio and Tagline -->
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label for="professional-tagline" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            Professional Tagline <span class="text-red-500">*</span>
+                                        </label>
+                                        <input type="text" id="professional-tagline" name="professionalTagline" maxlength="200" placeholder="e.g., Expert Corporate Lawyer with 10+ years experience" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                                    </div>
+                                    <div>
+                                        <label for="years-experience" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            Years of Experience <span class="text-red-500">*</span>
+                                        </label>
+                                        <input type="number" id="years-experience" name="yearsExperience" min="0" max="50" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label for="professional-bio" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Professional Bio <span class="text-red-500">*</span>
+                                    </label>
+                                    <textarea id="professional-bio" name="professionalBio" rows="4" placeholder="Tell potential clients about your background, expertise, and what sets you apart..." class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"></textarea>
+                                </div>
+
+                                <!-- Services and Industries -->
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label for="services-offered" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            Services Offered <span class="text-red-500">*</span>
+                                        </label>
+                                        <select id="services-offered" multiple class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white min-h-[120px]">
+                                            <!-- Options loaded dynamically -->
+                                        </select>
+                                        <p class="text-sm text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple</p>
+                                    </div>
+                                    <div>
+                                        <label for="industries-serviced" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            Industries Serviced <span class="text-red-500">*</span>
+                                        </label>
+                                        <select id="industries-serviced" multiple class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white min-h-[120px]">
+                                            <!-- Options loaded dynamically -->
+                                        </select>
+                                        <p class="text-sm text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple</p>
+                                    </div>
+                                </div>
+
+                                <!-- Contact Information -->
+                                <div>
+                                    <h4 class="text-md font-semibold text-gray-900 dark:text-white mb-3">Contact Information</h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label for="professional-website" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                Professional Website
+                                            </label>
+                                            <input type="url" id="professional-website" name="professionalWebsite" placeholder="https://yourwebsite.com" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                                        </div>
+                                        <div>
+                                            <label for="professional-phone" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                Professional Phone
+                                            </label>
+                                            <input type="tel" id="professional-phone" name="professionalPhone" placeholder="+1 (555) 123-4567" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Profile Settings -->
+                                <div>
+                                    <h4 class="text-md font-semibold text-gray-900 dark:text-white mb-3">Profile Settings</h4>
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label for="profile-visibility" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                Profile Visibility
+                                            </label>
+                                            <select id="profile-visibility" name="profileVisibility" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                                                <option value="public">Public - Anyone can view your profile</option>
+                                                <option value="verified_only">Verified Only - Only verified users can view</option>
+                                                <option value="private">Private - Only you can view</option>
+                                            </select>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <input type="checkbox" id="allow-direct-contact" name="allowDirectContact" checked class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded">
+                                            <label for="allow-direct-contact" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+                                                Allow direct contact from potential clients
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+
+                            <div class="flex justify-between mt-6">
+                                <button type="button" class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors" onclick="prevStep(3)">
+                                    <i class="fas fa-arrow-left mr-2"></i> Back
+                                </button>
+                                <button id="next-step-3-button" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors" onclick="nextStep(3)">
+                                    Review & Submit <i class="fas fa-arrow-right ml-2"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Step 4: Review and Submit -->
+                        <div id="step-4-content" class="hidden bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">Review Your Submission</h3>
+                            
+                            <div class="space-y-6 mb-6">
+                                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                                    <h4 class="font-semibold text-gray-900 dark:text-white mb-3">Professional Information</h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                        <div>
+                                            <span class="text-gray-600 dark:text-gray-400">Type:</span>
+                                            <span id="review-type" class="ml-2 font-medium text-gray-900 dark:text-white"></span>
+                                        </div>
+                                        <div>
+                                            <span class="text-gray-600 dark:text-gray-400">License:</span>
+                                            <span id="review-license" class="ml-2 font-medium text-gray-900 dark:text-white"></span>
+                                        </div>
+                                        <div>
+                                            <span class="text-gray-600 dark:text-gray-400">Experience:</span>
+                                            <span id="review-experience" class="ml-2 font-medium text-gray-900 dark:text-white"></span>
+                                        </div>
+                                        <div>
+                                            <span class="text-gray-600 dark:text-gray-400">Website:</span>
+                                            <span id="review-website" class="ml-2 font-medium text-gray-900 dark:text-white"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                                    <h4 class="font-semibold text-gray-900 dark:text-white mb-3">Professional Profile</h4>
+                                    <div class="space-y-2 text-sm">
+                                        <div>
+                                            <span class="text-gray-600 dark:text-gray-400">Tagline:</span>
+                                            <span id="review-tagline" class="ml-2 font-medium text-gray-900 dark:text-white"></span>
+                                        </div>
+                                        <div>
+                                            <span class="text-gray-600 dark:text-gray-400">Bio:</span>
+                                            <p id="review-bio" class="ml-2 mt-1 text-gray-900 dark:text-white"></p>
+                                        </div>
+                                        <div>
+                                            <span class="text-gray-600 dark:text-gray-400">Services:</span>
+                                            <div id="review-services" class="ml-2 mt-1"></div>
+                                        </div>
+                                        <div>
+                                            <span class="text-gray-600 dark:text-gray-400">Industries:</span>
+                                            <div id="review-industries" class="ml-2 mt-1"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                                    <h4 class="font-semibold text-gray-900 dark:text-white mb-3">Verification Documents</h4>
+                                    <ul id="review-documents" class="space-y-1 text-sm text-gray-900 dark:text-white">
+                                        <!-- Documents list will be populated here -->
+                                    </ul>
+                                </div>
+
+                                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                                    <h4 class="font-semibold text-gray-900 dark:text-white mb-3">Additional Notes</h4>
+                                    <p id="review-notes" class="text-sm text-gray-900 dark:text-white"></p>
+                                </div>
+                            </div>
+
+                            <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-6">
+                                <div class="flex items-start">
+                                    <i class="fas fa-exclamation-triangle text-yellow-600 dark:text-yellow-400 mt-1 mr-3"></i>
+                                    <div class="text-yellow-800 dark:text-yellow-200">
+                                        Please ensure all information and documents are accurate. Submission is final. Review typically takes 1-2 business days.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex justify-between">
+                                <button type="button" class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors" onclick="prevStep(4)">
+                                    <i class="fas fa-arrow-left mr-2"></i> Edit Profile
+                                </button>
+                                <button type="button" id="submit-verification" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                                    <span id="submit-btn-text">Submit Verification</span>
+                                    <span id="submit-spinner" class="hidden ml-2">
+                                        <i class="fas fa-spinner fa-spin"></i>
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentStep = 1;
+        let selectedProfessionalType = null;
+        let uploadedDocuments = [];
+        let verificationStatus = null;
+        let profileData = {};
+        let servicesOptions = [];
+        let industriesOptions = [];
+
+        const progressBar = document.getElementById('progress-bar');
+        const stepLabels = [document.getElementById('step-label-1'), document.getElementById('step-label-2'), document.getElementById('step-label-3'), document.getElementById('step-label-4')];
+        const stepContents = [document.getElementById('step-1-content'), document.getElementById('step-2-content'), document.getElementById('step-3-content'), document.getElementById('step-4-content')];
+        const nextButton1 = document.getElementById('next-step-1-button');
+        const nextButton2 = document.getElementById('next-step-2-button');
+        const nextButton3 = document.getElementById('next-step-3-button');
+        const submitButton = document.getElementById('submit-verification');
+        const uploadArea = document.getElementById('document-upload-area');
+        const documentInput = document.getElementById('document-input');
+        const documentList = document.getElementById('document-list');
+        const verificationView = document.getElementById('verification-view');
+        const statusView = document.getElementById('status-view');
+        const statusIcon = document.getElementById('status-icon');
+        const statusMessage = document.getElementById('status-message');
+        const statusDetails = document.getElementById('status-details');
+        const goToDashboardBtn = document.getElementById('goToDashboardBtn');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+
+        document.addEventListener('DOMContentLoaded', () => {
+            checkVerificationStatus();
+            setupEventListeners();
+            loadServicesAndIndustries();
+        });
+
+        function setupEventListeners() {
+            if (sidebarToggle && sidebar && sidebarBackdrop) {
+                sidebarToggle.addEventListener('click', () => {
+                    sidebar.classList.toggle('show');
+                    sidebarBackdrop.classList.toggle('show');
+                });
+                sidebarBackdrop.addEventListener('click', () => {
+                    sidebar.classList.remove('show');
+                    sidebarBackdrop.classList.remove('show');
+                });
+            }
+
+            const signOutBtn = document.getElementById('signOutBtn');
+            if (signOutBtn) {
+                signOutBtn.addEventListener('click', () => {
+                    localStorage.removeItem('token');
+                    window.location.href = '/login2';
+                });
+            }
+
+            // Document upload handlers
+            uploadArea.addEventListener('click', () => documentInput.click());
+            uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+            uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+            uploadArea.addEventListener('drop', (e) => { e.preventDefault(); uploadArea.classList.remove('dragover'); handleFiles(e.dataTransfer.files); });
+            documentInput.addEventListener('change', () => handleFiles(documentInput.files));
+
+            // Professional picture upload
+            const pictureInput = document.getElementById('professional-picture-input');
+            const pictureUploadBtn = document.getElementById('picture-upload-btn');
+            if (pictureInput && pictureUploadBtn) {
+                pictureUploadBtn.addEventListener('click', () => pictureInput.click());
+                pictureInput.addEventListener('change', handlePictureUpload);
+            }
+
+            // Profile form validation
+            const profileInputs = ['professional-bio', 'professional-tagline', 'services-offered', 'industries-serviced'];
+            profileInputs.forEach(inputId => {
+                const input = document.getElementById(inputId);
+                if (input) {
+                    input.addEventListener('input', updateButtonStates);
+                    input.addEventListener('change', updateButtonStates);
+                }
+            });
+
+            submitButton.addEventListener('click', submitVerification);
+        }
+
+        function handlePictureUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                showToast('Please select an image file', 'error');
+                return;
+            }
+
+            // Validate file size (max 2MB)
+            if (file.size > 2 * 1024 * 1024) {
+                showToast('Image must be smaller than 2MB', 'error');
+                return;
+            }
+
+            // Preview the image
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('picture-preview');
+                preview.innerHTML = `<img src="${e.target.result}" alt="Profile Picture" class="w-full h-full object-cover rounded-full">`;
+                profileData.profilePicture = file;
+                updateButtonStates();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function checkVerificationStatus() {
+            try {
+                const token = getAuthToken();
+                if (!token) { return; }
+
+                const response = await fetch('/api/verification/status', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) throw new Error('Failed to fetch status');
+
+                const data = await response.json();
+                verificationStatus = data;
+
+                if (data.isVerified) {
+                    displayStatus('success', 'Verified Professional', `You are verified as a ${formatProfessionalType(data.professionalType)}. You can now access all professional features.`, true);
+                } else if (data.latestRequest) {
+                    const status = data.latestRequest.status;
+                    const submittedDate = new Date(data.latestRequest.submittedAt).toLocaleDateString();
+                    if (status === 'pending' || status === 'under_review') {
+                        displayStatus('pending', 'Verification Pending', `Your request submitted on ${submittedDate} is currently being reviewed. This usually takes 1-2 business days.`, false);
+                    } else if (status === 'rejected') {
+                        displayStatus('rejected', 'Verification Rejected', `Your request submitted on ${submittedDate} was rejected. Reason: ${data.latestRequest.rejectionReason || 'Not specified'}. Please review and resubmit if necessary.`, false, true);
+                    } else {
+                        verificationView.style.display = 'block';
+                        statusView.style.display = 'none';
+                    }
+                } else {
+                    verificationView.style.display = 'block';
+                    statusView.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error checking verification status:', error);
+                verificationView.style.display = 'block';
+                statusView.style.display = 'none';
+            }
+        }
+
+        function displayStatus(type, message, details, isVerified, allowResubmit = false) {
+            verificationView.style.display = 'none';
+            statusView.style.display = 'block';
+
+            statusMessage.textContent = message;
+            statusDetails.textContent = details;
+            goToDashboardBtn.style.display = isVerified ? 'inline-block' : 'none';
+
+            if (type === 'success') {
+                statusIcon.innerHTML = '<i class="fas fa-check-circle text-success"></i>';
+                statusIcon.className = 'status-icon success';
+            } else if (type === 'pending') {
+                statusIcon.innerHTML = '<i class="fas fa-hourglass-half text-warning"></i>';
+                statusIcon.className = 'status-icon pending';
+            } else if (type === 'rejected') {
+                statusIcon.innerHTML = '<i class="fas fa-times-circle text-danger"></i>';
+                statusIcon.className = 'status-icon rejected';
+                if (allowResubmit) {
+                    const resubmitBtn = document.createElement('button');
+                    resubmitBtn.className = 'btn btn-warning ms-2';
+                    resubmitBtn.textContent = 'Resubmit Verification';
+                    resubmitBtn.onclick = () => {
+                        verificationView.style.display = 'block';
+                        statusView.style.display = 'none';
+                        resetForm();
+                    };
+                    statusDetails.parentNode.insertBefore(resubmitBtn, goToDashboardBtn.nextSibling);
+                }
+            } else {
+                statusIcon.innerHTML = '<i class="fas fa-info-circle text-secondary"></i>';
+                statusIcon.className = 'status-icon info';
+            }
+        }
+
+        function resetForm() {
+            currentStep = 1;
+            selectedProfessionalType = null;
+            uploadedDocuments = [];
+            document.getElementById('verification-form').reset();
+            documentList.innerHTML = '';
+            document.querySelectorAll('.professional-type-card').forEach(c => c.classList.remove('selected'));
+            updateStepUI();
+            updateButtonStates();
+        }
+
+        function nextStep(fromStep) {
+            if (fromStep === 1 && selectedProfessionalType) {
+                currentStep = 2;
+            } else if (fromStep === 2 && uploadedDocuments.length > 0) {
+                currentStep = 3;
+            } else if (fromStep === 3) {
+                currentStep = 4;
+                populateReview();
+            }
+            updateStepUI();
+        }
+
+        function prevStep(fromStep) {
+            if (fromStep === 4) {
+                currentStep = 3;
+            } else if (fromStep === 3) {
+                currentStep = 2;
+            } else if (fromStep === 2) {
+                currentStep = 1;
+            }
+            updateStepUI();
+        }
+
+        function updateStepUI() {
+            const progressPercentage = (currentStep / 4) * 100;
+            progressBar.style.width = `${progressPercentage}%`;
+            progressBar.setAttribute('aria-valuenow', progressPercentage);
+
+            // Update step indicators
+            for (let i = 1; i <= 4; i++) {
+                const indicator = document.getElementById(`step-indicator-${i}`);
+                const label = document.getElementById(`step-label-${i}`);
+                
+                if (indicator && label) {
+                    if (i === currentStep) {
+                        indicator.className = 'w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-medium';
+                        label.className = 'ml-3 text-sm font-medium text-gray-900 dark:text-white';
+                    } else if (i < currentStep) {
+                        indicator.className = 'w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center text-sm font-medium';
+                        label.className = 'ml-3 text-sm font-medium text-green-600 dark:text-green-400';
+                    } else {
+                        indicator.className = 'w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400 flex items-center justify-center text-sm font-medium';
+                        label.className = 'ml-3 text-sm font-medium text-gray-500 dark:text-gray-400';
+                    }
+                }
+            }
+
+            stepContents.forEach((content, index) => {
+                if (content) {
+                    content.style.display = (index + 1 === currentStep) ? 'block' : 'none';
+                }
+            });
+        }
+
+        function selectProfessionalType(type, element) {
+            selectedProfessionalType = type;
+            document.querySelectorAll('.professional-type-card').forEach(card => card.classList.remove('selected'));
+            element.classList.add('selected');
+            nextButton1.disabled = false;
+            
+            // Load services specific to this professional type
+            loadServicesAndIndustries();
+        }
+
+        function handleFiles(files) {
+            if (!files) return;
+            for (const file of files) {
+                if (file.size > 5 * 1024 * 1024) {
+                    showToast(`File ${file.name} exceeds 5MB limit.`, 'error');
+                    continue;
+                }
+                if (!uploadedDocuments.some(f => f.name === file.name && f.size === file.size)) {
+                    uploadedDocuments.push(file);
+                    addDocumentToList(file);
+                } else {
+                    showToast(`File ${file.name} is already added.`, 'warning');
+                }
+            }
+            updateButtonStates();
+        }
+
+        function addDocumentToList(file) {
+            const item = document.createElement('div');
+            item.className = 'document-item';
+            item.innerHTML = `
+                <div class="document-info">
+                    <i class="fas fa-file-alt document-icon"></i>
+                    <span class="document-name">${escapeHtml(file.name)}</span>
+                    <span class="document-size">(${formatFileSize(file.size)})</span>
+                </div>
+                <button type="button" class="document-remove" aria-label="Remove file">&times;</button>
+            `;
+            item.querySelector('.document-remove').addEventListener('click', () => removeDocument(file, item));
+            documentList.appendChild(item);
+        }
+
+        function removeDocument(file, item) {
+            uploadedDocuments = uploadedDocuments.filter(f => f !== file);
+            documentList.removeChild(item);
+            updateButtonStates();
+        }
+
+        function updateButtonStates() {
+            nextButton1.disabled = !selectedProfessionalType;
+            nextButton2.disabled = uploadedDocuments.length === 0;
+            
+            if (nextButton3) {
+                nextButton3.disabled = !validateProfileStep();
+            }
+        }
+
+        function validateProfileStep() {
+            const bio = document.getElementById('professional-bio')?.value?.trim();
+            const tagline = document.getElementById('professional-tagline')?.value?.trim();
+            const services = Array.from(document.getElementById('services-offered')?.selectedOptions || []);
+            const industries = Array.from(document.getElementById('industries-serviced')?.selectedOptions || []);
+            
+            return bio && bio.length >= 50 && services.length > 0 && industries.length > 0;
+        }
+
+        async function loadServicesAndIndustries() {
+            try {
+                // Define services based on professional type
+                const allServices = {
+                    'business_broker': [
+                        'Business Valuation', 'Business Sale Facilitation', 'Buyer Representation',
+                        'Seller Representation', 'Due Diligence Support', 'Negotiation Services',
+                        'Market Analysis', 'Business Listing Services', 'Confidentiality Management',
+                        'Transaction Coordination', 'Business Exit Planning', 'Acquisition Advisory'
+                    ],
+                    'accountant': [
+                        'Tax Preparation', 'Financial Statement Preparation', 'Bookkeeping Services',
+                        'Payroll Processing', 'Business Tax Planning', 'Audit Services',
+                        'Financial Consulting', 'QuickBooks Setup', 'Cash Flow Analysis',
+                        'Business Formation Advice', 'Tax Compliance', 'Financial Planning'
+                    ],
+                    'lawyer': [
+                        'Business Formation', 'Contract Review', 'Legal Compliance',
+                        'Intellectual Property', 'Employment Law', 'Real Estate Law',
+                        'Corporate Law', 'Litigation Services', 'Mergers & Acquisitions',
+                        'Regulatory Compliance', 'Partnership Agreements', 'Business Dissolution'
+                    ],
+                    'business_consultant': [
+                        'Strategic Planning', 'Operations Improvement', 'Management Consulting',
+                        'Market Research', 'Business Process Optimization', 'Change Management',
+                        'Performance Analysis', 'Growth Strategy', 'Digital Transformation',
+                        'Organizational Development', 'Risk Management', 'Project Management'
+                    ],
+                    'financial_advisor': [
+                        'Investment Planning', 'Retirement Planning', 'Wealth Management',
+                        'Insurance Planning', 'Estate Planning', 'Tax Planning',
+                        'Portfolio Management', 'Financial Planning', 'Risk Assessment',
+                        'Business Financial Planning', 'Succession Planning', 'Asset Protection'
+                    ],
+                    'other': [
+                        'Consulting Services', 'Advisory Services', 'Analysis Services',
+                        'Planning Services', 'Management Services', 'Strategic Services'
+                    ]
+                };
+
+                const industries = [
+                    'Technology', 'Healthcare', 'Manufacturing', 'Retail', 'Hospitality',
+                    'Real Estate', 'Construction', 'Professional Services', 'Education',
+                    'Finance & Banking', 'Transportation', 'Agriculture', 'Energy',
+                    'Non-Profit', 'Entertainment', 'E-commerce', 'Food & Beverage',
+                    'Automotive', 'Telecommunications', 'Government', 'Consulting',
+                    'Media & Marketing', 'Pharmaceuticals', 'Legal Services'
+                ];
+
+                servicesOptions = allServices[selectedProfessionalType] || allServices['other'];
+                industriesOptions = industries;
+
+                populateSelectOptions('services-offered', servicesOptions);
+                populateSelectOptions('industries-serviced', industriesOptions);
+
+            } catch (error) {
+                console.error('Error loading services and industries:', error);
+                showToast('Error loading service options', 'error');
+            }
+        }
+
+        function populateSelectOptions(selectId, options) {
+            const select = document.getElementById(selectId);
+            if (!select) return;
+
+            select.innerHTML = '';
+            options.forEach(option => {
+                const optionElement = document.createElement('option');
+                optionElement.value = option;
+                optionElement.textContent = option;
+                select.appendChild(optionElement);
+            });
+        }
+
+        function populateReview() {
+            // Professional Information
+            document.getElementById('review-type').textContent = formatProfessionalType(selectedProfessionalType);
+            document.getElementById('review-license').textContent = document.getElementById('license-number')?.value || 'Not provided';
+            
+            // Profile Information
+            document.getElementById('review-tagline').textContent = document.getElementById('professional-tagline')?.value || 'Not provided';
+            document.getElementById('review-bio').textContent = document.getElementById('professional-bio')?.value || 'Not provided';
+            document.getElementById('review-experience').textContent = 
+                document.getElementById('years-experience')?.value ? 
+                `${document.getElementById('years-experience').value} years` : 'Not specified';
+            document.getElementById('review-website').textContent = document.getElementById('professional-website')?.value || 'Not provided';
+
+            // Services
+            const servicesSelect = document.getElementById('services-offered');
+            const selectedServices = Array.from(servicesSelect?.selectedOptions || []).map(opt => opt.text);
+            const servicesContainer = document.getElementById('review-services');
+            if (selectedServices.length > 0) {
+                servicesContainer.innerHTML = selectedServices.map(service => 
+                    `<span class="inline-block bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200 px-2 py-1 rounded text-xs mr-1 mb-1">${service}</span>`
+                ).join('');
+            } else {
+                servicesContainer.innerHTML = '<span class="text-gray-500">No services selected</span>';
+            }
+
+            // Industries
+            const industriesSelect = document.getElementById('industries-serviced');
+            const selectedIndustries = Array.from(industriesSelect?.selectedOptions || []).map(opt => opt.text);
+            const industriesContainer = document.getElementById('review-industries');
+            if (selectedIndustries.length > 0) {
+                industriesContainer.innerHTML = selectedIndustries.map(industry => 
+                    `<span class="inline-block bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-200 px-2 py-1 rounded text-xs mr-1 mb-1">${industry}</span>`
+                ).join('');
+            } else {
+                industriesContainer.innerHTML = '<span class="text-gray-500">No industries selected</span>';
+            }
+
+            // Documents
+            const reviewDocList = document.getElementById('review-documents');
+            reviewDocList.innerHTML = '';
+            uploadedDocuments.forEach(doc => {
+                const li = document.createElement('li');
+                li.innerHTML = `<i class="fas fa-file me-2 text-muted"></i> ${escapeHtml(doc.name)}`;
+                reviewDocList.appendChild(li);
+            });
+
+            // Additional Notes
+            document.getElementById('review-notes').textContent = document.getElementById('verification-notes')?.value || 'No additional notes provided';
+            
+            submitButton.disabled = false;
+        }
+
+        async function submitVerification() {
+            if (uploadedDocuments.length === 0) {
+                showToast('Please upload at least one verification document.', 'error');
+                return;
+            }
+
+            if (!validateProfileStep()) {
+                showToast('Please complete all required profile fields.', 'error');
+                return;
+            }
+
+            const token = getAuthToken();
+            if (!token) {
+                showToast('Authentication error. Please log in again.', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            
+            // Basic verification data
+            formData.append('professionalType', selectedProfessionalType);
+            formData.append('licenseNumber', document.getElementById('license-number')?.value || '');
+            formData.append('verificationNotes', document.getElementById('verification-notes')?.value || '');
+            
+            // Profile data
+            formData.append('professionalBio', document.getElementById('professional-bio')?.value || '');
+            formData.append('professionalTagline', document.getElementById('professional-tagline')?.value || '');
+            formData.append('yearsExperience', document.getElementById('years-experience')?.value || '0');
+            formData.append('professionalWebsite', document.getElementById('professional-website')?.value || '');
+            formData.append('professionalPhone', document.getElementById('professional-phone')?.value || '');
+            formData.append('profileVisibility', document.getElementById('profile-visibility')?.value || 'public');
+            formData.append('allowDirectContact', document.getElementById('allow-direct-contact')?.checked || false);
+
+            // Services and industries
+            const selectedServices = Array.from(document.getElementById('services-offered')?.selectedOptions || []).map(opt => opt.value);
+            const selectedIndustries = Array.from(document.getElementById('industries-serviced')?.selectedOptions || []).map(opt => opt.value);
+            formData.append('servicesOffered', JSON.stringify(selectedServices));
+            formData.append('industriesServiced', JSON.stringify(selectedIndustries));
+
+            // Documents
+            uploadedDocuments.forEach(doc => {
+                formData.append('documents', doc);
+            });
+
+            // Profile picture
+            if (profileData.profilePicture) {
+                formData.append('profilePicture', profileData.profilePicture);
+            }
+
+            submitButton.disabled = true;
+            document.getElementById('submit-btn-text').textContent = 'Submitting...';
+            document.getElementById('submit-spinner').style.display = 'inline-block';
+
+            try {
+                const response = await fetch('/api/verification/upload', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ message: 'Submission failed with status ' + response.status }));
+                    throw new Error(errorData.message || 'Failed to submit verification');
+                }
+
+                const data = await response.json();
+                console.log('Verification submitted:', data);
+
+                displayStatus('pending', 'Verification Submitted', 'Your request has been submitted successfully. Review typically takes 1-2 business days.', false);
+
+            } catch (error) {
+                console.error('Error submitting verification:', error);
+                showToast(`Error: ${error.message}`, 'error');
+                submitButton.disabled = false;
+                document.getElementById('submit-btn-text').textContent = 'Submit Verification';
+                document.getElementById('submit-spinner').style.display = 'none';
+            }
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function formatProfessionalType(type) {
+            if (!type) return 'N/A';
+            return type.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+        }
+
+        function escapeHtml(unsafe) {
+            if (!unsafe) return '';
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function getAuthToken() {
+            const metaToken = document.querySelector('meta[name="auth-token"]')?.content;
+            return metaToken || localStorage.getItem('token');
+        }
+
+        function showToast(message, type = 'info') {
+            const toastContainer = document.querySelector('.toast-container') || createToastContainer();
+            const toastId = `toast-${Date.now()}`;
+            let bgColor = 'bg-primary';
+            if (type === 'success') bgColor = 'bg-success';
+            if (type === 'error') bgColor = 'bg-danger';
+            if (type === 'warning') bgColor = 'bg-warning';
+
+            const toastHtml = `
+                <div id="${toastId}" class="toast align-items-center text-white ${bgColor} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                  <div class="d-flex">
+                    <div class="toast-body">
+                      ${escapeHtml(message)}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                  </div>
+                </div>`;
+            toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+            const toastElement = document.getElementById(toastId);
+            const toast = new bootstrap.Toast(toastElement, { delay: 5000 });
+            toast.show();
+            toastElement.addEventListener('hidden.bs.toast', () => toastElement.remove());
+        }
+
+        function createToastContainer() {
+            const container = document.createElement('div');
+            container.className = 'toast-container position-fixed top-0 end-0 p-3';
+            container.style.zIndex = '1100';
+            document.body.appendChild(container);
+            return container;
+        }
+    </script>
+</body>
+</html>

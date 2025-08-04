@@ -1,0 +1,120 @@
+{
+  "name": "Arzani Finance Agent",
+  "description": "A specialist agent that provides financial analysis, valuation models, and tax planning for business transactions in the Arzani Marketplace",
+  "version": "1.0.0",
+  "contact": {
+    "url": "https://arzani.co.uk/finance",
+    "email": "hello@arzani.co.uk"
+  },
+  "capabilities": {
+    "tasks/send": {
+      "description": "Provides expert financial analysis, business valuation models, and tax planning strategies",
+      "examples": [
+        {
+          "description": "Calculate business valuation using multiple methods",
+          "params": {
+            "task": {
+              "id": "5f6a7b8c-9d0e-1f2a-3b4c-5d6e7f8a9b0c"
+            },
+            "message": {
+              "parts": [
+                {
+                  "type": "text",
+                  "text": "Calculate the value of my SaaS business using multiple valuation methods. We have $850K ARR with 30% EBITDA margins."
+                },
+                {
+                  "type": "data",
+                  "data": {
+                    "revenue": 850000,
+                    "ebitda_margin": 0.30,
+                    "growth_rate": 0.22,
+                    "churn_rate": 0.08,
+                    "customer_lifetime_value": 2500,
+                    "customer_acquisition_cost": 750
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "description": "Tax scenario analysis for business sale",
+          "params": {
+            "task": {
+              "id": "6a7b8c9d-0e1f-2a3b-4c5d-6e7f8a9b0c1d"
+            },
+            "message": {
+              "parts": [
+                {
+                  "type": "text",
+                  "text": "What are the tax implications if I sell my business for $2M vs. $2.5M with different deal structures?"
+                },
+                {
+                  "type": "data",
+                  "data": {
+                    "business_structure": "LLC",
+                    "seller_location": "Texas, USA",
+                    "years_in_operation": 5,
+                    "asset_allocation": {
+                      "tangible_assets": 0.35,
+                      "goodwill": 0.45,
+                      "non-compete": 0.20
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  },
+  "human_support": {
+    "available": true,
+    "email": "hello@arzani.co.uk",
+    "escalation_description": "For complex financial modeling, tax strategy, or deal structure optimization, a human financial advisor can be contacted at hello@arzani.co.uk"
+  },
+  "domain_specialties": [
+    "business valuation models",
+    "EBITDA analysis",
+    "SDE calculation",
+    "tax planning",
+    "deal structure optimization",
+    "financial forecasting"
+  ],
+  "artifacts": [
+    {
+      "type": "valuation_model",
+      "mimetype": "application/json",
+      "description": "Multi-method business valuation model with assumptions"
+    },
+    {
+      "type": "tax_analysis",
+      "mimetype": "application/pdf",
+      "description": "Tax impact analysis for different transaction structures"
+    },
+    {
+      "type": "financial_forecast",
+      "mimetype": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "description": "Financial forecasting model for business growth"
+    }
+  ],
+  "computational_methods": [
+    {
+      "name": "SDE Multiple Valuation",
+      "description": "Calculates business value based on Seller's Discretionary Earnings"
+    },
+    {
+      "name": "EBITDA Multiple Valuation",
+      "description": "Calculates business value based on EBITDA with industry-specific multiples"
+    },
+    {
+      "name": "DCF Valuation",
+      "description": "Discounted Cash Flow model for projecting future business value"
+    },
+    {
+      "name": "Tax Optimization Analysis",
+      "description": "Comparative analysis of tax impact across different deal structures"
+    }
+  ]
+}

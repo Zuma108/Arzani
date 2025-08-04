@@ -1,0 +1,1333 @@
+// API endpoint for fetching user conversation threads with bucketing and caching
+// File: routes/api/threads.js
+
+import express from 'express';
+import pool from '../../db.js';
+import { authenticateToken } from '../../middleware/auth.js';
+import a2aLogger from '../../utils/a2a-interaction-logger.js';
+const router = express.Router();
+
+/**
+ * GET /api/threads
+ * Fetches user conversation threads organized into buckets (pinned, today, yesterday, last7Days, older)
+ * with pagination and 30-second caching
+ * 
+ * Query Parameters:
+ * - limit: Number of items per bucket (default: 20, max: 50)
+ * - offset: Pagination offset (default: 0)
+ * - nocache: Skip cache lookup (default: false)
+ * 
+ * Response Format:
+ * {
+ *   "success": true,
+ *   "data": {
+ *     "pinned": [...],
+ *     "today": [...],
+ *     "yesterday": [...],
+ *     "last7Days": [...],
+ *     "older": [...],
+ *     "metadata": {
+ *       "totalCount": 245,
+ *       "pinnedCount": 3,
+ *       "todayCount": 12,
+ *       "yesterdayCount": 8,
+ *       "last7DaysCount": 25,
+ *       "olderCount": 197,
+ *       "limit": 20,
+ *       "offset": 0,
+ *       "generatedAt": "2024-01-15T10:30:00Z",
+ *       "fromCache": false
+ *     }
+ *   },
+ *   "timestamp": "2024-01-15T10:30:00Z"
+ * }
+ */
+
+/**
+ * GET /api/threads/search
+ * Search conversations by content, participant names, or business names
+ * 
+ * Query Parameters:
+ * - q: Search query string (required)
+ * - limit: Number of results to return (default: 10, max: 50)
+ * - offset: Pagination offset (default: 0)
+ * 
+ * Response Format:
+ * {
+ *   "success": true,
+ *   "data": {
+ *     "conversations": [...],
+ *     "totalCount": 15,
+ *     "limit": 10,
+ *     "offset": 0,
+ *     "query": "search term"
+ *   },
+ *   "timestamp": "2024-01-15T10:30:00Z"
+ * }
+ */
+router.get('/search', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user?.userId || req.session?.userId;
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                error: 'Authentication required',
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        const query = req.query.q?.trim();
+        if (!query) {
+            return res.status(400).json({
+                success: false,
+                error: 'Search query parameter "q" is required',
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        const limit = Math.min(parseInt(req.query.limit) || 20, 50);
+        const offset = Math.max(parseInt(req.query.offset) || 0, 0);
+
+        // Search A2A chat sessions and messages
+        const searchResult = await pool.query(`
+            WITH thread_search AS (
+                SELECT DISTINCT
+                    s.id,
+                    COALESCE(s.title, s.session_name, 'Untitled Chat') as title,
+                    s.session_name as group_name,
+                    COALESCE(s.last_active_at, s.updated_at, s.created_at) as last_active_at,
+                    COALESCE(s.last_active_at, s.updated_at, s.created_at) as last_message_time,
+                    s.updated_at,
+                    COALESCE(s.is_pinned, false) as is_pinned,
+                    s.avatar_url,
+                    s.agent_type,
+                    COALESCE(s.unread_count, 0) as unread_count,
+                    s.created_at,
+                    -- Get last message content
+                    (SELECT m.message_content FROM a2a_chat_messages m 
+                     WHERE m.session_id = s.id 
+                     ORDER BY m.created_at DESC 
+                     LIMIT 1) as last_message,
+                    -- Calculate relevance score for better ranking
+                    (
+                        CASE WHEN COALESCE(s.title, s.session_name, '') ILIKE $2 THEN 10 ELSE 0 END +
+                        CASE WHEN EXISTS (
+                            SELECT 1 FROM a2a_chat_messages m 
+                            WHERE m.session_id = s.id 
+                            AND (m.message_content ILIKE $2 OR m.content ILIKE $2)
+                        ) THEN 5 ELSE 0 END
+                    ) as relevance_score
+                FROM a2a_chat_sessions s
+                WHERE s.user_id = $1 
+                  AND s.is_active = true
+                  AND (
+                      COALESCE(s.title, s.session_name, '') ILIKE $2
+                      OR EXISTS (
+                          SELECT 1 FROM a2a_chat_messages m 
+                          WHERE m.session_id = s.id 
+                          AND (m.message_content ILIKE $2 OR m.content ILIKE $2)
+                      )
+                  )
+            ),
+            total_count AS (
+                SELECT COUNT(*) as count FROM thread_search WHERE relevance_score > 0
+            )
+            SELECT 
+                ts.*,
+                tc.count as total_count
+            FROM thread_search ts
+            CROSS JOIN total_count tc
+            WHERE ts.relevance_score > 0
+            ORDER BY ts.relevance_score DESC, ts.last_active_at DESC
+            LIMIT $3 OFFSET $4
+        `, [userId, `%${query}%`, limit, offset]);
+
+        const conversations = searchResult.rows.map(row => ({
+            id: row.id,
+            title: row.title,
+            group_name: row.group_name,
+            last_active_at: row.last_active_at,
+            last_message_time: row.last_message_time,
+            updated_at: row.updated_at,
+            is_pinned: row.is_pinned,
+            avatar_url: row.avatar_url,
+            agent_type: row.agent_type,
+            unread_count: row.unread_count,
+            created_at: row.created_at,
+            last_message: row.last_message || 'No messages yet',
+            relevance_score: row.relevance_score
+        }));
+
+        const totalCount = searchResult.rows.length > 0 ? searchResult.rows[0].total_count : 0;
+
+        console.log('🔍 Thread search completed:', { 
+            query, 
+            results: conversations.length,
+            totalMatches: totalCount 
+        });
+
+        res.json({
+            success: true,
+            data: {
+                conversations,
+                totalCount: parseInt(totalCount),
+                query,
+                hasMore: totalCount > offset + limit
+            },
+            timestamp: new Date().toISOString()
+        });
+
+    } catch (error) {
+        console.error('Thread search error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to search conversations',
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
+router.get('/', authenticateToken, async (req, res) => {
+    try {
+        // Extract and validate parameters
+        const userId = req.user?.userId || req.session?.userId;
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                error: 'Authentication required',
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        const limit = Math.min(parseInt(req.query.limit) || 20, 50);
+        const offset = Math.max(parseInt(req.query.offset) || 0, 0);
+        const nocache = req.query.nocache === 'true';
+
+        try {
+            // Get conversations for the user with proper bucketing by date
+            const conversationsResult = await pool.query(`
+                WITH user_conversations AS (
+                    SELECT DISTINCT
+                        c.id,
+                        c.created_at,
+                        c.updated_at,
+                        c.is_group_chat,
+                        c.group_name,
+                        c.business_id,
+                        
+                        -- Get last message info
+                        COALESCE(last_msg.content, '') AS last_message,
+                        COALESCE(last_msg.created_at, c.created_at) AS last_message_time,
+                        COALESCE(last_sender.username, 'Unknown') AS last_sender_name,
+                        
+                        -- Get business info if exists
+                        b.business_name AS business_name,
+                        
+                        -- Calculate time buckets
+                        CASE 
+                            WHEN COALESCE(last_msg.created_at, c.created_at)::date = CURRENT_DATE THEN 'today'
+                            WHEN COALESCE(last_msg.created_at, c.created_at)::date = CURRENT_DATE - INTERVAL '1 day' THEN 'yesterday'
+                            WHEN COALESCE(last_msg.created_at, c.created_at) >= CURRENT_DATE - INTERVAL '7 days' THEN 'last7Days'
+                            ELSE 'older'
+                        END AS time_bucket
+                        
+                    FROM conversations c
+                    
+                    -- Join with user's participation
+                    JOIN conversation_participants cp ON c.id = cp.conversation_id
+                    
+                    -- Get business info if conversation is related to a business
+                    LEFT JOIN businesses b ON c.business_id = b.id
+                    
+                    -- Get last message
+                    LEFT JOIN LATERAL (
+                        SELECT m.content, m.created_at, m.sender_id
+                        FROM messages m
+                        WHERE m.conversation_id = c.id
+                        ORDER BY m.created_at DESC
+                        LIMIT 1
+                    ) last_msg ON true
+                    LEFT JOIN users last_sender ON last_msg.sender_id = last_sender.id
+                    
+                    WHERE cp.user_id = $1
+                    ORDER BY COALESCE(last_msg.created_at, c.created_at) DESC
+                ),
+                
+                bucketed_conversations AS (
+                    SELECT 
+                        uc.*,
+                        ROW_NUMBER() OVER (PARTITION BY time_bucket ORDER BY last_message_time DESC) as bucket_row_num
+                    FROM user_conversations uc
+                ),
+                
+                counts AS (
+                    SELECT 
+                        COUNT(*) as total_count,
+                        COUNT(CASE WHEN time_bucket = 'today' THEN 1 END) as today_count,
+                        COUNT(CASE WHEN time_bucket = 'yesterday' THEN 1 END) as yesterday_count,
+                        COUNT(CASE WHEN time_bucket = 'last7Days' THEN 1 END) as last7days_count,
+                        COUNT(CASE WHEN time_bucket = 'older' THEN 1 END) as older_count
+                    FROM user_conversations
+                )
+                
+                SELECT 
+                    bc.*,
+                    c.total_count,
+                    c.today_count,
+                    c.yesterday_count,
+                    c.last7days_count,
+                    c.older_count
+                FROM bucketed_conversations bc
+                CROSS JOIN counts c
+                WHERE bc.bucket_row_num <= $2
+                ORDER BY 
+                    CASE bc.time_bucket
+                        WHEN 'today' THEN 1
+                        WHEN 'yesterday' THEN 2
+                        WHEN 'last7Days' THEN 3
+                        WHEN 'older' THEN 4
+                    END,
+                    bc.last_message_time DESC
+            `, [userId, limit]);
+
+            // Process results into buckets
+            const result = {
+                pinned: [], // We don't have pinning implemented in conversation tables yet
+                today: [],
+                yesterday: [],
+                last7Days: [],
+                older: [],
+                metadata: {
+                    totalCount: 0,
+                    pinnedCount: 0,
+                    todayCount: 0,
+                    yesterdayCount: 0,
+                    last7DaysCount: 0,
+                    olderCount: 0,
+                    limit,
+                    offset,
+                    generatedAt: new Date().toISOString(),
+                    fromCache: false
+                }
+            };
+
+            if (conversationsResult.rows.length > 0) {
+                const firstRow = conversationsResult.rows[0];
+                result.metadata.totalCount = parseInt(firstRow.total_count) || 0;
+                result.metadata.todayCount = parseInt(firstRow.today_count) || 0;
+                result.metadata.yesterdayCount = parseInt(firstRow.yesterday_count) || 0;
+                result.metadata.last7DaysCount = parseInt(firstRow.last7days_count) || 0;
+                result.metadata.olderCount = parseInt(firstRow.older_count) || 0;
+
+                // Group conversations by time bucket
+                conversationsResult.rows.forEach(row => {
+                    const conversation = {
+                        id: row.id,
+                        created_at: row.created_at,
+                        updated_at: row.updated_at,
+                        last_message_time: row.last_message_time,
+                        is_group_chat: row.is_group_chat,
+                        group_name: row.group_name,
+                        business_id: row.business_id,
+                        business_name: row.business_name,
+                        last_message: row.last_message,
+                        last_sender_name: row.last_sender_name,
+                        time_bucket: row.time_bucket
+                    };
+
+                    switch (row.time_bucket) {
+                        case 'today':
+                            result.today.push(conversation);
+                            break;
+                        case 'yesterday':
+                            result.yesterday.push(conversation);
+                            break;
+                        case 'last7Days':
+                            result.last7Days.push(conversation);
+                            break;
+                        case 'older':
+                            result.older.push(conversation);
+                            break;
+                    }
+                });
+            }
+
+            // Process buckets for pagination
+            const processedResult = processBucketsForPagination(result, limit);
+            
+            // Update session context with current thread access
+            const sessionData = {
+                lastAccessed: new Date().toISOString(),
+                threadAccess: true,
+                resultCounts: {
+                    pinned: processedResult.pinned.length,
+                    today: processedResult.today.length,
+                    yesterday: processedResult.yesterday.length,
+                    last7Days: processedResult.last7Days.length,
+                    older: processedResult.older.length
+                }
+            };
+            await updateSessionContext(userId, sessionData);
+            
+            // Update thread preferences with current access pattern
+            const preferences = {
+                lastThreadView: new Date().toISOString(),
+                viewPreferences: {
+                    limit: limit,
+                    offset: offset
+                },
+                bucketAccess: {
+                    pinned: processedResult.pinned.length > 0,
+                    today: processedResult.today.length > 0,
+                    yesterday: processedResult.yesterday.length > 0,
+                    last7Days: processedResult.last7Days.length > 0,
+                    older: processedResult.older.length > 0
+                }
+            };
+            await updateThreadPreferences(userId, preferences);
+
+            res.json({
+                success: true,
+                data: processedResult,
+                timestamp: new Date().toISOString()
+            });
+
+        } catch (dbError) {
+            console.error('Database query failed:', dbError);
+            return res.status(500).json({
+                success: false,
+                error: 'Failed to fetch threads',
+                timestamp: new Date().toISOString()
+            });
+        }
+
+    } catch (error) {
+        console.error('Thread API error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Internal server error',
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
+/**
+ * POST /api/threads/:threadId/pin
+ * Pin or unpin a conversation thread
+ * Note: Pinning feature not yet implemented in conversation tables
+ */
+router.post('/:threadId/pin', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user?.userId || req.session?.userId;
+        const threadId = parseInt(req.params.threadId);
+        const { pinned = true } = req.body;
+
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                error: 'Authentication required'
+            });
+        }
+
+        if (!threadId || isNaN(threadId)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Valid thread ID required'
+            });
+        }
+
+        // TODO: Implement pinning in conversation_participants table or create preferences table
+        res.json({
+            success: false,
+            error: 'Pinning feature not yet implemented',
+            message: 'This feature requires additional database schema changes'
+        });
+
+    } catch (error) {
+        console.error('Pin thread error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to update thread'
+        });
+    }
+});
+
+/**
+ * PUT /api/threads/:threadId/title
+ * Update thread title
+ */
+router.put('/:threadId/title', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user?.userId || req.session?.userId;
+        const threadId = parseInt(req.params.threadId);
+        const { title } = req.body;
+
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                error: 'Authentication required'
+            });
+        }
+
+        if (!threadId || isNaN(threadId)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Valid thread ID required'
+            });
+        }
+
+        if (!title || title.trim().length === 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'Title is required'
+            });
+        }
+
+        if (title.length > 200) {
+            return res.status(400).json({
+                success: false,
+                error: 'Title too long',
+                details: 'Title must be 200 characters or less'
+            });
+        }
+
+        const trimmedTitle = title.trim();
+
+        // Update the conversation title (using group_name for display) and title for search
+        const updateResult = await pool.query(`
+            UPDATE conversations 
+            SET group_name = $1, title = $1, updated_at = NOW()
+            WHERE id = $2 
+            AND EXISTS (
+                SELECT 1 FROM conversation_participants cp 
+                WHERE cp.conversation_id = conversations.id 
+                AND cp.user_id = $3
+            )
+            RETURNING id, group_name as title, updated_at;
+        `, [trimmedTitle, threadId, userId]);
+
+        if (updateResult.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: 'Thread not found or you do not have permission to update it'
+            });
+        }
+
+        console.log('✅ Thread title updated:', threadId, trimmedTitle);
+
+        res.json({
+            success: true,
+            data: {
+                threadId,
+                title: trimmedTitle,
+                updatedAt: updateResult.rows[0].updated_at
+            }
+        });
+
+    } catch (error) {
+        console.error('❌ Update title error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to update thread title',
+            details: error.message
+        });
+    }
+});
+
+/**
+ * DELETE /api/threads/:threadId
+ * Archive (soft delete) a conversation thread
+ * Note: Currently removes user from conversation_participants
+ */
+router.delete('/:threadId', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user?.userId || req.session?.userId;
+        const threadId = parseInt(req.params.threadId);
+
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                error: 'Authentication required'
+            });
+        }
+
+        if (!threadId || isNaN(threadId)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Valid thread ID required'
+            });
+        }
+
+        // Remove user from conversation participants (soft delete for user)
+        const deleteResult = await pool.query(`
+            DELETE FROM conversation_participants 
+            WHERE conversation_id = $1 AND user_id = $2
+            RETURNING conversation_id
+        `, [threadId, userId]);
+
+        if (deleteResult.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: 'Conversation not found or already removed'
+            });
+        }
+
+        res.json({
+            success: true,
+            data: {
+                threadId,
+                archived: true,
+                archivedAt: new Date().toISOString()
+            }
+        });
+
+    } catch (error) {
+        console.error('Archive thread error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to archive thread'
+        });
+    }
+});
+
+/**
+ * GET /api/threads/stats
+ * Get thread statistics for the current user
+ */
+router.get('/stats', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user?.userId || req.session?.userId;
+        
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                error: 'Authentication required'
+            });
+        }
+
+        const stats = await pool.query(`
+            WITH conversation_stats AS (
+                SELECT 
+                    c.id,
+                    c.created_at,
+                    c.updated_at,
+                    c.is_group_chat,
+                    COALESCE(msg_count.total, 0) as message_count,
+                    CASE 
+                        WHEN c.updated_at >= (NOW() - INTERVAL '1 day') THEN 1 
+                        ELSE 0 
+                    END as active_today,
+                    CASE 
+                        WHEN c.updated_at >= (NOW() - INTERVAL '7 days') THEN 1 
+                        ELSE 0 
+                    END as active_this_week
+                FROM conversations c
+                JOIN conversation_participants cp ON c.id = cp.conversation_id
+                LEFT JOIN (
+                    SELECT conversation_id, COUNT(*) as total
+                    FROM messages
+                    GROUP BY conversation_id
+                ) msg_count ON c.id = msg_count.conversation_id
+                WHERE cp.user_id = $1
+            )
+            SELECT 
+                COUNT(*) as total_threads,
+                0 as pinned_threads,  -- Not implemented yet
+                0 as archived_threads,  -- Not implemented yet
+                SUM(active_today) as active_today,
+                SUM(active_this_week) as active_this_week,
+                SUM(message_count) as total_messages,
+                CASE 
+                    WHEN COUNT(*) > 0 THEN ROUND(AVG(message_count), 2)
+                    ELSE 0
+                END as avg_messages_per_thread
+            FROM conversation_stats
+        `, [userId]);
+
+        res.json({
+            success: true,
+            data: stats.rows[0],
+            timestamp: new Date().toISOString()
+        });
+
+    } catch (error) {
+        console.error('Thread stats error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch thread statistics'
+        });
+    }
+});
+
+/**
+ * POST /api/threads
+ * Create a new conversation thread
+ * 
+ * Request Body:
+ * {
+ *   "group_name": "Chat Name",
+ *   "business_id": 123, // optional
+ *   "is_ai_chat": true  // optional, defaults to true
+ * }
+ * 
+ * Response:
+ * {
+ *   "success": true,
+ *   "id": 456,
+ *   "conversation_id": 456,
+ *   "group_name": "Chat Name",
+ *   "created_at": "2024-01-15T10:30:00Z",
+ *   "updated_at": "2024-01-15T10:30:00Z",
+ *   "is_ai_chat": true
+ * }
+ */
+router.post('/', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user?.userId;
+        if (!userId) {
+            return res.status(401).json({ 
+                success: false, 
+                error: 'Authentication required' 
+            });
+        }
+
+        const { group_name, business_id, is_ai_chat = true } = req.body;
+        
+        console.log(`Creating new conversation for user: ${userId}`);
+
+        // Create new conversation with Arzani AI chat settings
+        const createQuery = `
+            INSERT INTO conversations (is_group_chat, is_ai_chat, group_name, business_id, created_at, updated_at)
+            VALUES (false, $1, $2, $3, NOW(), NOW())
+            RETURNING id, created_at, updated_at
+        `;
+        
+        const conversationResult = await pool.query(createQuery, [
+            is_ai_chat,
+            group_name || `Arzani Chat ${new Date().toLocaleString()}`,
+            business_id || null
+        ]);
+        
+        const conversation = conversationResult.rows[0];
+        
+        // Add the user as a participant
+        await pool.query(
+            `INSERT INTO conversation_participants (conversation_id, user_id, joined_at, is_admin)
+             VALUES ($1, $2, NOW(), true)`,
+            [conversation.id, userId]
+        );
+        
+        console.log(`New conversation created: ${conversation.id}`);
+        
+        res.json({
+            success: true,
+            id: conversation.id,
+            conversation_id: conversation.id,
+            group_name: group_name || `Arzani Chat ${new Date().toLocaleString()}`,
+            created_at: conversation.created_at,
+            updated_at: conversation.updated_at,
+            is_ai_chat: true
+        });
+        
+    } catch (error) {
+        console.error('Error creating conversation:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to create conversation' 
+        });
+    }
+});
+
+/**
+ * POST /api/threads/:threadId/send
+ * Send a message to a specific thread (for AI conversations)
+ * 
+ * Request Body:
+ * {
+ *   "content": "Message content",
+ *   "sender_type": "user" | "assistant",
+ *   "agent_type": "orchestrator" | "finance" | "legal" | "broker"
+ * }
+ */
+router.post('/:threadId/send', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user?.userId;
+        const threadId = parseInt(req.params.threadId);
+        const { content, sender_type = 'user', agent_type = 'orchestrator', is_system_message = false } = req.body;
+
+        if (!userId) {
+            return res.status(401).json({ 
+                success: false, 
+                error: 'Authentication required' 
+            });
+        }
+
+        if (!threadId || isNaN(threadId)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Valid thread ID required'
+            });
+        }
+
+        if (!content || content.trim().length === 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'Message content is required'
+            });
+        }
+
+        // Verify user has access to this conversation
+        const accessCheck = await pool.query(`
+            SELECT c.id, c.is_ai_chat 
+            FROM conversations c
+            JOIN conversation_participants cp ON c.id = cp.conversation_id
+            WHERE c.id = $1 AND cp.user_id = $2
+        `, [threadId, userId]);
+
+        if (accessCheck.rows.length === 0) {
+            return res.status(403).json({
+                success: false,
+                error: 'Access denied to this conversation'
+            });
+        }
+
+        // For AI/system messages, use the authenticated user's ID as sender_id
+        // to avoid null constraint violations in the database trigger
+        let senderId;
+        if (is_system_message || sender_type !== 'user') {
+            // For system messages, use the authenticated user to prevent DB constraint errors
+            senderId = userId;
+            console.log(`Using authenticated user ID ${userId} for system/assistant message`);
+        } else {
+            // For user messages, use the standard behavior
+            senderId = userId;
+        }
+
+        // Insert the message
+        const messageResult = await pool.query(`
+            INSERT INTO messages (
+                conversation_id, 
+                sender_id, 
+                content, 
+                message_type,
+                agent_type,
+                is_ai_generated,
+                created_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, NOW())
+            RETURNING id, created_at
+        `, [
+            threadId, 
+            senderId, 
+            content.trim(), 
+            sender_type, 
+            agent_type, 
+            (is_system_message || sender_type !== 'user') // Flag AI messages
+        ]);
+
+        const message = messageResult.rows[0];
+
+        // Update conversation's last activity
+        await pool.query(`
+            UPDATE conversations 
+            SET updated_at = NOW() 
+            WHERE id = $1
+        `, [threadId]);
+
+        console.log(`Message saved to conversation ${threadId}:`, message.id);
+
+        res.json({
+            success: true,
+            message: {
+                id: message.id,
+                conversation_id: threadId,
+                content: content.trim(),
+                sender_type,
+                agent_type,
+                is_ai_generated: (is_system_message || sender_type !== 'user'),
+                created_at: message.created_at
+            }
+        });
+
+    } catch (error) {
+        console.error('Error sending message to thread:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to send message' 
+        });
+    }
+});
+
+/**
+ * GET /api/threads/:threadId/messages
+ * Get messages for a specific thread
+ */
+router.get('/:threadId/messages', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user?.userId;
+        const threadId = parseInt(req.params.threadId);
+        const limit = Math.min(parseInt(req.query.limit) || 50, 100);
+        const offset = Math.max(parseInt(req.query.offset) || 0, 0);
+
+        if (!userId) {
+            return res.status(401).json({ 
+                success: false, 
+                error: 'Authentication required' 
+            });
+        }
+
+        if (!threadId || isNaN(threadId)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Valid thread ID required'
+            });
+        }
+
+        // Verify user has access to this conversation
+        const accessCheck = await pool.query(`
+            SELECT c.id 
+            FROM conversations c
+            JOIN conversation_participants cp ON c.id = cp.conversation_id
+            WHERE c.id = $1 AND cp.user_id = $2
+        `, [threadId, userId]);
+
+        if (accessCheck.rows.length === 0) {
+            return res.status(403).json({
+                success: false,
+                error: 'Access denied to this conversation'
+            });
+        }
+
+        // Get messages for this conversation
+        const messagesResult = await pool.query(`
+            SELECT 
+                m.id,
+                m.content,
+                m.message_type as sender_type,
+                m.agent_type,
+                m.created_at,
+                u.username as sender_name
+            FROM messages m
+            LEFT JOIN users u ON m.sender_id = u.id
+            WHERE m.conversation_id = $1
+            ORDER BY m.created_at ASC
+            LIMIT $2 OFFSET $3
+        `, [threadId, limit, offset]);
+
+        res.json({
+            success: true,
+            messages: messagesResult.rows
+        });
+
+    } catch (error) {
+        console.error('Error getting thread messages:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to get messages' 
+        });
+    }
+});
+
+/**
+ * GET /api/threads/:id/preview
+ * Get thread preview information for sidebar updates
+ * Used by ArzaniA2AClient to update conversation previews in real-time
+ */
+router.get('/:id/preview', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const threadId = req.params.id;
+
+    if (!threadId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Thread ID is required'
+      });
+    }
+
+    console.log(`Fetching thread preview for thread ${threadId}, user ${userId}`);
+
+    // Check if it's an A2A session or regular conversation
+    let threadPreview = null;
+    
+    // First try A2A sessions
+    const a2aSessionResult = await pool.query(`
+      SELECT 
+        s.id,
+        s.session_name as title,
+        s.agent_type,
+        s.last_active_at,
+        s.updated_at,
+        (
+          SELECT m.message_content 
+          FROM a2a_chat_messages m 
+          WHERE m.session_id = s.id 
+          ORDER BY m.created_at DESC 
+          LIMIT 1
+        ) as last_message,
+        (
+          SELECT m.sender_type 
+          FROM a2a_chat_messages m 
+          WHERE m.session_id = s.id 
+          ORDER BY m.created_at DESC 
+          LIMIT 1
+        ) as last_sender,
+        (
+          SELECT COUNT(*) 
+          FROM a2a_chat_messages m 
+          WHERE m.session_id = s.id
+        ) as message_count,
+        'a2a' as thread_type
+      FROM a2a_chat_sessions s
+      WHERE s.id = $1 AND s.user_id = $2 AND s.is_active = true
+    `, [threadId, userId]);
+
+    if (a2aSessionResult.rows.length > 0) {
+      threadPreview = a2aSessionResult.rows[0];
+    } else {
+      // Try regular conversations
+      const conversationResult = await pool.query(`
+        SELECT 
+          c.id,
+          COALESCE(c.group_name, 'Chat Conversation') as title,
+          c.updated_at,
+          c.updated_at as last_active_at,
+          (
+            SELECT m.content 
+            FROM messages m 
+            WHERE m.conversation_id = c.id 
+            ORDER BY m.created_at DESC 
+            LIMIT 1
+          ) as last_message,
+          (
+            SELECT u.username 
+            FROM messages m 
+            JOIN users u ON m.sender_id = u.id
+            WHERE m.conversation_id = c.id 
+            ORDER BY m.created_at DESC 
+            LIMIT 1
+          ) as last_sender,
+          (
+            SELECT COUNT(*) 
+            FROM messages m 
+            WHERE m.conversation_id = c.id
+          ) as message_count,
+          'conversation' as thread_type
+        FROM conversations c
+        JOIN conversation_participants cp ON c.id = cp.conversation_id
+        WHERE c.id = $1 AND cp.user_id = $2
+      `, [threadId, userId]);
+
+      if (conversationResult.rows.length > 0) {
+        threadPreview = conversationResult.rows[0];
+      }
+    }
+
+    if (!threadPreview) {
+      return res.status(404).json({
+        success: false,
+        error: 'Thread not found or access denied'
+      });
+    }
+
+    // Format the preview data
+    const preview = {
+      id: threadPreview.id,
+      title: threadPreview.title,
+      lastMessage: threadPreview.last_message || '',
+      lastSender: threadPreview.last_sender || 'System',
+      messageCount: parseInt(threadPreview.message_count) || 0,
+      lastActiveAt: threadPreview.last_active_at,
+      updatedAt: threadPreview.updated_at,
+      threadType: threadPreview.thread_type,
+      agentType: threadPreview.agent_type || null
+    };
+
+    // Store preview in thread_previews table for future reference
+    try {
+      await pool.query(`
+        INSERT INTO thread_previews (
+          thread_id, user_id, title, last_message, last_sender, 
+          message_count, last_active_at, thread_type, agent_type, 
+          created_at, updated_at
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
+        ON CONFLICT (thread_id, user_id) DO UPDATE SET
+          title = EXCLUDED.title,
+          last_message = EXCLUDED.last_message,
+          last_sender = EXCLUDED.last_sender,
+          message_count = EXCLUDED.message_count,
+          last_active_at = EXCLUDED.last_active_at,
+          updated_at = NOW()
+      `, [
+        preview.id, userId, preview.title, preview.lastMessage, 
+        preview.lastSender, preview.messageCount, preview.lastActiveAt,
+        preview.threadType, preview.agentType
+      ]);
+    } catch (dbError) {
+      console.log('Non-critical error updating thread preview cache:', dbError.message);
+    }
+
+    console.log(`✅ Thread preview fetched for ${threadId}: ${preview.title}`);
+
+    res.json({
+      success: true,
+      preview: preview,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Error fetching thread preview:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch thread preview',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/threads/previews/bulk
+ * Get multiple thread previews at once for efficient sidebar updates
+ */
+router.post('/previews/bulk', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { threadIds } = req.body;
+
+    if (!threadIds || !Array.isArray(threadIds)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Thread IDs array is required'
+      });
+    }
+
+    console.log(`Fetching bulk previews for ${threadIds.length} threads, user ${userId}`);
+
+    const previews = [];
+
+    // Process each thread ID
+    for (const threadId of threadIds) {
+      try {
+        // Check A2A sessions first
+        const a2aResult = await pool.query(`
+          SELECT 
+            s.id,
+            s.session_name as title,
+            s.agent_type,
+            s.last_active_at,
+            s.updated_at,
+            (SELECT m.message_content FROM a2a_chat_messages m WHERE m.session_id = s.id ORDER BY m.created_at DESC LIMIT 1) as last_message,
+            (SELECT m.sender_type FROM a2a_chat_messages m WHERE m.session_id = s.id ORDER BY m.created_at DESC LIMIT 1) as last_sender,
+            (SELECT COUNT(*) FROM a2a_chat_messages m WHERE m.session_id = s.id) as message_count,
+            'a2a' as thread_type
+          FROM a2a_chat_sessions s
+          WHERE s.id = $1 AND s.user_id = $2 AND s.is_active = true
+        `, [threadId, userId]);
+
+        if (a2aResult.rows.length > 0) {
+          const thread = a2aResult.rows[0];
+          previews.push({
+            id: thread.id,
+            title: thread.title,
+            lastMessage: thread.last_message || '',
+            lastSender: thread.last_sender || 'System',
+            messageCount: parseInt(thread.message_count) || 0,
+            lastActiveAt: thread.last_active_at,
+            threadType: thread.thread_type,
+            agentType: thread.agent_type
+          });
+        } else {
+          // Check regular conversations
+          const convResult = await pool.query(`
+            SELECT 
+              c.id,
+              COALESCE(c.group_name, 'Chat Conversation') as title,
+              c.updated_at as last_active_at,
+              (SELECT m.content FROM messages m WHERE m.conversation_id = c.id ORDER BY m.created_at DESC LIMIT 1) as last_message,
+              (SELECT u.username FROM messages m JOIN users u ON m.sender_id = u.id WHERE m.conversation_id = c.id ORDER BY m.created_at DESC LIMIT 1) as last_sender,
+              (SELECT COUNT(*) FROM messages m WHERE m.conversation_id = c.id) as message_count,
+              'conversation' as thread_type
+            FROM conversations c
+            JOIN conversation_participants cp ON c.id = cp.conversation_id
+            WHERE c.id = $1 AND cp.user_id = $2
+          `, [threadId, userId]);
+
+          if (convResult.rows.length > 0) {
+            const thread = convResult.rows[0];
+            previews.push({
+              id: thread.id,
+              title: thread.title,
+              lastMessage: thread.last_message || '',
+              lastSender: thread.last_sender || 'System',
+              messageCount: parseInt(thread.message_count) || 0,
+              lastActiveAt: thread.last_active_at,
+              threadType: thread.thread_type,
+              agentType: null
+            });
+          }
+        }
+      } catch (error) {
+        console.log(`Error fetching preview for thread ${threadId}:`, error.message);
+      }
+    }
+
+    res.json({
+      success: true,
+      previews: previews,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Error fetching bulk thread previews:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch bulk thread previews',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * PUT /api/threads/:id/preview
+ * Update thread preview information (used when new messages are sent)
+ */
+router.put('/:id/preview', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const threadId = req.params.id;
+    const { lastMessage } = req.body;
+
+    console.log(`Updating thread preview for thread ${threadId}, user ${userId}`);
+
+    // Update or insert thread preview with simplified schema
+    await pool.query(`
+      INSERT INTO thread_previews (
+        thread_id, user_id, last_message, last_message_at, updated_at
+      )
+      VALUES ($1, $2, $3, NOW(), NOW())
+      ON CONFLICT (thread_id, user_id) DO UPDATE SET
+        last_message = COALESCE(EXCLUDED.last_message, thread_previews.last_message),
+        last_message_at = NOW(),
+        updated_at = NOW()
+    `, [threadId, userId, lastMessage]);
+
+    res.json({
+      success: true,
+      message: 'Thread preview updated successfully',
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Error updating thread preview:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update thread preview',
+      details: error.message
+    });
+  }
+});
+
+// Helper Functions
+
+/**
+ * Process buckets to handle pagination for arrays with 50+ items
+ */
+function processBucketsForPagination(result, limit) {
+    const processed = { ...result };
+    
+    ['pinned', 'today', 'yesterday', 'last7Days', 'older'].forEach(bucket => {
+        if (Array.isArray(processed[bucket]) && processed[bucket].length > 50) {
+            // If bucket has more than 50 items, paginate
+            processed[bucket] = {
+                items: processed[bucket].slice(0, limit),
+                totalCount: processed[bucket].length,
+                hasMore: processed[bucket].length > limit,
+                nextOffset: limit
+            };
+        }
+    });
+    
+    return processed;
+}
+
+/**
+ * Helper function to update session context
+ */
+async function updateSessionContext(userId, sessionData) {
+  try {
+    // Store or update session context in a2a_session_context table
+    await pool.query(`
+      INSERT INTO a2a_session_context (
+        user_id, session_data, last_accessed, created_at, updated_at
+      )
+      VALUES ($1, $2, NOW(), NOW(), NOW())
+      ON CONFLICT (user_id) DO UPDATE SET
+        session_data = EXCLUDED.session_data,
+        last_accessed = NOW(),
+        updated_at = NOW()
+    `, [userId, JSON.stringify(sessionData)]);
+  } catch (error) {
+    console.log('Session context update failed:', error.message);
+  }
+}
+
+/**
+ * Helper function to update thread preferences
+ */
+async function updateThreadPreferences(userId, preferences) {
+  try {
+    // Use the upsert function to handle conflicts properly
+    await pool.query(`SELECT upsert_thread_preferences($1, $2)`, [
+      userId, 
+      JSON.stringify(preferences)
+    ]);
+  } catch (error) {
+    console.log('Thread preferences update failed:', error.message);
+    
+    // Fallback to direct table operation if function doesn't exist
+    try {
+      await pool.query(`
+        INSERT INTO thread_preferences (
+          user_id, preferences, created_at, updated_at
+        )
+        VALUES ($1, $2, NOW(), NOW())
+        ON CONFLICT (user_id) DO UPDATE SET
+          preferences = EXCLUDED.preferences,
+          updated_at = NOW()
+      `, [userId, JSON.stringify(preferences)]);
+    } catch (fallbackError) {
+      console.log('Thread preferences fallback update failed:', fallbackError.message);
+    }
+  }
+}
+
+/**
+ * Helper function to get thread preferences
+ */
+async function getThreadPreferences(userId) {
+  try {
+    // Try both table names in case of inconsistency
+    let result = await pool.query(`
+      SELECT preferences FROM thread_preferences 
+      WHERE user_id = $1
+    `, [userId]);
+    
+    if (result.rows.length === 0) {
+      // Fallback to a2a_thread_preferences table
+      result = await pool.query(`
+        SELECT preferences FROM a2a_thread_preferences 
+        WHERE user_id = $1
+      `, [userId]);
+    }
+    
+    if (result.rows.length > 0) {
+      return result.rows[0].preferences;
+    }
+    return {}; // Default empty preferences
+  } catch (error) {
+    console.log('Thread preferences fetch failed:', error.message);
+    return {};
+  }
+}
+
+export default router;

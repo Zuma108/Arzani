@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sitemap - Arzani Marketplace</title>
+    <link rel="stylesheet" href="/css/modern.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#316FD4',
+                        dark: '#141414',
+                        'dark-light': '#1E1E1E'
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-W50GKB6F3M"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-W50GKB6F3M');
+    </script>
+</head>
+<body class="bg-dark text-white font-sans">
+    <header class="bg-dark-light py-4 border-b border-gray-800">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between">
+                <a href="/" class="navbar__logo">
+                    <img src="/figma design exports/logos/white-arzani-logo.svg" alt="Arzani Logo" class="h-8">
+                </a>
+                <a href="/" class="text-sm text-gray-400 hover:text-white transition-colors">
+                    Return to Homepage
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-12">
+        <h1 class="text-3xl md:text-4xl font-bold mb-8">Sitemap</h1>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <!-- Main Product Section -->
+            <div>
+                <h2 class="text-xl font-semibold mb-4 text-primary">Main Pages</h2>
+                <ul class="space-y-2">
+                    <li><a href="/" class="text-gray-300 hover:text-white transition-colors">Homepage</a></li>
+                    <li><a href="/marketplace-landing" class="text-gray-300 hover:text-white transition-colors">Marketplace Landing</a></li>
+                    <li><a href="/seller-questionnaire" class="text-gray-300 hover:text-white transition-colors">Seller Questionnaire</a></li>
+                    <li><a href="/marketplace2" class="text-gray-300 hover:text-white transition-colors">Marketplace</a></li>
+                    <li><a href="/pricing" class="text-gray-300 hover:text-white transition-colors">Pricing</a></li>
+                    <li><a href="/faq" class="text-gray-300 hover:text-white transition-colors">FAQ</a></li>
+                </ul>
+            </div>
+            
+            <!-- Account Section -->
+            <div>
+                <h2 class="text-xl font-semibold mb-4 text-primary">Account</h2>
+                <ul class="space-y-2">
+                    <li><a href="/login" class="text-gray-300 hover:text-white transition-colors">Log In</a></li>
+                    <li><a href="/signup" class="text-gray-300 hover:text-white transition-colors">Sign Up</a></li>
+                </ul>
+            </div>
+            
+            <!-- Legal Section -->
+            <div>
+                <h2 class="text-xl font-semibold mb-4 text-primary">Legal</h2>
+                <ul class="space-y-2">
+                    <li><a href="/terms" class="text-gray-300 hover:text-white transition-colors">Terms of Service</a></li>
+                    <li><a href="/privacy" class="text-gray-300 hover:text-white transition-colors">Privacy Policy</a></li>
+                    <li><a href="/cookies" class="text-gray-300 hover:text-white transition-colors">Cookie Policy</a></li>
+                </ul>
+            </div>
+
+            <!-- Blog Main -->
+            <div>
+                <h2 class="text-xl font-semibold mb-4 text-primary">Blog</h2>
+                <ul class="space-y-2">
+                    <li><a href="/blog" class="text-gray-300 hover:text-white transition-colors">Blog Home</a></li>
+                </ul>
+            </div>
+
+            <!-- Blog Categories Section -->
+            <div>
+                <h2 class="text-xl font-semibold mb-4 text-primary">Blog Categories</h2>
+                <ul class="space-y-2">
+                    <% blogCategories.forEach(category => { %>
+                        <li><a href="/blog/category/<%= category.slug %>" class="text-gray-300 hover:text-white transition-colors"><%= category.name %></a></li>
+                    <% }); %>
+                </ul>
+            </div>
+            
+            <!-- Blog Tags Section -->
+            <div>
+                <h2 class="text-xl font-semibold mb-4 text-primary">Blog Tags</h2>
+                <ul class="space-y-2">
+                    <% blogTags.forEach(tag => { %>
+                        <li><a href="/blog/tag/<%= tag.slug %>" class="text-gray-300 hover:text-white transition-colors">#<%= tag.name %></a></li>
+                    <% }); %>
+                </ul>
+            </div>
+
+            <!-- Recent Blog Posts Section -->
+            <div class="lg:col-span-2">
+                <h2 class="text-xl font-semibold mb-4 text-primary">Recent Blog Posts</h2>
+                <ul class="space-y-2">
+                    <% recentBlogPosts.forEach(post => { %>
+                        <li>
+                            <a href="<%= post.url_path ? post.url_path : '/blog/' + post.slug %>" 
+                               class="text-gray-300 hover:text-white transition-colors">
+                               <%= post.title %>
+                            </a>
+                        </li>
+                    <% }); %>
+                    <% if (recentBlogPosts.length === 0) { %>
+                        <li class="text-gray-400">No posts found</li>
+                    <% } %>
+                </ul>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-black border-t border-gray-800 py-6">
+        <div class="container mx-auto px-4">
+            <div class="text-center text-sm text-gray-500">
+                © <%= new Date().getFullYear() %> Arzani. All rights reserved.
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

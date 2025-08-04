@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="auth-token" content="<%= locals.token || '' %>">
+    <title>Buyer Dashboard - Arzani</title>
+    <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#041b76',
+                        secondary: '#f7f5f2',
+                        accent: '#064fa3',
+                        'text-primary': '#363309',
+                        'gray-850': '#1f2937',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-in-out',
+                        'slide-up': 'slideUp 0.3s ease-out',
+                        'pulse-slow': 'pulse 3s infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .logo-img {
+            width: 140px;
+            height: auto;
+            border-radius: 8px;
+            object-fit: contain;
+        }
+        
+        /* Custom animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Custom scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+        
+        /* Dark mode scrollbar */
+        .dark .custom-scrollbar::-webkit-scrollbar-track {
+            background: #374151;
+        }
+        
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #6B7280;
+        }
+        
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #9CA3AF;
+        }
+        
+        /* Stat card hover effects */
+        .stat-card:hover {
+            transform: translateY(-4px) scale(1.02);
+        }
+        
+        /* Premium gradient background */
+        .premium-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .warning-gradient {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+        }
+        
+        .success-gradient {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+        
+        .info-gradient {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        }
+        
+        /* Card shadow effects */
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        /* Alert item styles */
+        .alert-item {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        /* Meeting item hover effect */
+        .meeting-item {
+            transition: all 0.2s ease;
+        }
+        
+        .meeting-item:hover {
+            transform: translateX(4px);
+        }
+        
+        /* Sidebar transition styles */
+        .sidebar-transition {
+            transition: width 0.3s ease, transform 0.3s ease;
+        }
+        
+        .content-transition {
+            transition: margin-left 0.3s ease, width 0.3s ease;
+        }
+        
+        /* Mobile responsive sidebar */
+        @media (max-width: 768px) {
+            #sidebar {
+                transform: translateX(-100%);
+            }
+            
+            #sidebar.translate-x-0 {
+                transform: translateX(0);
+            }
+            
+            #content {
+                margin-left: 0 !important;
+            }
+        }
+        
+        /* Animation initialization */
+        .animate-fade-in, .animate-slide-up {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        
+        /* Dark mode enhancements */
+        .dark {
+            color-scheme: dark;
+        }
+        
+        .dark .bg-white {
+            background-color: #1F2937;
+        }
+        
+        .dark .text-gray-800 {
+            color: #F9FAFB;
+        }
+        
+        .dark .text-gray-700 {
+            color: #E5E7EB;
+        }
+        
+        .dark .text-gray-600 {
+            color: #D1D5DB;
+        }
+        
+        .dark .text-gray-500 {
+            color: #9CA3AF;
+        }
+        
+        .dark .border-gray-300 {
+            border-color: #4B5563;
+        }
+        
+        .dark .border-gray-200 {
+            border-color: #374151;
+        }
+        
+        .dark .hover\:bg-gray-100:hover {
+            background-color: #374151;
+        }
+        
+        .dark .shadow-lg {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.15);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans antialiased dark:bg-gray-900 transition-colors duration-300">
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <div id="sidebar" class="bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 h-screen sidebar-transition fixed z-40 w-64 md:w-20 xl:w-64 shadow-lg">
+            <div class="flex flex-col h-full">
+                <!-- Logo -->
+                <div class="flex items-center justify-center h-16 border-b border-gray-200 dark:border-gray-700 px-4">
+                    <a href="/" class="flex items-center justify-center">
+                        <img src="/figma design exports/logos/Arzani-logo.png" alt="Arzani.co.uk" class="logo-img">
+                    </a>
+                    <button id="sidebarCollapse" class="md:hidden xl:flex ml-auto text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- Navigation Menu -->
+                <nav class="flex-grow py-6 px-4 overflow-y-auto custom-scrollbar">
+                    <ul class="space-y-2">
+                        <li>
+                            <a href="#dashboard" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors bg-blue-50 dark:bg-blue-900/20">
+                                <i class="fas fa-home h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
+                                <span class="hidden md:hidden xl:block">Dashboard</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/marketplace2" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                <i class="fas fa-store h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
+                                <span class="hidden md:hidden xl:block">Marketplace</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#alerts" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                <i class="fas fa-bell h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
+                                <span class="hidden md:hidden xl:block">Alerts</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#meetings" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                <i class="fas fa-calendar h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
+                                <span class="hidden md:hidden xl:block">Meetings</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#saved" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                <i class="fas fa-bookmark h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
+                                <span class="hidden md:hidden xl:block">Saved Searches</span>
+                            </a>
+                        </li>
+                    </ul>
+                    
+                    <div class="pt-6 mt-6 border-t border-gray-200 dark:border-gray-700">
+                        <ul class="space-y-2">
+                            <li>
+                                <a href="/pricing" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                    <i class="fas fa-crown h-6 w-6 mr-3 text-gray-500 dark:text-gray-400"></i>
+                                    <span class="hidden md:hidden xl:block">Upgrade</span>
+                                </a>
+                            </li>
+                            <li>
+                                <button id="themeToggle" class="w-full flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                    <i id="lightIcon" class="fas fa-sun h-6 w-6 mr-3 text-gray-500 dark:text-gray-400"></i>
+                                    <i id="darkIcon" class="fas fa-moon h-6 w-6 mr-3 text-gray-500 dark:text-gray-400 hidden"></i>
+                                    <span class="hidden md:hidden xl:block">Toggle Theme</span>
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+                
+                <!-- User Profile Section -->
+                <div class="border-t border-gray-200 dark:border-gray-700 p-4">
+                    <div class="flex items-center">
+                        <div class="h-10 w-10 rounded-full bg-gradient-to-r from-primary to-secondary flex items-center justify-center text-white font-medium">
+                            <%= user && user.username ? user.username.charAt(0).toUpperCase() : 'U' %>
+                        </div>
+                        <div class="ml-3 hidden md:hidden xl:block">
+                            <p class="text-sm font-medium text-gray-700 dark:text-gray-300"><%= user && user.username ? user.username : 'User' %></p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400"><%= user && user.subscription ? user.subscription : 'Free' %> Plan</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div id="content" class="flex-1 overflow-y-auto content-transition ml-0 md:ml-20 xl:ml-64">
+            <!-- Top Navbar -->
+            <nav class="bg-white dark:bg-gray-800 shadow-md sticky top-0 z-30">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="flex items-center justify-between h-16">
+                        <!-- Left side - Hamburger and Page Title -->
+                        <div class="flex items-center">
+                            <button id="mobileSidebarToggle" class="md:hidden mr-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                                <i class="fas fa-bars h-6 w-6"></i>
+                            </button>
+                            <h1 class="text-xl font-bold text-primary dark:text-blue-400">Buyer Dashboard</h1>
+                        </div>
+                        
+                        <!-- Right side - Actions -->
+                        <div class="flex items-center space-x-4">
+                            <!-- Refresh Button -->
+                            <button data-action="refresh" class="hidden sm:flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+                                <i class="fas fa-sync h-4 w-4 mr-2"></i>
+                                Refresh
+                            </button>
+                            
+                            <!-- Quick Actions -->
+                            <button class="hidden sm:flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+                                <i class="fas fa-plus h-4 w-4 mr-2"></i>
+                                New Alert
+                            </button>
+                            
+                            <!-- Profile Dropdown -->
+                            <div class="relative">
+                                <button id="profileDropdown" class="flex items-center text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white focus:outline-none">
+                                    <div class="flex items-center">
+                                        <span class="mr-2 px-2 py-1 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-xs font-medium"><%= user && user.subscription ? user.subscription : 'Free' %></span>
+                                        <div class="h-8 w-8 rounded-full bg-gradient-to-r from-primary to-secondary flex items-center justify-center text-white text-sm font-medium">
+                                            <%= user && user.username ? user.username.charAt(0).toUpperCase() : 'U' %>
+                                        </div>
+                                    </div>
+                                    <i class="fas fa-chevron-down ml-1 h-4 w-4"></i>
+                                </button>
+                                
+                                <!-- Profile Dropdown Menu -->
+                                <div id="profileMenu" class="hidden absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 z-50">
+                                    <a href="/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Your Profile</a>
+                                    <a href="/settings" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Settings</a>
+                                    <a href="/pricing" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Upgrade</a>
+                                    <div class="border-t border-gray-200 dark:border-gray-700"></div>
+                                    <a href="/logout" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Sign out</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Dashboard Content -->
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <!-- Welcome Section -->
+                <div class="mb-8">
+                    <div class="bg-gradient-to-r from-primary to-secondary rounded-xl p-6 text-white shadow-lg">
+                        <h2 class="text-2xl font-bold mb-2">Welcome back, <%= user && user.username ? user.username : 'Buyer' %>!</h2>
+                        <p class="text-blue-100">Manage your business search and track opportunities with our intelligent platform.</p>
+                    </div>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 card-hover animate-fade-in">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-blue-100 dark:bg-blue-900/20">
+                                <i class="fas fa-search text-blue-600 dark:text-blue-400 text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Saved Searches</p>
+                                <p class="text-2xl font-semibold text-gray-900 dark:text-white" data-stat="saved-searches"><%= dashboardData?.stats?.savedSearches || 0 %></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 card-hover animate-fade-in">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-yellow-100 dark:bg-yellow-900/20">
+                                <i class="fas fa-bell text-yellow-600 dark:text-yellow-400 text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Active Alerts</p>
+                                <p class="text-2xl font-semibold text-gray-900 dark:text-white" data-stat="active-alerts"><%= dashboardData?.stats?.activeAlerts || 0 %></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 card-hover animate-fade-in">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-green-100 dark:bg-green-900/20">
+                                <i class="fas fa-calendar-check text-green-600 dark:text-green-400 text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Meetings Booked</p>
+                                <p class="text-2xl font-semibold text-gray-900 dark:text-white" data-stat="meetings-booked"><%= dashboardData?.stats?.meetingsBooked || 0 %></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 card-hover animate-fade-in">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-purple-100 dark:bg-purple-900/20">
+                                <i class="fas fa-eye text-purple-600 dark:text-purple-400 text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Businesses Viewed</p>
+                                <p class="text-2xl font-semibold text-gray-900 dark:text-white" data-stat="businesses-viewed"><%= dashboardData?.stats?.businessesViewed || 0 %></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Main Content Area -->
+                    <div class="lg:col-span-2 space-y-8">
+                        <!-- Recent Alerts -->
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden animate-slide-up">
+                            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Recent Alerts</h3>
+                                    <button class="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">
+                                        <i class="fas fa-cog mr-2"></i>
+                                        Manage Alerts
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="p-6 space-y-4" data-section="alerts">
+                                <% if (dashboardData?.recentAlerts && dashboardData.recentAlerts.length > 0) { %>
+                                    <% dashboardData.recentAlerts.forEach(function(alert) { %>
+                                        <div class="alert-item flex items-start justify-between p-4 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                            <div class="flex-1">
+                                                <div class="flex items-center mb-2">
+                                                    <div class="p-2 rounded-full <%= alert.type === 'price_drop' ? 'warning-gradient' : (alert.type === 'new_listing' ? 'info-gradient' : 'premium-gradient') %> mr-3">
+                                                        <i class="<%= alert.icon %> text-white text-sm"></i>
+                                                    </div>
+                                                    <h4 class="font-medium text-gray-900 dark:text-white"><%= alert.title %></h4>
+                                                </div>
+                                                <p class="text-gray-600 dark:text-gray-400 text-sm mb-1"><%= alert.description %></p>
+                                                <p class="text-xs text-gray-500 dark:text-gray-500"><%= alert.timeAgo %></p>
+                                            </div>
+                                            <button class="px-4 py-2 bg-primary hover:bg-secondary text-white text-sm font-medium rounded-lg transition-colors">
+                                                View
+                                            </button>
+                                        </div>
+                                    <% }); %>
+                                <% } else { %>
+                                    <div class="text-center py-8">
+                                        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100 dark:bg-gray-700">
+                                            <i class="fas fa-bell text-gray-400 text-xl"></i>
+                                        </div>
+                                        <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">No recent alerts</h3>
+                                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Set up alerts to get notified about new opportunities.</p>
+                                        <div class="mt-6">
+                                            <a href="#alerts" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                                <i class="fas fa-plus -ml-1 mr-2 h-4 w-4"></i>
+                                                Create Alert
+                                            </a>
+                                        </div>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+
+                        <!-- Upcoming Meetings -->
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden animate-slide-up">
+                            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Upcoming Meetings</h3>
+                                    <button class="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">
+                                        <i class="fas fa-calendar-plus mr-2"></i>
+                                        Book Meeting
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="p-6 space-y-6" data-section="meetings">
+                                <% if (dashboardData?.upcomingMeetings && dashboardData.upcomingMeetings.length > 0) { %>
+                                    <% dashboardData.upcomingMeetings.forEach(function(meeting) { %>
+                                        <div class="meeting-item flex items-center justify-between p-4 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200">
+                                            <div class="flex-1">
+                                                <h4 class="font-medium text-gray-900 dark:text-white mb-1"><%= meeting.businessName %></h4>
+                                                <p class="text-gray-600 dark:text-gray-400 text-sm mb-2">Meeting with <%= meeting.sellerName || 'seller' %></p>
+                                                <div class="flex items-center text-sm text-gray-500 dark:text-gray-500">
+                                                    <i class="fas fa-calendar mr-2"></i>
+                                                    <span><%= new Date(meeting.scheduledAt).toLocaleDateString('en-US', { weekday: 'long', hour: '2-digit', minute: '2-digit' }) %></span>
+                                                </div>
+                                            </div>
+                                            <div class="flex flex-col items-end space-y-2">
+                                                <% if (meeting.meetingType === 'video') { %>
+                                                    <button class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center">
+                                                        <i class="fas fa-video mr-2"></i>
+                                                        Join Call
+                                                    </button>
+                                                    <span class="text-xs text-gray-500 dark:text-gray-500">Video Call</span>
+                                                <% } else { %>
+                                                    <button class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm font-medium rounded-lg transition-colors flex items-center">
+                                                        <i class="fas fa-map-marker-alt mr-2"></i>
+                                                        View Location
+                                                    </button>
+                                                    <span class="text-xs text-gray-500 dark:text-gray-500">In-person</span>
+                                                <% } %>
+                                            </div>
+                                        </div>
+                                    <% }); %>
+                                <% } else { %>
+                                    <div class="text-center py-8">
+                                        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100 dark:bg-gray-700">
+                                            <i class="fas fa-calendar-alt text-gray-400 text-xl"></i>
+                                        </div>
+                                        <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">No upcoming meetings</h3>
+                                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Schedule meetings with sellers to discuss opportunities.</p>
+                                        <div class="mt-6">
+                                            <a href="/marketplace2" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                                <i class="fas fa-search -ml-1 mr-2 h-4 w-4"></i>
+                                                Browse Businesses
+                                            </a>
+                                        </div>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+
+                        <!-- AI Deal Advisor -->
+                        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-6 border border-blue-200 dark:border-blue-800 animate-slide-up">
+                            <div class="flex items-center justify-between">
+                                <div class="flex-1">
+                                    <div class="flex items-center mb-3">
+                                        <div class="p-2 rounded-full bg-blue-100 dark:bg-blue-800 mr-3">
+                                            <i class="fas fa-robot text-blue-600 dark:text-blue-400 text-xl"></i>
+                                        </div>
+                                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">AI Deal Advisor</h3>
+                                    </div>
+                                    <p class="text-gray-600 dark:text-gray-400 mb-4">
+                                        Get expert insights on any business listing. Ask questions about valuation, negotiation strategies, market trends, and get instant AI-powered advice.
+                                    </p>
+                                </div>
+                                <div class="ml-6">
+                                    <button class="px-6 py-3 bg-primary hover:bg-secondary text-white font-medium rounded-lg transition-colors flex items-center">
+                                        <i class="fas fa-comments mr-2"></i>
+                                        Start Chat
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sidebar -->
+                    <div class="space-y-8">
+                        <!-- Premium Upgrade Card -->
+                        <div class="premium-gradient rounded-xl p-6 text-white shadow-lg animate-slide-up">
+                            <div class="text-center">
+                                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/20 mb-4">
+                                    <i class="fas fa-crown text-white text-2xl"></i>
+                                </div>
+                                <h3 class="text-xl font-bold mb-3">Upgrade to Premium</h3>
+                                <p class="text-white/90 mb-6">
+                                    Unlock exclusive listings, early access alerts, and priority support.
+                                </p>
+                                
+                                <div class="space-y-3 mb-6 text-sm">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-check-circle mr-3"></i>
+                                        <span>Access exclusive off-market listings</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i class="fas fa-check-circle mr-3"></i>
+                                        <span>24-72 hour early access to new listings</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i class="fas fa-check-circle mr-3"></i>
+                                        <span>Unlimited AI deal advisor</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i class="fas fa-check-circle mr-3"></i>
+                                        <span>Priority customer support</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i class="fas fa-check-circle mr-3"></i>
+                                        <span>Advanced due diligence reports</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="text-center mb-4">
+                                    <div class="text-2xl font-bold">£35/month</div>
+                                    <div class="text-white/75 text-sm">Cancel anytime</div>
+                                </div>
+                                
+                                <a href="/pricing" class="block w-full bg-white text-purple-600 font-semibold py-3 px-6 rounded-lg hover:bg-gray-100 transition-colors">
+                                    Upgrade Now
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Quick Actions -->
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden animate-slide-up">
+                            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Quick Actions</h3>
+                            </div>
+                            <div class="p-6 space-y-3">
+                                <a href="/marketplace2" class="flex items-center p-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                    <i class="fas fa-search mr-3 text-blue-600 dark:text-blue-400"></i>
+                                    <span class="text-gray-700 dark:text-gray-300">Browse Businesses</span>
+                                </a>
+                                <button class="w-full flex items-center p-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                    <i class="fas fa-bookmark mr-3 text-blue-600 dark:text-blue-400"></i>
+                                    <span class="text-gray-700 dark:text-gray-300">Saved Searches</span>
+                                </button>
+                                <button class="w-full flex items-center p-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                    <i class="fas fa-bell mr-3 text-blue-600 dark:text-blue-400"></i>
+                                    <span class="text-gray-700 dark:text-gray-300">Manage Alerts</span>
+                                </button>
+                                <button class="w-full flex items-center p-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                    <i class="fas fa-calendar mr-3 text-blue-600 dark:text-blue-400"></i>
+                                    <span class="text-gray-700 dark:text-gray-300">Schedule Meeting</span>
+                                </button>
+                                <button class="w-full flex items-center p-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                    <i class="fas fa-file-alt mr-3 text-blue-600 dark:text-blue-400"></i>
+                                    <span class="text-gray-700 dark:text-gray-300">Due Diligence Reports</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Saved Searches -->
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden animate-slide-up">
+                            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Saved Searches</h3>
+                                    <button class="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
+                                        <i class="fas fa-plus mr-1"></i>
+                                        New
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="p-6" data-section="saved-searches">
+                                <% if (dashboardData?.savedSearches && dashboardData.savedSearches.length > 0) { %>
+                                    <div class="space-y-3">
+                                        <% dashboardData.savedSearches.forEach(function(search) { %>
+                                            <div class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                                <div class="flex-1 min-w-0">
+                                                    <h4 class="text-sm font-medium text-gray-900 dark:text-white truncate"><%= search.name %></h4>
+                                                    <div class="flex items-center text-xs text-gray-500 dark:text-gray-500 mt-1">
+                                                        <i class="fas fa-building mr-1"></i>
+                                                        <span><%= search.matchingBusinesses %> matches</span>
+                                                    </div>
+                                                </div>
+                                                <button class="ml-2 px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 transition-colors">
+                                                    View
+                                                </button>
+                                            </div>
+                                        <% }); %>
+                                    </div>
+                                <% } else { %>
+                                    <div class="text-center py-4">
+                                        <div class="mx-auto flex items-center justify-center h-10 w-10 rounded-full bg-gray-100 dark:bg-gray-700">
+                                            <i class="fas fa-bookmark text-gray-400"></i>
+                                        </div>
+                                        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">No saved searches yet</p>
+                                        <button class="mt-2 text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
+                                            Create your first search
+                                        </button>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+
+                        <!-- Recent Activity -->
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden animate-slide-up">
+                            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Recent Activity</h3>
+                            </div>
+                            <div class="p-6 space-y-4">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
+                                        <i class="fas fa-eye text-blue-600 dark:text-blue-400"></i>
+                                    </div>
+                                    <div class="ml-3 flex-1">
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white">Viewed Tech Startup</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-500">2 hours ago</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
+                                        <i class="fas fa-bookmark text-green-600 dark:text-green-400"></i>
+                                    </div>
+                                    <div class="ml-3 flex-1">
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white">Saved E-commerce Store</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-500">5 hours ago</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 w-10 h-10 rounded-full bg-yellow-100 dark:bg-yellow-900/20 flex items-center justify-center">
+                                        <i class="fas fa-calendar text-yellow-600 dark:text-yellow-400"></i>
+                                    </div>
+                                    <div class="ml-3 flex-1">
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white">Booked Meeting</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-500">Yesterday</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center">
+                                        <i class="fas fa-robot text-purple-600 dark:text-purple-400"></i>
+                                    </div>
+                                    <div class="ml-3 flex-1">
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white">Used AI Advisor</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-500">2 days ago</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dashboard interactions and functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Theme toggle functionality
+            const themeToggle = document.getElementById('themeToggle');
+            const lightIcon = document.getElementById('lightIcon');
+            const darkIcon = document.getElementById('darkIcon');
+            const html = document.documentElement;
+            
+            // Check saved theme preference or default to light mode
+            const currentTheme = localStorage.getItem('theme') || 'light';
+            html.classList.toggle('dark', currentTheme === 'dark');
+            updateThemeIcons(currentTheme);
+            
+            themeToggle.addEventListener('click', function() {
+                const isDark = html.classList.contains('dark');
+                const newTheme = isDark ? 'light' : 'dark';
+                
+                html.classList.toggle('dark', !isDark);
+                localStorage.setItem('theme', newTheme);
+                updateThemeIcons(newTheme);
+            });
+            
+            function updateThemeIcons(theme) {
+                if (theme === 'dark') {
+                    lightIcon.classList.add('hidden');
+                    darkIcon.classList.remove('hidden');
+                } else {
+                    lightIcon.classList.remove('hidden');
+                    darkIcon.classList.add('hidden');
+                }
+            }
+            
+            // Sidebar toggle functionality
+            const sidebar = document.getElementById('sidebar');
+            const content = document.getElementById('content');
+            const sidebarCollapse = document.getElementById('sidebarCollapse');
+            const mobileSidebarToggle = document.getElementById('mobileSidebarToggle');
+            
+            // Desktop sidebar collapse
+            if (sidebarCollapse) {
+                sidebarCollapse.addEventListener('click', function() {
+                    sidebar.classList.toggle('w-20');
+                    sidebar.classList.toggle('w-64');
+                    content.classList.toggle('ml-20');
+                    content.classList.toggle('ml-64');
+                });
+            }
+            
+            // Mobile sidebar toggle
+            if (mobileSidebarToggle) {
+                mobileSidebarToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('-translate-x-full');
+                    sidebar.classList.toggle('translate-x-0');
+                });
+            }
+            
+            // Profile dropdown functionality
+            const profileDropdown = document.getElementById('profileDropdown');
+            const profileMenu = document.getElementById('profileMenu');
+            
+            if (profileDropdown && profileMenu) {
+                profileDropdown.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    profileMenu.classList.toggle('hidden');
+                });
+                
+                // Close dropdown when clicking outside
+                document.addEventListener('click', function(e) {
+                    if (!profileDropdown.contains(e.target) && !profileMenu.contains(e.target)) {
+                        profileMenu.classList.add('hidden');
+                    }
+                });
+            }
+            
+            // Add hover effects to stat cards
+            const statCards = document.querySelectorAll('.card-hover');
+            statCards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-4px) scale(1.02)';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0) scale(1)';
+                });
+            });
+            
+            // Track dashboard interactions
+            const buttons = document.querySelectorAll('button, a');
+            buttons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    const text = this.textContent.trim();
+                    if (text && !text.includes('Toggle') && !text.includes('Sign out')) {
+                        console.log('Dashboard interaction:', text);
+                    }
+                });
+            });
+            
+            // Add animation classes to elements
+            const animatedElements = document.querySelectorAll('.animate-fade-in, .animate-slide-up');
+            animatedElements.forEach((element, index) => {
+                setTimeout(() => {
+                    element.style.opacity = '1';
+                    element.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+            
+            // Simulated real-time updates for stats (demo purposes)
+            setInterval(function() {
+                const statNumbers = document.querySelectorAll('.text-2xl.font-semibold');
+                // Could update these with real data from API
+                // Example: fetchDashboardStats().then(updateStatNumbers);
+            }, 30000);
+            
+            // Add pulse effect to new alert badge
+            const alertItems = document.querySelectorAll('.alert-item');
+            if (alertItems.length > 0) {
+                alertItems[0].classList.add('pulse-animation');
+                setTimeout(() => {
+                    alertItems[0].classList.remove('pulse-animation');
+                }, 2000);
+            }
+        });
+    </script>
+    
+    <!-- Buyer Dashboard JavaScript -->
+    <script src="/js/buyer-dashboard.js"></script>
+</body>
+</html>

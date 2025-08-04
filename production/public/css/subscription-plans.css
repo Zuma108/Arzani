@@ -1,0 +1,56 @@
+.plan-gold {
+    --plan-color: #FFD700;
+    --plan-gradient: linear-gradient(135deg, #FFD700, #FDB931);
+    --plan-shadow: 0 8px 16px rgba(253, 185, 49, 0.2);
+}
+
+.plan-platinum {
+    --plan-color: #E5E4E2;
+    --plan-gradient: linear-gradient(135deg, #E5E4E2, #B4B4B4);
+    --plan-shadow: 0 8px 16px rgba(229, 228, 226, 0.3);
+}
+
+.checkout-container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 30px;
+    border-radius: 12px;
+    background: var(--plan-gradient);
+    box-shadow: var(--plan-shadow);
+}
+
+.plan-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.plan-features {
+    display: grid;
+    gap: 1rem;
+    margin: 2rem 0;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 8px;
+}
+
+.feature-highlight {
+    background: var(--plan-color);
+    color: #000;
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.testimonial {
+    margin: 2rem 0;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 8px;
+    font-style: italic;
+}

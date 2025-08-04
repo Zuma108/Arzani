@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seller Questionnaire - The Basics | Arzani Marketplace</title>
+    <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">
+
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <%- include('../views/partials/tailwind-setup') %>
+    <link rel="stylesheet" href="/css/seller-questionnaire.css">
+    <link rel="stylesheet" href="/css/progress-bar.css">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: white;
+            overflow: hidden; /* Hide scrollbar */
+        }
+        .header {
+            height: 87px;
+            border-bottom: 0.8px solid #bfbcc6;
+        }
+        .content-container {
+            height: calc(100vh - 87px - 100px); /* Header height (87px) and footer height (100px) */
+            overflow-y: auto; /* Enable scrolling inside container if needed */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding-bottom: 20px;
+            padding-top: 20px; /* Add padding to top to prevent overlap */
+        }
+        .btn-main {
+            background-color: #25224a;
+            color: white;
+            border-radius: 0 1rem 1rem 1rem;
+        }
+        .btn-next {
+            background-color: #041b76;
+            color: white;
+            border-radius: 0 1rem 1rem 1rem;
+            box-shadow: 7px 7px 17px 0px rgba(25,31,64,0.22);
+        }
+        .progress-bar {
+            background-color: #dee8ff;
+            height: 10px;
+        }
+        .progress-active {
+            background-color: #3e50f7;
+        }
+        .status-message {
+            max-width: 490px;
+        }
+        .status-message h1 {
+            color: #25224a;
+            font-size: 27px;
+            font-weight: 900;
+            line-height: 42px;
+        }
+        .status-message p {
+            color: #464154;
+            font-size: 18px;
+            line-height: 29px;
+        }
+        .exit-link {
+            color: #25224a;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .profile-pics {
+            display: flex;
+            align-items: center;
+        }
+        .profile-pic {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid white;
+            object-fit: cover;
+        }
+        .profile-pic:not(:first-child) {
+            margin-left: -15px;
+        }
+    </style>
+    <script src="/js/questionnaire-logger.js"></script>
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-W50GKB6F3M"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-W50GKB6F3M');
+    </script>
+    
+    <!-- Microsoft Clarity -->
+    <script type="text/javascript">
+        (function(c,l,a,r,i,t,y){
+            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+        })(window, document, "clarity", "script", "slthf5bx9u");
+    </script>
+</head>
+<body>
+    <div class="w-full h-screen flex flex-col bg-white">
+        <!-- Header -->
+        <header class="header w-full bg-white flex items-center flex-shrink-0">
+            <div class="container mx-auto px-4 md:px-8 flex items-center justify-between">
+                <!-- Logo -->
+                <div class="h-12 md:h-16">
+                    <img src="/figma design exports/logos/Arzani black-white background 2.png" alt="Arzani" class="h-full">
+                </div>
+                
+                <!-- Right section -->
+                <div class="flex items-center gap-4">
+                    <!-- Help button -->
+                    <div class="hidden md:flex mr-4 h-12 px-6 items-center border border-[#bfbcc6] rounded">
+                        <span class="text-[#464154] text-base font-medium">Need help?</span>
+                    </div>
+                    
+                    <!-- Profile pictures -->
+                    <div class="profile-pics mr-4">
+                        <img src="https://randomuser.me/api/portraits/women/32.jpg" alt="Support agent" class="profile-pic">
+                        <img src="https://randomuser.me/api/portraits/men/44.jpg" alt="Support agent" class="profile-pic">
+                        <img src="https://randomuser.me/api/portraits/women/68.jpg" alt="Support agent" class="profile-pic">
+                    </div>
+                    
+                    <!-- Exit link -->
+                    <a href="/" class="exit-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                        <span class="hidden sm:inline">Exit</span>
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main content -->
+        <main class="content-container flex-grow page-transition">
+            <div class="text-center px-4 pt-6 md:pt-0"> <!-- Added padding top for mobile spacing -->
+                <!-- Center image - improved responsive scaling with spacing from navbar -->
+                <div class="flex justify-center mb-8 md:mb-12 mt-2 md:mt-4"> <!-- Added margin top -->
+                    <img src="/figma design exports/images/basics image.png" 
+                         alt="Business basics" 
+                         class="w-auto h-[160px] sm:h-[200px] md:h-[230px] lg:h-[260px] max-w-full object-contain transition-all duration-300"
+                         loading="eager">
+                </div>
+                
+                <!-- Status message - responsive text sizes -->
+                <div class="status-message mx-auto">
+                    <h1 class="text-2xl md:text-3xl font-black mb-4 md:mb-6">The basics</h1>
+                    <p class="text-base md:text-lg mb-6 md:mb-8">Add information about your business to entice buyers.</p>
+                    
+                    <!-- Free Valuation CTA -->
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-left max-w-md">
+                        <div class="flex items-center mb-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                            <span class="text-sm font-semibold text-blue-800">Need something faster?</span>
+                        </div>
+                        <p class="text-sm text-blue-700 mb-3">Get an instant business valuation in under 2 minutes with our AI-powered tool.</p>
+                        <a href="/business-valuation" class="inline-block bg-blue-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-blue-700 transition-colors">
+                            Try Free Instant Valuation
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Footer progress bar - Updated to match other pages -->
+        <footer class="w-full bg-white flex-shrink-0">
+            <!-- Progress bar system -->
+            <div class="container mx-auto px-4 md:px-20 py-2">
+                <div class="progress-status">
+                    <div class="current-page">The Basics</div>
+                    <div class="pages-count">Step 1 of 11</div>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-active step-1-of-11" style="width: 9.09%;"></div>
+                    </div>
+                </div>
+                <div class="step-indicators">
+                    <% for(let i = 1; i <= 11; i++) { %>
+                        <div class="step-dot <%= i === 1 ? 'active' : '' %>" data-step="<%= i %>"></div>
+                    <% } %>
+                </div>
+            </div>
+            
+                            
+                <div class="container mx-auto px-4 md:px-20 py-6 md:py-8 pb-10 sm:pb-8 flex justify-between items-center">
+                    <button id="backBtn" class="text-[#25224a] text-base font-medium">Back</button>
+                    <button id="nextBtn" class="btn-next px-6 md:px-8 py-3 md:py-4 text-white text-base font-medium">Next</button>
+                </div>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/js/questionnaire-navigation.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add page entry animation
+            document.querySelector('main').classList.add('page-transition');
+            
+            // Set up form elements
+            const businessNameInput = document.getElementById('businessName');
+            const industrySelect = document.getElementById('industry');
+            const yearEstablishedInput = document.getElementById('yearEstablished');
+            const descriptionInput = document.getElementById('description');
+            
+            // Load saved values if available
+            if (localStorage.getItem('sellerBusinessName')) {
+                businessNameInput.value = localStorage.getItem('sellerBusinessName');
+                questionnaireLogger.log('Loaded saved business name', { value: businessNameInput.value });
+            }
+            
+            // ...existing code for loading other values...
+            
+            // Add validation function for the navigation script
+            window.validateBeforeNext = function() {
+                // Check if required fields have been filled
+                if (!businessNameInput.value.trim()) {
+                    document.getElementById('nameError').classList.remove('hidden');
+                    businessNameInput.classList.add('border-red-500');
+                    businessNameInput.focus();
+                    questionnaireLogger.error('Validation failed: Missing business name');
+                    return false;
+                }
+                
+                if (!industrySelect.value) {
+                    document.getElementById('industryError').classList.remove('hidden');
+                    industrySelect.classList.add('border-red-500');
+                    industrySelect.focus();
+                    questionnaireLogger.error('Validation failed: Missing industry');
+                    return false;
+                }
+                
+                if (!yearEstablishedInput.value) {
+                    document.getElementById('yearError').classList.remove('hidden');
+                    yearEstablishedInput.classList.add('border-red-500');
+                    yearEstablishedInput.focus();
+                    questionnaireLogger.error('Validation failed: Missing year established');
+                    return false;
+                }
+                
+                // Save to localStorage
+                localStorage.setItem('sellerBusinessName', businessNameInput.value.trim());
+                localStorage.setItem('sellerIndustry', industrySelect.value);
+                localStorage.setItem('sellerYearEstablished', yearEstablishedInput.value);
+                localStorage.setItem('sellerDescription', descriptionInput.value.trim());
+                
+                const savedData = {
+                    businessName: businessNameInput.value.trim(),
+                    industry: industrySelect.value,
+                    yearEstablished: yearEstablishedInput.value,
+                    description: descriptionInput.value.trim()
+                };
+                
+                questionnaireLogger.dataSaved('basics', savedData);
+                
+                // Show a brief success message
+                showSaveSuccess();
+                
+                return true;
+            };
+            
+            // Function to show a brief success message
+            function showSaveSuccess() {
+                // Create or get the success message element
+                let successMessage = document.getElementById('save-success-message');
+                
+                if (!successMessage) {
+                    successMessage = document.createElement('div');
+                    successMessage.id = 'save-success-message';
+                    successMessage.className = 'fixed top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded shadow-md transition-all duration-500 transform scale-0';
+                    successMessage.innerHTML = `
+                        <div class="flex items-center">
+                            <svg class="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span>Data saved successfully</span>
+                        </div>
+                    `;
+                    document.body.appendChild(successMessage);
+                }
+                
+                // Show and then hide the message
+                successMessage.classList.remove('scale-0');
+                successMessage.classList.add('scale-100');
+                
+                setTimeout(() => {
+                    successMessage.classList.remove('scale-100');
+                    successMessage.classList.add('scale-0');
+                }, 2000);
+            }
+            
+            // Add direct event listener to the Next button to ensure navigation works
+            const nextButton = document.getElementById('nextBtn');
+            if (nextButton) {
+                nextButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation(); // Prevent event bubbling
+                    console.log('Next button clicked on basics page');
+                    
+                    // Navigate directly to the email page
+                    window.location.href = '/seller-questionnaire/email';
+                }, true); // Use capturing for higher priority
+            }
+            
+            // Add direct event listener to the Back button
+            const backButton = document.getElementById('backBtn');
+            if (backButton) {
+                backButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    console.log('Back button clicked on basics page');
+                    
+                    // Since this is the first page, simply confirm before exiting
+                    if (confirm('Are you sure you want to exit? Your progress will be saved.')) {
+                        window.location.href = '/';
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

@@ -127,6 +127,42 @@ jobs:
           fi
         done
         
+        # CRITICAL FIX: Explicitly ensure API files are present
+        echo "🚨 CRITICAL FIX: Explicitly copying API files..."
+        
+        # Double-check API directory exists
+        if [ ! -d "production/api" ]; then
+          echo "❌ API directory missing after copy, creating it..."
+          mkdir -p production/api
+        fi
+        
+        # Force copy critical API files with explicit verification
+        if [ -f "api/valuation.js" ]; then
+          cp "api/valuation.js" "production/api/valuation.js"
+          if [ -f "production/api/valuation.js" ]; then
+            echo "✅ FORCE COPY: valuation.js copied successfully"
+          else
+            echo "❌ FORCE COPY: valuation.js copy failed"
+            exit 1
+          fi
+        else
+          echo "❌ Source api/valuation.js not found"
+          exit 1
+        fi
+        
+        if [ -f "api/public-valuation.js" ]; then
+          cp "api/public-valuation.js" "production/api/public-valuation.js"
+          if [ -f "production/api/public-valuation.js" ]; then
+            echo "✅ FORCE COPY: public-valuation.js copied successfully"
+          else
+            echo "❌ FORCE COPY: public-valuation.js copy failed"
+            exit 1
+          fi
+        else
+          echo "❌ Source api/public-valuation.js not found"
+          exit 1
+        fi
+        
         # Explicitly verify api directory and key files with detailed logging
         if [ -d "production/api" ]; then
           echo "🔍 Verifying api directory contents with full file listing:"

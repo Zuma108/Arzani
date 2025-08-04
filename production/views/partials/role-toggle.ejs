@@ -1,0 +1,231 @@
+<!-- Role Toggle Component for Navigation -->
+<div class="role-toggle">
+    <div class="current-role" id="current-role-display">
+        <% if (user && user.primary_role) { %>
+            <span class="role-icon">
+                <% if (user.primary_role === 'buyer') { %>
+                    <i class="fas fa-search"></i>
+                <% } else if (user.primary_role === 'seller') { %>
+                    <i class="fas fa-store"></i>
+                <% } else if (user.primary_role === 'broker') { %>
+                    <i class="fas fa-handshake"></i>
+                <% } else if (user.primary_role === 'advisor') { %>
+                    <i class="fas fa-briefcase"></i>
+                <% } %>
+            </span>
+            <span class="role-name"><%= user.primary_role.charAt(0).toUpperCase() + user.primary_role.slice(1) %></span>
+            <i class="fas fa-chevron-down"></i>
+        <% } else { %>
+            <span class="role-icon">
+                <i class="fas fa-user"></i>
+            </span>
+            <span class="role-name">Select Role</span>
+            <i class="fas fa-chevron-down"></i>
+        <% } %>
+    </div>
+    
+    <div class="role-dropdown" id="role-dropdown">
+        <div class="role-option <%- user && user.primary_role === 'buyer' ? 'active' : '' %>" data-role="buyer">
+            <span class="role-icon"><i class="fas fa-search"></i></span>
+            <span class="role-name">Buyer</span>
+        </div>
+        <div class="role-option <%- user && user.primary_role === 'seller' ? 'active' : '' %>" data-role="seller">
+            <span class="role-icon"><i class="fas fa-store"></i></span>
+            <span class="role-name">Seller</span>
+        </div>
+        <div class="role-option <%- user && user.primary_role === 'broker' ? 'active' : '' %>" data-role="broker">
+            <span class="role-icon"><i class="fas fa-handshake"></i></span>
+            <span class="role-name">Broker</span>
+        </div>
+        <div class="role-option <%- user && user.primary_role === 'advisor' ? 'active' : '' %>" data-role="advisor">
+            <span class="role-icon"><i class="fas fa-briefcase"></i></span>
+            <span class="role-name">Advisor</span>
+        </div>
+        <div class="role-settings">
+            <a href="/profile#roles">
+                <span class="role-icon"><i class="fas fa-cog"></i></span>
+                <span class="role-name">Manage Roles</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .role-toggle {
+        position: relative;
+        margin-right: 15px;
+    }
+    
+    .current-role {
+        display: flex;
+        align-items: center;
+        padding: 5px 10px;
+        background-color: #f8f9fa;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 1px solid #e5e7eb;
+    }
+    
+    .current-role:hover {
+        background-color: #e9ecef;
+    }
+    
+    .role-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        margin-right: 8px;
+        color: #4b5563;
+    }
+    
+    .role-name {
+        font-size: 14px;
+        font-weight: 500;
+        color: #4b5563;
+    }
+    
+    .current-role .fa-chevron-down {
+        margin-left: 8px;
+        font-size: 12px;
+        color: #9ca3af;
+    }
+    
+    .role-dropdown {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        width: 180px;
+        margin-top: 5px;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        z-index: 100;
+        display: none;
+        overflow: hidden;
+    }
+    
+    .role-dropdown.show {
+        display: block;
+    }
+    
+    .role-option {
+        display: flex;
+        align-items: center;
+        padding: 10px 15px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+    
+    .role-option:hover {
+        background-color: #f3f4f6;
+    }
+    
+    .role-option.active {
+        background-color: #f0f7ff;
+        color: #3b82f6;
+    }
+    
+    .role-option.active .role-icon,
+    .role-option.active .role-name {
+        color: #3b82f6;
+    }
+    
+    .role-settings {
+        border-top: 1px solid #e5e7eb;
+        margin-top: 5px;
+    }
+    
+    .role-settings a {
+        display: flex;
+        align-items: center;
+        padding: 10px 15px;
+        text-decoration: none;
+        color: #4b5563;
+        transition: background-color 0.2s ease;
+    }
+    
+    .role-settings a:hover {
+        background-color: #f3f4f6;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const currentRoleDisplay = document.getElementById('current-role-display');
+        const roleDropdown = document.getElementById('role-dropdown');
+        const roleOptions = document.querySelectorAll('.role-option');
+        
+        // Toggle dropdown when current role is clicked
+        currentRoleDisplay.addEventListener('click', function(event) {
+            event.stopPropagation();
+            roleDropdown.classList.toggle('show');
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function() {
+            roleDropdown.classList.remove('show');
+        });
+        
+        // Prevent dropdown from closing when clicking inside it
+        roleDropdown.addEventListener('click', function(event) {
+            event.stopPropagation();
+        });
+        
+        // Handle role selection
+        roleOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                const selectedRole = this.getAttribute('data-role');
+                
+                // Call API to update primary role
+                fetch('/api/users/roles/primary', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({ role: selectedRole })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update UI immediately
+                        const roleIconHTML = (() => {
+                            switch(selectedRole) {
+                                case 'buyer': return '<i class="fas fa-search"></i>';
+                                case 'seller': return '<i class="fas fa-store"></i>';
+                                case 'broker': return '<i class="fas fa-handshake"></i>';
+                                case 'advisor': return '<i class="fas fa-briefcase"></i>';
+                                default: return '<i class="fas fa-user"></i>';
+                            }
+                        })();
+                        
+                        document.querySelector('#current-role-display .role-icon').innerHTML = roleIconHTML;
+                        document.querySelector('#current-role-display .role-name').textContent = 
+                            selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1);
+                        
+                        // Update active class in dropdown
+                        roleOptions.forEach(opt => opt.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        // Close dropdown
+                        roleDropdown.classList.remove('show');
+                        
+                        // Reload the page to update role-specific content
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 500);
+                    } else {
+                        alert('Failed to update role: ' + (data.message || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating role:', error);
+                    alert('An error occurred while updating your role.');
+                });
+            });
+        });
+    });
+</script>

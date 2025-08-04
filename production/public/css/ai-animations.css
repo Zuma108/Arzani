@@ -1,0 +1,98 @@
+/* AI Assistant Animation Effects */
+
+/* Chat bubble animation */
+@keyframes bubble-in {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Typing indicator animation */
+@keyframes typing-dot {
+  0%, 100% { 
+    opacity: 0.2; 
+    transform: translateY(0); 
+  }
+  50% { 
+    opacity: 1; 
+    transform: translateY(-5px); 
+  }
+}
+
+/* Button pulse animation */
+@keyframes button-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 10, 164, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(0, 10, 164, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 10, 164, 0);
+  }
+}
+
+/* Fade in animation */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Slide in animation */
+@keyframes slide-in {
+  from { 
+    transform: translateY(20px);
+    opacity: 0; 
+  }
+  to { 
+    transform: translateY(0);
+    opacity: 1; 
+  }
+}
+
+/* Apply animations to elements */
+.system-message, .user-message {
+  animation: bubble-in 0.3s ease-out forwards;
+}
+
+.typing-dots .dot {
+  animation: typing-dot 1.4s infinite;
+}
+
+.typing-dots .dot:nth-child(2) { 
+  animation-delay: 0.2s; 
+}
+
+.typing-dots .dot:nth-child(3) { 
+  animation-delay: 0.4s; 
+}
+
+.ai-button:hover {
+  animation: button-pulse 1.5s infinite;
+}
+
+.suggestion-button {
+  animation: fade-in 0.3s ease-out;
+}
+
+.action-tile {
+  animation: slide-in 0.3s ease-out;
+}
+
+/* Stagger the animations for action tiles */
+.action-tile:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.action-tile:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+.action-tile:nth-child(4) {
+  animation-delay: 0.3s;
+}

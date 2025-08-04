@@ -1,0 +1,44 @@
+{
+  "name": "Arzani Generalist Agent",
+  "description": "A generalist orchestration agent that routes queries to specialist agents in the Arzani Marketplace ecosystem",
+  "version": "1.0.0",
+  "contact": {
+    "url": "https://arzani.co.uk",
+    "email": "hello@arzani.co.uk"
+  },
+  "capabilities": {
+    "tasks/send": {
+      "description": "Route queries to appropriate specialist agents",
+      "examples": [
+        {
+          "description": "Route a business valuation request",
+          "params": {
+            "task": {
+              "id": "0a1b2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d"
+            },
+            "message": {
+              "parts": [
+                {
+                  "type": "text",
+                  "text": "I need a valuation of my eCommerce business with $500K annual revenue and $150K EBITDA."
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  },
+  "human_support": {
+    "available": true,
+    "email": "hello@arzani.co.uk",
+    "escalation_description": "If you need additional help beyond what our AI can provide, a human specialist can be contacted at hello@arzani.co.uk"
+  },
+  "domain_specialties": [
+    "business brokerage",
+    "marketplace",
+    "query routing",
+    "task orchestration"
+  ],
+  "failover_agents": []
+}

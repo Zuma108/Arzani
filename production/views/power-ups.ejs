@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Power-ups | Enhance Your Arzani Experience | Arzani</title>
+    <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">
+    <link rel="stylesheet" href="/css/modern.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#316FD4',
+                        dark: '#141414',
+                        'dark-light': '#1E1E1E'
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-W50GKB6F3M"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-W50GKB6F3M');
+    </script>
+    <style>
+        .coming-soon-badge {
+            display: inline-block;
+            background-color: #eab308; /* yellow-500 */
+            color: #1f2937; /* gray-800 */
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem; /* text-xs */
+            font-weight: 600; /* font-semibold */
+            margin-left: 0.5rem; /* ml-2 */
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body class="bg-dark text-white font-sans">
+    <div class="page-wrapper">
+
+        <!-- Include Navbar -->
+        <%- include('partials/navbar') %>
+
+        <!-- Hero Section -->
+        <section class="hero-section pt-32 md:pt-40 pb-20 md:pb-28 relative overflow-hidden bg-primary-dark">
+            <div class="absolute inset-0 grid-pattern opacity-30 z-0"></div>
+            <div class="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
+                <div class="gradient-box-bg absolute top-1/4 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full"></div>
+            </div>
+            <div class="container mx-auto px-4 md:px-6 relative z-10 text-center">
+                <h1 class="text-4xl md:text-6xl font-bold leading-tight mb-6 animate-fade-in-up">
+                    Supercharge Your <span class="text-gradient-animated">Workflow</span>
+                </h1>
+                <p class="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto animate-fade-in-up" style="animation-delay: 100ms;">
+                    Unlock advanced capabilities and streamline your business transactions with Arzani Power-ups.
+                </p>
+                <div class="animate-fade-in-up" style="animation-delay: 200ms;">
+                    <a href="#power-ups-list" class="btn-secondary text-lg py-3 px-6">
+                        Explore Power-ups
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Power-ups List Section -->
+        <section id="power-ups-list" class="py-20 md:py-24 bg-dark-light relative overflow-hidden">
+            <div class="absolute inset-0 z-0 opacity-10">
+                <div class="grid-pattern"></div>
+            </div>
+            <div class="container mx-auto px-4 md:px-6 relative z-10">
+                <h2 class="text-3xl md:text-4xl font-bold mb-16 text-center">Available Power-ups</h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+
+                    <!-- Power-up Card 1: AI Transaction Assistant -->
+                    <div class="feature-card bg-dark/60 backdrop-blur-md rounded-xl p-6 border border-gray-800/60 transition-all hover:border-primary/30" data-animation="fade-in-up" data-delay="100">
+                        <div class="flex items-center mb-4">
+                            <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mr-4 flex-shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" /></svg>
+                            </div>
+                            <h3 class="text-xl font-semibold">AI Transaction Assistant</h3>
+                            <span class="coming-soon-badge">Coming Soon</span>
+                        </div>
+                        <p class="text-gray-400">
+                            Leverage Brain AI directly within the marketplace. Get real-time guidance on valuations, negotiation points, due diligence checklists, and automate communication drafts. Your AI copilot for smoother deals.
+                        </p>
+                        <!-- Add a button or link if applicable when feature is live -->
+                        <!-- <a href="#" class="text-primary hover:underline mt-4 inline-block">Learn More</a> -->
+                    </div>
+
+                    <!-- Add more power-up cards here as they become available -->
+                     <div class="feature-card bg-dark/60 backdrop-blur-md rounded-xl p-6 border border-gray-800/60 flex items-center justify-center text-gray-500 italic" data-animation="fade-in-up" data-delay="200">
+                        More Power-ups coming soon...
+                    </div>
+
+
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="py-20 bg-dark text-center">
+            <div class="container mx-auto px-4 md:px-6">
+                 <h2 class="text-3xl md:text-4xl font-bold mb-6" data-animation="fade-in-up">Ready to Enhance Your Experience?</h2>
+                 <p class="text-xl text-gray-300 mb-10 max-w-2xl mx-auto" data-animation="fade-in-up" data-delay="100">Explore the Arzani platform and see how our core features and upcoming Power-ups can help you achieve your goals.</p>
+                 <div data-animation="fade-in-up" data-delay="200">
+                    <a href="/marketplace2" class="btn-primary text-lg py-4 px-10">
+                        Go to Marketplace
+                    </a>
+                 </div>
+            </div>
+        </section>
+
+    </div> <!-- End page-wrapper -->
+
+    <!-- Include Standard JS -->
+    <script src="/js/navigation.js"></script> 
+    <script src="/js/animations.js"></script>
+    <script src="/js/scroll-animations.js"></script>
+    <script src="/js/cookie-banner.js"></script>
+     <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeScrollAnimations();
+        });
+    </script>
+
+</body>
+</html>

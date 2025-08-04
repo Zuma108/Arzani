@@ -1,0 +1,106 @@
+<!-- AI Chatbot Component -->
+<div id="ai-assistant-container" class="ai-assistant-dialog ai-assistant-hidden">
+  <!-- Chatbot Header -->
+  <div class="copilot-header d-flex align-items-center justify-content-between px-3">
+    <span class="assistant-title">
+      AI Assistant <span class="version-badge">BETA</span>
+    </span>
+    <i class="fa-regular fa-xmark close-assistant-btn"></i>
+  </div>
+
+  <!-- Chat Container -->
+  <div class="chat-container">
+    <div class="messages-scroll dmo-px-16">
+      <!-- System welcome message -->
+      <div class="dmo-mt-16 system-message">
+        
+        
+        <div class="message-content">
+          <p>Welcome to our Marketplace Assistant! I'm here to help you find and sell businesses. You can ask me about available listings, business valuation, or get help with selling your business.</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Clear chat button -->
+    <button class="clear-chat-button mx-auto">
+      <i class="fa-regular fa-trash-can-xmark"></i> Clear chat
+    </button>
+    
+    <!-- Input area -->
+    <div class="assistant-input-container">
+      <span class="form-control searcher input">
+        <input type="text" id="assistant-input" placeholder="Ask anything..." class="assistant-input">
+      </span>
+      
+      <button class="send-button">
+        <i class="fas fa-arrow-right"></i>
+      </button>
+    </div>
+    
+    <!-- Credit counter -->
+    <div class="credits">
+      <i class="fa-regular fa-circle-star"></i>
+      <p>
+        Remaining: <strong>15</strong> of <strong>30</strong> credits. Credits reset in 3 days.
+        <a href="/checkout-gold" class="upgrade-link">Upgrade for more</a>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- AI Assistant Button -->
+<div class="ai-button-wrapper no-overlay">
+  <button class="ai-button" id="ai-assistant-button" onclick="toggleAIAssistant()">
+    <span>AI</span>
+    <i class="fa-regular fa-sparkles"></i>
+    <span class="ml-2 version-badge">BETA</span>
+  </button>
+</div>
+
+<!-- Direct handler script to ensure toggle works -->
+<script>
+function toggleAIAssistant() {
+  console.log('Button clicked directly via onclick');
+  if (window.aiAssistant && typeof window.aiAssistant.toggleAssistant === 'function') {
+    window.aiAssistant.toggleAssistant();
+  } else {
+    console.error('AI Assistant not initialized or toggleAssistant not found!');
+    // Fallback implementation
+    const container = document.getElementById('ai-assistant-container');
+    if (container) {
+      if (container.classList.contains('ai-assistant-hidden')) {
+        container.classList.remove('ai-assistant-hidden');
+      } else {
+        container.classList.add('ai-assistant-hidden');
+      }
+    }
+  }
+  return false;
+}
+
+// Load required scripts in the correct order
+document.addEventListener('DOMContentLoaded', function() {
+  // First load the main AI assistant script
+  const mainScript = document.createElement('script');
+  mainScript.src = '/js/ai-assistant.js';
+  document.body.appendChild(mainScript);
+  
+  // Then load the integration script after main script is loaded
+  mainScript.onload = function() {
+    const integrationScript = document.createElement('script');
+    integrationScript.src = '/js/ai-chatbot-integration.js';
+    document.body.appendChild(integrationScript);
+  };
+
+  // Ensure button has click handler
+  const aiButton = document.getElementById('ai-assistant-button');
+  if (aiButton) {
+    aiButton.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleAIAssistant();
+      return false;
+    });
+  }
+});
+</script>

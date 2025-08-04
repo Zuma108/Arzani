@@ -1,0 +1,150 @@
+.card2 {
+  max-width: 350px;
+  background-color: rgb(7, 16, 45);
+  background: linear-gradient(to top right, rgb(7, 16, 45), rgb(58, 60, 84));
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  border-radius: 20px;
+  border: 1px solid rgb(84, 90, 106);
+}
+
+.card2 .small-text,
+.card2 .title,
+.card2 .desc {
+  font-weight: 600;
+}
+
+.card2 .title,
+.card2 .desc {
+  margin: 8px 0;
+}
+
+.card2 .small-text {
+  color: #488aec;
+  font-size: 14px;
+}
+
+.card2 .title {
+  color: #fff;
+  font-size: 26px;
+  line-height: 26px;
+}
+
+.card2 .desc {
+  color: rgb(151, 153, 167);
+  font-size: 13px;
+}
+
+.card2 .buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.card2 .store-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 10px;
+  padding: 6px;
+  text-decoration: none;
+}
+
+.card2 .store-button:first-child {
+  box-shadow: 0 4px 6px -1px #488aec31, 0 2px 4px -1px #488aec17;
+  background-color: #488aec;
+}
+
+.card2 .store-button:last-child {
+  box-shadow: 0 4px 6px -1px #0b162531, 0 2px 4px -1px #0e192b17;
+  background-color: #fff;
+}
+
+.card2 .store-button .icon {
+  height: 25px;
+  width: 25px;
+}
+
+.card2 .store-button .icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.card2 .store-button .icon svg:last-child {
+  fill: #000;
+}
+
+.card2 .store-button-text {
+  display: flex;
+  flex-direction: column;
+  margin-left: 8px;
+}
+
+.card2 .store-button-text span:first-child {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.card2 .google span:first-child {
+  color: rgb(219, 206, 253);
+}
+
+.card2 .apple span:first-child {
+  color: rgb(81, 87, 108);
+}
+
+.card2 .google span:last-child {
+  color: #fff;
+  font-weight: 800;
+}
+
+.card2 .apple span:last-child {
+  color: #000;
+  font-weight: 800;
+}
+
+@media screen and (max-width: 1440px) {
+  .card2 {
+    max-width: 240px; /* 350px * 0.6 */
+    padding: 12px;    /* 20px * 0.6 */
+    right: auto !important; /* Reset right */
+    left: 800px !important; /* Align to left */
+    top: 952px !important;  /* Adjust top */    
+    bottom: auto !important; /* Reset bottom */
+  }
+  /* Optionally adjust inner text margins if needed */
+  
+  /* Scale the inner text */
+  .card2 .small-text {
+    font-size: 8px !important;  /* reduced from 14px */
+  }
+  .card2 .title {
+    font-size: 14px !important; /* reduced from 26px */
+    line-height: calc(26px * 0.6) !important;
+  }
+  .card2 .desc {
+    font-size: 10px !important;  /* reduced from 13px */
+  }
+  /* Reduce the height of store buttons */
+  .card2 .store-button {
+    padding: 4px !important; /* reduced padding */
+  }
+  .card2 .store-button .icon {
+    height: 20px !important; /* reduced icon size */
+    width: 20px !important;
+  }
+  /* Reduce the font weight */
+  .card2 .small-text,
+  .card2 .title,
+  .card2 .desc,  .card2 .store-button-text span:first-child {    font-weight: 20px !important;  }  /* Add font weight for Google Play and App Store labels */  .card2 .store-button-text span:Inter {    font-weight: 10 !important;  }}
+  
+/* Customizable span size for .card2 */
+.card2 span {
+  font-size: calc(1em * var(--card2-span-scale, 0.5));
+}
+
+
+

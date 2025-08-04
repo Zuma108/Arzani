@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Market Trends Analysis</title>
+    <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#041b76',
+                        secondary: '#064fa3',
+                        accent: '#2a9d8f',
+                        neutral: '#f7f5f2',
+                        'chart-blue': '#3b82f6',
+                        'chart-indigo': '#6366f1',
+                        'chart-purple': '#8b5cf6',
+                        'chart-pink': '#ec4899',
+                        'chart-orange': '#f97316',
+                        'chart-green': '#10b981',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        card: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .logo-img {
+            width: 140px;
+            height: auto;
+            border-radius: 8px;
+            object-fit: contain;
+        }
+        
+        /* Transition styles */
+        .sidebar-transition {
+            transition: width 0.3s ease, transform 0.3s ease;
+        }
+        
+        .content-transition {
+            transition: margin-left 0.3s ease, width 0.3s ease;
+        }
+        
+        /* Sidebar text visibility */
+        .sidebar-text,
+        .sidebar-text-area {
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        
+        .sidebar-collapsed .sidebar-text,
+        .sidebar-collapsed .sidebar-text-area {
+            opacity: 0;
+            visibility: hidden;
+        }
+        
+        /* Chart animation */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .chart-animate {
+            animation: fadeInUp 0.8s ease forwards;
+        }
+        
+        /* Pulse animation for input field */
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.5); }
+            70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
+        
+        .pulse-animation {
+            animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) 1;
+        }
+        
+        /* Custom scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+        
+        /* Dark mode scrollbar */
+        .dark .custom-scrollbar::-webkit-scrollbar-track {
+            background: #374151;
+        }
+        
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #6B7280;
+        }
+        
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #9CA3AF;
+        }
+        
+        /* Dark mode styles */
+        .dark {
+            color-scheme: dark;
+        }
+        
+        .dark .bg-white {
+            background-color: #1F2937;
+        }
+        
+        .dark .text-gray-800 {
+            color: #F9FAFB;
+        }
+        
+        .dark .text-gray-700 {
+            color: #E5E7EB;
+        }
+        
+        .dark .text-gray-600 {
+            color: #D1D5DB;
+        }
+        
+        .dark .text-gray-500 {
+            color: #9CA3AF;
+        }
+        
+        .dark .border-gray-300 {
+            border-color: #4B5563;
+        }
+        
+        .dark .border-gray-200 {
+            border-color: #374151;
+        }
+        
+        .dark .border-gray-100 {
+            border-color: #374151;
+        }
+        
+        .dark .bg-gray-50 {
+            background-color: #111827;
+        }
+        
+        .dark .hover\:bg-gray-100:hover {
+            background-color: #374151;
+        }
+        
+        .dark .shadow-card {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.15);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans antialiased dark:bg-gray-900 transition-colors duration-300">
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <div id="sidebar" class="bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 h-screen sidebar-transition fixed z-40 w-64 shadow-lg -translate-x-full md:translate-x-0 md:w-64">
+            <div class="flex flex-col h-full">
+                <!-- Logo -->
+                <div class="flex items-center justify-center h-16 border-b border-gray-200 dark:border-gray-700 px-4">
+                    <a href="/" class="flex items-center justify-center">
+                        <img src="/figma design exports/logos/Arzani-logo.png" alt="Arzani.co.uk" class="logo-img">
+                    </a>
+                    <button id="sidebarCollapse" class="hidden md:flex text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 ml-auto">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- Navigation Menu -->
+                <nav class="flex-grow py-6 px-4 overflow-y-auto custom-scrollbar">
+                    <ul class="space-y-2">
+                        <li>
+                            <a href="/marketplace2" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                <i class="fas fa-store h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
+                                <span class="sidebar-text">Marketplace</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/market-trends" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors bg-blue-50 dark:bg-blue-900/20">
+                                <i class="fas fa-chart-line h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
+                                <span class="sidebar-text">Market Trends</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/chat" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                <i class="fas fa-comments h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
+                                <span class="sidebar-text">Chat</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/profile" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                <i class="fas fa-user-circle h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
+                                <span class="sidebar-text">My Profile</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/saved-searches" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                <i class="fas fa-bookmark h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
+                                <span class="sidebar-text">Saved Searches</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/history" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                <i class="fas fa-history h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
+                                <span class="sidebar-text">History</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/professional-verification" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                <i class="fas fa-user-check h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
+                                <span class="sidebar-text">Professional Verification</span>
+                            </a>
+                        </li>
+                        <% if (locals.user && locals.user.is_verified_professional) { %>
+                        <li>
+                            <a href="/professional-dashboard" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                <i class="fas fa-tachometer-alt h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
+                                <span class="sidebar-text">Professional Dashboard</span>
+                            </a>
+                        </li>
+                        <% } %>
+                        <% if (locals.user && locals.user.role === 'admin') { %>
+                        <li>
+                            <a href="/admin/verification-review" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                <i class="fas fa-user-shield h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
+                                <span class="sidebar-text">Admin Verification</span>
+                            </a>
+                        </li>
+                        <% } %>
+                    </ul>
+                    
+                    <!-- Page-specific navigation -->
+                    <div class="pt-6 mt-6 border-t border-gray-200 dark:border-gray-700">
+                        <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 sidebar-text">Analysis</h4>
+                        <ul class="space-y-2">
+                            <li>
+                                <a href="#trends" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                    <i class="fas fa-chart-area h-6 w-6 mr-3 text-gray-500 dark:text-gray-400"></i>
+                                    <span class="sidebar-text">Market Trends</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#insights" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                    <i class="fas fa-chart-bar h-6 w-6 mr-3 text-gray-500 dark:text-gray-400"></i>
+                                    <span class="sidebar-text">Key Insights</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#data" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                    <i class="fas fa-table h-6 w-6 mr-3 text-gray-500 dark:text-gray-400"></i>
+                                    <span class="sidebar-text">Data Table</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#export" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                    <i class="fas fa-download h-6 w-6 mr-3 text-gray-500 dark:text-gray-400"></i>
+                                    <span class="sidebar-text">Export Options</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="pt-6 mt-6 border-t border-gray-200 dark:border-gray-700">
+                        <ul class="space-y-2">
+                            <li>
+                                <a href="/pricing" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                    <i class="fas fa-crown h-6 w-6 mr-3 text-gray-500 dark:text-gray-400"></i>
+                                    <span class="sidebar-text">Upgrade</span>
+                                </a>
+                            </li>
+                            <li>
+                                <button id="themeToggle" class="w-full flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                    <i id="lightIcon" class="fas fa-sun h-6 w-6 mr-3 text-gray-500 dark:text-gray-400"></i>
+                                    <i id="darkIcon" class="fas fa-moon h-6 w-6 mr-3 text-gray-500 dark:text-gray-400 hidden"></i>
+                                    <span class="sidebar-text">Toggle Theme</span>
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+                
+                <!-- User Profile Section -->
+                <div class="border-t border-gray-200 dark:border-gray-700 p-4">
+                    <div class="flex items-center">
+                        <div class="h-10 w-10 rounded-full bg-gradient-to-r from-primary to-secondary flex items-center justify-center text-white font-medium">
+                            <%= (locals.user && locals.user.username) ? locals.user.username.charAt(0).toUpperCase() : 'U' %>
+                        </div>
+                        <div class="ml-3 sidebar-text-area">
+                            <p class="text-sm font-medium text-gray-700 dark:text-gray-300"><%= (locals.user && locals.user.username) ? locals.user.username : 'User' %></p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400"><%= (locals.user && locals.user.subscription) ? locals.user.subscription : 'Free' %> Plan</p>
+                        </div>
+                        <button id="signOutBtn" class="ml-auto sidebar-text-area text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div id="content" class="flex-1 overflow-y-auto content-transition ml-0 md:ml-64">
+            <!-- Top Navbar -->
+            <nav class="bg-white dark:bg-gray-800 shadow-md sticky top-0 z-30">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="flex items-center justify-between h-16">
+                        <!-- Left side - Hamburger and Page Title -->
+                        <div class="flex items-center">
+                            <button id="sidebarToggle" class="md:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 mr-4">
+                                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                                </svg>
+                            </button>
+                            <h1 class="text-xl font-semibold text-gray-800 dark:text-white">Market Trends Analysis</h1>
+                        </div>
+                        
+                        <!-- Right side - Breadcrumb -->
+                        <nav class="hidden md:flex" aria-label="Breadcrumb">
+                            <ol class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
+                                <li><a href="/marketplace2" class="hover:text-gray-700 dark:hover:text-gray-200">Home</a></li>
+                                <li><i class="fas fa-chevron-right text-xs"></i></li>
+                                <li class="text-gray-700 dark:text-gray-300">Market Trends</li>
+                            </ol>
+                        </nav>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Error Container -->
+            <div id="errorContainer" class="hidden max-w-7xl mx-auto mt-4 p-4 bg-red-100 text-red-700 rounded-lg dark:bg-red-900 dark:text-red-200"></div>
+
+            <!-- Rest of the content -->
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <!-- Filter Section -->
+                <div id="filterSection" class="bg-white dark:bg-gray-800 rounded-xl shadow-card p-6 mb-8 transition-all duration-300 transform">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-200">Dashboard Controls</h2>
+                    </div>
+                    
+                    <!-- Filter Controls with Modern UI -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="relative">
+                            <select id="timeRange" class="block w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 pr-8 appearance-none focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent transition-all duration-200 text-gray-800 dark:text-gray-200">
+                                <% chartConfig.timeRanges.forEach(function(range) { %>
+                                    <option value="<%= range.value %>"><%= range.label %></option>
+                                <% }); %>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
+                                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                                </svg>
+                            </div>
+                        </div>
+                        
+                        <div class="relative">
+                            <select id="industryFilter" class="block w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 pr-8 appearance-none focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent transition-all duration-200 text-gray-800 dark:text-gray-200">
+                                <option value="">All Industries</option>
+                                <!-- Will be populated by JS -->
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
+                                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                                </svg>
+                            </div>
+                        </div>
+                        
+                        <div class="relative">
+                            <select id="locationFilter" class="block w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 pr-8 appearance-none focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent transition-all duration-200 text-gray-800 dark:text-gray-200">
+                                <option value="">All Locations</option>
+                                <!-- Will be populated by JS -->
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
+                                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                                </svg>
+                            </div>
+                        </div>
+                        
+                        <div class="flex space-x-2">
+                            <div class="group relative">
+                                <button class="flex-1 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-semibold py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm transition-all duration-200 flex items-center justify-center" onclick="exportToFormat('pdf')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    PDF
+                                </button>
+                                <div class="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-200 absolute z-10 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 mt-1">
+                                    <div class="p-2 text-xs text-gray-600 dark:text-gray-400">
+                                        Export complete report as PDF
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="group relative">
+                                <button class="flex-1 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-semibold py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm transition-all duration-200 flex items-center justify-center" onclick="exportToFormat('csv')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    CSV
+                                </button>
+                                <div class="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-200 absolute z-10 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 mt-1">
+                                    <div class="p-2 text-xs text-gray-600 dark:text-gray-400">
+                                        Export data in CSV format
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="group relative">
+                                <button class="flex-1 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-semibold py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm transition-all duration-200 flex items-center justify-center" onclick="exportTrendsToGoogleDrive()">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                                    </svg>
+                                    Drive
+                                </button>
+                                <div class="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-200 absolute z-10 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 mt-1">
+                                    <div class="p-2 text-xs text-gray-600 dark:text-gray-400">
+                                        Save to Google Drive
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Restructured Layout - First Row with Market Overview and Key Insights -->
+                <div id="trends" class="grid grid-cols-1 lg:grid-cols-4 gap-8 mb-8">
+                    <!-- Market Overview - Takes 3/4 of the width on large screens -->
+                    <div class="lg:col-span-3">
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-card overflow-hidden">
+                            <div class="p-6">
+                                <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-4">Market Overview</h2>
+                                
+                                <!-- Modern Tab Buttons -->
+                                <div class="flex flex-wrap gap-2 md:gap-4 mb-6 border-b border-gray-200 dark:border-gray-700">
+                                    <button class="tab-btn active px-4 py-3 font-medium text-sm rounded-t-lg transition-all duration-200 border-b-2 border-primary text-primary dark:border-blue-400 dark:text-blue-400" data-chart="valuationChart">Valuation Trends</button>
+                                    <button class="tab-btn px-4 py-3 font-medium text-sm rounded-t-lg transition-all duration-200 border-b-2 border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300" data-chart="priceDistChart">Price Distribution</button>
+                                    <button class="tab-btn px-4 py-3 font-medium text-sm rounded-t-lg transition-all duration-200 border-b-2 border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300" data-chart="revenueVsEbitdaChart">Revenue vs EBITDA</button>
+                                    <button class="tab-btn px-4 py-3 font-medium text-sm rounded-t-lg transition-all duration-200 border-b-2 border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300" data-chart="growthTrendsChart">Growth Trends</button>
+                                </div>
+                                
+                                <!-- Charts Container with Modern Styling -->
+                                <div class="chart-container bg-white dark:bg-gray-800 rounded-lg p-4 h-96">
+                                    <canvas id="valuationChart" class="active-chart"></canvas>
+                                    <canvas id="priceDistChart" style="display:none;"></canvas>
+                                    <canvas id="revenueVsEbitdaChart" style="display:none;"></canvas>
+                                    <canvas id="growthTrendsChart" style="display:none;"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Key Insights - Takes 1/4 of the width on large screens -->
+                    <div id="insights" class="lg:col-span-1">
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-card h-full">
+                            <div class="p-6">
+                                <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Key Insights</h3>
+                                
+                                <!-- Key metrics with modern styling -->
+                                <div class="space-y-6">
+                                    <!-- Average Valuation -->
+                                    <div class="bg-white dark:bg-gray-700 rounded-lg p-4 border border-gray-100 dark:border-gray-600 hover:shadow-md transition-shadow duration-200">
+                                        <div class="flex items-center justify-between">
+                                            <div class="text-sm text-gray-500 dark:text-gray-400 font-medium">Avg. Valuation</div>
+                                            <svg class="h-8 w-8 text-primary dark:text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                            </svg>
+                                        </div>
+                                        <div id="avgValuation" class="text-2xl font-bold text-primary dark:text-blue-400 mt-2">£0</div>
+                                        <div id="valuationChange" class="flex items-center mt-2 text-xs text-green-600">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                            </svg>
+                                            0%
+                                        </div>
+                                        <div class="mt-1 h-1 w-full bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
+                                            <div class="bg-primary dark:bg-blue-500 h-full rounded-full" style="width: 75%;"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Median vs Average -->
+                                    <div class="bg-white dark:bg-gray-700 rounded-lg p-4 border border-gray-100 dark:border-gray-600 hover:shadow-md transition-shadow duration-200">
+                                        <div class="flex items-center justify-between">
+                                            <div class="text-sm text-gray-500 dark:text-gray-400 font-medium">Median vs. Average Val.</div>
+                                            <svg class="h-8 w-8 text-teal-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                            </svg>
+                                        </div>
+                                        <div id="medianRatio" class="text-2xl font-bold text-teal-500 mt-2">0.97</div>
+                                        <div class="flex items-center mt-2 text-xs text-teal-600">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                            </svg>
+                                            0.4%
+                                        </div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">Lower ratio = more outliers</div>
+                                    </div>
+                                    
+                                    <!-- Most Active Region -->
+                                    <div class="bg-white dark:bg-gray-700 rounded-lg p-4 border border-gray-100 dark:border-gray-600 hover:shadow-md transition-shadow duration-200">
+                                        <div class="flex items-center justify-between">
+                                            <div class="text-sm text-gray-500 dark:text-gray-400 font-medium">Most Active Region</div>
+                                            <svg class="h-8 w-8 text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            </svg>
+                                        </div>
+                                        <div id="topIndustry" class="text-xl font-bold text-orange-500 mt-2 truncate">North West</div>
+                                        <div class="flex items-center mt-2 text-xs text-green-600">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                            </svg>
+                                            7%
+                                        </div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">growth in activity</div>
+                                    </div>
+                                    
+                                    <!-- Listing-to-Sale Conversion -->
+                                    <div class="bg-white dark:bg-gray-700 rounded-lg p-4 border border-gray-100 dark:border-gray-600 hover:shadow-md transition-shadow duration-200">
+                                        <div class="flex items-center justify-between">
+                                            <div class="text-sm text-gray-500 dark:text-gray-400 font-medium">Listing-to-Sale Rate</div>
+                                            <svg class="h-8 w-8 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        </div>
+                                        <div id="conversionRate" class="text-2xl font-bold text-indigo-500 mt-2">72.4%</div>
+                                        <div class="flex items-center mt-2 text-xs text-red-600">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0v-8m0 8l-8-8-4 4-6-6" />
+                                            </svg>
+                                            0.2%
+                                        </div>
+                                        <div class="mt-1 h-1 w-full bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
+                                            <div class="bg-indigo-500 h-full rounded-full" style="width: 72%;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Second Row with Data Table -->
+                <div id="data" class="bg-white dark:bg-gray-800 rounded-xl shadow-card overflow-hidden mb-8">
+                    <!-- Market Trends Table with Modern Styling -->
+                    <div class="px-6 py-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">Market Trends Data</h3>
+                            <div>
+                                <input type="text" id="tableSearch" placeholder="Search data..." class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto custom-scrollbar">
+                            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                <thead class="bg-gray-50 dark:bg-gray-700">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Industry</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Location</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Avg Price</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Listings Count</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Avg Multiple</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="trendsTableBody" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                    <!-- Data will be populated here by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Chat Button -->
+    <div id="chatButton" class="fixed right-6 bottom-6 z-40">
+        <button class="h-14 w-14 bg-primary dark:bg-blue-600 hover:bg-secondary dark:hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 transform hover:scale-110 focus:outline-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+            </svg>
+        </button>
+    </div>
+
+    <!-- Chat Panel - Initially Hidden -->
+    <div id="chatPanel" class="fixed right-6 bottom-24 w-80 md:w-96 bg-white dark:bg-gray-800 rounded-lg shadow-2xl z-40 transform translate-y-10 opacity-0 invisible transition-all duration-300">
+        <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center">
+                    <svg class="h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100">AI Assistant</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Ask about market trends</p>
+                </div>
+            </div>
+            <button id="closeChatBtn" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
+                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+            </button>
+        </div>
+        
+        <div id="chatMessages" class="flex-grow bg-gray-50 dark:bg-gray-900 rounded-lg p-4 overflow-y-auto custom-scrollbar max-h-[400px]">
+            <div class="message assistant">
+                <div class="bg-white dark:bg-gray-700 rounded-lg p-3 shadow-sm inline-block max-w-[85%] text-gray-800 dark:text-gray-200">
+                    Hello! I'm your market trends analyst. How can I help you understand the data today?
+                </div>
+            </div>
+            <!-- Chat messages will be displayed here -->
+        </div>
+        
+        <div class="p-4 border-t border-gray-200 dark:border-gray-700">
+            <div class="chat-input flex items-center">
+                <input type="text" id="messageInput" placeholder="Ask about trends..." class="flex-grow rounded-l-lg border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary focus:border-transparent py-2 px-3 text-sm dark:bg-gray-700 dark:text-gray-200">
+                <button onclick="window.marketTrendsChat.sendMessage()" class="bg-primary hover:bg-secondary dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-r-lg transition-colors duration-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="flex flex-wrap gap-2 mt-4">
+                <button onclick="suggestQuery('Highest growth rate?')" class="px-2 py-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-full text-xs text-gray-700 dark:text-gray-300 transition-colors duration-200">Growth rates</button>
+                <button onclick="suggestQuery('EBITDA multiples?')" class="px-2 py-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-full text-xs text-gray-700 dark:text-gray-300 transition-colors duration-200">EBITDA multiples</button>
+                <button onclick="suggestQuery('Recent price trends?')" class="px-2 py-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-full text-xs text-gray-700 dark:text-gray-300 transition-colors duration-200">Price trends</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/market_trends.js"></script>
+    <script src="/js/market_trends_chat.js"></script>
+    
+    <script>
+        // Sidebar toggle functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('sidebar');
+            const content = document.getElementById('content');
+            const sidebarCollapse = document.getElementById('sidebarCollapse');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            
+            let isCollapsed = false;
+            let isMobileMenuOpen = false;
+            
+            // Function to update collapse button icon
+            function updateCollapseIcon() {
+                if (sidebarCollapse) {
+                    const icon = sidebarCollapse.querySelector('svg path');
+                    if (isCollapsed) {
+                        // Right arrow (expand)
+                        icon.setAttribute('d', 'M13 19l7-7-7-7m-8 14l7-7-7-7');
+                    } else {
+                        // Left arrow (collapse)
+                        icon.setAttribute('d', 'M11 19l-7-7 7-7m8 14l-7-7 7-7');
+                    }
+                }
+            }
+            
+            // Desktop sidebar collapse (md screens and up)
+            if (sidebarCollapse) {
+                sidebarCollapse.addEventListener('click', function() {
+                    isCollapsed = !isCollapsed;
+                    
+                    if (isCollapsed) {
+                        // Collapse sidebar
+                        sidebar.classList.remove('md:w-64');
+                        sidebar.classList.add('md:w-16', 'sidebar-collapsed');
+                        content.classList.remove('md:ml-64');
+                        content.classList.add('md:ml-16');
+                    } else {
+                        // Expand sidebar
+                        sidebar.classList.remove('md:w-16', 'sidebar-collapsed');
+                        sidebar.classList.add('md:w-64');
+                        content.classList.remove('md:ml-16');
+                        content.classList.add('md:ml-64');
+                    }
+                    
+                    updateCollapseIcon();
+                });
+            }
+            
+            // Mobile sidebar toggle (below md screens)
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function() {
+                    isMobileMenuOpen = !isMobileMenuOpen;
+                    
+                    if (isMobileMenuOpen) {
+                        // Show sidebar on mobile
+                        sidebar.classList.remove('-translate-x-full');
+                        sidebar.classList.add('translate-x-0');
+                    } else {
+                        // Hide sidebar on mobile
+                        sidebar.classList.remove('translate-x-0');
+                        sidebar.classList.add('-translate-x-full');
+                    }
+                });
+            }
+            
+            // Close mobile menu when clicking outside
+            document.addEventListener('click', function(event) {
+                if (window.innerWidth < 768 && isMobileMenuOpen) {
+                    const isClickInsideSidebar = sidebar.contains(event.target);
+                    const isClickOnToggle = sidebarToggle && sidebarToggle.contains(event.target);
+                    
+                    if (!isClickInsideSidebar && !isClickOnToggle) {
+                        isMobileMenuOpen = false;
+                        sidebar.classList.remove('translate-x-0');
+                        sidebar.classList.add('-translate-x-full');
+                    }
+                }
+            });
+            
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                if (window.innerWidth >= 768) {
+                    // Reset mobile menu state on desktop
+                    isMobileMenuOpen = false;
+                    sidebar.classList.remove('translate-x-0', '-translate-x-full');
+                    sidebar.classList.add('md:translate-x-0');
+                }
+            });
+            
+            // Initialize collapse icon
+            updateCollapseIcon();
+        });
+    </script>
+</body>
+</html>

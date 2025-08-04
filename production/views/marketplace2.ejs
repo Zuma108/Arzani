@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Marketplace</title>
+    <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="/css/marketplace2.css">
+    <!-- Add Font Awesome for AI assistant icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Add AI Assistant styling -->
+    <link rel="stylesheet" href="/css/ai-chatbot.css">
+    <script src="/js/marketplace-tracking.js"></script>
+    <script type="module" src="/js/marketplace.js"></script>
+    <script type="module" src="/js/filter.js"></script>
+    <script src="/js/loading.js" type="module"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <!-- Add Inter font for the new AI assistant button -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+      /* Font Awesome fallback styles */
+      .fa-regular.fa-xmark::before {
+        content: "×";
+      }
+      .fa-regular.fa-search::before {
+        content: "🔍";
+      }
+      .fa-regular.fa-store::before {
+        content: "🏪";
+      }
+      .fa-regular.fa-calculator::before {
+        content: "🧮";
+      }
+      .fa-regular.fa-lightbulb::before {
+        content: "💡";
+      }
+      .fa-regular.fa-trash-can-xmark::before {
+        content: "🗑️";
+      }
+      .fa-regular.fa-paperclip::before {
+        content: "📎";
+      }
+      .fa-regular.fa-paper-plane-top::before {
+        content: "📤";
+      }
+      .fa-regular.fa-circle-star::before {
+        content: "⭐";
+      }
+      .fa-regular.fa-sparkles::before {
+        content: "✨";
+      }
+    </style>
+    <!-- Single S3 config with all properties -->
+    <script id="s3-config" type="application/json">
+      {
+        "region": "eu-west-2",
+        "fallbackRegion": "eu-north-1", 
+        "bucketName": "arzani-images1"
+      }
+    </script>
+    <!-- Debug flag configuration -->
+    <script>
+      // Debug flag - enable for development, disable for production
+      window.DEBUG_MODE = "<%= typeof debugMode !== 'undefined' && debugMode ? 'true' : 'false' %>" === "true";
+      console.log('Debug mode:', window.DEBUG_MODE ? 'enabled' : 'disabled');
+      
+      // Initialize with debugMode when requested
+      document.addEventListener('DOMContentLoaded', function() {
+        if (window.DEBUG_MODE) {
+          console.log('🔍 Loading marketplace in DEBUG mode');
+          const debugScript = document.createElement('script');
+          debugScript.src = '/js/marketplace-debug.js';
+          debugScript.type = 'module';
+          document.head.appendChild(debugScript);
+        }
+      });
+    </script>
+    <!-- After the S3 config script, ensure we have proper debug mode configuration -->
+    <script>
+      // Debug flag - false by default, enable via URL parameter ?debug=true
+      window.DEBUG_MODE = "<%= typeof debugMode !== 'undefined' && debugMode ? 'true' : 'false' %>" === "true";
+      
+      // Only log this when debug is enabled
+      if (window.DEBUG_MODE) {
+        console.log('Debug mode enabled - detailed logging will be shown');
+      }
+    </script>
+    
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-W50GKB6F3M"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-W50GKB6F3M');
+    </script>
+    
+    <!-- Microsoft Clarity -->
+    <script type="text/javascript">
+        (function(c,l,a,r,i,t,y){
+            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+        })(window, document, "clarity", "script", "slthf5bx9u");
+    </script>
+</head>
+
+<body>
+    <nav class="navbar navbar-light">
+        <div class="handshake-logo-container">
+            <img src="/public/figma design exports/logos/Arzani-logo.png" alt="Arzani.co.uk" class="logo-img">
+        </div>
+            <div class="navbar-container">
+                <div class="navbar-icons">
+                    <a href="/marketplace2" class="navbar-link" id="marketplace-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256" class="icon" aria-hidden="true">
+                            <path d="M216,36H40A20,20,0,0,0,20,56V200a20,20,0,0,0,20,20H216a20,20,0,0,0,20-20V56A20,20,0,0,0,216,36Zm-4,24V76H44V60ZM44,196V100H212v96Zm136-72a52,52,0,0,1-104,0,12,12,0,0,1,24,0,28,28,0,0,0,56,0,12,12,0,0,1,24,0Z"></path>
+                        </svg>
+                        <span>Marketplace</span>
+                    </a>
+                <a href="/history" class="navbar-link" id="history-link">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256" class="icon" aria-hidden="true">
+                        <path d="M140,80v41.21l34.17,20.5a12,12,0,1,1-12.34,20.58l-40-24A12,12,0,0,1,116,128V80a12,12,0,0,1,24,0ZM128,28A99.38,99.38,0,0,0,57.24,57.34c-4.69,4.74-9,9.37-13.24,14V64a12,12,0,0,0-24,0v40a12,12,0,0,0,12,12H72a12,12,0,0,0,0-24H57.77C63,86,68.37,80.22,74.26,74.26a76,76,0,1,1,1.58,109,12,12,0,0,0-16.48,17.46A100,100,0,1,0,128,28Z"></path>
+                    </svg>
+                    <span>History</span>
+                </a>
+                <a href="/talk-to-Arzani" class="navbar-link" id="arzani-link">
+                    <img src="/images/arzani-icon.svg" alt="Arzani" class="icon arzani-icon" style="width: 48px; height: 48px;" />
+                    <span>Arzani</span>
+                </a>
+                <a href="/saved-searches" class="navbar-link" id="saved-searches-link">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256" class="icon" aria-hidden="true">
+                        <path d="M184,28H72A20,20,0,0,0,52,48V224a12,12,0,0,0,18.36,10.18l57.63-36,57.65,36A12,12,0,0,0,204,224V48A20,20,0,0,0,184,28Zm-4,174.35-45.65-28.53a12,12,0,0,0-12.72,0L76,202.35V52H180Z"></path>
+                    </svg>
+                    <span>Saved Searches</span>
+                </a>
+                <a href="/off-market-leads" class="navbar-link" id="leads-link">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256" class="icon" aria-hidden="true">
+                        <path d="M148,108a12,12,0,0,1,12-12h28a12,12,0,0,1,0,24H160A12,12,0,0,1,148,108Zm40,28H168a12,12,0,0,0,0,24h20a12,12,0,0,0,0-24Zm48-80V200a20,20,0,0,1-20,20H40a20,20,0,0,1-20-20V56A20,20,0,0,1,40,36H216A20,20,0,0,1,236,56Zm-24,4H44V196H212ZM58.28,159.37A43.82,43.82,0,0,1,71.53,142a36,36,0,1,1,56.94,0,43.84,43.84,0,0,1,13.26,17.37,12,12,0,0,1-22.15,9.26C116.48,161.19,108.42,156,100,156s-16.47,5.2-19.59,12.63a12,12,0,1,1-22.13-9.26ZM88,120a12,12,0,1,0,12-12A12,12,0,0,0,88,120Z"></path>
+                    </svg>
+                    <span>Off Market Leads</span>
+                </a>
+            </div>
+            <div>
+                <ul class="navbar-nav"> 
+                    <!-- Check if user is logged in -->
+                    <script>
+                      var isLoggedIn = true; // Replace with actual login check
+                      if (isLoggedIn) {
+                        document.write('<li class="nav-item"><a class="nav-link" href="/post-business">Post a Business</a></li>');
+                      }
+                    </script>
+                  </ul>
+                </div>
+                <a href="/profile" class="btn profile-btn" id="profileBtn">Profile</a>
+    </div>
+    </nav>
+   
+<!-- Replace existing filter container -->
+<div class="sticky top-0 left-0 right-0 z-10 filter-container">
+    <!-- Mobile Filter Button (hidden on desktop) -->
+    <div class="dropdown mobile-filter-dropdown">
+        <button class="filter-input dropdown-toggle mobile-filter-btn" 
+                type="button" 
+                id="mobileFiltersDropdown" 
+                data-bs-toggle="dropdown" 
+                data-bs-auto-close="outside"
+                aria-expanded="false">
+            <i class="bi bi-funnel-fill"></i> Filters
+        </button>
+        <div class="dropdown-menu mobile-filter-menu" aria-labelledby="mobileFiltersDropdown">
+            <div class="mobile-filter-content">
+                <!-- Location Section -->
+                <div class="mobile-filter-section">
+                    <h6 class="mobile-filter-title">Location</h6>
+                    <input type="text" class="mobile-filter-input" 
+                           id="mobileLocationInput"
+                           placeholder="Enter location">
+                    <div class="mobile-filter-options">
+                        <button class="mobile-location-item">London</button>
+                        <button class="mobile-location-item">Manchester</button>
+                        <button class="mobile-location-item">Birmingham</button>
+                        <button class="mobile-location-item">Leeds</button>
+                        <button class="mobile-location-item">Liverpool</button>
+                    </div>
+                </div>
+                
+                <!-- Industries Section -->
+                <div class="mobile-filter-section">
+                    <h6 class="mobile-filter-title">Industries</h6>
+                    <div class="mobile-filter-options mobile-checkbox-grid">
+                        <label class="mobile-checkbox-item">
+                            <input type="checkbox" class="industry-checkbox mobile-checkbox" value="Agriculture"> Agriculture
+                        </label>
+                        <label class="mobile-checkbox-item">
+                            <input type="checkbox" class="industry-checkbox mobile-checkbox" value="Automotive & Boat"> Automotive & Boat
+                        </label>
+                        <label class="mobile-checkbox-item">
+                            <input type="checkbox" class="industry-checkbox mobile-checkbox" value="Beauty & Personal Care"> Beauty & Personal Care
+                        </label>
+                        <label class="mobile-checkbox-item">
+                            <input type="checkbox" class="industry-checkbox mobile-checkbox" value="Building & Construction"> Building & Construction
+                        </label>
+                        <label class="mobile-checkbox-item">
+                            <input type="checkbox" class="industry-checkbox mobile-checkbox" value="Financial Services"> Financial Services
+                        </label>
+                        <label class="mobile-checkbox-item">
+                            <input type="checkbox" class="industry-checkbox mobile-checkbox" value="Health Care & Fitness"> Health Care & Fitness
+                        </label>
+                        <label class="mobile-checkbox-item">
+                            <input type="checkbox" class="industry-checkbox mobile-checkbox" value="Online & Technology"> Online & Technology
+                        </label>
+                        <label class="mobile-checkbox-item">
+                            <input type="checkbox" class="industry-checkbox mobile-checkbox" value="Restaurants & Food"> Restaurants & Food
+                        </label>
+                        <label class="mobile-checkbox-item">
+                            <input type="checkbox" class="industry-checkbox mobile-checkbox" value="Retail"> Retail
+                        </label>
+                        <label class="mobile-checkbox-item">
+                            <input type="checkbox" class="industry-checkbox mobile-checkbox" value="Service Businesses"> Service Businesses
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Price Range Section -->
+                <div class="mobile-filter-section">
+                    <h6 class="mobile-filter-title">Price Range</h6>
+                    <div class="mobile-filter-options mobile-radio-grid">
+                        <label class="mobile-radio-item">
+                            <input type="radio" name="mobilePrice" value="Under £50k"> Under £50k
+                        </label>
+                        <label class="mobile-radio-item">
+                            <input type="radio" name="mobilePrice" value="£50k - £100k"> £50k - £100k
+                        </label>
+                        <label class="mobile-radio-item">
+                            <input type="radio" name="mobilePrice" value="£100k - £250k"> £100k - £250k
+                        </label>
+                        <label class="mobile-radio-item">
+                            <input type="radio" name="mobilePrice" value="£250k - £500k"> £250k - £500k
+                        </label>
+                        <label class="mobile-radio-item">
+                            <input type="radio" name="mobilePrice" value="£500k - £1M"> £500k - £1M
+                        </label>
+                        <label class="mobile-radio-item">
+                            <input type="radio" name="mobilePrice" value="£1M+"> £1M+
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Revenue Section -->
+                <div class="mobile-filter-section">
+                    <h6 class="mobile-filter-title">Gross Revenue</h6>
+                    <div class="mobile-filter-options mobile-radio-grid">
+                        <label class="mobile-radio-item">
+                            <input type="radio" name="mobileRevenue" value="Under £100k"> Under £100k
+                        </label>
+                        <label class="mobile-radio-item">
+                            <input type="radio" name="mobileRevenue" value="£100k - £500k"> £100k - £500k
+                        </label>
+                        <label class="mobile-radio-item">
+                            <input type="radio" name="mobileRevenue" value="£500k - £1M"> £500k - £1M
+                        </label>
+                        <label class="mobile-radio-item">
+                            <input type="radio" name="mobileRevenue" value="£1M+"> £1M+
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Filter Actions -->
+                <div class="mobile-filter-actions">
+                    <button type="button" class="btn btn-outline-secondary mobile-filter-clear">Clear All</button>
+                    <button type="button" class="btn btn-primary mobile-filter-apply">Apply Filters</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Desktop Filters (hidden on small screens) -->
+    <div class="desktop-filters">
+        <!-- Replace existing location input with this -->
+        <div class="dropdown location-dropdown">
+        <input type="text" class="filter-input dropdown-toggle" 
+               id="locationInput"
+               placeholder="Location" 
+               data-bs-toggle="dropdown"
+               data-bs-auto-close="outside"
+               aria-expanded="false">
+        <ul class="dropdown-menu location-menu" aria-labelledby="locationInput">
+            <li class="dropdown-header">Trending Searches</li>
+            <!-- Major Cities -->
+            <li><button class="dropdown-item location-item">London</button></li>
+            <li><button class="dropdown-item location-item">Manchester</button></li>
+            <li><button class="dropdown-item location-item">Birmingham</button></li>
+            <li><button class="dropdown-item location-item">Leeds</button></li>
+            <li><button class="dropdown-item location-item">Liverpool</button></li>
+            <li><button class="dropdown-item location-item">Edinburgh</button></li>
+            <li><button class="dropdown-item location-item">Glasgow</button></li>
+            <li><button class="dropdown-item location-item">Bristol</button></li>
+            <li><button class="dropdown-item location-item">Oxford</button></li>
+            <li><button class="dropdown-item location-item">Cambridge</button></li>
+        </ul>
+    </div>
+    
+    <div class="dropdown">
+        <button class="filter-input dropdown-toggle" 
+                type="button" 
+                id="industriesDropdown" 
+                data-bs-toggle="dropdown" 
+                data-bs-auto-close="outside"
+                aria-expanded="false">
+            Industries
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="industriesDropdown">
+            <li><label class="dropdown-item">
+                <input type="checkbox" class="industry-checkbox" value="Agriculture"> Agriculture
+            </label></li>
+            <li><label class="dropdown-item">
+                <input type="checkbox" class="industry-checkbox" value="Automotive &amp; Boat"> Automotive & Boat
+            </label></li>
+            <li><label class="dropdown-item">
+                <input type="checkbox" class="industry-checkbox" value="Beauty &amp; Personal Care"> Beauty & Personal Care
+            </label></li>
+            <li><label class="dropdown-item">
+                <input type="checkbox" class="industry-checkbox" value="Building &amp; Construction"> Building & Construction
+            </label></li>
+            <li><label class="dropdown-item">
+                <input type="checkbox" class="industry-checkbox" value="Communication &amp; Media"> Communication & Media
+            </label></li>
+            <li><label class="dropdown-item">
+                <input type="checkbox" class="industry-checkbox" value="Education &amp; Children"> Education & Children
+            </label></li>
+            <li><label class="dropdown-item">
+                <input type="checkbox" class="industry-checkbox" value="Entertainment &amp; Recreation"> Entertainment & Recreation
+            </label></li>
+            <li><label class="dropdown-item">
+                <input type="checkbox" class="industry-checkbox" value="Financial Services"> Financial Services
+            </label></li>
+            <li><label class="dropdown-item">
+                <input type="checkbox" class="industry-checkbox" value="Health Care &amp; Fitness"> Health Care & Fitness
+            </label></li>
+            <li><label class="dropdown-item">
+                <input type="checkbox" class="industry-checkbox" value="Manufacturing"> Manufacturing
+            </label></li>
+            <li><label class="dropdown-item">
+                <input type="checkbox" class="industry-checkbox" value="Online &amp; Technology"> Online & Technology
+            </label></li>
+            <li><label class="dropdown-item">
+                <input type="checkbox" class="industry-checkbox" value="Pet Services"> Pet Services
+            </label></li>
+            <li><label class="dropdown-item">
+                <input type="checkbox" class="industry-checkbox" value="Restaurants &amp; Food"> Restaurants & Food
+            </label></li>
+            <li><label class="dropdown-item">
+                <input type="checkbox" class="industry-checkbox" value="Retail"> Retail
+            </label></li>
+            <li><label class="dropdown-item">
+                <input type="checkbox" class="industry-checkbox" value="Service Businesses"> Service Businesses
+            </label></li>
+            <li><label class="dropdown-item">
+                <input type="checkbox" class="industry-checkbox" value="Transportation &amp; Storage"> Transportation & Storage
+            </label></li>
+            <li><label class="dropdown-item">
+                <input type="checkbox" class="industry-checkbox" value="Travel"> Travel
+            </label></li>
+            <li><label class="dropdown-item">
+                <input type="checkbox" class="industry-checkbox" value="Wholesale &amp; Distributors"> Wholesale & Distributors
+            </label></li>
+            <li><label class="dropdown-item">
+                <input type="checkbox" class="industry-checkbox" value="Other"> Other
+            </label></li>
+        </ul>
+    </div>
+
+    <!-- Price Range -->
+    <div class="dropdown">
+        <button class="filter-input dropdown-toggle" 
+                type="button" 
+                id="priceRangeDropdown" 
+                data-bs-toggle="dropdown" 
+                data-bs-auto-close="outside"
+                aria-expanded="false">
+            Price Range
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="priceRangeDropdown">
+        <li><label class="dropdown-item">
+            <input type="radio" name="priceRange" value="0-100000"> £0 - £100,000
+        </label></li>
+        <li><label class="dropdown-item">
+            <input type="radio" name="priceRange" value="100000-250000"> £100,000 - £250,000
+        </label></li>
+        <li><label class="dropdown-item">
+            <input type="radio" name="priceRange" value="250000-500000"> £250,000 - £500,000
+        </label></li>
+        <li><label class="dropdown-item">
+            <input type="radio" name="priceRange" value="500000-1000000"> £500,000 - £1,000,000
+        </label></li>
+        <li><label class="dropdown-item">
+            <input type="radio" name="priceRange" value="1000000-2500000"> £1,000,000 - £2,500,000
+        </label></li>
+        <li><label class="dropdown-item">
+            <input type="radio" name="priceRange" value="2500000-5000000"> £2,500,000 - £5,000,000
+        </label></li>
+        <li><label class="dropdown-item">
+            <input type="radio" name="priceRange" value="5000000-10000000"> £5,000,000 - £10,000,000
+        </label></li>
+        <li><label class="dropdown-item">
+            <input type="radio" name="priceRange" value="10000000+"> £10,000,000+
+        </label></li>
+    </ul>
+    </div>
+
+    <!-- Gross Revenue -->
+    <div class="dropdown">
+        <button class="filter-input dropdown-toggle" 
+                type="button" 
+                id="revenueDropdown" 
+                data-bs-toggle="dropdown" 
+                data-bs-auto-close="outside"
+                aria-expanded="false">
+            Gross Revenue
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="revenueDropdown">
+            <li><label class="dropdown-item">
+                <input type="radio" name="revenueRange" value="0-100000"> £0 - £100,000
+            </label></li>
+            <li><label class="dropdown-item">
+                <input type="radio" name="revenueRange" value="100000-500000"> £100,000 - £500,000
+            </label></li>
+            <li><label class="dropdown-item">
+                <input type="radio" name="revenueRange" value="500000+"> £500,000+
+            </label></li>
+        </ul>
+    </div>
+
+    <!-- Cashflow -->
+    <div class="dropdown">
+        <button class="filter-input dropdown-toggle" 
+                type="button" 
+                id="cashflowDropdown" 
+                data-bs-toggle="dropdown" 
+                data-bs-auto-close="outside"
+                aria-expanded="false">
+            Cashflow
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="cashflowDropdown">
+            <li><label class="dropdown-item">
+                <input type="radio" name="cashflowRange" value="0-50000"> £0 - £50,000
+            </label></li>
+            <li><label class="dropdown-item">
+                <input type="radio" name="cashflowRange" value="50000-200000"> £50,000 - £200,000
+            </label></li>
+            <li><label class="dropdown-item">
+                <input type="radio" name="cashflowRange" value="200000+"> £200,000+
+            </label></li>
+        </ul>
+    </div>
+    </div> <!-- End desktop-filters -->
+</div>
+   
+    <!-- Marketplace Section -->
+    <div class="container mt-5">
+      <h1 class="marketplace-heading">Marketplace Listings</h1>
+      
+      <!-- Horizontal Scroll Container -->
+      <div class="horizontal-marketplace-wrapper">
+        <button class="marketplace-nav-btn marketplace-nav-left" id="scrollLeft" aria-label="Scroll left">
+          <i class="bi bi-chevron-left"></i>
+        </button>
+        
+        <div class="horizontal-listings-container" id="horizontal-listings-container">
+          <div id="listings-container" class="horizontal-listings-scroll">
+            <!-- The listings will be dynamically loaded via JavaScript -->
+          </div>
+        </div>
+        
+        <button class="marketplace-nav-btn marketplace-nav-right" id="scrollRight" aria-label="Scroll right">
+          <i class="bi bi-chevron-right"></i>
+        </button>
+      </div>
+      
+      <div id="pagination">
+        <!-- Pagination controls will be loaded here -->
+      </div>
+    </div>
+
+    </div>
+    
+    <script>
+        // Highlight the active link
+        const links = document.querySelectorAll('.navbar-link');
+        links.forEach(link => {
+            if (link.href === window.location.href) {
+                link.classList.add('active');
+            }
+        });
+    </script>
+    
+    <div class="popup-modal" id="popupModal">
+        <div class="popup-content">
+            <!-- Popup Header -->
+            <div class="popup-header">
+                <h3>Filters</h3>
+                <button class="close-btn" id="closePopup">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+                        <path d="M208.49,191.51a12,12,0,0,1-17,17L128,145,64.49,208.49a12,12,0,0,1-17-17L111,128,47.51,64.49a12,12,0,0,1,17-17L128,111l63.51-63.52a12,12,0,0,1,17,17L145,128Z"></path>
+                    </svg>
+                </button>
+            </div>
+    
+            <!-- Popup Body -->
+            <div class="popup-body">
+                <div class="filter-section">
+                    <h4>Industries</h4>
+                    <span>Select one or more industries to filter listings by.</span>
+                    <div class="input-group">
+                        <input type="text" placeholder="Search industries">
+                    </div>
+                </div>
+    
+                <div class="filter-section">
+                    <h4>Price Range</h4>
+                    <span>Select a price range to filter listings by their asking price.</span>
+                    <div class="input-group">
+                        <input type="text" placeholder="Minimum">
+                        <input type="text" placeholder="Maximum">
+                    </div>
+                </div>
+            </div>
+    
+            <!-- Popup Footer -->
+            <div class="popup-footer">
+                <button class="clear-btn">Clear All</button>
+                <button class="apply-btn">Apply Filters</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+    // Get DOM elements
+    const openPopup = document.getElementById('openPopup');
+    const closePopup = document.getElementById('closePopup');
+    const popupModal = document.getElementById('popupModal');
+
+    // Open popup
+    openPopup.addEventListener('click', () => {
+        popupModal.style.display = 'flex';
+    });
+
+    // Close popup
+    closePopup.addEventListener('click', () => {
+        popupModal.style.display = 'none';
+    });
+
+    // Close popup when clicking outside the content
+    popupModal.addEventListener('click', (e) => {
+        if (e.target === popupModal) {
+            popupModal.style.display = 'none';
+        }
+    });
+    
+
+    </script>
+  <%- include('partials/footer') %>
+  <div id="pagination">
+  <!-- Pagination controls will be loaded here -->
+</div>
+
+
+
+<!-- Add this near the end of your body tag -->
+<div class="modal fade" id="contactModal" tabindex="-1" aria-labelledby="contactModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="contactModalLabel">Contact Seller</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="contactForm">
+          <input type="hidden" id="businessId" name="businessId">
+          <div class="mb-3">
+            <label for="firstName" class="form-label">First Name</label>
+            <input type="text" class="form-control" id="firstName" required>
+          </div>
+          <div class="mb-3">
+            <label for="lastName" class="form-label">Last Name</label>
+            <input type="text" class="form-control" id="lastName" required>
+          </div>
+          <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <input type="email" class="form-control" id="email" required>
+          </div>
+          <div class="mb-3">
+            <label for="phone" class="form-label">Phone</label>
+            <input type="tel" class="form-control" id="phone">
+          </div>
+          <div class="mb-3">
+            <label for="timeframe" class="form-label">Purchase Timeframe</label>
+            <select class="form-control" id="timeframe">
+              <option value="0-3">0-3 months</option>
+              <option value="3-6">3-6 months</option>
+              <option value="6+">6+ months</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="message" class="form-label">Message</label>
+            <textarea class="form-control" id="message" rows="3"></textarea>
+          </div>
+          <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" id="newsletter">
+            <label class="form-check-label" for="newsletter">Subscribe to newsletter</label>
+          </div>
+          <button type="submit" class="btn btn-primary">Send Message</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Add before closing body tag -->
+<script>
+  function viewDetails(id) {
+    window.location.href = `/business/${id}`;
+  }
+</script>
+<!-- Add this near the bottom, just before closing body tag -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const profileBtn = document.getElementById('profileBtn');
+      if (profileBtn) {
+        profileBtn.addEventListener('click', function(e) {
+          const token = localStorage.getItem('token');
+          if (!token) {
+            e.preventDefault();
+            window.location.href = '/login2';
+          } else {
+            // Set the Authorization header for the next navigation
+            localStorage.setItem('lastAuthAction', Date.now());
+          }
+        });
+      }
+    });
+  </script>
+
+<script>
+function trackAndView(businessId) {
+    console.log('Tracking and viewing business:', businessId);
+    trackBusinessView(businessId).then(() => {
+        window.location.href = `/business/${businessId}`;
+    }).catch(error => {
+        console.error('Error during tracking:', error);
+        window.location.href = `/business/${businessId}`;
+    });
+}
+</script>
+<!-- Update the scripts section near the end of the body tag -->
+<!-- Load tracking script first -->
+<script src="/js/marketplace-tracking.js"></script>
+<!-- Then load marketplace script as a module -->
+<script src="/js/profile.js"></script>
+<script>
+// Add a helper function to ensure S3 URLs are properly formatted
+function formatImageUrl(imageUrl, businessId) {
+    if (!imageUrl) return '/images/default-business.jpg';
+    
+    // If it's already a full URL, use it
+    if (imageUrl.startsWith('http')) {
+        return imageUrl;
+    }
+    
+    // Otherwise construct S3 URL
+    return `https://arzani-images.s3.eu-north-1.amazonaws.com/businesses/${businessId}/${imageUrl}`;
+}
+
+// Ensure this function is available globally for the template
+window.formatImageUrl = formatImageUrl;
+</script>
+<script src="/js/modal-fix.js"></script>
+
+<!-- Include the chatbox partial (with integrated assistant icon) -->
+<!-- Load the marketplace2.js script (without assistant icon creation) -->
+<script src="/js/marketplace2.js"></script>
+
+<!-- Include Onboarding System -->
+<link rel="stylesheet" href="/css/onboarding.css">
+<%- include('partials/onboarding-modal') %>
+<script src="/js/onboarding.js"></script>
+
+<!-- Initialize Onboarding System -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('Marketplace2 loaded - checking for post-login onboarding needs');
+    
+    // Check for post-login indicators immediately
+    const urlParams = new URLSearchParams(window.location.search);
+    const isPostLogin = urlParams.get('login') === 'success' || 
+                       sessionStorage.getItem('justLoggedIn') === 'true' ||
+                       document.referrer.includes('/login') ||
+                       document.referrer.includes('/register');
+    
+    if (isPostLogin) {
+      console.log('🔄 Post-login detected - prioritizing onboarding check');
+      sessionStorage.setItem('justLoggedIn', 'true'); // Ensure it's set
+    }
+    
+    // Initialize onboarding modal for logged-in users with retry logic
+    const initializeOnboarding = async (retryCount = 0, maxRetries = 3) => {
+      try {
+        // Check if user is logged in by checking for user data in the page
+        const userLoggedIn = <%- user ? 'true' : 'false' %>;
+        
+        console.log('Onboarding check attempt', retryCount + 1, '- User logged in (EJS):', userLoggedIn);
+        
+        // Quick localStorage check to avoid unnecessary API calls
+        const onboardingCompleted = localStorage.getItem('onboarding_completed');
+        if (onboardingCompleted === 'true') {
+          console.log('Onboarding already completed (localStorage check)');
+          return;
+        }
+        
+        // If EJS says user not logged in, try checking via API anyway (for post-login timing issues)
+        if (!userLoggedIn && retryCount === 0) {
+          console.log('EJS user state false, but trying API check for post-login timing...');
+        }
+        
+        console.log('Checking onboarding status via API...');
+        
+        // Check onboarding status
+        const response = await fetch('/users/onboarding-status', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include'
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Onboarding status response:', data);
+          
+          // Check if onboarding is completed
+          if (data.onboarding?.onboarding_completed) {
+            console.log('User has already completed onboarding (server check)');
+            // Store in localStorage for future quick checks
+            localStorage.setItem('onboarding_completed', 'true');
+            return;
+          }
+          
+          // Show onboarding modal if not completed
+          console.log('User has not completed onboarding, showing modal');
+          
+          // Initialize onboarding modal
+          if (typeof OnboardingModal !== 'undefined') {
+            window.onboardingModal = new OnboardingModal();
+            
+            // Small delay to ensure modal is ready
+            setTimeout(() => {
+              window.onboardingModal.showModal();
+            }, 500);
+          } else {
+            console.error('OnboardingModal class not found');
+          }
+        } else if (response.status === 401) {
+          console.log('User not authenticated (401 response)');
+          
+          // If we got 401 but EJS says user is logged in, there might be a timing issue
+          if (userLoggedIn && retryCount < maxRetries) {
+            console.log(`Auth timing issue detected, retrying in ${(retryCount + 1) * 1000}ms...`);
+            setTimeout(() => {
+              initializeOnboarding(retryCount + 1, maxRetries);
+            }, (retryCount + 1) * 1000);
+            return;
+          }
+          
+          console.log('User not logged in, skipping onboarding');
+        } else {
+          console.warn('Failed to fetch onboarding status:', response.status);
+          
+          // Retry for other errors too, but only if EJS says user is logged in
+          if (userLoggedIn && retryCount < maxRetries) {
+            console.log(`API error, retrying in ${(retryCount + 1) * 1000}ms...`);
+            setTimeout(() => {
+              initializeOnboarding(retryCount + 1, maxRetries);
+            }, (retryCount + 1) * 1000);
+          }
+        }
+      } catch (error) {
+        console.error('Error checking onboarding status:', error);
+        
+        // Retry on network errors if user should be logged in
+        const userLoggedIn = <%- user ? 'true' : 'false' %>;
+        if (userLoggedIn && retryCount < maxRetries) {
+          console.log(`Network error, retrying in ${(retryCount + 1) * 1000}ms...`);
+          setTimeout(() => {
+            initializeOnboarding(retryCount + 1, maxRetries);
+          }, (retryCount + 1) * 1000);
+        }
+      }
+    };
+    
+    // Initialize onboarding after a longer delay to ensure auth is settled after login
+    // Also add a more immediate check for post-login scenarios
+    setTimeout(initializeOnboarding, 2000); // Increased from 1000ms
+    
+    // Additional check for post-login scenarios - run sooner but with retry logic
+    setTimeout(() => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const isPostLogin = urlParams.get('login') === 'success' || 
+                         sessionStorage.getItem('justLoggedIn') === 'true' ||
+                         document.referrer.includes('/login');
+      
+      if (isPostLogin) {
+        console.log('Detected post-login scenario, running immediate onboarding check...');
+        initializeOnboarding(0, 5); // More retries for post-login
+        sessionStorage.removeItem('justLoggedIn'); // Clean up
+      }
+    }, 500);
+  });
+</script>
+
+<!-- Initialize and debug AI assistant -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('Marketplace page loaded, initializing AI Assistant integration');
+    
+    // Check if assistant is properly loaded
+    setTimeout(() => {
+      if (!window.aiAssistant) {
+        console.warn('AI Assistant not initialized yet, checking for missing elements');
+        
+        // Check that required elements exist
+        const elementsCheck = {
+          assistantButton: !!document.querySelector('.assistant-buttons'),
+          assistantDialog: !!document.getElementById('ai-assistant-dialog'),
+          messageContainer: !!document.querySelector('.messages-scroll')
+        };
+        
+        console.log('AI Assistant elements check:', elementsCheck);
+        
+        // Ensure image paths are valid
+        const aiAssistantImages = document.querySelectorAll('img[src="/images/ai-assistant.png"]');
+        console.log('Found AI Assistant images:', aiAssistantImages.length);
+        
+        // Add error handling for assistant icon images
+        aiAssistantImages.forEach(img => {
+          img.onerror = function() {
+            console.error('Failed to load AI Assistant image:', this.src);
+            this.src = 'https://cdn-icons-png.flaticon.com/512/4616/4616734.png'; // Fallback icon
+          };
+        });
+        
+        // Don't try to load the script again - this was causing the double declaration
+      }
+    }, 1000);
+  });
+</script>
+
+<!-- Near the bottom of the file, after the line loading ai-assistant.js, add: -->
+<script>
+  console.log('Marketplace2: Setting up AI integration');
+  
+  // Consolidate all your AI integration code here
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('Marketplace2: DOM loaded, initializing AI integration');
+    
+    // All tracking and event setup code here
+    setupAIIntegrationEvents();
+    
+    function setupAIIntegrationEvents() {
+      // Track business view events
+      const trackBusinessClick = (event) => {
+        if (event.target.closest('.card')) {
+          const card = event.target.closest('.card');
+          const businessId = card.dataset.businessId;
+          
+          if (businessId) {
+            console.log('Business clicked:', businessId);
+            // Create custom event that our AI integration can listen for
+            const viewEvent = new CustomEvent('business_viewed', {
+              detail: { 
+                businessId: businessId,
+                timestamp: new Date().toISOString()
+              }
+            });
+            
+            document.dispatchEvent(viewEvent);
+          }
+        }
+      };
+      
+      // Add listener to the listings container
+      const listingsContainer = document.getElementById('listings-container');
+      if (listingsContainer) {
+        listingsContainer.addEventListener('click', trackBusinessClick);
+        console.log('Added click tracker to listings container');
+      } else {
+        console.warn('Listings container not found');
+      }
+      
+      // The rest of your event setup...
+    }
+  });
+</script>
+
+<script src="/js/ai-assistant.js"></script>
+
+<script>
+// Add tracking for AI integration metrics
+document.addEventListener('DOMContentLoaded', function() {
+  // Track business view events
+  const trackBusinessClick = (event) => {
+    if (event.target.closest('.card')) {
+      const card = event.target.closest('.card');
+      const businessId = card.dataset.businessId;
+      
+      if (businessId) {
+        // Create custom event that our AI integration can listen for
+        const viewEvent = new CustomEvent('business_viewed', {
+          detail: { 
+            businessId: businessId,
+            timestamp: new Date().toISOString()
+          }
+        });
+        
+        document.dispatchEvent(viewEvent);
+      }
+    }
+  };
+  
+  // Add listener to the listings container
+  const listingsContainer = document.getElementById('listings-container');
+  if (listingsContainer) {
+    listingsContainer.addEventListener('click', trackBusinessClick);
+  }
+  
+  // Listen for AI-initiated business saves
+  document.addEventListener('ai_save_business', function(event) {
+    const businessId = event.detail.businessId;
+    console.log('AI requested to save business:', businessId);
+    
+    // Call your existing save business function
+    if (typeof saveBusiness === 'function') {
+      saveBusiness(businessId);
+    } else {
+      // Fallback implementation
+      let savedBusinesses = JSON.parse(localStorage.getItem('savedBusinesses') || '[]');
+      
+      if (!savedBusinesses.includes(businessId)) {
+        savedBusinesses.push(businessId);
+        localStorage.setItem('savedBusinesses', JSON.stringify(savedBusinesses));
+        
+        if (window.aiAssistant) {
+          window.aiAssistant.addSystemMessage(`Business #${businessId} has been saved to your favorites.`);
+        }
+      }
+    }
+  });
+  
+  // Track form submissions for lead generation
+  const contactForm = document.getElementById('contactForm');
+  if (contactForm) {
+    contactForm.addEventListener('submit', function(event) {
+      const businessId = document.getElementById('businessId')?.value;
+      
+      if (businessId) {
+        const contactEvent = new CustomEvent('seller_contacted', {
+          detail: {
+            businessId: businessId,
+            timestamp: new Date().toISOString()
+          }
+        });
+        
+        document.dispatchEvent(contactEvent);
+      }
+    });
+  }
+  
+  // Save search criteria for AI assistant context
+  const filterElements = document.querySelectorAll('.filter-input, .industry-checkbox, input[name="priceRange"]');
+  filterElements.forEach(element => {
+    element.addEventListener('change', function() {
+      // Collect current filter criteria
+      const locationValue = document.getElementById('locationInput')?.value;
+      const industriesChecked = Array.from(document.querySelectorAll('.industry-checkbox:checked')).map(cb => cb.value);
+      const priceRange = document.querySelector('input[name="priceRange"]:checked')?.value;
+      
+      const searchCriteria = {
+        location: locationValue,
+        industries: industriesChecked,
+        priceRange: priceRange,
+        timestamp: new Date().toISOString()
+      };
+      
+      // Save to localStorage for AI assistant to access
+      localStorage.setItem('lastSearchCriteria', JSON.stringify(searchCriteria));
+    });
+  });
+});
+</script>
+
+<!-- Add AI Assistant Integration -->
+<%- include('partials/ai-chatbot') %>
+
+<!-- AI Assistant scripts -->
+<script src="/js/ai-assistant.js"></script>
+<script src="/js/ai-chatbot-initializer.js"></script>
+<script src="/js/modal-fix.js"></script>
+
+<!-- Track business interactions for AI context -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Track business view events
+  document.querySelectorAll('.card').forEach(card => {
+    card.addEventListener('click', function(event) {
+      const businessId = this.getAttribute('data-business-id');
+      if (businessId) {
+        // Save to localStorage for AI context
+        try {
+          let recentViews = JSON.parse(localStorage.getItem('recentBusinessViews') || '[]');
+          // Add to front if not already present
+          recentViews = recentViews.filter(view => view.id !== businessId);
+          recentViews.unshift({
+            id: businessId,
+            name: this.querySelector('.card-title')?.textContent || 'Business',
+            timestamp: new Date().toISOString()
+          });
+          // Keep only 10 most recent
+          recentViews = recentViews.slice(0, 10);
+          localStorage.setItem('recentBusinessViews', JSON.stringify(recentViews));
+        } catch (error) {
+          console.error('Error saving recent view:', error);
+        }
+      }
+    });
+  });
+});
+</script>
+
+<!-- Add near the bottom of the file, before the closing </body> tag -->
+
+<!-- Add AI Assistant Integration -->
+<%- include('partials/ai-chatbot') %>
+
+<!-- AI Assistant scripts -->
+<script src="/js/ai-assistant.js"></script>
+<script src="/js/ai-chatbot-initializer.js"></script>
+<script src="/js/modal-fix.js"></script>
+<script src="/js/ai-debug.js"></script>
+
+<!-- Ensure AI button functionality -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Extra check to ensure AI button functionality
+  setTimeout(function() {
+    const aiButton = document.getElementById('ai-assistant-button');
+    if (aiButton) {
+      console.log('Reinforcing AI button click handler');
+      
+      aiButton.addEventListener('click', function(e) {
+        console.log('AI button clicked via extra handler');
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (window.aiAssistant && typeof window.aiAssistant.toggleAssistant === 'function') {
+          window.aiAssistant.toggleAssistant();
+        } else {
+          console.log('Falling back to manual toggle');
+          const container = document.getElementById('ai-assistant-container');
+          if (container) {
+            if (container.classList.contains('ai-assistant-hidden')) {
+              container.classList.remove('ai-assistant-hidden');
+            } else {
+              container.classList.add('ai-assistant-hidden');
+            }
+          }
+        }
+        return false;
+      });
+    }
+  }, 1000);
+});
+</script>
+
+<!-- ...existing code... -->
+
+<!-- ...existing code... -->
+
+<!-- Add this contact modal HTML before the closing body tag -->
+<div class="modal fade" id="contactFormModal" tabindex="-1" aria-labelledby="contactFormModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="contactFormModalLabel">Contact Seller</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="preContactForm">
+          <input type="hidden" id="contactBusinessId" name="businessId">
+          <input type="hidden" id="contactSellerId" name="sellerId">
+          
+          <div class="mb-3">
+            <label for="buyerInterest" class="form-label">Your Interest Level</label>
+            <select class="form-select" id="buyerInterest" name="buyerInterest" required>
+              <option value="" disabled selected>Select your interest level</option>
+              <option value="Very Interested">Very Interested</option>
+              <option value="Somewhat Interested">Somewhat Interested</option>
+              <option value="Just Exploring">Just Exploring</option>
+            </select>
+          </div>
+          
+          <div class="mb-3">
+            <label for="buyerTimeline" class="form-label">Purchasing Timeline</label>
+            <select class="form-select" id="buyerTimeline" name="buyerTimeline" required>
+              <option value="" disabled selected>Select your timeline</option>
+              <option value="Immediately">Immediately</option>
+              <option value="1-3 months">1-3 months</option>
+              <option value="3-6 months">3-6 months</option>
+              <option value="6+ months">6+ months</option>
+            </select>
+          </div>
+          
+          <div class="mb-3">
+            <label for="initialMessage" class="form-label">Initial Message to Seller</label>
+            <textarea class="form-control" id="initialMessage" name="initialMessage" rows="4" placeholder="Introduce yourself and share why you're interested in this business..."></textarea>
+          </div>
+          
+          <div class="mb-3">
+            <label for="buyerQuestions" class="form-label">Specific Questions (Optional)</label>
+            <textarea class="form-control" id="buyerQuestions" name="buyerQuestions" rows="3" placeholder="Any specific questions you'd like to ask the seller?"></textarea>
+          </div>
+          
+          <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" id="contactConsent" name="contactConsent" required>
+            <label class="form-check-label" for="contactConsent">
+              I agree to share my contact information with the seller and have them contact me about this business.
+            </label>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="submitContactForm">Continue to Chat</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ...existing code... -->
+
+<!-- Make sure you include the contact form modal before the end of the body tag -->
+<%- include('partials/contact-modal') %>
+
+<!-- Make sure Bootstrap JS is included for the modal to work -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+
+<!-- Add this script for debugging -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('Marketplace2 page loaded');
+    
+    // Check if modal element exists
+    const modalElement = document.getElementById('contactFormModal');
+    if (modalElement) {
+      console.log('Contact form modal element found');
+    } else {
+      console.error('Contact form modal element not found!');
+    }
+    
+    // Check if marketplace.js is properly loaded
+    if (typeof initContactSellerButtons === 'function') {
+      console.log('initContactSellerButtons function is available');
+    } else {
+      console.error('initContactSellerButtons function is not available!');
+    }
+  });
+</script>
+
+<!-- ...existing code... -->
+
+<!-- Update the script loading order near the end of the body -->
+<!-- Core libraries first -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
+
+<script src="/js/contact-seller-enhanced.js"></script>
+
+<!-- Fix modal issues -->
+<script src="/js/modal-fix.js"></script>
+
+<!-- Fix filter functionality -->
+<script type="module" src="/js/marketplace.js"></script>
+<script src="/js/filter.js"></script>
+
+<!-- Add this debugging section before closing body tag -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('Debugging dropdown functionality');
+    
+    // Force-check dropdown functionality
+    document.querySelectorAll('.dropdown-toggle').forEach(toggle => {
+      console.log('Dropdown toggle found:', toggle.id || toggle.className);
+      
+      // Add debugging click handler
+      toggle.addEventListener('click', function(e) {
+        console.log('Dropdown toggle clicked:', this.id || this.className);
+        console.log('Event prevented?', e.defaultPrevented);
+        
+        // Force menu to show if not showing
+        const dropdown = this.closest('.dropdown');
+        const menu = dropdown.querySelector('.dropdown-menu');
+        console.log('Menu found:', menu ? 'yes' : 'no');
+        console.log('Menu has show class?', menu?.classList.contains('show'));
+        
+        // Double-check Bootstrap modal behavior
+        if (typeof bootstrap !== 'undefined' && typeof bootstrap.Dropdown !== 'undefined') {
+          console.log('Bootstrap Dropdown is available');
+        } else {
+          console.log('Bootstrap Dropdown is NOT available, using fallback');
+        }
+      });
+    });
+    
+    // Test click behavior on dropdowns
+    setTimeout(() => {
+      const firstDropdown = document.querySelector('.dropdown-toggle');
+      if (firstDropdown) {
+        console.log('Simulating click on first dropdown');
+        firstDropdown.click();
+        
+        // Check if the menu opened
+        setTimeout(() => {
+          const menu = firstDropdown.closest('.dropdown').querySelector('.dropdown-menu');
+          console.log('Menu visible after click?', menu.classList.contains('show'));
+        }, 100);
+      }
+    }, 1000);
+  });
+</script>
+
+<!-- Add the S3 image fallback handler script before other script includes -->
+<script src="/js/s3-image-fallback.js"></script>
+
+<!-- Add before closing body tag -->
+<script src="/js/s3-image-fallback.js"></script>
+
+<!-- Add this right after opening the listings-container div -->
+<script>
+  // Initialize with skeleton loaders on page load
+  document.addEventListener('DOMContentLoaded', function() {
+    // Show skeleton loaders immediately
+    const listingsContainer = document.getElementById('listings-container');
+    if (listingsContainer) {
+      const loadFunction = window.showSkeletonLoaders || function(container) {
+        // Fallback skeleton loader if the main function isn't available yet
+        container.innerHTML = `
+          <div class="listings-loader">
+            <div class="spinner"></div>
+            <p>Loading marketplace listings...</p>
+          </div>
+          <div class="ghost-container">
+            ${Array(6).fill().map(() => `
+              <div class="card-skeleton">
+                <div class="image-skeleton skeleton-loader"></div>
+                <div class="title-skeleton skeleton-loader"></div>
+                <div class="price-skeleton skeleton-loader"></div>
+                <div class="text-skeleton skeleton-loader"></div>
+                <div class="button-skeleton skeleton-loader"></div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      };
+      
+      loadFunction(listingsContainer);
+    }
+  });
+</script>
+</body>
+</html>

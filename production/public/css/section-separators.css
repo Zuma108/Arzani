@@ -1,0 +1,45 @@
+/* Additional styles to eliminate blurring between white and dark sections */
+.section-separator-white {
+  background-color: #ffffff;
+  height: 8px;
+  width: 100%;
+  z-index: 30;
+  position: relative;
+  border-top: 1px solid #f0f0f0;
+  border-bottom: 1px solid #f0f0f0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.section-separator-dark {
+  background-color: #121212;
+  height: 8px;
+  width: 100%;
+  z-index: 30;
+  position: relative;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Force solid background color for journey section */
+.journey-section-solid-bg {
+  background-color: #ffffff !important;
+  box-shadow: none !important;
+  z-index: 5;
+}
+
+/* Enhanced journey section background */
+.journey-section {
+  position: relative;
+}
+
+.journey-section::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ffffff;
+  z-index: -5;
+}

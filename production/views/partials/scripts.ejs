@@ -1,0 +1,18 @@
+<!-- Common scripts for all pages -->
+<script src="/js/auth.js"></script>
+<script src="/js/global.js"></script>
+
+<!-- Conditional script loading based on page type -->
+<% if (locals.isChatPage === true) { %>
+  <!-- Chat-specific scripts - only loaded on chat pages -->
+  <script src="/js/scroll.js"></script>
+  <script src="/js/chat-interface.js"></script>
+<% } %>
+
+<!-- Load specific scripts based on passed script names -->
+<% if (locals.scripts && Array.isArray(locals.scripts)) { %>
+  <% scripts.forEach(script => { %>
+    <script src="<%= script %>"></script>
+  <% }); %>
+<% } %>
+
