@@ -414,7 +414,13 @@ async function testS3Connection() {
     console.error('❌ Error connecting to AWS S3:', error);
     console.error('This might be due to incorrect credentials in environment files.');
     console.error('Please ensure AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are correct in your .env files.');
-    process.exit(1); // Exit if S3 connection fails
+    
+    // In production, warn but don't exit - allow server to start without S3
+    if (process.env.NODE_ENV === 'production') {
+      console.warn('⚠️ S3 connection failed in production - continuing without S3 functionality');
+    } else {
+      process.exit(1); // Exit only in development
+    }
   }
 }
 
@@ -865,12 +871,22 @@ app.use(async (req, res, next) => {
 // Add JWT secret check on startup
 if (!process.env.JWT_SECRET) {
   console.error('JWT_SECRET is not set in environment variables');
-  process.exit(1);
+  if (process.env.NODE_ENV === 'production') {
+    console.warn('⚠️ Using default JWT_SECRET in production - this is insecure!');
+    process.env.JWT_SECRET = 'fallback-secret-for-production';
+  } else {
+    process.exit(1);
+  }
 }
 
 if (!process.env.REFRESH_TOKEN_SECRET) {
   console.error('REFRESH_TOKEN_SECRET is not set in environment variables');
-  process.exit(1);
+  if (process.env.NODE_ENV === 'production') {
+    console.warn('⚠️ Using default REFRESH_TOKEN_SECRET in production - this is insecure!');
+    process.env.REFRESH_TOKEN_SECRET = 'fallback-refresh-secret-for-production';
+  } else {
+    process.exit(1);
+  }
 }
 
 // Update CORS configuration - remove the duplicate corsOptions and merge all options
