@@ -86,6 +86,10 @@ jobs:
       run: |
         echo "📦 Creating production build..."
         
+        # Show directory overview (limited output)
+        echo "📂 Root directory file count: $(find . -maxdepth 1 -type f | wc -l)"
+        echo "📁 Root directory size: $(du -sh . | cut -f1)"
+        
         # Verify essential files exist
         [ -f "package.json" ] || { echo "❌ package.json missing"; exit 1; }
         [ -f "server.js" ] || { echo "❌ server.js missing"; exit 1; }
@@ -119,7 +123,7 @@ jobs:
         done
         
         echo "✅ Production build created"
-        echo "📊 Production contents: $(ls production/)"
+        echo "📊 Production files: $(find production/ -type f | wc -l) files"
 
     # Fix package.json and install production dependencies
     - name: Fix package.json and install production dependencies

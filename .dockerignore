@@ -93,19 +93,18 @@ README.md
 *.md
 docs/
 
-# Test files
-test/
-tests/
-__tests__/
-*.test.js
-*.spec.js
-
-# Large data files
-data/
-uploads/
+# Database files
 *.sql
 *.db
 *.sqlite
+
+# Scripts and deployment
+scripts/
+migrations/
+deploy-*
+setup-*
+*.ps1
+*.sh
 
 # Analytics and tracking
 analytics/
