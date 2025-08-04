@@ -99,6 +99,8 @@ jobs:
         [ -f "server.js" ] || { echo "❌ server.js missing"; exit 1; }
         [ -f "api/valuation.js" ] || { echo "❌ api/valuation.js missing in source"; exit 1; }
         [ -f "api/public-valuation.js" ] || { echo "❌ api/public-valuation.js missing in source"; exit 1; }
+        [ -f "auth/auth.js" ] || { echo "❌ auth/auth.js missing in source"; exit 1; }
+        [ -d "auth" ] || { echo "❌ auth directory missing in source"; exit 1; }
         echo "✅ All critical files verified in source"
         
         # Create production directory with proper structure
@@ -139,7 +141,7 @@ jobs:
         fi
         
         # Copy remaining critical directories (api will be overwritten but files already copied)
-        CRITICAL_DIRS="api views public routes middleware services libs utils migrations socket"
+        CRITICAL_DIRS="api auth views public routes middleware services libs utils migrations socket controllers models db"
         for dir in $CRITICAL_DIRS; do
           if [ -d "$dir" ]; then
             echo "📁 Copying $dir directory..."
@@ -188,6 +190,25 @@ jobs:
           echo "🎯 Both critical API files successfully verified in production build"
         else
           echo "❌ api directory missing in production build"
+          exit 1
+        fi
+        
+        # Verify auth directory and critical auth files
+        if [ -d "production/auth" ]; then
+          echo "📁 auth directory exists in production build"
+          ls -la production/auth/
+          
+          if [ -f "production/auth/auth.js" ]; then
+            file_size=$(stat -c%s "production/auth/auth.js" 2>/dev/null || wc -c < "production/auth/auth.js")
+            echo "✅ auth/auth.js found in production build (${file_size} bytes)"
+          else
+            echo "❌ auth/auth.js missing in production build - THIS WILL CAUSE CONTAINER STARTUP FAILURE"
+            echo "🔍 DEBUG: Contents of production/auth directory:"
+            find production/auth/ -type f -name "*.js" | head -10
+            exit 1
+          fi
+        else
+          echo "❌ auth directory missing in production build - THIS WILL CAUSE CONTAINER STARTUP FAILURE"
           exit 1
         fi
         
