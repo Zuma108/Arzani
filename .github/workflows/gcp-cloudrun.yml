@@ -153,7 +153,7 @@ jobs:
         fi
         
         # Copy other important files
-        for file in db.js config.js app.js database.js; do
+        for file in db.js config.js app.js database.js root-route-fix.js; do
           [ -f "$file" ] && cp "$file" production/ || echo "⚠️ $file not found, skipping"
         done
         
