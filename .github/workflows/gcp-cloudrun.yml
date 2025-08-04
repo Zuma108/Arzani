@@ -102,10 +102,45 @@ jobs:
         cp package.json server.js production/
         [ -f "package-lock.json" ] && cp package-lock.json production/
         
-        # Copy application directories (only if they exist)
-        for dir in api views public routes middleware services libs utils migrations socket; do
-          [ -d "$dir" ] && cp -r "$dir" production/ || echo "⚠️ $dir not found, skipping"
+        # Copy critical directories with explicit verification
+        CRITICAL_DIRS="api views public routes middleware services libs utils migrations socket"
+        for dir in $CRITICAL_DIRS; do
+          if [ -d "$dir" ]; then
+            echo "📁 Copying $dir directory..."
+            cp -r "$dir" production/
+            # Verify the copy worked
+            if [ -d "production/$dir" ]; then
+              file_count=$(find "production/$dir" -type f | wc -l)
+              echo "✅ $dir copied successfully ($file_count files)"
+            else
+              echo "❌ Failed to copy $dir directory"
+              exit 1
+            fi
+          else
+            echo "⚠️ $dir directory not found, skipping"
+          fi
         done
+        
+        # Explicitly verify api directory and key files
+        if [ -d "production/api" ]; then
+          echo "🔍 Verifying api directory contents:"
+          ls -la production/api/
+          if [ -f "production/api/valuation.js" ]; then
+            echo "✅ valuation.js found in production build"
+          else
+            echo "❌ valuation.js missing in production build"
+            exit 1
+          fi
+          if [ -f "production/api/public-valuation.js" ]; then
+            echo "✅ public-valuation.js found in production build"
+          else
+            echo "❌ public-valuation.js missing in production build"
+            exit 1
+          fi
+        else
+          echo "❌ api directory missing in production build"
+          exit 1
+        fi
         
         # Always ensure scripts directory exists
         if [ -d "scripts" ]; then
