@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Valuation Payment | Arzani Marketplace</title>
+    <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <%- include('../views/partials/tailwind-setup') %>
+    <link rel="stylesheet" href="/css/seller-questionnaire.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            min-height: 100vh;
+        }        .payment-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+        @media (min-width: 768px) {
+            .payment-container {
+                padding: 2.5rem;
+            }
+        }
+        /* Countdown banner styles */
+        .countdown-banner {
+            background: linear-gradient(135deg, #0f172a, #1e40af); /* Dark slate to deep blue */
+            color: white;
+            text-align: center;
+            padding: 1rem;
+            position: relative;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+        .countdown-banner-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+        }
+        .banner-logo {
+            height: 48px;
+            margin-right: 1rem;
+        }
+        .banner-offer {
+            font-weight: 600; /* Semibold */
+            font-size: 1.1rem; /* Slightly larger */
+        }
+        .banner-countdown {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .banner-time-unit {
+            background: rgba(255,255,255,0.15); /* Lighter background */
+            border-radius: 6px; /* Softer corners */
+            padding: 0.35rem 0.6rem;
+            font-weight: bold;
+            min-width: 2.8rem; /* Slightly wider */
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        .banner-text {
+            font-size: 0.95rem;
+        }
+        /* End countdown banner styles */
+
+        .page-title {
+            font-size: 1.875rem; /* text-3xl */
+            line-height: 2.25rem;
+            font-weight: 700; /* bold */
+            margin-bottom: 0.75rem; /* mb-3 */
+            color: #1e293b; /* slate-800 */
+            text-align: center;
+        }
+        @media (min-width: 768px) {
+            .page-title {
+                font-size: 2.25rem; /* md:text-4xl */
+                line-height: 2.5rem;
+            }
+        }
+        .page-subtitle {
+            color: #475569; /* slate-600 */
+            margin-bottom: 2rem; /* mb-8 */
+            text-align: center;
+            font-size: 1rem; /* base */
+        }
+        @media (min-width: 768px) {
+            .page-subtitle {
+                margin-bottom: 2.5rem; /* md:mb-10 */
+                font-size: 1.125rem; /* md:text-lg */
+            }
+        }
+
+        .payment-card {
+            border-radius: 16px; /* More rounded */
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.07), 0 4px 8px rgba(0, 0, 0, 0.04); /* Softer shadow */
+            overflow: hidden;
+            margin-bottom: 2.5rem; /* Increased margin */
+            transition: all 0.3s ease-in-out;
+            background: white;
+        }
+        .payment-card:hover {
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1), 0 6px 12px rgba(0, 0, 0, 0.06); /* Enhanced hover shadow */
+            transform: translateY(-4px);
+        }
+        .payment-header {
+            padding: 2rem; /* Increased padding */
+            background: linear-gradient(135deg, #1e3a8a, #2563eb); /* Updated gradient */
+            color: white;
+        }
+        .payment-header h2 {
+            font-size: 1.5rem; /* text-xl */
+            font-weight: 700; /* bold */
+        }
+        @media (min-width: 768px) {
+            .payment-header h2 {
+                font-size: 1.875rem; /* md:text-2xl */
+            }
+        }
+        .payment-header p {
+            color: #cbd5e1; /* Light grey (Tailwind's slate-300) */
+            margin-top: 0.5rem;
+            font-size: 0.875rem; /* text-sm */
+        }
+        @media (min-width: 768px) {
+            .payment-header p {
+                font-size: 1rem; /* md:text-base */
+            }
+        }
+
+        .payment-body {
+            padding: 2rem; /* Consistent padding */
+        }
+        @media (min-width: 768px) {
+            .payment-body {
+                padding: 2.5rem; /* More padding on desktop */
+            }
+        }
+        .payment-body h3 { /* "What You'll Get" and "Why get professional..." titles */
+            font-weight: 600; /* Semibold */
+            font-size: 1.25rem; /* text-xl */
+            margin-bottom: 1.25rem; /* mb-5 */
+            color: #334155; /* slate-700 */
+        }
+        @media (min-width: 768px) {
+            .payment-body h3 {
+                font-size: 1.5rem; /* md:text-2xl */
+            }
+        }
+
+        .feature-list li {
+            margin-bottom: 0.85rem; /* Increased spacing */
+            display: flex;
+            align-items: flex-start;
+        }
+        .feature-list li svg {
+            flex-shrink: 0;
+            margin-right: 0.75rem;
+            margin-top: 0.15rem; /* Align better with text */
+            color: #10b981; /* emerald-500, brighter green */
+        }
+        .feature-list span {
+             color: #475569; /* slate-600 */
+             font-size: 0.875rem; /* text-sm */
+        }
+        @media (min-width: 768px) {
+            .feature-list span {
+                font-size: 1rem; /* md:text-base */
+            }
+        }
+
+        .price-display .original-price {
+            font-size: 2.25rem; /* text-3xl */
+            font-weight: 800; /* extrabold */
+            color: #1e293b; /* slate-800 */
+        }
+        @media (min-width: 768px) {
+            .price-display .original-price {
+                font-size: 2.75rem; /* md:text-4xl */
+            }
+        }
+        #discounted-price .original-price-strikethrough {
+            color: #64748b; /* slate-500 */
+            font-size: 1rem; /* text-base */
+            line-height: 1;
+        }
+        @media (min-width: 768px) {
+             #discounted-price .original-price-strikethrough {
+                font-size: 1.125rem; /* md:text-lg */
+            }
+        }
+        #discounted-price .new-price {
+            font-size: 2.25rem; /* text-3xl */
+            font-weight: 800; /* extrabold */
+            color: #2563eb; /* blue-600 */
+        }
+        @media (min-width: 768px) {
+            #discounted-price .new-price {
+                 font-size: 2.75rem; /* md:text-4xl */
+            }
+        }
+        #discounted-price .savings-message {
+            font-size: 0.875rem; /* text-sm */
+            color: #059669; /* emerald-600 */
+            font-weight: 600; /* semibold */
+            margin-top: 0.5rem;
+        }
+         @media (min-width: 768px) {
+            #discounted-price .savings-message {
+                font-size: 1rem; /* md:text-base */
+            }
+        }
+
+
+        .payment-footer { /* Card footer */
+            padding: 1.5rem 2rem;
+            background: #f8fafc; /* slate-50 */
+            border-top: 1px solid #e2e8f0; /* slate-200 */
+        }
+        .payment-footer .text-sm {
+            color: #475569; /* slate-600 */
+        }
+        .payment-footer img { /* Payment icons */
+            height: 20px; /* h-5 */
+        }
+        .payment-footer img.amex-logo { /* Specific class for amex if needed */
+            height: 20px; /* h-5 */
+            width: auto;
+        }
+
+
+        .checkout-button {
+            background-color: #2563eb; /* blue-600 */
+            color: white;
+            padding: 0.85rem 1.5rem;
+            border-radius: 10px; /* Softer radius */
+            font-weight: 600; /* Semibold */
+            font-size: 1.05rem; /* Slightly larger */
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            border: none;
+            cursor: pointer;
+            width: 100%; /* Ensure it's full width in its container */
+        }
+        .checkout-button:hover:not(:disabled) {
+            background-color: #1d4ed8; /* blue-700 */
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(37, 99, 235, 0.25);
+        }
+        .checkout-button:focus:not(:disabled) {
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.3); /* Adjusted focus ring */
+        }
+        .checkout-button:disabled {
+            background-color: #94a3b8; /* slate-400 */
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .checkout-button #button-spinner.hidden {
+            display: none;
+        }
+
+
+        /* Offer badge from original, if used dynamically */
+        .offer-badge {
+            background: #dd6b20;
+            color: white;
+            font-weight: bold;
+            padding: 0.3rem 0.8rem;
+            border-radius: 9999px;
+            display: inline-block;
+            font-size: 0.875rem;
+            margin-bottom: 0.75rem;
+            animation: pulse-badge 2s infinite;
+        }
+        @keyframes pulse-badge {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(221, 107, 32, 0.7); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(221, 107, 32, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(221, 107, 32, 0); }
+        }
+        .spots-left { /* From original, if used dynamically */
+            font-weight: bold;
+            color: #dd6b20;
+        }
+
+
+        .coupon-form {
+            margin-top: 2rem; /* More space above */
+            padding: 1.5rem; /* Increased padding */
+            border-radius: 10px; /* Softer radius */
+            background-color: #f8fafc; /* slate-50, light background */
+            border: 1px solid #e2e8f0; /* slate-200, subtle border */
+        }
+        .coupon-form label {
+            display: block;
+            font-size: 0.875rem; /* text-sm */
+            font-weight: 500; /* medium */
+            margin-bottom: 0.5rem; /* mb-2 */
+            color: #334155; /* slate-700 */
+        }
+        .coupon-input {
+            width: 100%;
+            padding: 0.75rem; /* Increased padding */
+            border: 1px solid #cbd5e0; /* slate-300 */
+            border-radius: 8px; /* Softer radius */
+            margin-bottom: 0.75rem;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .coupon-input:focus {
+            border-color: #2563eb; /* blue-600 */
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2); /* Softer focus shadow */
+        }
+        .coupon-button {
+            padding: 0.75rem 1.25rem; /* Balanced padding */
+            background: #10b981; /* emerald-500 */
+            color: white;
+            border: none;
+            border-radius: 8px; /* Softer radius */
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600; /* Semibold */
+            transition: background-color 0.3s ease;
+        }
+        .coupon-button:hover:not(:disabled) {
+            background: #059669; /* emerald-600 */
+        }
+        .coupon-button:disabled {
+            background: #9ca3af; /* gray-400 */
+            cursor: not-allowed;
+        }
+        .coupon-message {
+            margin-top: 0.75rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        .coupon-success {
+            color: #10b981; /* emerald-500 */
+        }
+        .coupon-error {
+            color: #ef4444; /* red-500 */
+        }
+        .goodwill-message {
+            font-style: italic;
+            color: #64748b; /* slate-500 */
+            font-size: 0.875rem;
+            margin-top: 0.5rem; /* Reduced from 0.75rem to fit better */
+        }
+
+
+        #payment-message { /* Error message below button */
+            color: #ef4444; /* red-500 */
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            text-align: center;
+            font-weight: 500;
+        }
+        .payment-loading {
+            display: none; /* Controlled by JS */
+            align-items: center;
+            justify-content: center;
+            margin-top: 1rem;
+            color: #475569; /* slate-600 */
+            font-size: 0.9rem;
+        }
+        .payment-loading-spinner {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(0,0,0,0.1);
+            border-radius: 50%;
+            border-top-color: #2563eb; /* blue-600 */
+            animation: spin 0.8s linear infinite;
+            margin-right: 0.75rem;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .info-section { /* For "Why get a professional valuation?" */
+            background-color: white;
+            border-radius: 12px; /* Softer radius */
+            padding: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); /* Subtle shadow */
+            margin-top: 2.5rem; /* Increased top margin */
+            border: 1px solid #e2e8f0; /* slate-200 */
+            /* Optional: add a left border for emphasis */
+            /* border-left: 4px solid #2563eb; */
+        }
+        @media (min-width: 768px) {
+            .info-section {
+                padding: 2rem;
+            }
+        }
+        .info-section h3 {
+            font-weight: 600; /* Semibold */
+            font-size: 1.25rem; /* text-xl */
+            margin-bottom: 1rem;
+            color: #334155; /* slate-700 */
+        }
+         @media (min-width: 768px) {
+            .info-section h3 {
+                font-size: 1.5rem; /* md:text-2xl */
+            }
+        }
+        .info-section p {
+            color: #475569; /* slate-600 */
+            margin-bottom: 1rem;
+            font-size: 0.875rem; /* text-sm */
+            line-height: 1.6; /* Improved readability */
+        }
+        @media (min-width: 768px) {
+            .info-section p {
+                font-size: 1rem; /* md:text-base */
+            }
+        }
+        .info-section p:last-child {
+            margin-bottom: 0;
+        }        .site-footer {
+            background-color: #0f172a; /* slate-900 */
+            color: white;
+            padding-top: 2.5rem; /* py-10 */
+            padding-bottom: 2.5rem;
+        }
+        .site-footer p {
+            font-size: 0.875rem; /* text-sm */
+            color: #94a3b8; /* slate-400 */
+        }
+
+        /* Testimonial card styles */
+        .testimonial-card {
+            background: #f8fafc; /* slate-50 */
+            border: 1px solid #e2e8f0; /* slate-200 */
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        .testimonial-card:hover {
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+            transform: translateY(-2px);
+        }
+        @media (min-width: 768px) {
+            .testimonial-card {
+                padding: 1.75rem;
+            }
+        }
+
+        /* Enhanced pricing display */
+        .price-display {
+            position: relative;
+        }
+        .price-display::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 4px;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            border-radius: 2px;
+        }
+
+        /* Enhanced discounted price styling */
+        #discounted-price .original-price-strikethrough {
+            text-decoration: line-through;
+            text-decoration-color: #ef4444;
+            text-decoration-thickness: 2px;
+        }
+
+        /* Add some micro-animations */
+        .countdown-banner {
+            animation: slideDown 0.8s ease-out;
+        }
+        @keyframes slideDown {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .payment-card {
+            animation: fadeInUp 1s ease-out 0.2s both;
+        }
+        @keyframes fadeInUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .info-section {
+            animation: fadeInUp 1s ease-out 0.4s both;
+        }
+
+        .trust-indicators {
+            animation: fadeInUp 1s ease-out 0.6s both;
+        }
+        .trust-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .trust-icon {
+            flex-shrink: 0;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 9999px;
+            background: rgba(37, 99, 235, 0.1);
+        }
+        .trust-title {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 0.25rem;
+        }
+        .trust-description {
+            color: #475569;
+            font-size: 0.875rem;
+            margin: 0;
+        }
+        .trust-metric {
+            text-align: center;
+        }
+        .metric-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2563eb;
+            margin-bottom: 0.25rem;
+        }
+        .metric-label {
+            color: #475569;
+            font-size: 0.875rem;
+            margin: 0;
+        }
+
+        /* Trust indicators styles */
+        .trust-indicators {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .trust-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            transition: all 0.3s ease;
+        }
+        
+        .trust-item:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            transform: translateY(-2px);
+        }
+        
+        .trust-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .trust-title {
+            font-weight: 600;
+            font-size: 1rem;
+            color: #1e293b;
+            margin-bottom: 0.25rem;
+        }
+        
+        .trust-description {
+            font-size: 0.875rem;
+            color: #64748b;
+            line-height: 1.4;
+        }
+        
+        .trust-metric {
+            background: white;
+            padding: 1.5rem 1rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            transition: all 0.3s ease;
+        }
+        
+        .trust-metric:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            transform: translateY(-2px);
+        }
+        
+        .metric-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #3b82f6;
+            margin-bottom: 0.5rem;
+        }
+        
+        .metric-label {
+            font-size: 0.75rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 500;
+        }
+        
+        @media (min-width: 768px) {
+            .trust-indicators {
+                padding: 2.5rem;
+            }
+        }
+
+        /* Final polish and enhancements */
+        .payment-container {
+            animation: fadeInUp 0.8s ease-out;
+        }
+        
+        .info-section h3 {
+            position: relative;
+            padding-bottom: 0.5rem;
+        }
+        
+        .info-section h3::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+            border-radius: 2px;
+        }
+        
+        /* Enhanced list styling */
+        .feature-list li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f1f5f9;
+            transition: all 0.3s ease;
+        }
+        
+        .feature-list li:hover {
+            background: rgba(59, 130, 246, 0.02);
+            padding-left: 0.5rem;
+            margin-left: -0.5rem;
+            border-radius: 8px;
+        }
+        
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+        
+        /* Enhanced button styling */
+        .payment-button {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .payment-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.6s ease;
+        }
+        
+        .payment-button:hover::before {
+            left: 100%;
+        }
+        
+        /* Smooth scroll behavior */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* Loading state for form */
+        .loading .payment-button {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        
+        /* Accessibility improvements */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-W50GKB6F3M"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-W50GKB6F3M');
+    </script>
+    <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body class="bg-slate-50"> <div class="countdown-banner">
+        <div class="countdown-banner-inner">
+            <img src="/figma design exports/logos/Arzani-logo.webp" alt="Arzani Logo" class="banner-logo">
+            <div class="banner-offer">FLASH SALE: £70 OFF</div>
+            <div class="banner-countdown">
+                <div id="banner-hours" class="banner-time-unit">24</div>
+                <span>:</span>
+                <div id="banner-minutes" class="banner-time-unit">00</div>
+                <span>:</span>
+                <div id="banner-seconds" class="banner-time-unit">00</div>
+            </div>
+            <div class="banner-text">Use code <strong>ARZANI28</strong> before time expires!</div>
+        </div>
+    </div>
+    
+    <div class="w-full min-h-screen flex flex-col">
+        <main class="flex-1 py-8 md:py-12">
+            <div class="payment-container">
+                <h1 class="page-title">Business Valuation Service</h1>
+                <p class="page-subtitle">Accurate insights to make informed business decisions</p>
+                
+                <div class="payment-card">
+                    <div class="payment-header">
+                        <h2>Professional Business Valuation</h2>
+                        <p>Get a comprehensive valuation of your business</p>
+                    </div>
+                    <div class="payment-body">
+                        <div class="flex flex-col lg:flex-row gap-6 md:gap-8">
+                            <div class="lg:w-3/5">
+                                <h3>What You'll Get</h3>                                <ul class="feature-list">
+                                    <li>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                        <span>Comprehensive 15-page valuation report</span>
+                                    </li>
+                                    <li>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                        <span>Multiple valuation methods (DCF, Asset-based, Market)</span>
+                                    </li>
+                                    <li>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                        <span>Industry benchmark comparisons</span>
+                                    </li>
+                                    <li>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                        <span>Growth potential and risk analysis</span>
+                                    </li>
+                                    <li>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                        <span>Strategic recommendations for value enhancement</span>
+                                    </li>
+                                    <li>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                        <span>Market positioning insights</span>
+                                    </li>
+                                    <li>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                        <span>Exit strategy recommendations</span>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="lg:w-2/5 flex flex-col">
+                                <div class="text-center mb-6 price-display">
+                                    <div class="original-price">£250.00</div>
+                                    <div id="discounted-price" style="display: none;">
+                                        <p class="original-price-strikethrough">£250.00</p>
+                                        <div class="new-price">£180.00</div>
+                                        <p class="savings-message">You save £70.00!</p>
+                                    </div>
+
+                                <div class="coupon-form w-full mb-6">
+                                    <label for="coupon-code">Have a discount code?</label>
+                                    <div class="flex gap-2">
+                                        <input type="text" id="coupon-code" class="coupon-input flex-grow" placeholder="Enter code" aria-label="Discount Code">
+                                        <button id="apply-coupon" class="coupon-button">Apply</button>
+                                    </div>
+                                    <div id="coupon-message" class="coupon-message"></div>
+                                    <p class="goodwill-message">Enter <strong>"ARZANI28"</strong> for your £70 flash sale discount.</p>
+                                </div>
+
+                                <div class="w-full mt-auto">
+                                    <button id="checkout-button" class="checkout-button">
+                                        <span id="button-text">Pay Securely</span>
+                                        <svg id="button-spinner" class="hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                    </button>
+                                    <div class="payment-loading" id="payment-loading-text"></div> <div id="payment-message"></div> </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="payment-footer">
+                        <div class="flex items-center justify-center space-x-3"> <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            </svg>
+                            <span class="text-sm">Secure payment processed by Stripe</span>
+                            <img src="/figma design exports/logos/visa-svgrepo-com.svg" alt="Visa" class="h-5">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" class="h-5">
+                            <img src="https://www.americanexpress.com/content/dam/amex/us/merchant/supplies-uplift/product/images/img-WEBLOGO1-01.jpg" alt="American Express" class="amex-logo"> </div>
+                    </div>
+                </div>
+                  <div class="info-section">
+                    <h3>Why get a professional valuation?</h3>
+                    <p>A professional business valuation gives you confidence in your business's worth, helping you make informed decisions when selling, seeking investment, or planning for growth. Our data-driven approach ensures accuracy and removes guesswork.</p>
+                    <p>With our valuation, you'll have a detailed report that impresses potential buyers and investors while giving you a clear understanding of your business's strengths and growth opportunities.</p>
+                </div>
+
+                <!-- Testimonial Section -->
+                <div class="info-section">
+                    <h3>What Our Clients Say</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="testimonial-card">
+                            <div class="flex items-center mb-3">
+                                <div class="flex text-yellow-400">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                    </svg>
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                    </svg>
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                    </svg>
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <p class="text-sm text-slate-600 mb-3">"The valuation report was incredibly detailed and helped us secure £2M in investment. The market analysis was spot-on and gave us confidence in our pricing strategy."</p>
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 rounded-full overflow-hidden mr-3 flex-shrink-0">
+                                    <img src="https://randomuser.me/api/portraits/women/41.jpg" alt="Sarah Hughes" class="w-full h-full object-cover">
+                                </div>
+                                <div>
+                                    <p class="font-medium text-slate-800">Sarah Hughes</p>
+                                    <p class="text-xs text-slate-500">CEO, TechFlow Solutions</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="testimonial-card">
+                            <div class="flex items-center mb-3">
+                                <div class="flex text-yellow-400">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                    </svg>
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                    </svg>
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                    </svg>
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <p class="text-sm text-slate-600 mb-3">"Outstanding service! The valuation helped us sell our business for 15% above the initial offer. The strategic recommendations were invaluable."</p>
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 rounded-full overflow-hidden mr-3 flex-shrink-0">
+                                    <img src="https://randomuser.me/api/portraits/men/4.jpg" alt="Michael Patterson" class="w-full h-full object-cover">
+                                </div>
+                                <div>
+                                    <p class="font-medium text-slate-800">Michael Patterson</p>
+                                    <p class="text-xs text-slate-500">Founder, Green Energy Co.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Trust Indicators Section -->
+                <div class="info-section trust-indicators">
+                    <h3>Why Choose Our Valuation Service?</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <!-- Professional Methodology -->
+                        <div class="trust-item">
+                            <div class="trust-icon">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="trust-title">Comprehensive Analysis</h4>
+                                <p class="trust-description">Multiple valuation methodologies including DCF, asset-based, and market comparisons for accurate results</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Professional Standards -->
+                        <div class="trust-item">
+                            <div class="trust-icon">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="trust-title">Professional Standards</h4>
+                                <p class="trust-description">Following industry-standard valuation practices and methodologies used by financial professionals</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Detailed Reporting -->
+                        <div class="trust-item">
+                            <div class="trust-icon">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="trust-title">Detailed Insights</h4>
+                                <p class="trust-description">15-page comprehensive report with market analysis, growth potential assessment, and strategic recommendations</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Affordable Pricing -->
+                        <div class="trust-item">
+                            <div class="trust-icon">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="trust-title">Affordable & Accessible</h4>
+                                <p class="trust-description">Professional-grade valuation at a fraction of the cost of traditional consulting services</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Value proposition highlights -->
+                    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-12 p-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+                            <div class="value-highlight">
+                                <div class="text-2xl font-bold text-blue-600 mb-2">£250</div>
+                                <div class="text-sm text-slate-600 font-medium">Professional Valuation</div>
+                                <div class="text-xs text-slate-500 mt-1">vs £2,000+ traditional consulting</div>
+                            </div>
+                            <div class="value-highlight">
+                                <div class="text-2xl font-bold text-blue-600 mb-2">15 Pages</div>
+                                <div class="text-sm text-slate-600 font-medium">Comprehensive Report</div>
+                                <div class="text-xs text-slate-500 mt-1">Detailed analysis & insights</div>
+                            </div>
+                            <div class="value-highlight">
+                                <div class="text-2xl font-bold text-blue-600 mb-2">Instant</div>
+                                <div class="text-sm text-slate-600 font-medium">Quick Delivery</div>
+                                <div class="text-xs text-slate-500 mt-1">Immediate report generation</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="site-footer"> <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <p>© <%= new Date().getFullYear() %> Arzani. All rights reserved.</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        const host = window.location.protocol + '//' + window.location.host;
+        let couponApplied = false;
+        const discountCode = 'ARZANI28';
+        // IMPORTANT: Replace with your actual Stripe Payment Link
+        const stripePaymentLink = 'https://buy.stripe.com/8x214o6Wj7vj1Jj7pr8so00'; // Example link
+        
+        const couponInput = document.getElementById('coupon-code');
+        const applyButton = document.getElementById('apply-coupon');
+        const couponMessage = document.getElementById('coupon-message');
+        
+        // Price display elements
+        const originalPriceEl = document.querySelector('.price-display .original-price'); // The main £250.00 display
+        const discountedPriceContainerEl = document.getElementById('discounted-price'); // Container for strikethrough and new price
+
+        const checkoutButton = document.getElementById('checkout-button');
+        const buttonText = document.getElementById('button-text');
+        const buttonSpinner = document.getElementById('button-spinner');
+        const paymentLoadingTextEl = document.getElementById('payment-loading-text'); // Renamed for clarity
+        const paymentMessageEl = document.getElementById('payment-message');
+
+        function setLoadingState(isLoading, message = 'Processing payment...') {
+            if (isLoading) {
+                checkoutButton.disabled = true;
+                buttonText.textContent = message; // Or set to empty if spinner is enough
+                buttonSpinner.classList.remove('hidden');
+                paymentLoadingTextEl.style.display = 'flex'; // Use flex to center spinner and text
+                paymentLoadingTextEl.innerHTML = `<div class="payment-loading-spinner"></div> ${message}`;
+            } else {
+                checkoutButton.disabled = false;
+                buttonText.textContent = 'Pay Securely';
+                buttonSpinner.classList.add('hidden');
+                paymentLoadingTextEl.style.display = 'none';
+            }
+        }
+        
+        applyButton.addEventListener('click', function() {
+            const code = couponInput.value.trim().toUpperCase();
+            
+            if (code === discountCode) {
+                couponApplied = true;
+                couponMessage.textContent = 'Discount code "ARZANI28" applied successfully!';
+                couponMessage.className = 'coupon-message coupon-success';
+                
+                // Hide original price, show discounted price block
+                if(originalPriceEl) originalPriceEl.style.display = 'none';
+                discountedPriceContainerEl.style.display = 'block';
+
+                couponInput.value = discountCode; // Optional: keep the code in input
+                couponInput.disabled = true;
+                applyButton.disabled = true;
+                applyButton.textContent = 'Applied';
+            } else if (code === '') {
+                couponMessage.textContent = 'Please enter a discount code.';
+                couponMessage.className = 'coupon-message coupon-error';
+            } else {
+                couponMessage.textContent = 'Invalid discount code. Try "ARZANI28".';
+                couponMessage.className = 'coupon-message coupon-error';
+            }
+        });
+
+        checkoutButton.addEventListener('click', function() {
+            setLoadingState(true, 'Redirecting to secure payment...');
+            paymentMessageEl.textContent = ''; // Clear previous messages
+            
+            try {
+                // Store a flag in localStorage to indicate payment process has begun
+                localStorage.setItem('valuation_payment_started', 'true');
+                localStorage.setItem('valuation_payment_time', Date.now().toString());
+                
+                // Create the payment URL with custom success URL
+                let paymentUrl = stripePaymentLink;
+                
+                // Modify the URL to include our custom redirect without params
+                // Stripe Payment Links support this pattern: {url}?prefilled_email=...&prefilled_promo_code=...
+                let params = [];
+                
+                // Add direct success URL instead of trying to use Stripe's parameter replacement
+                // We'll use our own verification on return
+                if (couponApplied) {
+                    params.push(`prefilled_promo_code=${discountCode}`);
+                }
+                
+                // Join params with &
+                const queryString = params.length > 0 ? params.join('&') : '';
+                
+                // Construct final URL
+                if (queryString) {
+                    paymentUrl += (paymentUrl.includes('?') ? '&' : '?') + queryString;
+                }
+                
+                console.log('Redirecting to payment URL:', paymentUrl);
+                
+                // Redirect to Stripe payment link
+                window.location.href = paymentUrl;
+                
+            } catch (error) {
+                console.error('Error redirecting to payment link:', error);
+                paymentMessageEl.textContent = error.message || 'An error occurred while preparing payment. Please try again.';
+                setLoadingState(false);
+            }
+        });
+        
+        function updateCountdown() {
+            // Set the end time to 24 hours from now (or from a fixed point if desired)
+            let targetTime;
+            const storedEndTime = localStorage.getItem('flashSaleEndTime');
+
+            if (storedEndTime && new Date(storedEndTime) > new Date()) {
+                targetTime = new Date(storedEndTime);
+            } else {
+                targetTime = new Date();
+                targetTime.setHours(targetTime.getHours() + 24);
+                localStorage.setItem('flashSaleEndTime', targetTime.toISOString());
+            }
+            
+            const interval = setInterval(function() {
+                const now = new Date();
+                const diff = targetTime - now;
+                
+                if (diff <= 0) {
+                    clearInterval(interval);
+                    document.getElementById("banner-hours").textContent = "00";
+                    document.getElementById("banner-minutes").textContent = "00";
+                    document.getElementById("banner-seconds").textContent = "00";
+                    // Optionally hide banner or show "expired" message
+                    // document.querySelector('.countdown-banner .banner-offer').textContent = "SALE EXPIRED";
+                    // document.querySelector('.countdown-banner .banner-text').style.display = 'none';
+                    localStorage.removeItem('flashSaleEndTime');
+                    return;
+                }
+                
+                const hours = Math.floor(diff / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                
+                document.getElementById("banner-hours").textContent = hours.toString().padStart(2, '0');
+                document.getElementById("banner-minutes").textContent = minutes.toString().padStart(2, '0');
+                document.getElementById("banner-seconds").textContent = seconds.toString().padStart(2, '0');
+            }, 1000);
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCountdown();
+
+            // Initial state for price display:
+            // If coupon 'ARZANI28' should be auto-suggested or if a banner implies it,
+            // you might want to update the goodwill message or even auto-fill for demo.
+            // For now, it starts with the full price visible.
+            if(originalPriceEl) originalPriceEl.style.display = 'block';
+            discountedPriceContainerEl.style.display = 'none';
+            
+            // Check if we were redirected back after payment
+            // This handles the case where Stripe redirected back to the payment page instead of success URL
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('redirect_status') && urlParams.get('redirect_status') === 'succeeded') {
+                console.log('Detected successful payment redirect');
+                
+                // Check if we started payment process (from localStorage flag)
+                if (localStorage.getItem('valuation_payment_started') === 'true') {
+                    console.log('Payment process was started, redirecting to questionnaire');
+                    
+                    // Clear the payment flag
+                    localStorage.removeItem('valuation_payment_started');
+                    
+                    // Redirect to the questionnaire directly
+                    window.location.href = '/seller-questionnaire/basics';
+                }
+            }
+        });
+    </script>
+    <!-- Add this script right before the closing </body> tag -->
+<script>
+    // Check if we were redirected back after payment completion
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check URL parameters for Stripe success indicators
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        // If we detect Stripe success parameters, redirect to confirmation page
+        if (urlParams.has('redirect_status') && urlParams.get('redirect_status') === 'succeeded') {
+            console.log('Detected Stripe success redirect parameters');
+            
+            // Add parameters to localStorage to ensure they're available on the next page
+            localStorage.setItem('stripe_redirect_status', 'succeeded');
+            
+            // Redirect to confirmation page with the same parameters
+            window.location.href = '/valuation-confirmation' + window.location.search;
+        }
+        
+        // If we have a payment_intent or session_id, these are also success indicators
+        if (urlParams.has('payment_intent') || urlParams.has('session_id')) {
+            console.log('Detected Stripe payment_intent or session_id parameters');
+            
+            // Redirect to confirmation page with the same parameters
+            window.location.href = '/valuation-confirmation' + window.location.search;
+        }
+        
+        // Rest of your existing code...
+        updateCountdown();
+        
+        // ...
+    });
+</script>
+</body>
+</html>

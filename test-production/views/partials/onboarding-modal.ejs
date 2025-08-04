@@ -1,0 +1,499 @@
+<!-- Onboarding Modal Component - 2025 Edition -->
+<div class="modal fade" id="onboardingModal" tabindex="-1" aria-labelledby="onboardingModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content onboarding-modal">
+      <div class="modal-header border-0">
+        <div class="w-100 text-center">
+          <img src="/figma design exports/images.webp/arzani-icon-nobackground.png" alt="Arzani Logo" height="46" class="mb-2">
+          <h5 class="modal-title text-white" id="onboardingModalLabel">Welcome to Arzani!</h5>
+        </div>
+        <!-- Skip onboarding option -->
+        <a href="#" class="skip-link" id="skipOnboarding" aria-label="Skip onboarding">
+          <i class="fas fa-forward me-1"></i> Skip
+        </a>
+      </div>
+      <div class="modal-body p-4">
+        <!-- Progress Indicator -->
+        <div class="progress-container mb-4">
+          <div class="progress">
+            <div class="progress-bar" role="progressbar" style="width: 20%" id="onboardingProgress"></div>
+          </div>
+          <div class="d-flex justify-content-between mt-2">
+            <small class="text-muted">Step <span id="currentStep">1</span> of 5</small>
+            <small class="text-muted"><span id="progressPercentage">20</span>% Complete</small>
+          </div>
+        </div>
+
+        <!-- Slide 1: Discovery Source and Personalization -->
+        <div class="onboarding-slide active" id="slide-1">
+          <div class="text-center mb-4">
+            <i class="fas fa-search fa-3x text-primary mb-3"></i>
+            <h4>Let's Personalize Your Experience</h4>
+            <p class="text-muted">Help us understand how you found us and what you're looking for</p>
+          </div>
+          <div class="discovery-options mb-4">
+            <label class="d-block mb-2 fw-bold">How did you discover Arzani?</label>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <input type="radio" class="btn-check" name="discoverySource" value="google" id="source-google">
+                <label class="btn w-100 p-3" for="source-google">
+                  <i class="fab fa-google me-2"></i>Google Search
+                </label>
+              </div>
+              <div class="col-md-6">
+                <input type="radio" class="btn-check" name="discoverySource" value="reddit" id="source-reddit">
+                <label class="btn w-100 p-3" for="source-reddit">
+                  <i class="fab fa-reddit me-2"></i>Reddit
+                </label>
+              </div>
+              <div class="col-md-6">
+                <input type="radio" class="btn-check" name="discoverySource" value="chatgpt" id="source-chatgpt">
+                <label class="btn w-100 p-3" for="source-chatgpt">
+                  <i class="fas fa-robot me-2"></i>ChatGPT/AI Assistant
+                </label>
+              </div>
+              <div class="col-md-6">
+                <input type="radio" class="btn-check" name="discoverySource" value="social-media" id="source-social">
+                <label class="btn w-100 p-3" for="source-social">
+                  <i class="fab fa-facebook me-2"></i>Social Media
+                </label>
+              </div>
+              <div class="col-md-6">
+                <input type="radio" class="btn-check" name="discoverySource" value="word-of-mouth" id="source-word">
+                <label class="btn w-100 p-3" for="source-word">
+                  <i class="fas fa-users me-2"></i>Word of Mouth
+                </label>
+              </div>
+              <div class="col-md-6">
+                <input type="radio" class="btn-check" name="discoverySource" value="other" id="source-other">
+                <label class="btn w-100 p-3" for="source-other">
+                  <i class="fas fa-ellipsis-h me-2"></i>Other
+                </label>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Personalization section -->
+          <div class="personalization-section mt-4">
+            <label class="d-block mb-2 fw-bold">What are you primarily interested in? (Optional)</label>
+            <div class="row g-3">
+              <div class="col-md-4">
+                <input type="checkbox" class="btn-check" name="userInterest" value="buying" id="interest-buying">
+                <label class="btn w-100 p-3" for="interest-buying">
+                  <i class="fas fa-shopping-cart me-2"></i>Buying a Business
+                </label>
+              </div>
+              <div class="col-md-4">
+                <input type="checkbox" class="btn-check" name="userInterest" value="selling" id="interest-selling">
+                <label class="btn w-100 p-3" for="interest-selling">
+                  <i class="fas fa-store me-2"></i>Selling a Business
+                </label>
+              </div>
+              <div class="col-md-4">
+                <input type="checkbox" class="btn-check" name="userInterest" value="investing" id="interest-investing">
+                <label class="btn w-100 p-3" for="interest-investing">
+                  <i class="fas fa-chart-line me-2"></i>Investing
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 2: Welcome Overview with Video -->
+        <div class="onboarding-slide" id="slide-2">
+          <div class="text-center mb-4">
+            <i class="fas fa-handshake fa-3x text-primary mb-3"></i>
+            <h4>Welcome to Your Business Marketplace</h4>
+            <p class="text-muted">Discover, connect, and grow with the UK's premier business marketplace</p>
+          </div>
+          
+          <!-- Video section will be implemented in a future update -->
+          <div class="info-box bg-light rounded p-4 mb-4">
+            <div class="d-flex align-items-center">
+              <i class="fas fa-info-circle text-primary me-3 fa-2x"></i>
+              <div>
+                <h6 class="fw-bold mb-1">About Arzani Marketplace</h6>
+                <p class="mb-0">Arzani connects buyers and sellers in a secure, efficient marketplace designed for business growth. Our platform offers advanced filtering, verified listings, and AI-powered insights to help you make informed decisions.</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="feature-highlights">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <div class="feature-card">
+                  <i class="fas fa-store fa-2x mb-2"></i>
+                  <h6>Browse Businesses</h6>
+                  <small class="text-muted">Discover thousands of verified businesses for sale across various industries</small>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="feature-card">
+                  <i class="fas fa-chart-line fa-2x mb-2"></i>
+                  <h6>Market Insights</h6>
+                  <small class="text-muted">Access real-time market trends and valuation data for informed decisions</small>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="feature-card">
+                  <i class="fas fa-robot fa-2x mb-2"></i>
+                  <h6>AI Assistant</h6>
+                  <small class="text-muted">Get personalized recommendations and instant support 24/7</small>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Trust signals -->
+          <div class="trust-signals mt-4 text-center">
+            <div class="d-flex justify-content-center align-items-center flex-wrap">
+              <span class="badge bg-light text-dark m-1 p-2">
+                <i class="fas fa-lock text-success me-1"></i> Secure Transactions
+              </span>
+              <span class="badge bg-light text-dark m-1 p-2">
+                <i class="fas fa-user-shield text-primary me-1"></i> Verified Listings
+              </span>
+              <span class="badge bg-light text-dark m-1 p-2">
+                <i class="fas fa-headset text-primary me-1"></i> 24/7 Support
+              </span>
+              <span class="badge bg-light text-dark m-1 p-2">
+                <i class="fas fa-shield-alt text-success me-1"></i> Data Protection
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 3: Navigation Features with Checklist -->
+        <div class="onboarding-slide" id="slide-3">
+          <div class="text-center mb-4">
+            <i class="fas fa-compass fa-3x text-primary mb-3"></i>
+            <h4>Navigate Like a Pro</h4>
+            <p class="text-muted">Master these essential features to find your perfect business match</p>
+          </div>
+          
+          <!-- Getting Started Checklist -->
+          <div class="checklist-container mb-4">
+            <h6 class="fw-bold mb-3"><i class="fas fa-tasks me-2"></i>Your Getting Started Checklist</h6>
+            <div class="checklist-items">
+              <div class="checklist-item" data-item="complete-profile">
+                <div class="checkbox" id="check-profile">
+                  <i class="fas fa-check" style="display: none;"></i>
+                </div>
+                <div>
+                  <span class="fw-bold">Complete your profile</span>
+                  <small class="d-block text-muted">Add your details and preferences for better matches</small>
+                </div>
+              </div>
+              <div class="checklist-item" data-item="explore-marketplace">
+                <div class="checkbox" id="check-explore">
+                  <i class="fas fa-check" style="display: none;"></i>
+                </div>
+                <div>
+                  <span class="fw-bold">Explore the marketplace</span>
+                  <small class="d-block text-muted">Browse through available businesses</small>
+                </div>
+              </div>
+              <div class="checklist-item" data-item="save-search">
+                <div class="checkbox" id="check-save">
+                  <i class="fas fa-check" style="display: none;"></i>
+                </div>
+                <div>
+                  <span class="fw-bold">Save your first search</span>
+                  <small class="d-block text-muted">Get notifications when new matches appear</small>
+                </div>
+              </div>
+              <div class="checklist-item" data-item="contact-seller">
+                <div class="checkbox" id="check-contact">
+                  <i class="fas fa-check" style="display: none;"></i>
+                </div>
+                <div>
+                  <span class="fw-bold">Contact a seller</span>
+                  <small class="d-block text-muted">Reach out to businesses you're interested in</small>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Key Navigation Features -->
+          <div class="nav-features">
+            <h6 class="fw-bold mb-3"><i class="fas fa-map-signs me-2"></i>Key Platform Features</h6>
+            <div class="feature-item d-flex align-items-center mb-3 p-3 rounded">
+              <i class="fas fa-filter fa-2x me-3"></i>
+              <div>
+                <h6 class="mb-1">Advanced Filters</h6>
+                <small class="text-muted">Narrow down by location, industry, price range, and more</small>
+              </div>
+            </div>
+            <div class="feature-item d-flex align-items-center mb-3 p-3 rounded">
+              <i class="fas fa-bell fa-2x me-3"></i>
+              <div>
+                <h6 class="mb-1">Alerts & Notifications</h6>
+                <small class="text-muted">Get notified when businesses matching your criteria appear</small>
+              </div>
+            </div>
+            <div class="feature-item d-flex align-items-center mb-3 p-3 rounded">
+              <i class="fas fa-user-check fa-2x me-3"></i>
+              <div>
+                <h6 class="mb-1">Verification System</h6>
+                <small class="text-muted">Trust indicators and badge system for verified sellers</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 4: AI Assistant with Interactive Demo -->
+        <div class="onboarding-slide" id="slide-4">
+          <div class="text-center mb-4">
+            <i class="fas fa-robot fa-3x text-primary mb-3"></i>
+            <h4>Meet Your AI Business Advisor</h4>
+            <p class="text-muted">Your intelligent companion for finding the perfect business</p>
+          </div>
+          
+          <!-- Interactive AI Demo -->
+          <div class="ai-features">
+            <div class="ai-demo-card p-4 rounded mb-4">
+              <div class="chat-simulation">
+                <!-- User query -->
+                <div class="d-flex justify-content-end mb-3">
+                  <div class="user-message bg-primary bg-opacity-10 p-3 rounded shadow-sm" style="max-width: 80%;">
+                    <p class="mb-0">I'm looking for a profitable café business in London with outdoor seating.</p>
+                  </div>
+                </div>
+                
+                <!-- AI response -->
+                <div class="d-flex align-items-start mb-3">
+                  <div class="ai-avatar me-3">
+                    <i class="fas fa-robot fa-1x"></i>
+                  </div>
+                  <div class="ai-message p-3 rounded shadow-sm">
+                    <p class="mb-2">I found 7 café businesses in London with outdoor seating and profitability data. Here are the top 3 matches:</p>
+                    <ul class="mb-2 ps-3">
+                      <li><strong>Riverside Café</strong> - £175K, 12% profit margin, 4.8⭐ ratings</li>
+                      <li><strong>The Garden Brew</strong> - £210K, 15% profit margin, 4.5⭐ ratings</li>
+                      <li><strong>Central Perk</strong> - £245K, 11% profit margin, 4.7⭐ ratings</li>
+                    </ul>
+                    <p class="mb-0">Would you like to see more details or filter by price range?</p>
+                    <small class="text-muted d-block mt-2">- Your AI Business Advisor</small>
+                  </div>
+                </div>
+                
+                <!-- Interaction options -->
+                <div class="ai-interaction-options d-flex flex-wrap justify-content-end">
+                  <button class="btn btn-sm btn-outline-primary m-1" disabled>Show more details</button>
+                  <button class="btn btn-sm btn-outline-primary m-1" disabled>Filter by price</button>
+                  <button class="btn btn-sm btn-outline-primary m-1" disabled>Compare these businesses</button>
+                </div>
+              </div>
+            </div>
+            
+            <div class="ai-capabilities">
+              <h6 class="mb-3"><i class="fas fa-magic me-2"></i>What Your AI Advisor Can Do:</h6>
+              <div class="row g-2">
+                <div class="col-md-6">
+                  <div class="capability-item">
+                    <i class="fas fa-search text-primary"></i>
+                    <span>Find businesses matching specific criteria</span>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="capability-item">
+                    <i class="fas fa-calculator text-primary"></i>
+                    <span>Provide valuation insights and analysis</span>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="capability-item">
+                    <i class="fas fa-chart-bar text-primary"></i>
+                    <span>Analyze market trends and opportunities</span>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="capability-item">
+                    <i class="fas fa-lightbulb text-primary"></i>
+                    <span>Suggest investment opportunities</span>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="capability-item">
+                    <i class="fas fa-file-contract text-primary"></i>
+                    <span>Explain business terms and processes</span>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="capability-item">
+                    <i class="fas fa-hands-helping text-primary"></i>
+                    <span>Connect you with business advisors</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="ai-location mt-3 p-3 rounded pulse-animation">
+              <div class="d-flex align-items-center">
+                <i class="fas fa-map-marker-alt text-primary me-3 fa-lg"></i>
+                <div>
+                  <strong>Access Your AI Advisor Anytime:</strong>
+                  <small class="d-block">Look for the AI assistant button on the bottom right of any page</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 5: Start Exploring with Feedback -->
+        <div class="onboarding-slide" id="slide-5">
+          <div class="text-center mb-4">
+            <i class="fas fa-rocket fa-3x text-primary mb-3"></i>
+            <h4>Ready to Explore</h4>
+            <p class="text-muted">Find your perfect business opportunity with these powerful tools</p>
+          </div>
+          
+          <div class="exploration-guide">
+            <div class="guide-section mb-4">
+              <h6 class="mb-3"><i class="fas fa-filter"></i>Smart Filtering</h6>
+              <div class="row g-2">
+                <div class="col-md-6">
+                  <div class="filter-demo">
+                    <div class="d-flex align-items-center">
+                      <i class="fas fa-map-marker-alt text-primary me-2"></i>
+                      <span class="fw-bold">Location</span>
+                    </div>
+                    <small class="d-block mt-1">Filter by city, region, or postal code</small>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="filter-demo">
+                    <div class="d-flex align-items-center">
+                      <i class="fas fa-industry text-primary me-2"></i>
+                      <span class="fw-bold">Industry</span>
+                    </div>
+                    <small class="d-block mt-1">Choose from 50+ business categories</small>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="filter-demo">
+                    <div class="d-flex align-items-center">
+                      <i class="fas fa-pound-sign text-primary me-2"></i>
+                      <span class="fw-bold">Price Range</span>
+                    </div>
+                    <small class="d-block mt-1">Set min/max investment budget</small>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="filter-demo">
+                    <div class="d-flex align-items-center">
+                      <i class="fas fa-chart-pie text-primary me-2"></i>
+                      <span class="fw-bold">Profitability</span>
+                    </div>
+                    <small class="d-block mt-1">Filter by revenue and profit margin</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="guide-section mb-4">
+              <h6 class="mb-3"><i class="fas fa-mouse-pointer"></i>Quick Actions</h6>
+              <div class="quick-actions">
+                <div class="action-item">
+                  <i class="fas fa-eye text-success"></i>
+                  <span>Click any business card to view detailed information and analytics</span>
+                </div>
+                <div class="action-item">
+                  <i class="fas fa-heart text-danger"></i>
+                  <span>Save interesting businesses to your favorites for easy access</span>
+                </div>
+                <div class="action-item">
+                  <i class="fas fa-envelope text-primary"></i>
+                  <span>Contact sellers directly through our secure messaging system</span>
+                </div>
+                <div class="action-item">
+                  <i class="fas fa-share-alt text-info"></i>
+                  <span>Share listings with advisors or business partners</span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Feedback Section -->
+            <div class="feedback-section">
+              <h6><i class="fas fa-comment-alt me-2"></i>Help Us Improve</h6>
+              <p class="small text-muted mb-3">How do you feel about this onboarding experience?</p>
+              
+              <div class="feedback-options">
+                <div class="feedback-option positive" data-rating="positive">
+                  <i class="far fa-smile fa-2x"></i>
+                  <small class="d-block">Great!</small>
+                </div>
+                <div class="feedback-option neutral" data-rating="neutral">
+                  <i class="far fa-meh fa-2x"></i>
+                  <small class="d-block">It's OK</small>
+                </div>
+                <div class="feedback-option negative" data-rating="negative">
+                  <i class="far fa-frown fa-2x"></i>
+                  <small class="d-block">Needs work</small>
+                </div>
+              </div>
+              
+              <div id="feedbackComment" class="mt-3" style="display: none;">
+                <textarea class="form-control" placeholder="Tell us more about your experience (optional)" rows="2"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer border-0 d-flex justify-content-between">
+        <button type="button" class="btn btn-outline-secondary" id="onboardingPrev" style="display: none;" aria-label="Previous slide">
+          <i class="fas fa-arrow-left me-2"></i>Previous
+        </button>
+        <div class="d-none d-md-flex step-dots justify-content-center flex-grow-1">
+          <span class="step-dot active" data-step="1" aria-label="Step 1"></span>
+          <span class="step-dot" data-step="2" aria-label="Step 2"></span>
+          <span class="step-dot" data-step="3" aria-label="Step 3"></span>
+          <span class="step-dot" data-step="4" aria-label="Step 4"></span>
+          <span class="step-dot" data-step="5" aria-label="Step 5"></span>
+        </div>
+        <button type="button" class="btn btn-primary" id="onboardingNext" aria-label="Next slide">
+          Next<i class="fas fa-arrow-right ms-2"></i>
+        </button>
+        <button type="button" class="btn btn-success" id="onboardingComplete" style="display: none;" aria-label="Complete onboarding">
+          Get Started<i class="fas fa-check ms-2"></i>
+        </button>
+      </div>
+      
+      <!-- Accessibility Note -->
+      <div class="text-center small text-muted pb-3">
+        <span>Press <kbd>Esc</kbd> to pause, <kbd>Tab</kbd> to navigate, <kbd>Enter</kbd> to select</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Additional CSS for step dots -->
+<style>
+  .step-dots {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .step-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: var(--border-color, #E0E0E0);
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  .step-dot.active {
+    background-color: var(--primary-color, #1A237E);
+    transform: scale(1.2);
+  }
+  /* Dark mode support */
+  @media (prefers-color-scheme: dark) {
+    .step-dot {
+      background-color: #555;
+    }
+    .step-dot.active {
+      background-color: #3F51B5;
+    }
+  }
+</style>

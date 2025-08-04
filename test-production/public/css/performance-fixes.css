@@ -1,0 +1,70 @@
+/* Performance optimization styles to prevent black sections during loading */
+
+/* Ensure sections are at least visible even before animations load */
+section {
+  opacity: 1 !important;
+  transition: opacity 0.3s ease !important;
+  will-change: opacity, transform;
+}
+
+/* Ensure the journey section is always visible */
+.journey-section, 
+#features-section, 
+.journey-section-solid-bg {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+  transition: opacity 0.3s ease, transform 0.3s ease !important;
+  visibility: visible !important;
+}
+
+/* Remove any animations that might cause flicker */
+.journey-card,
+.feature-card {
+  opacity: 1 !important;
+  transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+}
+
+/* Preload animations to avoid jank */
+[data-scroll-animation],
+[data-section-animation] {
+  will-change: opacity, transform;
+  transition: opacity 0.4s ease, transform 0.4s ease !important;
+}
+
+/* Force visibility on the problem areas */
+.journey-section .container,
+#features-section .container {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Force visibility on specific elements */
+.journey-card-inner,
+.journey-card-content,
+.journey-card-visual {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Make sure scrolling is smooth */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Lower animation intensity to improve performance */
+.animated {
+  animation-duration: 0.5s !important;
+}
+
+/* Force all section backgrounds to be visible immediately */
+.absolute.inset-0,
+.absolute.top-0.left-0.w-full.h-full {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Make sure the page-wrapper is visible */
+.page-wrapper {
+  opacity: 1 !important;
+  visibility: visible !important;
+}

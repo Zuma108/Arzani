@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Arzani Marketplace Checkout">
+    <title>Checkout - Arzani Marketplace</title>
+    
+    <!-- Tailwind and custom styles -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/checkout1.css">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body class="bg-gray-50 font-sans">
+    <div class="min-h-screen flex flex-col">
+        <!-- Header with logo -->
+        <header class="bg-gradient-to-r from-blue-900 to-indigo-800 text-white py-4">
+            <div class="container mx-auto px-4 md:px-6 flex justify-between items-center">
+                <div class="flex items-center">
+                    <a href="/">
+                        <img src="/public/figma design exports/logos/Arzani-logo.png" alt="Arzani" class="h-10">
+                    </a>
+                </div>
+                <div>
+                    <span class="text-sm">Already have an account? <a href="/login" class="text-blue-200 hover:text-white">Login</a></span>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Promo Banner -->
+        <div class="bg-gradient-to-r from-blue-700 to-blue-900 text-white py-2 text-center">
+            <div class="container mx-auto">
+                Use Code: <strong>ARZANI10</strong> for 10% off your first payment
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <main class="flex-grow container mx-auto px-4 md:px-6 py-8">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Left Column - Checkout Form -->
+                <div class="lg:col-span-2">
+                    <form id="payment-form" class="space-y-6">
+                        <!-- Step 1: Account Creation -->
+                        <div class="bg-white rounded-lg shadow-md p-6">
+                            <h2 class="text-xl font-semibold text-gray-800 mb-4">1. Create your account</h2>
+                            <div class="space-y-4">
+                                <div>
+                                    <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                                    <input type="email" id="email" name="email" required 
+                                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
+                                           placeholder="you@example.com">
+                                    <div id="email-errors" class="mt-1 text-sm text-red-600 hidden"></div>
+                                </div>
+                                
+                                <div>
+                                    <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                                    <input type="password" id="password" name="password" required 
+                                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
+                                           placeholder="Choose a strong password" minlength="8">
+                                    <div id="password-errors" class="mt-1 text-sm text-red-600 hidden"></div>
+                                    <p class="mt-1 text-xs text-gray-500">
+                                        Must be at least 8 characters
+                                    </p>
+                                </div>
+                            </div>
+                            <p class="mt-2 text-sm text-gray-500">
+                                This email will be used to access all Arzani products and services.
+                            </p>
+                        </div>
+                        
+                        <!-- Step 2: Payment Method -->
+                        <div class="bg-white rounded-lg shadow-md p-6">
+                            <h2 class="text-xl font-semibold text-gray-800 mb-4">2. Payment method</h2>
+                            <div class="space-y-4">
+                                <div class="flex space-x-2 mb-4">
+                                    <div class="p-3 border rounded-md bg-blue-50 border-blue-500">
+                                        <span class="text-blue-700 font-semibold">Card</span>
+                                    </div>
+                                </div>
+                                
+                                <!-- Stripe Elements will mount here -->
+                                <div id="payment-element" class="mt-4 border border-gray-300 rounded-md p-4 min-h-[200px]">
+                                    <!-- Stripe Elements will be mounted here -->
+                                    <div class="flex items-center justify-center h-full">
+                                        <div class="loading"></div>
+                                        <span class="ml-2 text-gray-500">Loading payment form...</span>
+                                    </div>
+                                </div>
+                                <div id="payment-errors" class="mt-1 text-sm text-red-600 hidden"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 3: Billing Details -->
+                        <div class="bg-white rounded-lg shadow-md p-6">
+                            <h2 class="text-xl font-semibold text-gray-800 mb-4">3. Billing details</h2>
+                            <div class="space-y-4">
+                                <div>
+                                    <label for="name" class="block text-sm font-medium text-gray-700">Full name</label>
+                                    <input type="text" id="name" name="name" required 
+                                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
+                                           placeholder="John Smith">
+                                </div>
+                                
+                                <div>
+                                    <label for="country" class="block text-sm font-medium text-gray-700">Country</label>
+                                    <select id="country" name="country" 
+                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+                                        <option value="GB">United Kingdom</option>
+                                        <option value="US">United States</option>
+                                        <option value="CA">Canada</option>
+                                        <option value="AU">Australia</option>
+                                        <option value="DE">Germany</option>
+                                        <option value="FR">France</option>
+                                        <option value="ES">Spain</option>
+                                        <option value="IT">Italy</option>
+                                        <option value="NL">Netherlands</option>
+                                        <option value="SE">Sweden</option>
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label for="address" class="block text-sm font-medium text-gray-700">Address</label>
+                                    <input type="text" id="address" name="address" required 
+                                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
+                                           placeholder="123 Main St">
+                                </div>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div class="md:col-span-1">
+                                        <label for="city" class="block text-sm font-medium text-gray-700">City</label>
+                                        <input type="text" id="city" name="city" required 
+                                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
+                                               placeholder="London">
+                                    </div>
+                                    
+                                    <div class="md:col-span-1">
+                                        <label for="state" class="block text-sm font-medium text-gray-700">State/Province</label>
+                                        <input type="text" id="state" name="state" 
+                                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
+                                               placeholder="(optional)">
+                                    </div>
+                                    
+                                    <div class="md:col-span-1">
+                                        <label for="postal_code" class="block text-sm font-medium text-gray-700">Postal Code</label>
+                                        <input type="text" id="postal_code" name="postal_code" required 
+                                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
+                                               placeholder="SW1A 1AA">
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="mt-2 text-sm text-gray-500">
+                                Your billing information will be used for tax calculations and payment verification.
+                            </p>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Right Column - Order Summary -->
+                <div>
+                    <div class="bg-white rounded-lg shadow-md p-6 sticky top-4">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4">Order summary</h2>
+                        
+                        <!-- Subscription Item -->
+                        <div class="flex items-center space-x-4 mb-4 pb-4 border-b">
+                            <div class="bg-gradient-to-br <%= planId === 'platinum' ? 'from-purple-500 to-indigo-600' : 'from-yellow-500 to-orange-500' %> h-16 w-16 rounded-lg flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-gray-800">
+                                    <span id="plan-name">Arzani <%= planName %> Plan</span>
+                                </h3>
+                                <p class="text-gray-500 text-sm">Billed monthly</p>
+                            </div>
+                            <div class="ml-auto">
+                                <span id="plan-price" class="font-semibold">£<%= planPrice %></span>
+                            </div>
+                        </div>
+                        
+                        <!-- Discount Code -->
+                        <div class="mb-6">
+                            <div class="flex space-x-2">
+                                <input type="text" id="discount-code" placeholder="Discount code"
+                                       class="flex-grow rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+                                <button type="button" id="apply-discount" 
+                                        class="px-4 py-2 border border-gray-300 rounded-md text-gray-800 bg-white hover:bg-gray-50 transition-colors">
+                                    Apply
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Order Total -->
+                        <div class="space-y-2 mb-6">
+                            <div class="flex justify-between text-gray-700">
+                                <span>Subtotal</span>
+                                <span id="subtotal">£<%= planPrice %></span>
+                            </div>
+                            <div class="flex justify-between font-semibold text-gray-900">
+                                <span>Total</span>
+                                <div>
+                                    <span class="text-gray-500 text-sm mr-1">GBP</span>
+                                    <span id="total">£<%= planPrice %></span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <button type="submit" id="submit-button"
+                                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-md transition-colors">
+                            Subscribe Now
+                        </button>
+                        
+                        <!-- Money Back Guarantee -->
+                        <div class="mt-4 bg-gray-50 rounded-md p-4 flex items-center space-x-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-700" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                            </svg>
+                            <span class="text-sm text-gray-700">You're covered by our 14-day money-back guarantee.</span>
+                        </div>
+                        
+                        <!-- Secure Checkout -->
+                        <div class="mt-6 flex justify-between items-center">
+                            <span class="text-sm text-gray-500">Secure checkout</span>
+                            <div class="flex items-center space-x-1 opacity-60">
+                                <svg class="h-6" viewBox="0 0 36 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <rect width="36" height="24" rx="4" fill="#252525"/>
+                                    <path d="M10.155 8.378H7.165V15.628H10.155V8.378Z" fill="white"/>
+                                    <path d="M7.582 12.003C7.582 10.5655 8.16 9.25304 9.158 8.38304C8.385 7.78554 7.403 7.44104 6.33 7.44104C3.983 7.44104 2.077 9.34704 2.077 11.694C2.077 14.041 3.983 15.947 6.33 15.947C7.403 15.947 8.385 15.6025 9.158 15.005C8.16 14.1425 7.582 12.826 7.582 12.003Z" fill="#FF5F00"/>
+                                    <path d="M20.5229 7.44104C19.4499 7.44104 18.4679 7.78554 17.6949 8.38304C18.6899 9.25304 19.2679 10.5655 19.2679 12.003C19.2679 12.826 18.6899 14.1425 17.6949 15.005C18.4679 15.6025 19.4499 15.947 20.5229 15.947C22.8699 15.947 24.7759 14.041 24.7759 11.694C24.7759 9.34704 22.8699 7.44104 20.5229 7.44104Z" fill="#EB001B"/>
+                                    <path d="M19.2679 12.003C19.2679 10.5655 18.6899 9.25304 17.6949 8.38304C16.7004 9.253 16.1219 10.566 16.1219 12.003C16.1219 13.44 16.7004 14.7525 17.6949 15.623C18.6899 14.753 19.2679 13.4405 19.2679 12.003Z" fill="#F79E1B"/>
+                                    <path d="M28.4699 13.7955V13.5305H28.5904V13.4485H28.2774V13.5305H28.3954V13.7955H28.4699ZM29.1074 13.7955V13.447H29.0254L28.9329 13.684L28.8404 13.447H28.7584V13.7955H28.8329V13.5395L28.9194 13.7625H28.9479L29.0344 13.538V13.7955H29.1074Z" fill="white"/>
+                                </svg>
+                                <svg class="h-4" viewBox="0 0 36 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <rect width="36" height="24" rx="3" fill="white"/>
+                                    <path fill-rule="evenodd" clip-rule="evenodd" d="M18.1201 8.3804C18.0196 8.9016 17.6996 9.333 17.2197 9.5536C16.7397 9.7743 16.1602 9.7625 15.6904 9.5201C15.2205 9.2776 14.9205 8.8343 14.8405 8.3008L14.8404 8.2996C14.7443 7.6585 14.9911 7.0122 15.4895 6.5978C15.9879 6.1834 16.6619 6.0518 17.2725 6.2482C17.8832 6.4445 18.3463 6.9386 18.4997 7.5555C18.653 8.1724 18.4747 8.8251 18.0301 9.2616C18.3001 8.9716 18.4301 8.6916 18.1201 8.3804Z" fill="url(#paint0_linear_680_87827)"/>
+                                    <path fill-rule="evenodd" clip-rule="evenodd" d="M21.1201 17.6591C21.0196 18.1804 20.6996 18.6118 20.2197 18.8324C19.7397 19.0531 19.1602 19.0413 18.6904 18.7988C18.2205 18.5564 17.9205 18.113 17.8405 17.5796L17.8404 17.5784C17.7443 16.9372 17.9911 16.291 18.4895 15.8766C18.9879 15.4621 19.6619 15.3306 20.2725 15.527C20.8832 15.7233 21.3463 16.2173 21.4997 16.8342C21.653 17.4512 21.4747 18.1038 21.0301 18.5404C21.3001 18.2504 21.4301 17.9704 21.1201 17.6591Z" fill="#FFB800"/>
+                                    <path fill-rule="evenodd" clip-rule="evenodd" d="M14.8999 14.6105C14.9701 15.1351 15.2635 15.5821 15.7281 15.8269C16.1928 16.0717 16.7719 16.0882 17.2499 15.8705C17.728 15.6528 18.0499 15.2283 18.1499 14.7105L18.15 14.7093C18.2702 14.0728 18.0429 13.416 17.553 12.9802C17.0631 12.5445 16.3866 12.3856 15.7655 12.5601C15.1444 12.7345 14.6622 13.2129 14.4902 13.8224C14.3181 14.4318 14.479 15.0921 14.91 15.5405C14.65 15.2405 14.5399 14.9505 14.8999 14.6105Z" fill="#1267FC"/>
+                                    <defs>
+                                        <linearGradient id="paint0_linear_680_87827" x1="14.1923" y1="8.87205" x2="19.0485" y2="6.10254" gradientUnits="userSpaceOnUse">
+                                        <stop stop-color="#1267FC"/>
+                                        <stop offset="1" stop-color="#FFB800"/>
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Footer -->
+        <footer class="bg-white border-t mt-12 py-6">
+            <div class="container mx-auto px-4 md:px-6">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <div class="mb-4 md:mb-0">
+                        <img src="/public/figma design exports/logos/Arzani-logo.png" alt="Arzani" class="h-8">
+                    </div>
+                    <div class="text-sm text-gray-500">
+                        <ul class="flex space-x-6">
+                            <li><a href="/terms" class="hover:text-gray-700">Terms &amp; Conditions</a></li>
+                            <li><a href="/privacy" class="hover:text-gray-700">Privacy Policy</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="mt-4 text-sm text-gray-500 text-center md:text-left">
+                    © <%= new Date().getFullYear() %> Arzani. All rights reserved.
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="/js/subscription-manager.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Stripe and subscription manager
+            const stripeKey = '<%= stripePublishableKey %>';
+            const planId = '<%= planId %>';
+            const planName = '<%= planName %>';
+            const currentPlanPrice = '<%= planPrice %>';
+            const manager = new SubscriptionManager(stripeKey);
+            
+            // Initialize payment form
+            initializePaymentForm(manager, planId);
+            
+            // Set up event listeners
+            setupFormListeners(manager);
+            
+            // Register form submission handler
+            const form = document.getElementById('payment-form');
+            const submitButton = document.getElementById('submit-button');
+            
+            form.addEventListener('submit', async function(event) {
+                event.preventDefault();
+                
+                // Disable submit button to prevent double clicks
+                submitButton.disabled = true;
+                submitButton.innerHTML = `<div class="loading"></div><span class="ml-2">Processing...</span>`;
+                
+                // Validate inputs
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                const name = document.getElementById('name').value;
+                
+                let isValid = true;
+                
+                if (!email) {
+                    showError('email-errors', 'Email is required');
+                    isValid = false;
+                }
+                
+                if (!password || password.length < 8) {
+                    showError('password-errors', 'Password must be at least 8 characters');
+                    isValid = false;
+                }
+                
+                if (!name) {
+                    showError('payment-errors', 'Full name is required');
+                    isValid = false;
+                }
+                
+                if (!isValid) {
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Subscribe Now';
+                    return;
+                }
+                
+                try {
+                    // Create user account
+                    const userResponse = await fetch('/api/auth/register', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password, name })
+                    });
+                    
+                    const userData = await userResponse.json();
+                    
+                    if (!userResponse.ok) {
+                        throw new Error(userData.error || 'Failed to create account');
+                    }
+                    
+                    // Store the authentication token
+                    localStorage.setItem('token', userData.token);
+                    
+                    // Process payment
+                    const success = await manager.confirmPayment(window.location.origin + '/subscription-complete');
+                    
+                    // If payment failed (the confirmPayment will redirect on success)
+                    if (!success) {
+                        submitButton.disabled = false;
+                        submitButton.textContent = 'Subscribe Now';
+                    }
+                } catch (error) {
+                    console.error('Checkout error:', error);
+                    showError('payment-errors', error.message || 'An unexpected error occurred');
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Subscribe Now';
+                }
+            });
+            
+            // Initialize discount code handling
+            const discountButton = document.getElementById('apply-discount');
+            const discountInput = document.getElementById('discount-code');
+            
+            discountButton.addEventListener('click', async () => {
+                const code = discountInput.value.trim();
+                if (!code) return;
+                
+                try {
+                    discountButton.disabled = true;
+                    discountButton.textContent = 'Applying...';
+                    
+                    const result = await manager.applyDiscount(code);
+                    
+                    if (result.success) {
+                        // Update pricing display
+                        const subtotalEl = document.getElementById('subtotal');
+                        const totalEl = document.getElementById('total');
+                        
+                        if (subtotalEl && totalEl && result.total !== undefined) {
+                            totalEl.textContent = `£${(result.total / 100).toFixed(2)}`;
+                            
+                            // Add success message
+                            discountButton.textContent = 'Applied';
+                            discountButton.classList.remove('bg-white', 'hover:bg-gray-50');
+                            discountButton.classList.add('bg-green-50', 'text-green-700', 'border-green-500');
+                            
+                            // Add discount info
+                            const discountInfo = document.createElement('div');
+                            discountInfo.className = 'text-sm text-green-600 mt-1';
+                            discountInfo.textContent = `${result.discount}% discount applied`;
+                            discountInput.parentNode.appendChild(discountInfo);
+                        }
+                    } else {
+                        throw new Error('Invalid discount code');
+                    }
+                } catch (error) {
+                    discountButton.textContent = 'Invalid';
+                    discountButton.classList.add('bg-red-50', 'text-red-700', 'border-red-500');
+                    setTimeout(() => {
+                        discountButton.textContent = 'Apply';
+                        discountButton.disabled = false;
+                        discountButton.classList.remove('bg-red-50', 'text-red-700', 'border-red-500');
+                    }, 2000);
+                }
+            });
+        });
+        
+        // Helper function to initialize the payment form
+        async function initializePaymentForm(manager, planId) {
+            try {
+                await manager.setupPaymentForm(planId, 'payment-element');
+            } catch (error) {
+                console.error('Failed to initialize payment form:', error);
+                showError('payment-errors', 'Failed to initialize payment form. Please try again later.');
+            }
+        }
+        
+        // Helper function to set up form event listeners
+        function setupFormListeners(manager) {
+            // Email validation
+            const emailInput = document.getElementById('email');
+            
+            emailInput.addEventListener('blur', async () => {
+                const email = emailInput.value.trim();
+                if (!email) return;
+                
+                try {
+                    const result = await manager.validateEmail(email);
+                    
+                    if (result.error) {
+                        showError('email-errors', result.error.message);
+                    } else {
+                        hideError('email-errors');
+                    }
+                } catch (error) {
+                    console.error('Email validation error:', error);
+                }
+            });
+            
+            // Password validation
+            const passwordInput = document.getElementById('password');
+            
+            passwordInput.addEventListener('input', () => {
+                const password = passwordInput.value;
+                
+                if (password.length < 8) {
+                    showError('password-errors', 'Password must be at least 8 characters');
+                } else {
+                    hideError('password-errors');
+                }
+            });
+        }
+        
+        // Helper function to show error messages
+        function showError(elementId, message) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.textContent = message;
+                element.classList.remove('hidden');
+            }
+        }
+        
+        // Helper function to hide error messages
+        function hideError(elementId) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.textContent = '';
+                element.classList.add('hidden');
+            }
+        }
+    </script>
+    
+</body>
+</html>

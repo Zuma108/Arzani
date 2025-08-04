@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="auth-token" content="<%= locals.token || '' %>">
+    <title><%= user.username %>'s Profile</title>
+    <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#041b76',
+                        secondary: '#f7f5f2',
+                        accent: '#064fa3',
+                        'text-primary': '#363309',
+                        'gray-850': '#1f2937',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-in-out',
+                        'slide-up': 'slideUp 0.3s ease-out',
+                        'pulse-slow': 'pulse 3s infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+
+        /* Dark mode scrollbar */
+        .dark ::-webkit-scrollbar-track {
+            background: #374151;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: #6b7280;
+        }
+        .dark ::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
+        }
+
+        /* Sidebar transitions */
+        #sidebar {
+            transition: transform 0.3s ease-in-out;
+        }
+
+        /* Toggle switch styles for two-factor auth */
+        #twoFactorSwitch:checked + label .dot {
+            transform: translateX(24px);
+            background-color: #041b76;
+        }
+        #twoFactorSwitch:checked + label {
+            background-color: #e5e7eb;
+        }
+
+        /* Animation keyframes */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Custom animations */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        .slide-up {
+            animation: slideUp 0.3s ease-out;
+        }
+
+        /* Focus styles for accessibility */
+        .focus\:ring-primary:focus {
+            --tw-ring-color: #041b76;
+        }
+
+        /* Hover effects */
+        .hover\:bg-accent:hover {
+            background-color: #064fa3;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 min-h-screen flex">
+    <!-- Mobile menu button -->
+    <button id="mobile-menu-button" class="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+        <i class="fas fa-bars text-gray-600 dark:text-gray-300"></i>
+    </button>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-gray-800 shadow-lg transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
+        <div class="flex flex-col h-full">
+            <!-- Logo -->
+            <div class="flex items-center px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <img src="/figma design exports/images.webp/arzani-icon-nobackground.png" alt="Arzani" class="h-8 w-8">
+                <span class="ml-3 text-xl font-semibold text-gray-900 dark:text-white">Arzani</span>
+            </div>
+
+            <!-- Navigation -->
+            <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+                <a href="/marketplace2" class="flex items-center px-3 py-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <i class="fas fa-store mr-3 w-5"></i>
+                    <span>Marketplace</span>
+                </a>
+                <a href="/market-trends" class="flex items-center px-3 py-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <i class="fas fa-chart-line mr-3 w-5"></i>
+                    <span>Market Trends</span>
+                </a>
+                <a href="/chat" class="flex items-center px-3 py-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <i class="fas fa-comments mr-3 w-5"></i>
+                    <span>Chat</span>
+                </a>
+                <a href="/profile" class="flex items-center px-3 py-2 bg-primary text-white rounded-lg">
+                    <i class="fas fa-user-circle mr-3 w-5"></i>
+                    <span>My Profile</span>
+                </a>
+                <a href="/saved-searches" class="flex items-center px-3 py-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <i class="fas fa-bookmark mr-3 w-5"></i>
+                    <span>Saved Searches</span>
+                </a>
+                <a href="/history" class="flex items-center px-3 py-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <i class="fas fa-history mr-3 w-5"></i>
+                    <span>History</span>
+                </a>
+                <a href="/professional-verification" class="flex items-center px-3 py-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <i class="fas fa-user-check mr-3 w-5"></i>
+                    <span>Professional Verification</span>
+                </a>
+                
+                <!-- Add Buyer Dashboard link if buyer is premium -->
+                <% if (locals.user && locals.user.buyer_plan === 'premium') { %>
+                <a href="/buyer-dashboard" class="flex items-center px-3 py-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <i class="fas fa-shopping-cart mr-3 w-5"></i>
+                    <span>Buyer Dashboard</span>
+                </a>
+                <% } %>
+                
+                <!-- Add Professional Dashboard link if verified -->
+                <% if (locals.user && locals.user.is_verified_professional) { %>
+                <a href="/professional-dashboard" class="flex items-center px-3 py-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <i class="fas fa-tachometer-alt mr-3 w-5"></i>
+                    <span>Professional Dashboard</span>
+                </a>
+                <% } %>
+                
+                <!-- Admin Verification Review link -->
+                <% if (locals.user && locals.user.role === 'admin') { %>
+                <a href="/admin/verification-review" class="flex items-center px-3 py-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <i class="fas fa-user-shield mr-3 w-5"></i>
+                    <span>Admin Verification</span>
+                    <span class="ml-auto bg-red-500 text-white text-xs px-2 py-1 rounded-full">Admin</span>
+                </a>
+                <% } %>
+            </nav>
+
+            <!-- Sign out button -->
+            <div class="p-4 border-t border-gray-200 dark:border-gray-700">
+                <button id="signOutBtn" class="w-full flex items-center justify-center px-4 py-2 text-red-600 dark:text-red-400 border border-red-600 dark:border-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                    <i class="fas fa-sign-out-alt mr-2"></i>
+                    <span>Sign Out</span>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Mobile sidebar overlay -->
+    <div id="sidebar-overlay" class="lg:hidden fixed inset-0 z-30 bg-black bg-opacity-50 hidden"></div>
+
+    <!-- Main Content -->
+    <main class="flex-1 lg:ml-64 flex flex-col overflow-y-auto">
+        <!-- Top Navbar -->
+        <nav class="bg-white dark:bg-gray-800 shadow-md sticky top-0 z-30">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-16">
+                    <!-- Left side - Hamburger and Page Title -->
+                    <div class="flex items-center">
+                        <button id="sidebarToggle" class="lg:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 mr-4">
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                        </button>
+                        <h1 class="text-xl font-semibold text-gray-800 dark:text-white">My Profile</h1>
+                    </div>
+                    
+                    <!-- Center - Token Balance Widget -->
+                    <div id="token-balance-navbar-widget"></div>
+                    
+                    <!-- Right side - Breadcrumb -->
+                    <nav class="hidden md:flex" aria-label="Breadcrumb">
+                        <ol class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
+                            <li><a href="/marketplace2" class="hover:text-gray-700 dark:hover:text-gray-200">Home</a></li>
+                            <li><i class="fas fa-chevron-right text-xs"></i></li>
+                            <li class="text-gray-700 dark:text-gray-300">My Profile</li>
+                        </ol>
+                    </nav>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Page Content -->
+        <div class="p-6">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">My Profile</h1>
+            <p class="text-gray-600 dark:text-gray-400">Manage your account settings and preferences</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Profile Overview Card -->
+            <div class="lg:col-span-1">
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Profile Overview</h3>
+                    </div>
+                    <div class="p-6 text-center">
+                        <div class="relative inline-block mb-4">
+                            <img 
+                                src="<%= user.profile_picture || '/images/default-profile.png' %>" 
+                                alt="Profile Picture" 
+                                class="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
+                                onerror="this.src='/images/default-profile.png'"
+                            >
+                            <label for="profile-picture-input" class="absolute bottom-0 right-0 bg-primary text-white rounded-full w-10 h-10 flex items-center justify-center cursor-pointer hover:bg-accent transition-colors">
+                                <i class="fas fa-camera text-sm"></i>
+                            </label>
+                            <input 
+                                type="file" 
+                                id="profile-picture-input" 
+                                accept="image/jpeg,image/png" 
+                                class="hidden"
+                            >
+                        </div>
+                        <h5 class="text-xl font-semibold text-gray-900 dark:text-white mb-1"><%= user.username %></h5>
+                        <p class="text-gray-600 dark:text-gray-400 mb-4">Member since <%= new Date(user.created_at).toLocaleDateString() %></p>
+                        <div class="flex justify-center mb-4">
+                            <span class="bg-secondary text-primary px-4 py-2 rounded-full text-sm font-medium">
+                                Free Plan
+                            </span>
+                        </div>
+                        <button class="w-full bg-primary text-white py-2 px-4 rounded-lg hover:bg-accent transition-colors" id="upgradeBtn">
+                            Upgrade to Premium
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Information Cards -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Account Information Card -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Account Information</h3>
+                    </div>
+                    <div class="p-6">
+                        <form id="profile-edit-form" class="space-y-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Username</label>
+                                    <input 
+                                        type="text" 
+                                        id="username" 
+                                        name="username" 
+                                        value="<%= user.username %>"
+                                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
+                                    >
+                                </div>
+                                <div>
+                                    <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email Address</label>
+                                    <input 
+                                        type="email" 
+                                        id="email" 
+                                        name="email" 
+                                        value="<%= user.email %>"
+                                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
+                                    >
+                                </div>
+                            </div>
+                            <div>
+                                <label for="bio" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Bio</label>
+                                <textarea 
+                                    id="bio" 
+                                    name="bio" 
+                                    rows="3"
+                                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
+                                ><%= user.bio || '' %></textarea>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="location" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Location</label>
+                                    <input 
+                                        type="text" 
+                                        id="location" 
+                                        name="location" 
+                                        value="<%= user.location || '' %>"
+                                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
+                                    >
+                                </div>
+                                <div>
+                                    <label for="website" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Website</label>
+                                    <input 
+                                        type="url" 
+                                        id="website" 
+                                        name="website" 
+                                        value="<%= user.website || '' %>"
+                                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
+                                    >
+                                </div>
+                            </div>
+                            <div class="flex justify-end">
+                                <button type="submit" class="bg-primary text-white py-2 px-6 rounded-lg hover:bg-accent transition-colors">
+                                    Save Changes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Security Settings Card -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Security Settings</h3>
+                    </div>
+                    <div class="p-6 space-y-6">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h6 class="text-base font-medium text-gray-900 dark:text-white mb-1">Password</h6>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Last changed on <%= new Date().toLocaleDateString() %></p>
+                            </div>
+                            <a href="/auth/forgot-password" class="bg-white border border-primary text-primary py-2 px-4 rounded-lg hover:bg-primary hover:text-white transition-colors">
+                                Change Password
+                            </a>
+                        </div>
+
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h6 class="text-base font-medium text-gray-900 dark:text-white mb-1">Two-Factor Authentication</h6>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Add an extra layer of security</p>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" id="twoFactorSwitch" class="sr-only">
+                                <label for="twoFactorSwitch" class="relative cursor-pointer">
+                                    <div class="block bg-gray-600 w-14 h-8 rounded-full"></div>
+                                    <div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition"></div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Token Balance & Management Card -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Token Balance & Management</h3>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <div>
+                                <h6 class="text-base font-medium text-gray-900 dark:text-white mb-1">Current Balance</h6>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Use tokens to contact sellers and access premium features</p>
+                            </div>
+                            <div class="text-right">
+                                <div class="flex items-center gap-2">
+                                    <i class="fas fa-coins text-yellow-500 text-xl"></i>
+                                    <span id="token-balance-display" class="text-2xl font-bold text-gray-900 dark:text-white">0</span>
+                                    <span class="text-sm text-gray-600 dark:text-gray-400">Tokens</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Tokens Used This Month</p>
+                                        <p class="text-lg font-semibold text-gray-900 dark:text-white" id="tokens-used-month">0</p>
+                                    </div>
+                                    <i class="fas fa-chart-line text-blue-500"></i>
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Last Purchase</p>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400" id="last-purchase-date">Never</p>
+                                    </div>
+                                    <i class="fas fa-shopping-cart text-green-500"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex gap-3">
+                            <button 
+                                class="flex-1 bg-primary text-white py-2 px-4 rounded-lg hover:bg-accent transition-colors" 
+                                onclick="TokenPurchase.showModal()"
+                            >
+                                <i class="fas fa-plus mr-2"></i>
+                                Buy Tokens
+                            </button>
+                            <button 
+                                class="flex-1 bg-white border border-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600 transition-colors"
+                                onclick="showTokenUsageHistory()"
+                            >
+                                <i class="fas fa-history mr-2"></i>
+                                Usage History
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Buyer Status & Verification Card -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Buyer Status & Verification</h3>
+                            <span class="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm" id="buyer-status-badge">Loading...</span>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div id="buyer-status-content">
+                            <div class="text-center py-8">
+                                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                                <p class="text-gray-600 dark:text-gray-400 mt-4">Loading buyer status...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End Page Content -->
+    </main>
+
+    <!-- Profile Picture Upload Modal -->
+    <div id="profilePictureModal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full">
+            <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Update Profile Picture</h3>
+            </div>
+            <div class="p-6">
+                <form id="picture-form" enctype="multipart/form-data" class="space-y-4">
+                    <div>
+                        <label for="profile_picture" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Choose a new profile picture</label>
+                        <input 
+                            type="file" 
+                            id="profile_picture" 
+                            name="profile_picture" 
+                            accept="image/*" 
+                            required
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
+                        >
+                    </div>
+                    <div id="preview-container" class="text-center hidden">
+                        <img id="image-preview" class="max-h-48 rounded-lg mx-auto" alt="Preview">
+                    </div>
+                </form>
+            </div>
+            <div class="p-6 border-t border-gray-200 dark:border-gray-700 flex justify-end space-x-3">
+                <button 
+                    type="button" 
+                    id="cancelUploadBtn"
+                    class="px-4 py-2 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                >
+                    Cancel
+                </button>
+                <button 
+                    type="button" 
+                    id="saveProfilePictureBtn"
+                    class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-accent transition-colors"
+                >
+                    Upload
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mobile menu functionality
+        document.getElementById('mobile-menu-button').addEventListener('click', function() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        });
+
+        document.getElementById('sidebar-overlay').addEventListener('click', function() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            
+            sidebar.classList.add('-translate-x-full');
+            overlay.classList.add('hidden');
+        });
+
+        // Profile picture modal functionality
+        document.getElementById('profile-picture-input').addEventListener('change', function() {
+            document.getElementById('profilePictureModal').classList.remove('hidden');
+        });
+
+        document.getElementById('cancelUploadBtn').addEventListener('click', function() {
+            document.getElementById('profilePictureModal').classList.add('hidden');
+        });
+
+        // Close modal when clicking outside
+        document.getElementById('profilePictureModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.add('hidden');
+            }
+        });
+
+        // Dark mode toggle (if needed)
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+            localStorage.setItem('darkMode', document.documentElement.classList.contains('dark'));
+        }
+
+        // Load dark mode preference
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+    
+    <!-- Token System Components -->
+    <script src="/js/token-balance.js"></script>
+    <script src="/js/token-purchase.js"></script>
+    
+    <script src="/js/profile.js"></script>
+    
+    <!-- Initialize Token Balance System -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize token balance system for profile page
+            if (typeof TokenBalance !== 'undefined') {
+                console.log('Initializing Token Balance for profile page');
+                
+                // Create a custom instance for the profile page
+                window.profileTokenBalance = new TokenBalance();
+                
+                // Override the findWidgetContainer method to target our specific navbar widget
+                window.profileTokenBalance.findWidgetContainer = function() {
+                    return document.getElementById('token-balance-navbar-widget');
+                };
+                
+                // Also update the profile page token display
+                window.profileTokenBalance.addBalanceListener(function(balance) {
+                    const displayElement = document.getElementById('token-balance-display');
+                    if (displayElement) {
+                        displayElement.textContent = balance;
+                    }
+                });
+                
+                // Load usage statistics
+                loadTokenUsageStats();
+                
+            } else {
+                console.error('TokenBalance class not available');
+            }
+        });
+        
+        // Function to load token usage statistics
+        async function loadTokenUsageStats() {
+            try {
+                const response = await fetch('/api/tokens/usage-stats', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const stats = await response.json();
+                    
+                    // Update tokens used this month
+                    const usedElement = document.getElementById('tokens-used-month');
+                    if (usedElement && stats.usedThisMonth !== undefined) {
+                        usedElement.textContent = stats.usedThisMonth;
+                    }
+                    
+                    // Update last purchase date
+                    const lastPurchaseElement = document.getElementById('last-purchase-date');
+                    if (lastPurchaseElement && stats.lastPurchaseDate) {
+                        const date = new Date(stats.lastPurchaseDate);
+                        lastPurchaseElement.textContent = date.toLocaleDateString();
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading token usage stats:', error);
+            }
+        }
+        
+        // Function to show token usage history modal
+        function showTokenUsageHistory() {
+            // Create and show a modal with token usage history
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4';
+            modal.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-96 overflow-y-auto">
+                    <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Token Usage History</h3>
+                            <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div id="usage-history-content">
+                            <div class="text-center py-8">
+                                <i class="fas fa-spinner fa-spin text-primary text-2xl mb-2"></i>
+                                <p class="text-gray-600 dark:text-gray-400">Loading usage history...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Load usage history
+            loadUsageHistory();
+        }
+        
+        // Function to load detailed usage history
+        async function loadUsageHistory() {
+            try {
+                const response = await fetch('/api/tokens/usage-history', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const content = document.getElementById('usage-history-content');
+                if (!content) return;
+                
+                if (response.ok) {
+                    const history = await response.json();
+                    
+                    if (history.length === 0) {
+                        content.innerHTML = `
+                            <div class="text-center py-8">
+                                <i class="fas fa-history text-gray-400 text-3xl mb-2"></i>
+                                <p class="text-gray-600 dark:text-gray-400">No token usage history yet</p>
+                            </div>
+                        `;
+                    } else {
+                        content.innerHTML = history.map(item => `
+                            <div class="flex justify-between items-center py-3 border-b border-gray-200 dark:border-gray-700 last:border-b-0">
+                                <div>
+                                    <p class="font-medium text-gray-900 dark:text-white">${item.action}</p>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">${new Date(item.created_at).toLocaleDateString()}</p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-red-600 dark:text-red-400">-${item.amount} tokens</span>
+                                </div>
+                            </div>
+                        `).join('');
+                    }
+                } else {
+                    content.innerHTML = `
+                        <div class="text-center py-8">
+                            <i class="fas fa-exclamation-triangle text-red-500 text-3xl mb-2"></i>
+                            <p class="text-red-600">Error loading usage history</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading usage history:', error);
+                const content = document.getElementById('usage-history-content');
+                if (content) {
+                    content.innerHTML = `
+                        <div class="text-center py-8">
+                            <i class="fas fa-exclamation-triangle text-red-500 text-3xl mb-2"></i>
+                            <p class="text-red-600">Error loading usage history</p>
+                        </div>
+                    `;
+                }
+            }
+        }
+    </script>
+</body>
+</html>

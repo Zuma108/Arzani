@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - Arzani Marketplace</title>
+    <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="/css/marketplace2.css">
+    <!-- Add Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <%- include('partials/navbar') %>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-primary-600 to-primary-800 py-12 px-6 sm:px-12 text-center">
+                <h1 class="text-4xl font-bold text-white mb-2">Privacy Policy</h1>
+                <p class="text-primary-100 font-medium">Last Updated: February 28, 2024</p>
+            </div>
+
+            <!-- Content -->
+            <div class="p-6 sm:p-8 md:p-12">
+                <!-- Introduction -->
+                <div class="prose max-w-4xl mx-auto mb-10">
+                    <p class="text-gray-700 leading-relaxed text-lg">
+                        Arzani Ltd and its subsidiaries ("Company", "We", or "Us") respect your privacy and are committed to protecting it in accordance with the highest legal standards developed over more than 20 years in privacy law, as well as in full compliance with UK data protection legislation including the Data Protection Act 2018 and the UK General Data Protection Regulation (UK GDPR).
+                    </p>
+                </div>
+
+                <!-- Important Notice -->
+                <div class="bg-blue-50 border-l-4 border-primary-500 p-6 rounded-lg my-8">
+                    <p class="font-semibold text-primary-900 text-lg">Your Privacy Rights Matter</p>
+                    <p class="text-primary-800 mt-2">
+                        This Privacy Policy explains what information we collect, how we use it, and your rights regarding your personal data. By using our services, you agree to the collection and use of information in accordance with this policy.
+                    </p>
+                </div>
+
+                <!-- All Privacy Sections -->
+                <div class="space-y-12 max-w-4xl mx-auto">
+                    <!-- Section 1 -->
+                    <section id="information-collection" class="relative">
+                        <div class="absolute -left-4 top-0 h-full w-1 bg-primary-200 rounded hidden md:block"></div>
+                        <h2 class="text-2xl font-bold text-primary-900 mb-5 flex items-center">
+                            <span class="inline-flex items-center justify-center bg-primary-600 text-white rounded-full h-7 w-7 mr-3">1</span>
+                            Information We Collect
+                        </h2>
+                        <div class="ml-0 md:ml-10 space-y-6 text-gray-700">
+                            <div class="bg-gray-50 p-6 rounded-xl border border-gray-200">
+                                <h3 class="font-bold text-primary-800 text-xl mb-3">1.1 Personal Information</h3>
+                                <ul class="list-disc pl-6 space-y-2">
+                                    <li>Contact information (name, email, phone number)</li>
+                                    <li>Account credentials</li>
+                                    <li>Business information</li>
+                                    <li>Transaction data</li>
+                                    <li>Communication records</li>
+                                </ul>
+                            </div>
+
+                            <div class="bg-gray-50 p-6 rounded-xl border border-gray-200">
+                                <h3 class="font-bold text-primary-800 text-xl mb-3">1.2 Automatically Collected Information</h3>
+                                <ul class="list-disc pl-6 space-y-2">
+                                    <li>Device and browser information</li>
+                                    <li>IP address and location data</li>
+                                    <li>Usage patterns and preferences</li>
+                                    <li>Cookies and similar technologies</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Add these new sections after existing sections -->
+                    <section id="business-data-protection" class="relative">
+                        <div class="absolute -left-4 top-0 h-full w-1 bg-primary-200 rounded hidden md:block"></div>
+                        <h2 class="text-2xl font-bold text-primary-900 mb-5 flex items-center">
+                            <span class="inline-flex items-center justify-center bg-primary-600 text-white rounded-full h-7 w-7 mr-3">2</span>
+                            Business Information Protection
+                        </h2>
+                        <div class="ml-0 md:ml-10 space-y-6 text-gray-700">
+                            <div class="bg-gray-50 p-6 rounded-xl border border-gray-200">
+                                <h3 class="font-bold text-primary-800 text-xl mb-3">2.1 Sensitive Business Information</h3>
+                                <p class="mb-4">We understand the sensitive nature of business sale information and implement the following protections:</p>
+                                <ul class="list-disc pl-6 space-y-2 text-gray-700">
+                                    <li>Business listing data is encrypted using industry-standard AES-256 encryption</li>
+                                    <li>Access to full business details is restricted to verified buyers only</li>
+                                    <li>Financial records are stored separately with additional security measures</li>
+                                    <li>Non-disclosure agreements are automatically generated for sensitive information access</li>
+                                </ul>
+                            </div>
+
+                            <div class="bg-amber-50 border-l-4 border-amber-500 p-6 rounded-lg">
+                                <h3 class="font-bold text-amber-800 text-xl mb-3">2.2 Confidentiality Measures</h3>
+                                <p class="text-amber-900 mb-4">To protect business confidentiality, we:</p>
+                                <ul class="list-disc pl-6 space-y-2 text-amber-800">
+                                    <li>Anonymize business listings unless explicitly authorized otherwise</li>
+                                    <li>Implement strict access controls for employee access to business data</li>
+                                    <li>Maintain detailed access logs for all sensitive information</li>
+                                    <li>Require confidentiality agreements from all platform users</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="data-processing" class="relative">
+                        <div class="absolute -left-4 top-0 h-full w-1 bg-primary-200 rounded hidden md:block"></div>
+                        <h2 class="text-2xl font-bold text-primary-900 mb-5 flex items-center">
+                            <span class="inline-flex items-center justify-center bg-primary-600 text-white rounded-full h-7 w-7 mr-3">3</span>
+                            Data Processing and Transfer
+                        </h2>
+                        <div class="ml-0 md:ml-10 space-y-6 text-gray-700">
+                            <div class="bg-blue-50 p-6 rounded-xl border border-blue-200">
+                                <h3 class="font-bold text-blue-800 text-xl mb-3">3.1 International Data Transfers</h3>
+                                <p class="text-blue-900 mb-4">For users in the European Economic Area (EEA) and UK:</p>
+                                <ul class="list-disc pl-6 space-y-2 text-blue-800">
+                                    <li>All data transfers comply with UK GDPR requirements</li>
+                                    <li>Standard Contractual Clauses (SCCs) are implemented for international transfers</li>
+                                    <li>Data processing agreements are in place with all third-party processors</li>
+                                    <li>Regular data protection impact assessments are conducted</li>
+                                </ul>
+                            </div>
+
+                            <div class="bg-gray-50 p-6 rounded-xl border border-gray-200">
+                                <h3 class="font-bold text-primary-800 text-xl mb-3">3.2 Third-Party Processing</h3>
+                                <p class="mb-4">We engage the following categories of third-party processors:</p>
+                                <ul class="list-disc pl-6 space-y-2 text-gray-700">
+                                    <li>Payment processors (regulated financial institutions)</li>
+                                    <li>Cloud storage providers (with UK/EU data centers)</li>
+                                    <li>Analytics services (anonymized data only)</li>
+                                    <li>Email service providers (marketing and transactional)</li>
+                                    <li>Document verification services</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="marketplace-specific" class="relative">
+                        <div class="absolute -left-4 top-0 h-full w-1 bg-primary-200 rounded hidden md:block"></div>
+                        <h2 class="text-2xl font-bold text-primary-900 mb-5 flex items-center">
+                            <span class="inline-flex items-center justify-center bg-primary-600 text-white rounded-full h-7 w-7 mr-3">4</span>
+                            Marketplace-Specific Privacy Measures
+                        </h2>
+                        <div class="ml-0 md:ml-10 space-y-6 text-gray-700">
+                            <div class="bg-gray-50 p-6 rounded-xl border border-gray-200">
+                                <h3 class="font-bold text-primary-800 text-xl mb-3">4.1 Business Listing Privacy</h3>
+                                <ul class="list-disc pl-6 space-y-2 text-gray-700">
+                                    <li>Public listings show only non-identifying business information</li>
+                                    <li>Detailed financials are shared only after NDA execution</li>
+                                    <li>Seller contact information is protected through our messaging system</li>
+                                    <li>Geographic location is approximated unless authorized</li>
+                                </ul>
+                            </div>
+
+                            <div class="bg-gray-50 p-6 rounded-xl border border-gray-200">
+                                <h3 class="font-bold text-primary-800 text-xl mb-3">4.2 Buyer Privacy</h3>
+                                <ul class="list-disc pl-6 space-y-2 text-gray-700">
+                                    <li>Buyer credentials and financial capacity are verified privately</li>
+                                    <li>Search history and saved listings are confidential</li>
+                                    <li>Communication with sellers is anonymized by default</li>
+                                    <li>Due diligence documents are access-controlled</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="data-retention" class="relative">
+                        <div class="absolute -left-4 top-0 h-full w-1 bg-primary-200 rounded hidden md:block"></div>
+                        <h2 class="text-2xl font-bold text-primary-900 mb-5 flex items-center">
+                            <span class="inline-flex items-center justify-center bg-primary-600 text-white rounded-full h-7 w-7 mr-3">5</span>
+                            Data Retention and Deletion
+                        </h2>
+                        <div class="ml-0 md:ml-10 space-y-6 text-gray-700">
+                            <div class="bg-gray-50 p-6 rounded-xl border border-gray-200">
+                                <h3 class="font-bold text-primary-800 text-xl mb-3">5.1 Retention Periods</h3>
+                                <p class="mb-4">We retain different types of data for specific periods:</p>
+                                <ul class="list-disc pl-6 space-y-2 text-gray-700">
+                                    <li>Active listings: Duration of listing plus 30 days</li>
+                                    <li>Transaction records: 7 years (legal requirement)</li>
+                                    <li>Communication records: 2 years after last interaction</li>
+                                    <li>Account information: Until account deletion request</li>
+                                </ul>
+                            </div>
+
+                            <div class="bg-green-50 p-6 rounded-xl border border-green-200">
+                                <h3 class="font-bold text-green-800 text-xl mb-3">5.2 Data Subject Rights</h3>
+                                <p class="text-green-900 mb-4">As a data subject, you have the right to:</p>
+                                <ul class="list-disc pl-6 space-y-2 text-green-800">
+                                    <li>Request access to your personal data</li>
+                                    <li>Request correction of inaccurate data</li>
+                                    <li>Request erasure of your data ("right to be forgotten")</li>
+                                    <li>Object to processing of your data</li>
+                                    <li>Request restriction of processing</li>
+                                    <li>Request data portability</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Bottom notice -->
+                    <div class="mt-12 bg-gradient-to-r from-primary-50 to-primary-100 p-8 rounded-xl border border-primary-200 shadow-sm text-center">
+                        <p class="text-primary-800 text-xl font-medium">
+                            If you have any questions about this Privacy Policy, please contact us at 
+                            <a href="mailto:hello@arzani.co.uk" class="text-primary-600 hover:text-primary-700">hello@arzani.co.uk</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Back to top button -->
+        <div class="text-center mt-8">
+            <a href="#" class="inline-flex items-center px-4 py-2 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                </svg>
+                Back to top
+            </a>
+        </div>
+    </div>
+
+    <%- include('partials/footer') %>
+</body>
+</html>

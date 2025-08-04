@@ -81,19 +81,25 @@ jobs:
         fi
         echo "✅ All required secrets are present"
 
-    # Simple production build
+    # Clear any potential caches and create production build
     - name: Create production build
       run: |
-        echo "📦 Creating production build..."
+        echo "📦 Creating production build with cache clearing..."
         
-        # Show directory overview (limited output)
+        # Clear npm cache to prevent stale dependency issues
+        npm cache clean --force
+        
+        # Show directory overview and file verification
         echo "📂 Root directory file count: $(find . -maxdepth 1 -type f | wc -l)"
         echo "📁 Root directory size: $(du -sh . | cut -f1)"
         
-        # Verify essential files exist
+        # PRE-FLIGHT: Verify critical files exist BEFORE starting build
+        echo "🔍 PRE-FLIGHT: Verifying critical files exist..."
         [ -f "package.json" ] || { echo "❌ package.json missing"; exit 1; }
         [ -f "server.js" ] || { echo "❌ server.js missing"; exit 1; }
-        echo "✅ Essential files verified"
+        [ -f "api/valuation.js" ] || { echo "❌ api/valuation.js missing in source"; exit 1; }
+        [ -f "api/public-valuation.js" ] || { echo "❌ api/public-valuation.js missing in source"; exit 1; }
+        echo "✅ All critical files verified in source"
         
         # Create production directory
         mkdir production
@@ -121,22 +127,34 @@ jobs:
           fi
         done
         
-        # Explicitly verify api directory and key files
+        # Explicitly verify api directory and key files with detailed logging
         if [ -d "production/api" ]; then
-          echo "🔍 Verifying api directory contents:"
+          echo "🔍 Verifying api directory contents with full file listing:"
           ls -la production/api/
+          echo "📊 API directory file count: $(find production/api/ -type f | wc -l)"
+          
+          # Check each critical file individually with size and timestamp
           if [ -f "production/api/valuation.js" ]; then
-            echo "✅ valuation.js found in production build"
+            file_size=$(stat -c%s "production/api/valuation.js" 2>/dev/null || wc -c < "production/api/valuation.js")
+            echo "✅ valuation.js found in production build (${file_size} bytes)"
           else
             echo "❌ valuation.js missing in production build"
+            echo "🔍 DEBUG: Contents of production/api directory:"
+            find production/api/ -type f -name "*.js" | head -10
             exit 1
           fi
+          
           if [ -f "production/api/public-valuation.js" ]; then
-            echo "✅ public-valuation.js found in production build"
+            file_size=$(stat -c%s "production/api/public-valuation.js" 2>/dev/null || wc -c < "production/api/public-valuation.js")
+            echo "✅ public-valuation.js found in production build (${file_size} bytes)"
           else
             echo "❌ public-valuation.js missing in production build"
+            echo "🔍 DEBUG: Contents of production/api directory:"
+            find production/api/ -type f -name "*.js" | head -10
             exit 1
           fi
+          
+          echo "🎯 Both critical API files successfully verified in production build"
         else
           echo "❌ api directory missing in production build"
           exit 1

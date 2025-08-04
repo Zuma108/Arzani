@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cookie Policy | Arzani</title>
+    <link rel="stylesheet" href="/css/modern.css">
+    <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/cookie-banner.css">
+    <%- include('partials/tailwind-setup') %>
+    <style>
+        .policy-section {
+            margin-bottom: 2.5rem;
+            position: relative;
+        }
+        
+        .policy-section h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            position: relative;
+        }
+        
+        .policy-section h2::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 50px;
+            height: 2px;
+            background-color: var(--primary-blue);
+        }
+        
+        .policy-container {
+            background: rgba(30, 30, 30, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            max-width: 900px;
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .policy-container::before {
+            content: "";
+            position: absolute;
+            top: -200px;
+            right: -200px;
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(49,111,212,0.1) 0%, transparent 70%);
+            z-index: -1;
+        }
+        
+        .policy-container::after {
+            content: "";
+            position: absolute;
+            bottom: -200px;
+            left: -200px;
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(155,75,249,0.08) 0%, transparent 70%);
+            z-index: -1;
+        }
+        
+        .policy-table {
+            width: 100%;
+            margin: 1.5rem 0;
+            border-collapse: collapse;
+        }
+        
+        .policy-table th, .policy-table td {
+            padding: 1rem;
+            text-align: left;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .policy-table th {
+            background-color: rgba(49,111,212,0.1);
+            font-weight: 600;
+        }
+        
+        .policy-table tr:nth-child(even) {
+            background-color: rgba(255,255,255,0.03);
+        }
+        
+        .browser-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+        
+        .browser-link {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            background-color: rgba(30, 30, 30, 0.8);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        
+        .browser-link:hover {
+            transform: translateY(-3px);
+            border-color: var(--primary-blue);
+            box-shadow: 0 5px 15px rgba(49,111,212,0.15);
+        }
+        
+        .browser-link svg {
+            margin-right: 0.75rem;
+        }
+        
+        .cookie-policy-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .cookie-policy-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff 30%, #9BA3AF 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+        }
+        
+        .cookie-policy-header .last-updated {
+            color: var(--text-gray);
+            font-style: italic;
+        }
+    </style>
+</head>
+<body class="bg-dark text-white font-sans">
+    <div class="page-wrapper">
+    
+        <!-- Header/Navbar -->
+        <header class="header-transparent fixed w-full z-50 transition-all duration-300">
+            <nav class="container max-w-[1920px] mx-auto px-4 md:px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-4 md:gap-10">
+                        <a href="/" class="navbar__logo">
+                            <img src="/figma design exports/logos/white-arzani-logo.svg" alt="Arzani Logo" class="h-6 md:h-8">
+                        </a>
+                        <div class="hidden md:flex items-center space-x-8">
+                            <!-- Products Dropdown -->
+                            <div class="navbar__drawer group relative">
+                                <div class="navbar__drawer_trigger flex items-center">
+                                    <span class="text-sm font-medium">Products</span>
+                                    <div class="icon-1x1-xsmall ml-2">
+                                        <svg width="20" height="20" fill="none" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" class="transition-transform duration-200 group-hover:rotate-180">
+                                            <path clip-rule="evenodd" d="M15.5303 13.0303C15.2374 13.3232 14.7626 13.3232 14.4697 13.0303L11.7324 10.2931C11.3276 9.8883 11.0555 9.61703 10.8292 9.42491C10.6096 9.23847 10.4829 9.17101 10.3863 9.13961C10.1352 9.05803 9.86478 9.05803 9.61373 9.13961C9.51706 9.17101 9.39038 9.23847 9.17076 9.42491C8.94445 9.61704 8.67236 9.8883 8.26759 10.2931L5.53033 13.0303C5.23744 13.3232 4.76256 13.3232 4.46967 13.0303C4.17678 12.7374 4.17678 12.2626 4.46967 11.9697L7.20693 9.23241L7.22846 9.21088C7.60615 8.83317 7.9214 8.51791 8.2 8.2814C8.49056 8.03473 8.79021 7.82999 9.1502 7.71302C9.70252 7.53356 10.2975 7.53356 10.8498 7.71302C11.2098 7.82999 11.5094 8.03473 11.8 8.2814C12.0786 8.51791 12.3939 8.83318 12.7715 9.21089L12.7931 9.23241L15.5303 11.9697C15.8232 12.2626 15.8232 12.7374 15.5303 13.0303Z" fill="currentColor" fill-rule="evenodd"></path>
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div class="navbar__drawer_dropdown hidden group-hover:block absolute top-full left-0 mt-2">
+                                    <div class="navbar__drawer_dropdown__wrapper">
+                                        <div class="navbar__drawer_card bg-dark-light rounded-lg shadow-lg border border-gray-800 overflow-hidden p-4 min-w-[240px]">
+                                            <a href="/business-valuation" class="navbar__link block px-4 py-3 hover:bg-gray-800 transition-colors rounded-md">
+                                                <div class="text-base font-medium">Business Valuation</div>
+                                                <p class="text-xs text-gray-400 mt-1">Get accurate valuations using AI</p>
+                                            </a>
+                                            <a href="/ai-insights" class="navbar__link block px-4 py-3 hover:bg-gray-800 transition-colors rounded-md">
+                                                <div class="text-base font-medium">AI Market Insights</div>
+                                                <p class="text-xs text-gray-400 mt-1">Data-driven market analysis</p>
+                                            </a>
+                                            <a href="/marketplace2" class="navbar__link block px-4 py-3 hover:bg-gray-800 transition-colors rounded-md">
+                                                <div class="text-base font-medium">Marketplace</div>
+                                                <p class="text-xs text-gray-400 mt-1">Browse business listings</p>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- More navigation items - same as pricing page -->
+                            <!-- Features Dropdown -->
+                            <div class="navbar__drawer group relative">
+                                <div class="navbar__drawer_trigger flex items-center">
+                                    <span class="text-sm font-medium">Features</span>
+                                    <div class="icon-1x1-xsmall ml-2">
+                                        <svg width="20" height="20" fill="none" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" class="transition-transform duration-200 group-hover:rotate-180">
+                                            <path clip-rule="evenodd" d="M15.5303 13.0303C15.2374 13.3232 14.7626 13.3232 14.4697 13.0303L11.7324 10.2931C11.3276 9.8883 11.0555 9.61703 10.8292 9.42491C10.6096 9.23847 10.4829 9.17101 10.3863 9.13961C10.1352 9.05803 9.86478 9.05803 9.61373 9.13961C9.51706 9.17101 9.39038 9.23847 9.17076 9.42491C8.94445 9.61704 8.67236 9.8883 8.26759 10.2931L5.53033 13.0303C5.23744 13.3232 4.76256 13.3232 4.46967 13.0303C4.17678 12.7374 4.17678 12.2626 4.46967 11.9697L7.20693 9.23241L7.22846 9.21088C7.60615 8.83317 7.9214 8.51791 8.2 8.2814C8.49056 8.03473 8.79021 7.82999 9.1502 7.71302C9.70252 7.53356 10.2975 7.53356 10.8498 7.71302C11.2098 7.82999 11.5094 8.03473 11.8 8.2814C12.0786 8.51791 12.3939 8.83318 12.7715 9.21089L12.7931 9.23241L15.5303 11.9697C15.8232 12.2626 15.8232 12.7374 15.5303 13.0303Z" fill="currentColor" fill-rule="evenodd"></path>
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div class="navbar__drawer_dropdown hidden group-hover:block absolute top-full left-0 mt-2">
+                                    <div class="navbar__drawer_dropdown__wrapper">
+                                        <div class="navbar__drawer_card bg-dark-light rounded-lg shadow-lg border border-gray-800 overflow-hidden p-4 min-w-[240px]">
+                                            <a href="/features/brain-ai" class="navbar__link block px-4 py-3 hover:bg-gray-800 transition-colors rounded-md">
+                                                <div class="text-base font-medium">Brain AI</div>
+                                                <p class="text-xs text-gray-400 mt-1">Intelligent business analytics</p>
+                                            </a>
+                                            <a href="/features/power-ups" class="navbar__link block px-4 py-3 hover:bg-gray-800 transition-colors rounded-md">
+                                                <div class="text-base font-medium">Power-ups</div>
+                                                <p class="text-xs text-gray-400 mt-1">Enhance your experience</p>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Company Dropdown -->
+                            <div class="navbar__drawer group relative">
+                                <div class="navbar__drawer_trigger flex items-center">
+                                    <span class="text-sm font-medium">Company</span>
+                                    <div class="icon-1x1-xsmall ml-2">
+                                        <svg width="20" height="20" fill="none" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" class="transition-transform duration-200 group-hover:rotate-180">
+                                            <path clip-rule="evenodd" d="M15.5303 13.0303C15.2374 13.3232 14.7626 13.3232 14.4697 13.0303L11.7324 10.2931C11.3276 9.8883 11.0555 9.61703 10.8292 9.42491C10.6096 9.23847 10.4829 9.17101 10.3863 9.13961C10.1352 9.05803 9.86478 9.05803 9.61373 9.13961C9.51706 9.17101 9.39038 9.23847 9.17076 9.42491C8.94445 9.61704 8.67236 9.8883 8.26759 10.2931L5.53033 13.0303C5.23744 13.3232 4.76256 13.3232 4.46967 13.0303C4.17678 12.7374 4.17678 12.2626 4.46967 11.9697L7.20693 9.23241L7.22846 9.21088C7.60615 8.83317 7.9214 8.51791 8.2 8.2814C8.49056 8.03473 8.79021 7.82999 9.1502 7.71302C9.70252 7.53356 10.2975 7.53356 10.8498 7.71302C11.2098 7.82999 11.5094 8.03473 11.8 8.2814C12.0786 8.51791 12.3939 8.83318 12.7715 9.21089L12.7931 9.23241L15.5303 11.9697C15.8232 12.2626 15.8232 12.7374 15.5303 13.0303Z" fill="currentColor" fill-rule="evenodd"></path>
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div class="navbar__drawer_dropdown hidden group-hover:block absolute top-full left-0 mt-2">
+                                    <div class="navbar__drawer_dropdown__wrapper">
+                                        <div class="navbar__drawer_card bg-dark-light rounded-lg shadow-lg border border-gray-800 overflow-hidden p-4 min-w-[240px]">
+                                            <a href="/about-us" class="navbar__link block px-4 py-3 hover:bg-gray-800 transition-colors rounded-md">
+                                                <div class="text-base font-medium">About Us</div>
+                                                <p class="text-xs text-gray-400 mt-1">Our mission and vision</p>
+                                            </a>
+                                            <a href="/contact" class="navbar__link block px-4 py-3 hover:bg-gray-800 transition-colors rounded-md">
+                                                <div class="text-base font-medium">Contact Us</div>
+                                                <p class="text-xs text-gray-400 mt-1">Get in touch with our team</p>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <a href="/blog" class="navbar__link">
+                                <span class="text-sm font-medium">Blog</span>
+                            </a>
+                            
+                            <a href="/pricing" class="navbar__link">
+                                <span class="text-sm font-medium">Pricing</span>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4 md:gap-6">
+                        <a href="/login" class="hidden md:block text-sm font-medium">Log in</a>
+                        <a href="/signup" class="btn-primary text-sm md:text-base px-4 py-2 md:px-6">
+                            Get Started
+                        </a>
+                        <button class="navbar__burger md:hidden flex items-center" aria-expanded="false">
+                            <div class="burger-line"></div>
+                            <div class="burger-line"></div>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Mobile menu container -->
+                <div class="navbar__menu hidden md:hidden transition-all duration-300 mt-4">
+                    <div class="flex flex-col space-y-3 pb-3 border-b border-gray-800">
+                        <a href="/business-valuation" class="text-sm py-2">Business Valuation</a>
+                        <a href="/ai-insights" class="text-sm py-2">AI Market Insights</a>
+                        <a href="/marketplace" class="text-sm py-2">Marketplace</a>
+                        <a href="/features" class="text-sm py-2">Features</a>
+                        <a href="/pricing" class="text-sm py-2">Pricing</a>
+                        <a href="/login" class="text-sm py-2">Log in</a>
+                    </div>
+                </div>
+            </nav>
+        </header>
+
+        <!-- Main Content -->
+        <main class="min-h-screen bg-dark text-white pt-32 pb-20">
+            <div class="container mx-auto px-4">
+                <!-- Cookie Policy Header -->
+                <div class="cookie-policy-header">
+                    <h1>Cookie Policy</h1>
+                    <p class="last-updated">Last Updated: October 27, 2023</p>
+                </div>
+                
+                <!-- Policy Content -->
+                <div class="policy-container">
+                    <div class="policy-section">
+                        <p class="text-gray-300 leading-relaxed">
+                            Arzani ("we", "us", or "our") uses cookies and similar tracking technologies on our website. This policy explains what cookies are, how we use them, the types of cookies we use, the information we collect using cookies, how that information is used, and how you can control your cookie preferences.
+                        </p>
+                    </div>
+
+                    <div class="policy-section">
+                        <h2 class="animate-fade-in">1. What Are Cookies?</h2>
+                        <p class="text-gray-300 leading-relaxed mb-4">
+                            Cookies are small text files that are stored on your browser or device by websites, apps, online media, and advertisements. They are widely used to make websites work, or work more efficiently, as well as to provide reporting information and assist with service or advertising personalization.
+                        </p>
+                        
+                        <p class="text-gray-300 leading-relaxed">
+                            Cookies can be "persistent" or "session" cookies:
+                        </p>
+                        
+                        <ul class="list-disc pl-6 mt-3 space-y-2 text-gray-300">
+                            <li><strong class="text-white">Session cookies</strong> are temporary and are deleted from your device when you close your web browser.</li>
+                            <li><strong class="text-white">Persistent cookies</strong> remain on your device until they expire or you delete them from your cache. These cookies enable websites to recognize you and remember your preferences for future visits.</li>
+                        </ul>
+                    </div>
+
+                    <div class="policy-section">
+                        <h2 class="animate-fade-in">2. How We Use Cookies</h2>
+                        <p class="text-gray-300 leading-relaxed mb-4">
+                            We use cookies for several purposes, including:
+                        </p>
+                        
+                        <table class="policy-table">
+                            <thead>
+                                <tr>
+                                    <th>Cookie Type</th>
+                                    <th>Description</th>
+                                    <th>Purpose</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="font-medium">Essential Cookies</td>
+                                    <td>These are necessary for the website to function and cannot be switched off in our systems.</td>
+                                    <td>They are usually only set in response to actions made by you which amount to a request for services, such as setting your privacy preferences, logging in, or filling in forms.</td>
+                                </tr>
+                                <tr>
+                                    <td class="font-medium">Analytics Cookies</td>
+                                    <td>These allow us to count visits and traffic sources so we can measure and improve the performance of our site.</td>
+                                    <td>They help us know which pages are the most and least popular and see how visitors move around the site. We use services like Google Analytics for this purpose.</td>
+                                </tr>
+                                <tr>
+                                    <td class="font-medium">Marketing Cookies</td>
+                                    <td>These cookies may be set through our site by our advertising partners.</td>
+                                    <td>They may be used by those companies to build a profile of your interests and show you relevant adverts on other sites.</td>
+                                </tr>
+                                <tr>
+                                    <td class="font-medium">Functionality Cookies</td>
+                                    <td>These enable the website to provide enhanced functionality and personalization.</td>
+                                    <td>They may be set by us or by third-party providers whose services we have added to our pages.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="policy-section">
+                        <h2 class="animate-fade-in">3. Third-Party Cookies</h2>
+                        <p class="text-gray-300 leading-relaxed mb-4">
+                            In addition to our own cookies, we may also use various third-party cookies to report usage statistics of the service, deliver advertisements on and through the service, and so on. Notably:
+                        </p>
+                        
+                        <div class="bg-dark-light rounded-xl border border-gray-800 p-4 mb-4">
+                            <h3 class="font-semibold text-lg mb-2">Google Analytics</h3>
+                            <p class="text-gray-300 leading-relaxed">
+                                We use Google Analytics to collect and analyze information about the use of the service and report on activities and trends. This service may also collect information regarding the use of other websites, apps, and online resources. You can learn about Google's practices by going to <a href="https://www.google.com/policies/privacy/partners/" target="_blank" rel="noopener noreferrer" class="text-primary-blue hover:underline">www.google.com/policies/privacy/partners/</a>, and opt-out of them by downloading the Google Analytics opt-out browser add-on, available at <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener noreferrer" class="text-primary-blue hover:underline">https://tools.google.com/dlpage/gaoptout</a>.
+                            </p>
+                        </div>
+                        
+                        <div class="bg-dark-light rounded-xl border border-gray-800 p-4">
+                            <h3 class="font-semibold text-lg mb-2">Google Ads & Remarketing</h3>
+                            <p class="text-gray-300 leading-relaxed">
+                                We may use Google Ads to display targeted advertisements to users who have previously visited our site. Google uses cookies to serve ads based on someone's past visits to the website. You can opt out of Google's use of cookies or device identifiers by visiting Google's <a href="https://adssettings.google.com/authenticated" target="_blank" rel="noopener noreferrer" class="text-primary-blue hover:underline">Ads Settings</a>.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="policy-section">
+                        <h2 class="animate-fade-in">4. Your Choices Regarding Cookies</h2>
+                        <p class="text-gray-300 leading-relaxed mb-4">
+                            When you first visit our website, you will see a cookie consent banner allowing you to accept all cookies, accept only selected types, or reject non-essential cookies.
+                        </p>
+                        
+                        <p class="text-gray-300 leading-relaxed mb-4">
+                            Most web browsers allow some control of most cookies through the browser settings. To find out more about cookies, including how to see what cookies have been set, visit <a href="https://www.aboutcookies.org" target="_blank" rel="noopener noreferrer" class="text-primary-blue hover:underline">www.aboutcookies.org</a> or <a href="https://www.allaboutcookies.org" target="_blank" rel="noopener noreferrer" class="text-primary-blue hover:underline">www.allaboutcookies.org</a>.
+                        </p>
+                        
+                        <p class="text-gray-300 leading-relaxed mb-4">
+                            Find out how to manage cookies on popular browsers:
+                        </p>
+                        
+                        <div class="browser-links">
+                            <a href="https://support.google.com/chrome/answer/95647" target="_blank" rel="noopener noreferrer" class="browser-link">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+                                    <path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 6c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/>
+                                </svg>
+                                Google Chrome
+                            </a>
+                            <a href="https://support.microsoft.com/en-us/windows/delete-and-manage-cookies-168dab11-0753-043d-7c16-ede5947fc64d" target="_blank" rel="noopener noreferrer" class="browser-link">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M2.5 12a9.5 9.5 0 1119 0 9.5 9.5 0 01-19 0zM12 2.5a9.5 9.5 0 100 19 9.5 9.5 0 000-19z"/>
+                                    <path d="M9 16h6v-6H9v6z"/>
+                                </svg>
+                                Microsoft Edge
+                            </a>
+                            <a href="https://support.mozilla.org/en-US/kb/enhanced-tracking-protection-firefox-desktop" target="_blank" rel="noopener noreferrer" class="browser-link">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                                </svg>
+                                Mozilla Firefox
+                            </a>
+                            <a href="https://support.apple.com/guide/safari/manage-cookies-and-website-data-sfri11471/mac" target="_blank" rel="noopener noreferrer" class="browser-link">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8-8-3.59 8-8 8z"/>
+                                    <path d="M13 9.94l1.95 1.95-1.95 1.95 1.41 1.41 1.95-1.95 1.95 1.95 1.41-1.41-1.95-1.95 1.95-1.95-1.41-1.41-1.95 1.95-1.95-1.95z"/>
+                                    <path d="M4.22 9.22l1.42 1.42c.39-.39.9-.59 1.41-.59.51 0 1.02.2 1.41.59.78.78.78 2.05 0 2.83-.39.39-.9.58-1.41.58-.51 0-1.02-.19-1.4-.57L4.22 14.9c.74.74 1.71 1.15 2.83 1.15 1.11 0 2.17-.44 2.95-1.23 1.63-1.63 1.63-4.27 0-5.9-1.63-1.63-4.27-1.63-5.9 0-.39.39-.68.84-.88 1.32z"/>
+                                </svg>
+                                Apple Safari
+                            </a>
+                        </div>
+                        
+                        <p class="text-gray-300 leading-relaxed mt-4">
+                            To opt out of being tracked by Google Analytics across all websites, visit <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener noreferrer" class="text-primary-blue hover:underline">http://tools.google.com/dlpage/gaoptout</a>.
+                        </p>
+                    </div>
+
+                    <div class="policy-section">
+                        <h2 class="animate-fade-in">5. Changes to This Cookie Policy</h2>
+                        <p class="text-gray-300 leading-relaxed mb-4">
+                            We may update our Cookie Policy from time to time. We will notify you of any changes by posting the new Cookie Policy on this page and updating the "Last Updated" date.
+                        </p>
+                        <p class="text-gray-300 leading-relaxed">
+                            We encourage you to review this Cookie Policy periodically to stay informed of any updates.
+                        </p>
+                    </div>
+
+                    <div class="policy-section mb-0">
+                        <h2 class="animate-fade-in">6. Contact Us</h2>
+                        <p class="text-gray-300 leading-relaxed mb-4">
+                            If you have any questions about this Cookie Policy, please contact us:
+                        </p>
+                        
+                        <div class="bg-gradient-to-r from-primary-blue/10 to-transparent rounded-xl p-5 border border-primary-blue/20">
+                            <div class="flex items-center mb-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary-blue mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
+                                <p class="text-white">By email: <a href="mailto:privacy@arzani.co.uk" class="text-primary-blue hover:underline">privacy@arzani.co.uk</a></p>
+                            </div>
+                            <div class="flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary-blue mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                                </svg>
+                                <p class="text-white">By visiting this page on our website: <a href="/contact" class="text-primary-blue hover:underline">Contact Page</a></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer - same as pricing page -->
+        <footer class="bg-black border-t border-gray-800">
+            <!-- Upper footer with navigation -->
+            <div class="container mx-auto px-6 py-16">
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-10">
+                    <!-- Company info -->
+                    <div class="md:col-span-4 space-y-6">
+                        <img src="/figma design exports/logos/white-arzani-logo.svg" alt="Arzani Logo" class="h-8">
+                        <p class="text-gray-400 text-sm pr-8 leading-relaxed">
+                            Arzani uses AI-powered insights to revolutionize how businesses are bought and sold, making transactions smarter, faster, and more profitable.
+                        </p>
+                        <div class="flex space-x-4">
+                            <a href="#" class="w-9 h-9 rounded-full flex items-center justify-center bg-dark border border-gray-800 text-gray-400 hover:bg-primary/10 hover:text-white transition-colors">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clip-rule="evenodd"/>
+                                </svg>
+                            </a>
+                            <a href="#" class="w-9 h-9 rounded-full flex items-center justify-center bg-dark border border-gray-800 text-gray-400 hover:bg-primary/10 hover:text-white transition-colors">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.107 4.107 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.096 4.096 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.109 4.109 0 001.27 5.477A4.07 4.07 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84"/>
+                                </svg>
+                            </a>
+                            <a href="#" class="w-9 h-9 rounded-full flex items-center justify-center bg-dark border border-gray-800 text-gray-400 hover:bg-primary/10 hover:text-white transition-colors">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M12.315 2c2.43 0 2.784.013 3.808.06 1.064.049 1.791.218 2.427.465a4.902 4.902 0 011.772 1.153 4.902 4.902 0 011.153 1.772c.247.636.416 1.363.465 2.427.048 1.067.06 1.407.06 4.123v.08c0 2.643-.012 2.987-.06 4.043-.049 1.064-.218 1.791-.465 2.427a4.902 4.902 0 01-1.153 1.772 4.902 4.902 0 01-1.772 1.153c-.636.247-1.363.416-2.427.465-1.067.048-1.407.06-4.123.06h-.08c-2.597 0-2.917-.012-4.043-.06-1.064-.049-1.791-.218-2.427-.465a4.902 4.902 0 01-1.772-1.153 4.902 4.902 0 01-1.153-1.772c-.247-.636-.416-1.363-.465-2.427-.047-1.024-.06-1.379-.06-3.808v-.63c0-2.43.013-2.784.06-3.808.049-1.064.218-1.791.465-2.427a4.902 4.902 0 011.153-1.772A4.902 4.902 0 015.45 2.525c.636-.247 1.363-.416 2.427-.465C8.901 2.013 9.256 2 11.685 2h.63zm-.081 1.802h-.468c-2.456 0-2.784.011-3.807.058-.975.045-1.504.207-1.857.344-.467.182-.8.398-1.15.748-.35.35-.566.683-.748 1.15-.137.353-.3.882-.344 1.857-.047 1.023-.058 1.351-.058 3.807v.468c0 2.456.011 2.784.058 3.807.045.975.207 1.504.344 1.857.182.466.399.8.748 1.15.35.35.683.566 1.15.748.353.137.882.3 1.857.344 1.054.048 1.37.058 4.041.058h.08c2.597 0 2.917-.01 3.96-.058.976-.045 1.505-.207 1.858-.344.466-.182.8-.398 1.15-.748.35-.35.566-.683.748-1.15.137-.353.3-.882.344-1.857.048-1.055.058-1.37.058-4.041v-.08c0-2.597-.01-2.917-.058-3.96-.045-.976-.207-1.505-.344-1.858a3.097 3.097 0 00-.748-1.15 3.098 3.098 0 00-1.15-.748c-.353-.137-.882-.3-1.857-.344-1.023-.047-1.351-.058-3.807-.058zM12 6.865a5.135 5.135 0 110 10.27 5.135 5.135 0 010-10.27zm0 1.802a3.333 3.333 0 100 6.666 3.333 3.333 0 000-6.666zm5.338-3.205a1.2 1.2 0 110 2.4 1.2 1.2 0 010-2.4z" clip-rule="evenodd"/>
+                                </svg>
+                            </a>
+                            <a href="#" class="w-9 h-9 rounded-full flex items-center justify-center bg-dark border border-gray-800 text-gray-400 hover:bg-primary/10 hover:text-white transition-colors">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Navigation links -->
+                    <div class="md:col-span-2">
+                        <h5 class="text-sm font-bold tracking-wide text-gray-100 uppercase mb-4">Product</h5>
+                        <ul class="space-y-3">
+                            <li><a href="/business-valuation" class="text-gray-400 text-sm hover:text-white transition-colors">Business Valuation</a></li>
+                            <li><a href="/ai-insights" class="text-gray-400 text-sm hover:text-white transition-colors">AI Market Insights</a></li>
+                            <li><a href="/marketplace" class="text-gray-400 text-sm hover:text-white transition-colors">Marketplace</a></li>
+                            <li><a href="/arzani-x" class="text-gray-400 text-sm hover:text-white transition-colors">Arzani X</a></li>
+                            <li><a href="/pricing" class="text-gray-400 text-sm hover:text-white transition-colors">Pricing</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <h5 class="text-sm font-bold tracking-wide text-gray-100 uppercase mb-4">Resources</h5>
+                        <ul class="space-y-3">
+                            <li><a href="/blog" class="text-gray-400 text-sm hover:text-white transition-colors">Blog</a></li>
+                            <li><a href="/market-reports" class="text-gray-400 text-sm hover:text-white transition-colors">Market Reports</a></li>
+                            <li><a href="/guides" class="text-gray-400 text-sm hover:text-white transition-colors">Seller Guides</a></li>
+                            <li><a href="/webinars" class="text-gray-400 text-sm hover:text-white transition-colors">Webinars</a></li>
+                            <li><a href="/faq" class="text-gray-400 text-sm hover:text-white transition-colors">FAQ</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <h5 class="text-sm font-bold tracking-wide text-gray-100 uppercase mb-4">Company</h5>
+                        <ul class="space-y-3">
+                            <li><a href="/about" class="text-gray-400 text-sm hover:text-white transition-colors">About Us</a></li>
+                            <li><a href="/careers" class="text-gray-400 text-sm hover:text-white transition-colors">Careers</a></li>
+                            <li><a href="/contact" class="text-gray-400 text-sm hover:text-white transition-colors">Contact</a></li>
+                            <li><a href="/press" class="text-gray-400 text-sm hover:text-white transition-colors">Press</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <h5 class="text-sm font-bold tracking-wide text-gray-100 uppercase mb-4">Legal</h5>
+                        <ul class="space-y-3">
+                            <li><a href="/terms" class="text-gray-400 text-sm hover:text-white transition-colors">Terms of Service</a></li>
+                            <li><a href="/privacy" class="text-gray-400 text-sm hover:text-white transition-colors">Privacy Policy</a></li>
+                            <li><a href="/cookies" class="text-gray-400 text-sm hover:text-white transition-colors">Cookie Policy</a></li>
+                            <li><a href="/security" class="text-gray-400 text-sm hover:text-white transition-colors">Security</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom footer with copyright - also in black -->
+            <div class="border-t border-gray-800 bg-black">
+                <div class="container mx-auto px-6 py-6">
+                    <div class="flex flex-col md:flex-row justify-between items-center">
+                        <div class="mt-4 text-sm text-gray-500 text-center md:text-left">
+                            © <%= new Date().getFullYear() %> Arzani. All rights reserved.
+                        </div>
+                        
+                        <div class="flex items-center mt-4 md:mt-0 space-x-6">
+                            <a href="/accessibility" class="text-gray-400 text-xs hover:text-gray-300">Accessibility</a>
+                            <span class="text-gray-700">|</span>
+                            <a href="/sitemap" class="text-gray-400 text-xs hover:text-gray-300">Sitemap</a>
+                            <span class="text-gray-700">|</span>
+                            <div class="flex items-center">
+                                <span class="text-gray-400 text-xs mr-2">Region:</span>
+                                <select class="bg-transparent text-gray-400 text-xs border-0 focus:ring-0 cursor-pointer">
+                                    <option value="uk" selected>United Kingdom</option>
+                                    <option value="us">United States</option>
+                                    <option value="eu">European Union</option>
+                                    <option value="ca">Canada</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </footer>
+        
+        <!-- Cookie Consent Banner -->
+        <div id="cookieConsentBanner" class="fixed bottom-0 left-0 right-0 bg-black p-4 border-t border-gray-700 z-[100] hidden">
+            <div class="container mx-auto px-4 md:px-6 flex flex-col md:flex-row items-center justify-between gap-4">
+                <p class="text-sm text-gray-300 text-center md:text-left">
+                    We use essential cookies to make our site work. With your consent, we may also use non-essential cookies to improve user experience and analyze website traffic. By clicking "Accept All," you agree to our website's cookie use as described in our <a href="/cookies" class="text-primary hover:underline">Cookie Policy</a>.
+                </p>
+                <div class="flex flex-shrink-0 gap-3">
+                    <button id="acceptNecessary" class="btn-secondary text-sm px-4 py-2">Accept Necessary</button>
+                    <button id="acceptAllCookies" class="btn-primary text-sm px-4 py-2">Accept All</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/navigation.js"></script>
+    <script src="/js/cookie-banner.js"></script>
+    <script>
+        // Add animations to sections when they come into view
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add header scroll effect
+            const header = document.querySelector('header');
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 10) {
+                    header.classList.add('scrolled');
+                } else {
+                    header.classList.remove('scrolled');
+                }
+            });
+            
+            // Add burger menu functionality
+            const burger = document.querySelector('.navbar__burger');
+            const menu = document.querySelector('.navbar__menu');
+            if (burger) {
+                burger.addEventListener('click', () => {
+                    burger.classList.toggle('open');
+                    menu.classList.toggle('hidden');
+                    const isOpen = !menu.classList.contains('hidden');
+                    burger.setAttribute('aria-expanded', isOpen);
+                });
+            }
+        });
+    </script>
+</body>
+</html>

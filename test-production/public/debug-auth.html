@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Auth Debugger</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 p-8">
+  <div class="max-w-3xl mx-auto bg-white shadow-md rounded-lg p-6">
+    <h1 class="text-2xl font-bold mb-6">Authentication Debugger</h1>
+    
+    <div class="mb-6 p-4 bg-blue-50 rounded">
+      <h2 class="font-bold text-blue-800 mb-2">Authentication Status</h2>
+      <div id="auth-status" class="text-blue-700">Checking...</div>
+    </div>
+    
+    <div class="mb-6">
+      <h2 class="font-bold mb-2">Token Sources</h2>
+      <div class="grid grid-cols-2 gap-4">
+        <div class="p-4 bg-gray-50 rounded">
+          <h3 class="font-medium text-gray-700">Meta Tag</h3>
+          <div id="meta-token" class="break-all text-sm mt-1 bg-gray-100 p-2 rounded">Checking...</div>
+        </div>
+        <div class="p-4 bg-gray-50 rounded">
+          <h3 class="font-medium text-gray-700">LocalStorage</h3>
+          <div id="local-token" class="break-all text-sm mt-1 bg-gray-100 p-2 rounded">Checking...</div>
+        </div>
+        <div class="p-4 bg-gray-50 rounded">
+          <h3 class="font-medium text-gray-700">Cookies</h3>
+          <div id="cookie-token" class="break-all text-sm mt-1 bg-gray-100 p-2 rounded">Checking...</div>
+        </div>
+        <div class="p-4 bg-gray-50 rounded">
+          <h3 class="font-medium text-gray-700">Session Storage</h3>
+          <div id="session-token" class="break-all text-sm mt-1 bg-gray-100 p-2 rounded">Checking...</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="mb-6">
+      <h2 class="font-bold mb-2">API Test</h2>
+      <div id="api-result" class="p-4 bg-gray-50 rounded">
+        <p class="text-gray-500">Testing API access...</p>
+      </div>
+    </div>
+    
+    <div class="flex space-x-4">
+      <button id="test-api-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded">
+        Test API
+      </button>
+      <button id="fix-token-btn" class="bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded">
+        Fix Token
+      </button>
+      <button id="clear-tokens-btn" class="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded">
+        Clear Tokens
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // Show the first 10 characters of a token + ellipsis for display
+    function truncateToken(token) {
+      if (!token) return 'Not found';
+      return token.substring(0, 10) + '...' + token.substring(token.length - 5);
+    }
+    
+    // Get cookie by name
+    function getCookie(name) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop().split(';').shift();
+      return null;
+    }
+    
+    // Update the UI with token info
+    function updateTokenInfo() {
+      // Check meta tag
+      const metaToken = document.querySelector('meta[name="auth-token"]')?.content;
+      document.getElementById('meta-token').textContent = metaToken ? 
+        truncateToken(metaToken) : 'Not found';
+      
+      // Check localStorage
+      const localToken = localStorage.getItem('token');
+      document.getElementById('local-token').textContent = localToken ? 
+        truncateToken(localToken) : 'Not found';
+      
+      // Check cookies
+      const cookieToken = getCookie('token');
+      document.getElementById('cookie-token').textContent = cookieToken ? 
+        truncateToken(cookieToken) : 'Not found';
+      
+      // Check sessionStorage
+      const sessionToken = sessionStorage.getItem('token');
+      document.getElementById('session-token').textContent = sessionToken ? 
+        truncateToken(sessionToken) : 'Not found';
+      
+      // Update auth status
+      const hasToken = metaToken || localToken || cookieToken || sessionToken;
+      document.getElementById('auth-status').innerHTML = hasToken ? 
+        '<span class="text-green-600 font-bold">✓ Token found</span>' : 
+        '<span class="text-red-600 font-bold">✗ No token found</span>';
+    }
+    
+    // Test API access
+    function testApiAccess() {
+      const apiResult = document.getElementById('api-result');
+      apiResult.innerHTML = '<p class="text-blue-500">Testing API connection...</p>';
+      
+      // First try the debug endpoint
+      fetch('/api/chat/auth-debug', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token') || getCookie('token') || ''}`
+        }
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`API responded with status ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        apiResult.innerHTML = `
+          <div class="text-green-600 font-bold mb-2">✓ API connection successful</div>
+          <pre class="text-xs bg-gray-100 p-2 rounded overflow-auto max-h-40">${JSON.stringify(data, null, 2)}</pre>
+        `;
+      })
+      .catch(error => {
+        apiResult.innerHTML = `
+          <div class="text-red-600 font-bold mb-2">✗ API connection failed</div>
+          <p class="text-red-500">${error.message}</p>
+          <div class="mt-2">
+            <button onclick="testApiAccess()" class="text-sm bg-blue-500 text-white px-2 py-1 rounded">
+              Try Again
+            </button>
+          </div>
+        `;
+      });
+    }
+    
+    // Fix token by copying from available sources
+    function fixToken() {
+      const metaToken = document.querySelector('meta[name="auth-token"]')?.content;
+      const localToken = localStorage.getItem('token');
+      const cookieToken = getCookie('token');
+      const sessionToken = sessionStorage.getItem('token');
+      
+      // Find the first valid token
+      const token = metaToken || localToken || cookieToken || sessionToken;
+      
+      if (!token) {
+        alert('No token found in any source. Please log in again.');
+        return;
+      }
+      
+      // Store token in all storage mechanisms
+      localStorage.setItem('token', token);
+      sessionStorage.setItem('token', token);
+      document.cookie = `token=${token}; path=/; max-age=86400`;
+      
+      // If meta tag doesn't exist, create it
+      if (!document.querySelector('meta[name="auth-token"]')) {
+        const meta = document.createElement('meta');
+        meta.name = 'auth-token';
+        meta.content = token;
+        document.head.appendChild(meta);
+      }
+      
+      // Update UI
+      updateTokenInfo();
+      alert('Token has been synchronized across all storage mechanisms.');
+    }
+    
+    // Clear all tokens
+    function clearTokens() {
+      localStorage.removeItem('token');
+      sessionStorage.removeItem('token');
+      document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      
+      // Remove meta tag if it exists
+      const metaTag = document.querySelector('meta[name="auth-token"]');
+      if (metaTag) {
+        metaTag.remove();
+      }
+      
+      // Update UI
+      updateTokenInfo();
+      alert('All tokens have been cleared.');
+    }
+    
+    // Set up event listeners
+    document.addEventListener('DOMContentLoaded', function() {
+      updateTokenInfo();
+      testApiAccess();
+      
+      document.getElementById('test-api-btn').addEventListener('click', testApiAccess);
+      document.getElementById('fix-token-btn').addEventListener('click', fixToken);
+      document.getElementById('clear-tokens-btn').addEventListener('click', clearTokens);
+    });
+  </script>
+</body>
+</html>

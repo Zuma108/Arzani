@@ -1,0 +1,11 @@
+<!-- Tailwind CSS Setup (Production Ready) -->
+<% if (process.env.NODE_ENV === 'production') { %>
+  <!-- Use compiled CSS for production -->
+  <link rel="stylesheet" href="/css/tailwind.min.css">
+<% } else { %>
+  <!-- Use CDN for development only -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    console.log('Using Tailwind CSS CDN in development mode. For production, please use PostCSS or the Tailwind CLI.');
+  </script>
+<% } %>

@@ -1,0 +1,113 @@
+/* White Section Background Glows */
+
+/* AI Hero Section background glows */
+.ai-hero-section {
+  position: relative;
+}
+
+.ai-hero-section::before {
+  content: "";
+  position: absolute;
+  width: 800px;
+  height: 800px;
+  background: radial-gradient(circle, rgba(79, 70, 229, 0.15) 0%, rgba(79, 70, 229, 0) 70%);
+  border-radius: 50%;
+  top: -200px;
+  left: -200px;
+  z-index: -1;
+  animation: float-slow 20s infinite alternate ease-in-out;
+  filter: blur(40px);
+}
+
+.ai-hero-section::after {
+  content: "";
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(91, 33, 182, 0.12) 0%, rgba(91, 33, 182, 0) 70%);
+  border-radius: 50%;
+  bottom: -100px;
+  right: -100px;
+  z-index: -1;
+  animation: float-slow 15s infinite alternate-reverse ease-in-out;
+  filter: blur(40px);
+}
+
+/* Add a third smaller glow */
+.ai-hero-section .glow-accent {
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0) 65%);
+  border-radius: 50%;
+  top: 30%;
+  right: 20%;
+  z-index: -1;
+  animation: float-slow 18s infinite alternate-reverse ease-in-out;
+  filter: blur(35px);
+}
+
+/* Journey Section background glows */
+.journey-section-solid-bg {
+  position: relative;
+}
+
+.journey-section-solid-bg::before {
+  content: "";
+  position: absolute;
+  width: 700px;
+  height: 700px;
+  background: radial-gradient(circle, rgba(109, 40, 217, 0.12) 0%, rgba(109, 40, 217, 0) 70%);
+  border-radius: 50%;
+  top: -150px;
+  right: -150px;
+  z-index: -1;
+  animation: float-slow 25s infinite alternate ease-in-out;
+  filter: blur(50px);
+}
+
+.journey-section-solid-bg::after {
+  content: "";
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(79, 70, 229, 0.1) 0%, rgba(79, 70, 229, 0) 70%);
+  border-radius: 50%;
+  bottom: -100px;
+  left: -100px;
+  z-index: -1;
+  animation: float-slow 20s infinite alternate-reverse ease-in-out;
+  filter: blur(45px);
+}
+
+.journey-section-solid-bg .glow-accent {
+  position: absolute;
+  width: 350px;
+  height: 350px;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.12) 0%, rgba(37, 99, 235, 0) 70%);
+  border-radius: 50%;
+  top: 40%;
+  left: 30%;
+  z-index: -1;
+  animation: float-slow 18s infinite alternate ease-in-out;
+  filter: blur(40px);
+}
+
+/* Float animation for background elements */
+@keyframes float-slow {
+  0% {
+    transform: translate(0px, 0px);
+  }
+  25% {
+    transform: translate(-20px, 10px);
+  }
+  50% {
+    transform: translate(0px, 20px);
+  }
+  75% {
+    transform: translate(20px, 10px);
+  }
+  100% {
+    transform: translate(0px, 0px);
+  }
+}

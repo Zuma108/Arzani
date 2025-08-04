@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thank You for Subscribing | Arzani</title>
+    <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#316FD4',
+                        dark: '#141414',
+                        'dark-light': '#1E1E1E'
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans">
+    <div class="min-h-screen flex flex-col">
+        <%- include('../partials/navbar') %>
+
+        <main class="flex-grow flex items-center justify-center py-16 px-4">
+            <div class="max-w-md w-full bg-white rounded-xl shadow-lg p-8 border border-gray-100 text-center animate-fade-in-up">
+                <!-- Success Icon -->
+                <div class="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-6">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                </div>
+                
+                <h1 class="text-2xl font-bold mb-4 text-gray-900">
+                    <%= status === 'existing' ? 'Already Subscribed' : (status === 'reactivated' ? 'Welcome Back!' : 'Thank You for Subscribing!') %>
+                </h1>
+                
+                <% if (status === 'existing') { %>
+                    <p class="text-gray-600 mb-6">
+                        You're already subscribed to our newsletter. We appreciate your continued interest!
+                    </p>
+                <% } else if (status === 'reactivated') { %>
+                    <p class="text-gray-600 mb-6">
+                        Your subscription has been reactivated. Welcome back to our newsletter!
+                    </p>
+                <% } else { %>
+                    <p class="text-gray-600 mb-6">
+                        You've been successfully added to our newsletter. We're excited to share the latest insights on business valuation, market trends, and growth strategies with you.
+                    </p>
+                <% } %>
+                
+                <div class="mb-8">
+                    <p class="text-gray-600">
+                        Here's what to expect:
+                    </p>
+                    <ul class="text-left mt-4 space-y-2">
+                        <li class="flex items-start">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary mr-2 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span>Weekly market updates and analysis</span>
+                        </li>
+                        <li class="flex items-start">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary mr-2 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span>Exclusive valuation insights and tools</span>
+                        </li>
+                        <li class="flex items-start">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary mr-2 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span>Early access to premium features</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="space-x-4">
+                    <a href="/" class="btn-primary px-6 py-2 rounded-lg inline-block">
+                        Return to Home
+                    </a>
+                    <a href="/blog" class="text-primary hover:text-primary/80">
+                        Visit Our Blog
+                    </a>
+                </div>
+            </div>
+        </main>
+
+        <%- include('../partials/footer') %>
+    </div>
+
+    <script src="/js/navigation.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add sticky header on scroll
+            const header = document.querySelector('header');
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 50) {
+                    header.classList.add('scrolled', 'bg-dark/80', 'backdrop-blur-md', 'border-b', 'border-gray-800');
+                } else {
+                    header.classList.remove('scrolled', 'bg-dark/80', 'backdrop-blur-md', 'border-b', 'border-gray-800');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

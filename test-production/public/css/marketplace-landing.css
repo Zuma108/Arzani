@@ -1,0 +1,692 @@
+/* Marketplace Landing Page Styles */
+
+/* General Body and Typography */
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f8f9fa; /* Light gray background for a cleaner look */
+    color: #212529; /* Darker text for better readability */
+}
+
+.text-gradient-animated {
+    background: linear-gradient(90deg, #316FD4, #4A90E2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-fill-color: transparent;
+}
+
+/* Button Styles */
+.btn-primary-large {
+    @apply bg-primary hover:bg-primary/90 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105;
+}
+
+.btn-secondary-large {
+    @apply bg-white hover:bg-gray-100 text-primary font-bold py-3 px-6 rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105;
+}
+
+/* Section Styles */
+.blue-glow-section {
+    padding: 6rem 0;
+    background-color: #ffffff;
+}
+
+.feature-card, .process-card, .testimonial-card {
+    background-color: #ffffff;
+    border: 1px solid #e9ecef;
+    border-radius: 1rem;
+    padding: 2rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.feature-card:hover, .process-card:hover, .testimonial-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+.blue-glow-icon {
+    @apply w-16 h-16 flex items-center justify-center rounded-full mb-6 text-white;
+    background: linear-gradient(135deg, #316FD4, #4A90E2);
+}
+
+.process-number {
+    @apply w-12 h-12 flex items-center justify-center rounded-full mb-6 text-2xl font-bold text-white;
+    background: linear-gradient(135deg, #316FD4, #4A90E2);
+}
+
+/* Enhanced Search Bar */
+.enhanced-search-container {
+    background: #ffffff;
+    border-radius: 1rem;
+    padding: 1rem;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+.enhanced-search-input {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 1rem;
+    color: #212529;
+}
+
+.enhanced-search-button {
+    background: linear-gradient(135deg, #316FD4, #4A90E2);
+    border: none;
+    border-radius: 0.75rem;
+    padding: 1rem 1.5rem;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.enhanced-search-button:hover {
+    transform: scale(1.05);
+}
+
+/* Business Slider */
+.business-slider-container {
+    position: relative;
+}
+
+.business-card {
+    border: 1px solid #e9ecef;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.business-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+}
+
+.business-card-header {
+    padding: 1.5rem;
+    background-color: #f8f9fa;
+}
+
+.business-card-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #212529;
+}
+
+.business-card-body {
+    padding: 1.5rem;
+}
+
+.metric-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.metric-item:last-child {
+    border-bottom: none;
+}
+
+.metric-label {
+    color: #6c757d;
+}
+
+.metric-value {
+    font-weight: 600;
+    color: #212529;
+}
+
+.slider-nav-button {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 50%;
+    width: 3rem;
+    height: 3rem;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.slider-nav-button:hover {
+    transform: scale(1.1);
+    background-color: #316FD4;
+    color: white;
+}
+
+.slider-dots .slider-dot {
+    width: 0.75rem;
+    height: 0.75rem;
+    background-color: #ced4da;
+    transition: all 0.3s ease;
+}
+
+.slider-dots .slider-dot.active {
+    background-color: #316FD4;
+    transform: scale(1.2);
+}
+
+/* Business Preview Slider - White Theme */
+.business-preview-section-white {
+    background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.business-slider-container-white {
+    position: relative;
+    width: 100%;
+    max-width: 1400px;
+    padding: 0 60px;
+    margin: 0 auto;
+    overflow: visible;
+    box-sizing: border-box;
+}
+
+.business-slider-track-white {
+    display: flex;
+    overflow-x: visible;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding: 20px 0;
+    gap: 24px;
+    margin: 0 auto;
+    -webkit-overflow-scrolling: touch;
+    transition: transform 0.6s cubic-bezier(0.4, 0.0, 0.2, 1);
+    width: 100%;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    min-height: 220px; /* Ensure minimum height for loading state */
+}
+
+.business-slider-track-white::-webkit-scrollbar {
+    display: none;
+}
+
+/* White theme business cards */
+.business-card-white {
+    flex: 0 0 calc(33.333% - 16px);
+    min-width: 280px;
+    max-width: 380px;
+    height: auto;
+    scroll-snap-align: start;
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    position: relative;
+    overflow: hidden;
+    opacity: 1;
+    transform: translateY(0);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+}
+
+.business-card-white:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+    border-color: #316FD4;
+}
+
+.business-card-header-white {
+    position: relative;
+    padding: 20px 24px 16px;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-radius: 20px 20px 0 0;
+    border-bottom: 1px solid #e5e7eb;
+    flex-shrink: 0;
+}
+
+.business-card-category-white {
+    display: inline-block;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1e40af;
+    font-size: 0.75rem;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.business-card-title-white {
+    font-size: 1.375rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 6px;
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.business-card-location-white {
+    font-size: 0.875rem;
+    color: #6b7280;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+}
+
+.business-card-body-white {
+    padding: 20px 24px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.business-metrics-white {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 16px 12px;
+    margin-top: 12px;
+    border: 1px solid #e5e7eb;
+}
+
+.metric-item-white {
+    text-align: center;
+    padding: 8px 6px;
+    background: transparent;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    flex: 1;
+    border-right: 1px solid #e5e7eb;
+}
+
+.metric-item-white:last-child {
+    border-right: none;
+}
+
+.metric-item-white:hover {
+    background: #eff6ff;
+    transform: translateY(-2px);
+}
+
+.metric-label-white {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.metric-value-white {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #1f2937;
+    line-height: 1.2;
+}
+
+/* Color coding for different metrics - white theme */
+.metric-item-white[data-type="price"] .metric-value-white {
+    color: #2563eb;
+}
+
+.metric-item-white[data-type="price"] .metric-label-white {
+    color: #60a5fa;
+}
+
+.metric-item-white[data-type="revenue"] .metric-value-white {
+    color: #374151;
+}
+
+.metric-item-white[data-type="revenue"] .metric-label-white {
+    color: #6b7280;
+}
+
+.metric-item-white[data-type="profit"] .metric-value-white {
+    color: #059669;
+}
+
+.metric-item-white[data-type="profit"] .metric-label-white {
+    color: #10b981;
+}
+
+/* Navigation buttons - white theme */
+.slider-nav-button-white {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 30;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    background-color: white;
+    color: #6b7280;
+    transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.slider-nav-button-white:first-of-type {
+    left: 10px;
+}
+
+.slider-nav-button-white:last-of-type {
+    right: 10px;
+}
+
+.slider-nav-button-white:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.slider-nav-button-white:disabled:hover {
+    transform: translateY(-50%);
+    background-color: white;
+    color: #6b7280;
+}
+
+.slider-nav-button-white:hover:not(:disabled) {
+    transform: translateY(-50%) scale(1.1);
+    background-color: #316FD4;
+    color: white;
+}
+
+/* Navigation dots - white theme */
+.slider-dots-white .slider-dot {
+    width: 12px;
+    height: 12px;
+    background-color: #d1d5db;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: 2px solid transparent;
+}
+
+.slider-dots-white .slider-dot.active {
+    background-color: #316FD4;
+    transform: scale(1.2);
+    border-color: #316FD4;
+}
+
+.slider-dots-white .slider-dot:hover {
+    background-color: #9ca3af;
+    transform: scale(1.1);
+}
+
+/* Loading state - white theme */
+.loading-state-white {
+    min-height: 200px;
+}
+
+.loader-circle-white {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #e5e7eb;
+    border-top: 4px solid #316FD4;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* View all button - white theme */
+.view-all-btn-white {
+    background: linear-gradient(135deg, #316FD4 0%, #4A90E2 100%);
+    transition: all 0.3s ease;
+}
+
+.view-all-btn-white:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+}
+
+/* Light background pattern */
+.light-grid-pattern-white {
+    background-image: 
+        linear-gradient(rgba(49, 111, 212, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(49, 111, 212, 0.03) 1px, transparent 1px);
+    background-size: 20px 20px;
+    width: 100%;
+    height: 100%;
+}
+
+/* Text gradients */
+.text-gradient-blue {
+    background: linear-gradient(135deg, #316FD4 0%, #4A90E2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-fill-color: transparent;
+}
+
+/* Animation utilities */
+.animate-pulse-slow {
+    animation: pulse-slow 4s ease-in-out infinite;
+}
+
+.animation-delay-1000 {
+    animation-delay: 1s;
+}
+
+.animation-delay-2000 {
+    animation-delay: 2s;
+}
+
+@keyframes pulse-slow {
+    0%, 100% {
+        opacity: 0.3;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.6;
+        transform: scale(1.1);
+    }
+}
+
+/* Shine effect for progress bars */
+.shine-effect {
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        rgba(255,255,255,0) 0%,
+        rgba(255,255,255,0.2) 50%,
+        rgba(255,255,255,0) 100%
+    );
+    animation: shine 2s infinite linear;
+}
+
+@keyframes shine {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+/* Section spacing utilities */
+.section-spacing {
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+}
+
+/* Header backdrop for light sections */
+.header-light-backdrop {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.header-light-backdrop .navbar__logo img {
+    filter: brightness(0) saturate(100%) invert(20%) sepia(20%) saturate(2764%) hue-rotate(200deg) brightness(95%) contrast(90%);
+}
+
+.header-light-backdrop .text-white {
+    color: #1f2937 !important;
+}
+
+/* Responsive design */
+@media (max-width: 1024px) {
+    .business-slider-container-white {
+        padding: 0 60px;
+    }
+    
+    .business-card-white {
+        flex: 0 0 calc(50% - 12px);
+        min-width: 260px;
+        max-width: 340px;
+        height: auto;
+    }
+    
+    .business-card-title-white {
+        font-size: 1.25rem;
+    }
+    
+    .business-metrics-white {
+        padding: 12px 8px;
+    }
+    
+    .metric-item-white {
+        padding: 6px 4px;
+    }
+    
+    .metric-value-white {
+        font-size: 1rem;
+    }
+    
+    .metric-label-white {
+        font-size: 0.65rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .business-slider-container-white {
+        padding: 0 50px;
+    }
+    
+    .business-card-white {
+        flex: 0 0 calc(100% - 8px);
+        min-width: 260px;
+        max-width: 400px;
+        height: auto;
+    }
+    
+    .business-card-header-white {
+        padding: 16px 20px 12px;
+    }
+    
+    .business-card-body-white {
+        padding: 16px 20px;
+    }
+}
+
+@media (max-width: 640px) {
+    .business-preview-section-white {
+        padding: 2rem 0;
+    }
+    
+    .business-slider-container-white {
+        padding: 0 40px;
+    }
+    
+    .slider-nav-button-white {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .slider-nav-button-white:first-of-type {
+        left: 5px;
+    }
+    
+    .slider-nav-button-white:last-of-type {
+        right: 5px;
+    }
+    
+    .slider-nav-button-white svg {
+        width: 16px;
+        height: 16px;
+    }
+}
+
+/* Demo Video Section Styles */
+.demo-video-section {
+    position: relative;
+    overflow: hidden;
+}
+
+.demo-video-section iframe {
+    border-radius: 1rem;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+}
+
+.demo-video-section .aspect-video {
+    position: relative;
+    width: 100%;
+    height: 0;
+    padding-bottom: 56.25%; /* 16:9 aspect ratio */
+}
+
+.demo-video-section .aspect-video iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* Animation for demo section */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.demo-video-section [data-animation="fade-in-up"] {
+    animation: fadeInUp 0.8s ease-out forwards;
+}
+
+.demo-video-section [data-delay="200"] {
+    animation-delay: 0.2s;
+}
+
+.demo-video-section [data-delay="400"] {
+    animation-delay: 0.4s;
+}
+
+/* Responsive adjustments for demo section */
+@media (max-width: 768px) {
+    .demo-video-section {
+        padding: 3rem 0;
+    }
+    
+    .demo-video-section .container {
+        padding: 0 1rem;
+    }
+    
+    .demo-video-section h2 {
+        font-size: 2rem;
+        line-height: 1.2;
+    }
+    
+    .demo-video-section .btn-primary,
+    .demo-video-section .btn-secondary {
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+}
+

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscribe to Our Newsletter | Arzani</title>
+    <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#316FD4',
+                        dark: '#141414',
+                        'dark-light': '#1E1E1E'
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .btn-primary {
+            @apply bg-primary text-white hover:bg-primary/90 transition-colors;
+        }
+        .animate-fade-in-up {
+            animation: fadeInUp 0.5s ease-out;
+        }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans">
+    <div class="min-h-screen flex flex-col">
+        <%- include('../partials/navbar') %>
+
+        <main class="flex-grow flex items-center justify-center py-16 px-4">
+            <div class="max-w-lg w-full animate-fade-in-up">
+                <div class="bg-white rounded-xl shadow-lg p-8 border border-gray-100">
+                    <h1 class="text-3xl font-bold mb-2 text-center text-gray-900">Subscribe to Our Newsletter</h1>
+                    <p class="text-gray-600 mb-8 text-center">Stay up to date with the latest insights on business valuation, market trends, and growth strategies.</p>
+                    
+                    <form action="/subscribe" method="POST" class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="first_name" class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                                <input type="text" id="first_name" name="first_name" class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-primary" placeholder="John">
+                            </div>
+                            <div>
+                                <label for="last_name" class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                                <input type="text" id="last_name" name="last_name" class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Doe">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email Address <span class="text-red-500">*</span></label>
+                            <input type="email" id="email" name="email" required class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-primary" placeholder="john.doe@example.com">
+                        </div>
+                        
+                        <div>
+                            <input type="hidden" name="source" value="subscribe-page">
+                            <button type="submit" class="w-full btn-primary py-3 px-4 rounded-lg text-lg font-medium">
+                                Subscribe Now
+                            </button>
+                        </div>
+                        
+                        <p class="text-sm text-gray-500 text-center">
+                            By subscribing, you agree to our <a href="/privacy" class="text-primary hover:underline">Privacy Policy</a> and <a href="/terms" class="text-primary hover:underline">Terms of Service</a>. You can unsubscribe at any time.
+                        </p>
+                    </form>
+                </div>
+                
+                <div class="mt-8 bg-white rounded-xl shadow-lg p-8 border border-gray-100">
+                    <h2 class="text-xl font-bold mb-4">Why Subscribe?</h2>
+                    <ul class="space-y-3">
+                        <li class="flex items-start">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary mr-2 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span>Weekly market updates and business valuation insights</span>
+                        </li>
+                        <li class="flex items-start">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary mr-2 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span>Exclusive access to business growth strategies</span>
+                        </li>
+                        <li class="flex items-start">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary mr-2 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span>Early access to new features and tools</span>
+                        </li>
+                        <li class="flex items-start">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary mr-2 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span>Industry-specific analysis and benchmarking</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </main>
+
+        <%- include('../partials/footer') %>
+    </div>
+
+    <script src="/js/navigation.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add sticky header on scroll
+            const header = document.querySelector('header');
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 50) {
+                    header.classList.add('scrolled', 'bg-dark/80', 'backdrop-blur-md', 'border-b', 'border-gray-800');
+                } else {
+                    header.classList.remove('scrolled', 'bg-dark/80', 'backdrop-blur-md', 'border-b', 'border-gray-800');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

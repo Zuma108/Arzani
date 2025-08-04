@@ -1,0 +1,179 @@
+.business-valuation-container {
+    margin: 2rem 0;
+    padding: 1.5rem;
+    border-radius: var(--radius-md);
+    background: white;
+    box-shadow: var(--shadow-md);
+}
+
+.valuation-status {
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+}
+
+.valuation-status.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.valuation-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.confidence-meter {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.confidence-value {
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-sm);
+    background: var(--accent-color);
+    color: white;
+    font-weight: 600;
+}
+
+.valuation-details {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.valuation-range {
+    padding: 1.5rem;
+    border-radius: var(--radius-sm);
+    background: var(--bg-color);
+}
+
+.range-header {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.price-status {
+    margin-top: 1rem;
+    padding: 1rem;
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+}
+
+.price-status.below {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.price-status.within {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.price-status.above {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.insights-panel {
+    padding: 1.5rem;
+    border-radius: var(--radius-sm);
+    background: white;
+    border: 1px solid var(--border-color);
+}
+
+.insights-header {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+}
+
+.insights-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.insights-list li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.insights-list li:last-child {
+    border-bottom: none;
+}
+
+.valuation-disclaimer {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: #f8fafc;
+    border-left: 4px solid var(--accent-color);
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+#checkValuation {
+    background: var(--accent-color);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#checkValuation:hover {
+    background: var(--hover-color);
+    transform: translateY(-1px);
+}
+
+.loading {
+    position: relative;
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.loading::after {
+    content: "";
+    position: absolute;
+    top: calc(50% - 1rem);
+    left: calc(50% - 1rem);
+    width: 2rem;
+    height: 2rem;
+    border: 2px solid var(--border-color);
+    border-top-color: var(--accent-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.advanced-valuation-container {
+    margin: 2rem 0;
+    padding: 1.5rem;
+    border-radius: var(--radius-md);
+    background: white;
+    box-shadow: var(--shadow-md);
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+}
+
+.advanced-valuation-container.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.advanced-range, .advanced-insights, .advanced-disclaimer {
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    border-radius: var(--radius-sm);
+    background: var(--bg-color);
+}

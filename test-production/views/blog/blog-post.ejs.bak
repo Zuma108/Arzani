@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= blog.seo_title || blog.title %> | Arzani</title>
+    <meta name="description" content="<%= blog.meta_description || blog.excerpt %>">
+    <meta name="keywords" content="<%= blog.seo_keywords || blog.target_keyword %>">
+    
+    <!-- Open Graph metadata for social sharing -->
+    <meta property="og:title" content="<%= blog.seo_title || blog.title %> | Arzani">
+    <meta property="og:description" content="<%= blog.meta_description || blog.excerpt %>">
+    <meta property="og:image" content="<%= blog.hero_image %>">
+    <meta property="og:url" content="<%= `https://arzani.co.uk/blog/${blog.content_category}/${blog.slug}` %>">
+    <meta property="og:type" content="article">
+    
+    <!-- Twitter Card metadata -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="<%= blog.seo_title || blog.title %> | Arzani">
+    <meta name="twitter:description" content="<%= blog.meta_description || blog.excerpt %>">
+    <meta name="twitter:image" content="<%= blog.hero_image %>">
+    
+    <!-- Canonical URL to prevent duplicate content issues -->
+    <link rel="canonical" href="<%= `https://arzani.co.uk/blog/${blog.content_category}/${blog.slug}` %>">
+    
+    <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">
+    <link rel="stylesheet" href="/css/modern.css">
+    <link rel="stylesheet" href="/css/blog.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#316FD4',
+                        dark: '#141414',
+                        'dark-light': '#1E1E1E'
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Schema.org markup for structured data -->
+    <script type="application/ld+json">
+        <%- blog.schema_markup %>
+    </script>
+    
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-W50GKB6F3M"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-W50GKB6F3M');
+    </script>
+      <!-- Modern Blog Navigation Styles -->
+    <style>
+        /* Modern Navbar Styles */
+        .modern-navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .modern-navbar.scrolled {
+            background: rgba(255, 255, 255, 0.98);
+        }
+        
+        .nav-link {
+            position: relative;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+        
+        .nav-link:hover {
+            color: #316FD4;
+        }
+        
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: #316FD4;
+            transition: width 0.3s ease;
+        }
+        
+        .nav-link:hover::after {
+            width: 100%;
+        }
+        
+        /* Reading Progress Bar */
+        .reading-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background-color: #316FD4;
+            width: 0%;
+            z-index: 100;
+            transition: width 0.1s ease;
+        }
+    </style>
+</head>
+<body class="bg-white text-gray-900 font-sans">
+    <!-- Reading Progress Bar -->
+    <div class="reading-progress" id="readingProgress"></div>
+    
+    <!-- Modern Navigation Header -->
+    <header class="modern-navbar fixed w-full top-0 z-50" id="navbar">
+        <nav class="container mx-auto px-4 lg:px-8 py-4">
+            <%- include('../partials/navbar') %>
+        </nav>
+    </header>
+    
+    <div class="page-wrapper">
+        <!-- Enhanced Blog Post Hero Section -->
+        <section class="hero-section pt-24 lg:pt-28 pb-12 lg:pb-20">
+            <div class="container mx-auto px-4 md:px-6">
+                <div class="flex flex-col lg:flex-row gap-8">
+                    <div class="lg:w-2/3">
+                        <!-- Breadcrumb Navigation -->
+                        <div class="flex items-center text-sm text-gray-500 mb-6">
+                            <a href="/blog" class="hover:text-primary transition-colors">Blog</a>
+                            <span class="mx-2">›</span>
+                            <a href="/blog/<%= blog.content_category %>" class="hover:text-primary transition-colors">
+                                <%= blog.content_category.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') %>
+                            </a>
+                            <span class="mx-2">›</span>
+                            <span class="truncate max-w-xs"><%= blog.title %></span>
+                        </div>
+                        
+                        <!-- Article Header -->
+                        <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 leading-tight text-gray-900">
+                            <%= blog.title %>
+                        </h1>
+                        
+                        <!-- Author and Date Information -->
+                        <div class="flex items-center mb-8">
+                            <img src="<%= blog.author.avatar || '/figma design exports/images/default-avatar.png' %>" 
+                                alt="<%= blog.author.name %>" 
+                                class="w-10 h-10 rounded-full mr-3 border border-gray-200">
+                            <div>
+                                <p class="font-medium text-gray-900"><%= blog.author.name %></p>
+                                <div class="text-sm text-gray-500 flex items-center">
+                                    <span><%= new Date(blog.publish_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) %></span>
+                                    <span class="mx-2">•</span>
+                                    <span><%= blog.reading_time %> min read</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Hero Image -->
+                        <div class="rounded-xl overflow-hidden mb-8">
+                            <img src="<%= blog.hero_image || 'https://arzani-images1.s3.eu-west-2.amazonaws.com/blogs/default-blog-hero.jpg' %>" 
+                                alt="<%= blog.title %>" 
+                                class="w-full h-auto object-cover"
+                                onerror="this.onerror=null; this.src='https://arzani-images1.s3.eu-west-2.amazonaws.com/blogs/default-blog-hero.jpg';">
+                        </div>
+                    </div>
+                    
+                    <!-- Right Sidebar (Table of Contents) -->
+                    <div class="lg:w-1/3">
+                        <div class="bg-gray-50 rounded-xl p-6 sticky top-24">
+                            <h3 class="text-xl font-bold mb-4">Table of Contents</h3>
+                            <div id="tableOfContents" class="space-y-2">
+                                <!-- Dynamically populated by JavaScript -->
+                            </div>
+                            
+                            <!-- Empty state -->
+                            <div id="emptyToc" class="hidden text-gray-500 text-sm italic">
+                                No headings found in this article.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Enhanced Blog Post Content -->
+        <section class="content-section py-8 lg:py-12">
+            <div class="container mx-auto px-4 md:px-6">
+                <div class="flex flex-col lg:flex-row gap-8">
+                    <!-- Main Content -->
+                    <div class="lg:w-2/3">
+                        <!-- Article Content -->
+                        <article class="prose prose-lg max-w-none">
+                            <%- blog.content %>
+                            
+                            <!-- CTA Section -->
+                            <% if (blog.cta_text && blog.cta_link) { %>
+                            <div class="my-12 p-6 bg-primary bg-opacity-5 rounded-xl border border-primary border-opacity-20">
+                                <h3 class="text-2xl font-bold text-gray-900 mb-3">Ready to take the next step?</h3>
+                                <p class="mb-6 text-gray-700"><%= blog.cta_text %></p>
+                                <a href="<%= blog.cta_link %>" class="btn-primary inline-block">
+                                    <%= blog.cta_type === 'marketplace' ? 'Explore Marketplace' : (blog.cta_type === 'valuation' ? 'Get Free Valuation' : 'Learn More') %>
+                                </a>
+                            </div>
+                            <% } %>
+                            
+                            <!-- Tags -->
+                            <% if (blog.tags && blog.tags.length > 0) { %>
+                            <div class="flex flex-wrap gap-2 mt-8 mb-8">
+                                <% blog.tags.forEach(tag => { %>
+                                <a href="/blog/tag/<%= tag.slug %>" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-sm text-gray-700 transition-colors">
+                                    <%= tag.name %>
+                                </a>
+                                <% }) %>
+                            </div>
+                            <% } %>
+                            
+                            <!-- Author Bio Section -->
+                            <div class="mt-16 p-6 bg-gray-50 rounded-xl">
+                                <div class="flex items-start">
+                                    <img src="<%= blog.author.avatar || '/figma design exports/images/default-avatar.png' %>" 
+                                        alt="<%= blog.author.name %>" 
+                                        class="w-16 h-16 rounded-full mr-4 border border-gray-200">
+                                    <div>
+                                        <h3 class="text-xl font-bold mb-2">About <%= blog.author.name %></h3>
+                                        <p class="text-gray-700"><%= blog.author.bio || 'Expert contributor at Arzani Business Marketplace.' %></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
+                        
+                        <!-- Related Posts Section -->
+                        <% if (blog.relatedPosts && blog.relatedPosts.length > 0) { %>
+                        <div class="mt-16">
+                            <h3 class="text-2xl font-bold mb-6">Related Articles</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <% blog.relatedPosts.forEach(relatedPost => { %>
+                                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-transform hover:shadow-md hover:-translate-y-1">
+                                    <a href="/blog/<%= relatedPost.content_category || 'buying-a-business' %>/<%= relatedPost.slug %>">
+                                        <img src="<%= relatedPost.hero_image || 'https://arzani-images1.s3.eu-west-2.amazonaws.com/blogs/default-blog-hero.jpg' %>" 
+                                            alt="<%= relatedPost.title %>" 
+                                            class="w-full h-48 object-cover"
+                                            onerror="this.onerror=null; this.src='https://arzani-images1.s3.eu-west-2.amazonaws.com/blogs/default-blog-hero.jpg';">
+                                        <div class="p-4">
+                                            <h4 class="text-lg font-bold mb-2 line-clamp-2"><%= relatedPost.title %></h4>
+                                            <p class="text-gray-600 text-sm line-clamp-3"><%= relatedPost.excerpt %></p>
+                                        </div>
+                                    </a>
+                                </div>
+                                <% }) %>
+                            </div>
+                        </div>
+                        <% } %>
+                        
+                        <!-- Parent Pillar Content Section -->
+                        <% if (blog.parentPillar) { %>
+                        <div class="mt-16 p-6 bg-primary bg-opacity-5 rounded-xl">
+                            <h3 class="text-2xl font-bold mb-3">Read the Complete Guide</h3>
+                            <p class="mb-6">This article is part of our comprehensive guide on <%= blog.parentPillar.title.toLowerCase().includes('guide') ? blog.parentPillar.title.split('guide')[0].trim() : blog.parentPillar.title %>.</p>
+                            <a href="/blog/<%= blog.parentPillar.content_category || 'buying-a-business' %>/<%= blog.parentPillar.slug %>" class="btn-primary inline-block">
+                                Read Full Guide
+                            </a>
+                        </div>
+                        <% } %>
+                    </div>
+                    
+                    <!-- Right Sidebar for Desktop -->
+                    <div class="lg:w-1/3 hidden lg:block">
+                        <!-- Categories Widget -->
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
+                            <h3 class="text-xl font-bold mb-4">Categories</h3>
+                            <ul class="space-y-2">
+                                <% categories.forEach(category => { %>
+                                <li>
+                                    <a href="/blog/<%= category.slug %>" class="flex items-center justify-between hover:text-primary transition-colors">
+                                        <span><%= category.name %></span>
+                                        <span class="bg-gray-100 px-2 py-1 rounded-full text-xs"><%= category.post_count %></span>
+                                    </a>
+                                </li>
+                                <% }) %>
+                            </ul>
+                        </div>
+                        
+                        <!-- Newsletter Signup -->
+                        <div class="bg-gray-900 text-white rounded-xl p-6 mb-8">
+                            <h3 class="text-xl font-bold mb-3">Get Business Insights</h3>
+                            <p class="mb-4 text-gray-300">Subscribe to our newsletter for the latest business market insights.</p>
+                            <form action="/api/subscribe" method="POST" class="space-y-3">
+                                <input type="email" name="email" placeholder="Your email address" required 
+                                    class="w-full px-4 py-2 rounded-md bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary">
+                                <button type="submit" class="w-full bg-primary hover:bg-primary-dark text-white py-2 px-4 rounded-md transition-colors">
+                                    Subscribe
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <!-- CTA Widget -->
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                            <h3 class="text-xl font-bold mb-3">Ready to Sell Your Business?</h3>
+                            <p class="mb-4">Get an accurate valuation in minutes with our AI-powered tool.</p>
+                            <a href="/valuation" class="block w-full bg-primary hover:bg-primary-dark text-white text-center py-2 px-4 rounded-md transition-colors">
+                                Get Free Valuation
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <%- include('../partials/footer') %>
+    </div>
+
+    <!-- Simplified Cookie Consent Banner -->
+    <div id="cookieConsentBanner" class="fixed bottom-0 left-0 right-0 bg-dark-light p-4 border-t border-gray-700 z-[100] hidden">
+        <div class="container mx-auto px-4 md:px-6 flex flex-col md:flex-row items-center justify-between gap-4">
+            <p class="text-white text-sm">We use cookies to enhance your experience. By continuing, you agree to our <a href="/privacy-policy" class="underline">Privacy Policy</a>.</p>
+            <div class="flex gap-2">
+                <button id="acceptCookies" class="bg-primary hover:bg-primary-dark text-white px-4 py-1 rounded text-sm transition-colors">Accept</button>
+                <button id="declineCookies" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-1 rounded text-sm transition-colors">Decline</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/navigation.js"></script>
+    <script src="/js/blog-post.js"></script>
+    <script src="/js/cookie-banner.js"></script>
+    
+    <script>
+        // Table of Contents Generator
+        document.addEventListener('DOMContentLoaded', function() {
+            const article = document.querySelector('article');
+            const tableOfContents = document.getElementById('tableOfContents');
+            const emptyToc = document.getElementById('emptyToc');
+            
+            if (article && tableOfContents) {
+                // Get all headings (h2, h3) from the article
+                const headings = article.querySelectorAll('h2, h3');
+                
+                if (headings.length === 0) {
+                    if (emptyToc) emptyToc.classList.remove('hidden');
+                    return;
+                }
+                
+                // Create TOC entries
+                headings.forEach((heading, index) => {
+                    // Add ID to heading if not present
+                    if (!heading.id) {
+                        heading.id = `heading-${index}`;
+                    }
+                    
+                    const tocItem = document.createElement('a');
+                    tocItem.href = `#${heading.id}`;
+                    tocItem.classList.add('block', 'hover:text-primary', 'transition-colors');
+                    
+                    // Add padding for h3 to create hierarchy
+                    if (heading.tagName === 'H3') {
+                        tocItem.classList.add('pl-4', 'text-sm');
+                    }
+                    
+                    tocItem.textContent = heading.textContent;
+                    tableOfContents.appendChild(tocItem);
+                });
+            }
+            
+            // Reading Progress Indicator
+            const readingProgress = document.getElementById('readingProgress');
+            if (readingProgress) {
+                window.addEventListener('scroll', function() {
+                    const windowHeight = window.innerHeight;
+                    const fullHeight = document.body.clientHeight;
+                    const scrolled = window.scrollY;
+                    
+                    const percentScrolled = (scrolled / (fullHeight - windowHeight)) * 100;
+                    readingProgress.style.width = `${percentScrolled}%`;
+                });
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,430 @@
+/* Pricing Page - White Theme Styles */
+
+/* Base styles */
+body.pricing-page {
+    background-color: #ffffff;
+    color: #2d3748;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    line-height: 1.6;
+}
+
+/* Header styles */
+.pricing-header {
+    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.pricing-nav {
+    background-color: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.pricing-nav .logo {
+    filter: brightness(0) saturate(100%) invert(13%) sepia(15%) saturate(1350%) hue-rotate(193deg) brightness(94%) contrast(90%);
+}
+
+.pricing-nav-link {
+    color: #4a5568;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.pricing-nav-link:hover {
+    color: #2b6cb0;
+}
+
+/* Main content */
+.pricing-main {
+    background-color: #ffffff;
+    min-height: 100vh;
+    padding-top: 80px;
+}
+
+/* Hero section */
+.pricing-hero {
+    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+    padding: 80px 0;
+    text-align: center;
+}
+
+.pricing-hero h1 {
+    color: #1a202c;
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 800;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(135deg, #1a202c 0%, #4a5568 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.pricing-hero p {
+    color: #718096;
+    font-size: 1.25rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Pricing toggle */
+.pricing-toggle {
+    background-color: #f7fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 6px;
+    display: inline-flex;
+    margin-bottom: 3rem;
+}
+
+.pricing-toggle-btn {
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    transition: all 0.3s ease;
+    background: transparent;
+    color: #718096;
+    border: none;
+    cursor: pointer;
+}
+
+.pricing-toggle-btn.active {
+    background: #2b6cb0;
+    color: white;
+    box-shadow: 0 4px 12px rgba(43, 108, 176, 0.3);
+}
+
+.pricing-toggle-btn:hover:not(.active) {
+    color: #2b6cb0;
+    background-color: rgba(43, 108, 176, 0.1);
+}
+
+/* Pricing cards */
+.pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+.pricing-card {
+    background: #ffffff;
+    border: 2px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 2rem;
+    position: relative;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.pricing-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    border-color: #2b6cb0;
+}
+
+.pricing-card.featured {
+    border-color: #2b6cb0;
+    background: linear-gradient(135deg, #ffffff 0%, #f7fafc 100%);
+    transform: scale(1.05);
+}
+
+.pricing-card.featured:hover {
+    transform: scale(1.05) translateY(-4px);
+}
+
+/* Popular badge */
+.popular-badge {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #2b6cb0 0%, #3182ce 100%);
+    color: white;
+    padding: 8px 24px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 12px rgba(43, 108, 176, 0.3);
+}
+
+/* Card content */
+.pricing-card-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.pricing-card h3 {
+    color: #1a202c;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.pricing-price {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+.pricing-price .currency {
+    color: #4a5568;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.pricing-price .amount {
+    color: #1a202c;
+    font-size: 3rem;
+    font-weight: 800;
+    margin: 0 0.25rem;
+}
+
+.pricing-price .period {
+    color: #718096;
+    font-size: 1rem;
+}
+
+.pricing-description {
+    color: #718096;
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+/* Features list */
+.pricing-features {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 2rem 0;
+}
+
+.pricing-feature {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+    padding: 0.5rem 0;
+}
+
+.pricing-feature-icon {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    margin-right: 0.75rem;
+    margin-top: 0.125rem;
+}
+
+.pricing-feature-icon.check {
+    color: #38a169;
+}
+
+.pricing-feature-icon.cross {
+    color: #e53e3e;
+}
+
+.pricing-feature-text {
+    color: #4a5568;
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.pricing-feature-highlight {
+    font-weight: 600;
+    color: #1a202c;
+}
+
+/* CTA buttons */
+.pricing-cta {
+    width: 100%;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 1rem;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.pricing-cta:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.pricing-cta:hover:before {
+    left: 100%;
+}
+
+.pricing-cta-primary {
+    background: linear-gradient(135deg, #2b6cb0 0%, #3182ce 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(43, 108, 176, 0.3);
+}
+
+.pricing-cta-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(43, 108, 176, 0.4);
+}
+
+.pricing-cta-secondary {
+    background: #ffffff;
+    color: #2b6cb0;
+    border: 2px solid #2b6cb0;
+}
+
+.pricing-cta-secondary:hover {
+    background: #2b6cb0;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.pricing-cta-disabled {
+    background: #f7fafc;
+    color: #a0aec0;
+    border: 2px solid #e2e8f0;
+    cursor: not-allowed;
+}
+
+.pricing-cta-disabled:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+/* FAQ section */
+.pricing-faq {
+    background: #f7fafc;
+    padding: 80px 0;
+    margin-top: 80px;
+}
+
+.pricing-faq h2 {
+    color: #1a202c;
+    font-size: 2.5rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.faq-item {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+}
+
+.faq-question {
+    padding: 1.5rem;
+    font-weight: 600;
+    color: #1a202c;
+    cursor: pointer;
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    transition: background-color 0.3s ease;
+}
+
+.faq-question:hover {
+    background-color: #f7fafc;
+}
+
+.faq-answer {
+    padding: 0 1.5rem 1.5rem;
+    color: #4a5568;
+    line-height: 1.7;
+    display: none;
+}
+
+.faq-item.active .faq-answer {
+    display: block;
+}
+
+/* Footer */
+.pricing-footer {
+    background: #1a202c;
+    color: #e2e8f0;
+    padding: 80px 0 40px;
+}
+
+.pricing-footer h3 {
+    color: white;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.pricing-footer a {
+    color: #a0aec0;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.pricing-footer a:hover {
+    color: white;
+}
+
+.pricing-footer-bottom {
+    border-top: 1px solid #2d3748;
+    background: #1a202c;
+    padding: 2rem 0;
+    margin-top: 3rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .pricing-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .pricing-card.featured {
+        transform: none;
+    }
+    
+    .pricing-card.featured:hover {
+        transform: translateY(-4px);
+    }
+    
+    .pricing-hero h1 {
+        font-size: 2.5rem;
+    }
+    
+    .pricing-hero p {
+        font-size: 1.125rem;
+    }
+}
+
+/* Cookie banner */
+.cookie-banner {
+    background: white;
+    border-top: 2px solid #e2e8f0;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.cookie-banner p {
+    color: #4a5568;
+}
+
+.cookie-banner .btn-primary {
+    background: #2b6cb0;
+    color: white;
+}
+
+.cookie-banner .btn-secondary {
+    background: transparent;
+    color: #2b6cb0;
+    border: 1px solid #2b6cb0;
+}

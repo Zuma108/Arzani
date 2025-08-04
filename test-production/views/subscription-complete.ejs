@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Subscription Complete - Arzani Marketplace">
+    <title>Subscription Complete - Arzani Marketplace</title>
+    
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-50 font-sans">
+    <div class="min-h-screen flex flex-col">
+        <!-- Header with logo -->
+        <header class="bg-gradient-to-r from-blue-900 to-indigo-800 text-white py-4">
+            <div class="container mx-auto px-4 md:px-6 flex justify-between items-center">
+                <div class="flex items-center">
+                    <img src="/public/figma design exports/logos/Arzani-logo.png" alt="Arzani" class="h-10">
+                </div>
+                <a href="/profile" class="text-sm bg-blue-800 hover:bg-blue-700 text-white px-4 py-2 rounded-md">My Account</a>
+            </div>
+        </header>
+        
+        <!-- Main Content -->
+        <main class="flex-grow container mx-auto px-4 md:px-6 py-16">
+            <div class="max-w-xl mx-auto">
+                <div class="bg-white rounded-lg shadow-md p-8 text-center">
+                    <div class="w-20 h-20 mx-auto mb-6 flex items-center justify-center bg-green-100 rounded-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+                    
+                    <h1 class="text-3xl font-bold text-gray-800 mb-4">Subscription Confirmed!</h1>
+                    
+                    <p class="text-gray-600 mb-8">
+                        Thank you for subscribing to the <span id="subscription-tier" class="font-semibold"><%= plan %></span> plan. 
+                        Your account has been successfully upgraded, and you now have access to all the premium features.
+                    </p>
+                    
+                    <div class="bg-blue-50 border border-blue-200 rounded-md p-4 mb-8">
+                        <h2 class="text-lg font-semibold text-blue-800 mb-2">Order Summary</h2>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Plan:</span>
+                            <span id="plan-name" class="font-medium"><%= plan %> Plan</span>
+                        </div>
+                        <div class="flex justify-between text-sm mt-1">
+                            <span class="text-gray-600">Payment:</span>
+                            <span id="plan-price" class="font-medium">£<%= planPrice %>/month</span>
+                        </div>
+                        <div class="flex justify-between text-sm mt-1">
+                            <span class="text-gray-600">Next billing date:</span>
+                            <span id="next-billing" class="font-medium"><%= nextBillingDate %></span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-col space-y-4">
+                        <a href="/off-market-leads" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-md transition-colors">
+                            Explore Off-Market Leads
+                        </a>
+                        <a href="/profile" class="text-blue-600 hover:text-blue-800">
+                            Manage your subscription
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="mt-8 text-center text-gray-500 text-sm">
+                    <p>
+                        If you have any questions about your subscription, please contact our support team at 
+                        <a href="mailto:support@arzani.co.uk" class="text-blue-600 hover:underline">support@arzani.co.uk</a>
+                    </p>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Footer -->
+        <footer class="bg-white border-t mt-12 py-6">
+            <div class="container mx-auto px-4 md:px-6">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <div class="mb-4 md:mb-0">
+                        <img src="/public/figma design exports/logos/Arzani-logo.png" alt="Arzani" class="h-8">
+                    </div>
+                    <div class="text-sm text-gray-500">
+                        <ul class="flex space-x-6">
+                            <li><a href="/terms" class="hover:text-gray-700">Terms &amp; Conditions</a></li>
+                            <li><a href="/privacy" class="hover:text-gray-700">Privacy Policy</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="mt-4 text-sm text-gray-500 text-center md:text-left">
+                    © <%= new Date().getFullYear() %> Arzani. All rights reserved.
+                </div>
+            </div>
+        </footer>
+    </div>
+    
+    <script>
+        // Track subscription success with analytics
+        document.addEventListener('DOMContentLoaded', function() {
+            // You could add analytics code here
+            console.log('Subscription completed successfully');
+            
+            // Store subscription status in localStorage for UI updates
+            localStorage.setItem('subscription_status', '<%= plan.toLowerCase() %>');
+        });
+    </script>
+</body>
+</html>

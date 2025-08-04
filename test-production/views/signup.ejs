@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- ...existing code... -->
+  
+  <!-- Add meta tag for Google client ID -->
+  <meta name="google-client-id" content="<%= process.env.GOOGLE_CLIENT_ID %>">
+  
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-W50GKB6F3M"></script>
+  <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-W50GKB6F3M');
+  </script>
+  
+  <!-- Microsoft Clarity -->
+  <script type="text/javascript">
+      (function(c,l,a,r,i,t,y){
+          c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+          t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+          y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+      })(window, document, "clarity", "script", "slthf5bx9u");
+  </script>
+  
+  <!-- Load the new signup handler script -->
+  <script src="/js/signup-handler.js" defer></script>
+</head>
+<body>
+  <!-- ...existing code... -->
+  
+  <!-- At the end of the file, right before the closing body tag -->
+  <script>
+    // Add form submission handler for signup
+    document.addEventListener('DOMContentLoaded', function() {
+      // The main functionality is now in signup-handler.js
+      console.log('Signup form initialized');
+      
+      // Check for questionnaire data
+      const questionnaireSubmissionId = localStorage.getItem('questionnaireSubmissionId');
+      const sellerEmail = localStorage.getItem('sellerEmail');
+      
+      // If we have questionnaire data, pre-fill and add hidden field
+      if (questionnaireSubmissionId) {
+          // Add hidden field for questionnaire ID
+          const hiddenField = document.createElement('input');
+          hiddenField.type = 'hidden';
+          hiddenField.name = 'questionnaireSubmissionId';
+          hiddenField.value = questionnaireSubmissionId;
+          document.querySelector('form').appendChild(hiddenField);
+          
+          // Pre-fill email if available
+          if (sellerEmail && document.querySelector('input[name="email"]')) {
+              document.querySelector('input[name="email"]').value = sellerEmail;
+          }
+          
+          // Show a message about the questionnaire data
+          const formHeader = document.querySelector('form h1, form h2, form header');
+          if (formHeader) {
+              const infoBox = document.createElement('div');
+              infoBox.className = 'bg-blue-50 p-4 rounded-lg mb-4 text-blue-800';
+              infoBox.innerHTML = 'We\'ve saved your business valuation data. Complete your account to access your valuation report.';
+              formHeader.after(infoBox);
+          }
+      }
+    });
+  </script>
+</body>
+</html>

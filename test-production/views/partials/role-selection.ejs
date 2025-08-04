@@ -1,0 +1,204 @@
+<!-- Role Selection Component -->
+<div class="role-selection-container">
+    <h2>Select your primary role</h2>
+    <p class="mb-4">Choose how you'll primarily use our marketplace. You can always change this later or act in multiple roles.</p>
+    
+    <div class="role-options">
+        <div class="role-option" data-role="buyer">
+            <div class="role-icon">
+                <i class="fas fa-search"></i>
+            </div>
+            <h3>Buyer</h3>
+            <p>I'm looking to purchase a business</p>
+            <ul>
+                <li>Browse available businesses</li>
+                <li>Save favorite listings</li>
+                <li>Contact sellers directly</li>
+            </ul>
+        </div>
+        
+        <div class="role-option" data-role="seller">
+            <div class="role-icon">
+                <i class="fas fa-store"></i>
+            </div>
+            <h3>Seller</h3>
+            <p>I want to sell my business</p>
+            <ul>
+                <li>List your business for sale</li>
+                <li>Get automatic valuations</li>
+                <li>Connect with potential buyers</li>
+            </ul>
+        </div>
+        
+        <div class="role-option" data-role="broker">
+            <div class="role-icon">
+                <i class="fas fa-handshake"></i>
+            </div>
+            <h3>Broker</h3>
+            <p>I help connect buyers and sellers</p>
+            <ul>
+                <li>Manage multiple listings</li>
+                <li>Access professional tools</li>
+                <li>Request verified status</li>
+            </ul>
+        </div>
+        
+        <div class="role-option" data-role="advisor">
+            <div class="role-icon">
+                <i class="fas fa-briefcase"></i>
+            </div>
+            <h3>Advisor</h3>
+            <p>I provide professional services</p>
+            <ul>
+                <li>Offer expertise to clients</li>
+                <li>Build your professional profile</li>
+                <li>Connect with business owners</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="mt-6">
+        <button id="role-continue-btn" class="btn btn-primary btn-lg w-full" disabled>Continue</button>
+    </div>
+</div>
+
+<style>
+    .role-selection-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    .role-options {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-top: 30px;
+    }
+    
+    .role-option {
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 20px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .role-option:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+    
+    .role-option.selected {
+        border-color: #3b82f6;
+        background-color: rgba(59, 130, 246, 0.05);
+    }
+    
+    .role-icon {
+        font-size: 2rem;
+        color: #6b7280;
+        margin-bottom: 15px;
+    }
+    
+    .role-option.selected .role-icon {
+        color: #3b82f6;
+    }
+    
+    .role-option h3 {
+        font-size: 1.25rem;
+        margin-bottom: 8px;
+    }
+    
+    .role-option ul {
+        list-style-type: none;
+        padding-left: 0;
+        margin-top: 10px;
+        font-size: 0.9rem;
+    }
+    
+    .role-option ul li {
+        position: relative;
+        padding-left: 20px;
+        margin-bottom: 5px;
+    }
+    
+    .role-option ul li:before {
+        content: "✓";
+        position: absolute;
+        left: 0;
+        color: #6b7280;
+    }
+    
+    .role-option.selected ul li:before {
+        color: #3b82f6;
+    }
+    
+    #role-continue-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const roleOptions = document.querySelectorAll('.role-option');
+        const continueBtn = document.getElementById('role-continue-btn');
+        let selectedRole = null;
+        
+        roleOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                // Remove selected class from all options
+                roleOptions.forEach(opt => opt.classList.remove('selected'));
+                
+                // Add selected class to clicked option
+                this.classList.add('selected');
+                
+                // Store selected role
+                selectedRole = this.getAttribute('data-role');
+                
+                // Enable continue button
+                continueBtn.disabled = false;
+            });
+        });
+        
+        continueBtn.addEventListener('click', function() {
+            if (selectedRole) {
+                // Save the selected role via API
+                fetch('/api/users/roles/primary', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({ role: selectedRole })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Redirect based on role
+                        switch(selectedRole) {
+                            case 'buyer':
+                                window.location.href = '/marketplace2';
+                                break;
+                            case 'seller':
+                                window.location.href = '/post-business';
+                                break;
+                            case 'broker':
+                            case 'advisor':
+                                window.location.href = '/professional-dashboard';
+                                break;
+                            default:
+                                window.location.href = '/dashboard';
+                        }
+                    } else {
+                        alert('Failed to save role preference. Please try again.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error saving role preference:', error);
+                    alert('An error occurred. Please try again.');
+                });
+            }
+        });
+    });
+</script>

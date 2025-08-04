@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seller Questionnaire - Business Location | Arzani Marketplace</title>
+    <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">
+
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <%- include('../views/partials/tailwind-setup') %>
+    <link rel="stylesheet" href="/css/seller-questionnaire.css">
+    <link rel="stylesheet" href="/css/progress-bar.css">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: white;
+            overflow: hidden; /* Hide scrollbar */
+        }
+        .header {
+            height: 87px;
+            border-bottom: 0.8px solid #bfbcc6;
+        }
+        .content-container {
+            height: calc(100vh - 87px - 100px); /* Header height (87px) and footer height (100px) */
+            overflow-y: auto; /* Enable scrolling inside container if needed */
+            padding-bottom: 20px;
+        }
+        .btn-main {
+            background-color: #25224a;
+            color: white;
+            border-radius: 0 1rem 1rem 1rem;
+        }
+        .btn-next {
+            background-color: #041b76;
+            color: white;
+            border-radius: 0 1rem 1rem 1rem;
+            box-shadow: 7px 7px 17px 0px rgba(25,31,64,0.22);
+        }
+        .progress-bar {
+            background-color: #dee8ff;
+            height: 10px;
+        }
+        .progress-active {
+            background-color: #3e50f7;
+        }
+        .exit-link {
+            color: #25224a;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .profile-pics {
+            display: flex;
+            align-items: center;
+        }
+        .profile-pic {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid white;
+            object-fit: cover;
+        }
+        .profile-pic:not(:first-child) {
+            margin-left: -15px;
+        }
+        .location-option {
+            border: 2px solid #bfbcc6;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+        }
+        .location-option:hover {
+            border-color: #3e50f7;
+            background-color: rgba(62, 80, 247, 0.05);
+        }
+        .location-option.selected {
+            border-color: #3e50f7;
+            background-color: rgba(62, 80, 247, 0.1);
+        }
+    </style>
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-W50GKB6F3M"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-W50GKB6F3M');
+    </script>
+</head>
+<body>
+    <div class="w-full h-screen flex flex-col bg-white">
+        <!-- Header -->
+        <header class="header w-full bg-white flex items-center flex-shrink-0">
+            <div class="container mx-auto px-4 md:px-8 flex items-center justify-between">
+                <!-- Logo -->
+                <div class="h-12 md:h-16">
+                    <img src="/figma design exports/logos/Arzani black-white background 2.png" alt="Arzani" class="h-full">
+                </div>
+                
+                <!-- Right section -->
+                <div class="flex items-center gap-4">
+                    <!-- Help button -->
+                    <div class="hidden md:flex mr-4 h-12 px-6 items-center border border-[#bfbcc6] rounded">
+                        <span class="text-[#464154] text-base font-medium">Need help?</span>
+                    </div>
+                    
+                    <!-- Profile pictures -->
+                    <div class="profile-pics mr-4">
+                        <img src="https://randomuser.me/api/portraits/women/32.jpg" alt="Support agent" class="profile-pic">
+                        <img src="https://randomuser.me/api/portraits/men/44.jpg" alt="Support agent" class="profile-pic">
+                        <img src="https://randomuser.me/api/portraits/women/68.jpg" alt="Support agent" class="profile-pic">
+                    </div>
+                    
+                    <!-- Exit link -->
+                    <a href="/" class="exit-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                        <span class="hidden sm:inline">Exit</span>
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main content -->
+        <main class="content-container flex-grow page-transition">
+            <div class="container mx-auto px-4 max-w-2xl pt-8 md:pt-12">
+                <h1 class="text-[#25224a] text-2xl md:text-3xl font-black mb-4 text-center">Where is your business located?</h1>
+                <p class="text-[#5f5770] text-lg mb-8 text-center">Location helps buyers understand the market and opportunities for your business.</p>
+                
+                <!-- Location Input Form -->
+                <div class="mt-8">
+                    <div class="mb-6">
+                        <label for="locationInput" class="block text-[#25224a] text-lg font-medium mb-2">Business Location</label>
+                        <div class="relative">
+                            <input 
+                                type="text" 
+                                id="locationInput" 
+                                name="locationInput"
+                                class="w-full px-4 py-4 border border-[#bfbcc6] rounded-md focus:outline-none focus:ring-2 focus:ring-[#3e50f7] text-lg" 
+                                placeholder="Start typing your location..."
+                                autocomplete="off"
+                            >
+                            <div id="locationError" class="text-red-500 text-left hidden mt-2">Please enter your business location</div>
+                            <div class="text-[#5f5770] text-sm mt-2">Use the dropdown suggestions for best results</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Google Maps error message box -->
+                    <div id="maps-error" class="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded mb-4 hidden">
+                        Unable to load Google Maps. You can still enter your location manually.
+                    </div>
+                    
+                    <!-- Common UK regions as helpful options -->
+                    <div class="mt-8">
+                        <p class="text-[#5f5770] text-base mb-3">Popular UK regions:</p>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            <div class="location-option p-3 text-center cursor-pointer" data-value="London, UK">
+                                <p class="text-[#25224a] font-medium">London</p>
+                            </div>
+                            <div class="location-option p-3 text-center cursor-pointer" data-value="Manchester, UK">
+                                <p class="text-[#25224a] font-medium">Manchester</p>
+                            </div>
+                            <div class="location-option p-3 text-center cursor-pointer" data-value="Birmingham, UK">
+                                <p class="text-[#25224a] font-medium">Birmingham</p>
+                            </div>
+                            <div class="location-option p-3 text-center cursor-pointer" data-value="Edinburgh, UK">
+                                <p class="text-[#25224a] font-medium">Edinburgh</p>
+                            </div>
+                            <div class="location-option p-3 text-center cursor-pointer" data-value="Glasgow, UK">
+                                <p class="text-[#25224a] font-medium">Glasgow</p>
+                            </div>
+                            <div class="location-option p-3 text-center cursor-pointer" data-value="Leeds, UK">
+                                <p class="text-[#25224a] font-medium">Leeds</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Footer progress bar -->
+        <footer class="w-full bg-white flex-shrink-0">
+            <!-- New progress bar system -->
+            <div class="container mx-auto px-4 md:px-20 py-2">
+                <div class="progress-status">
+                    <div class="current-page">Business Location</div>
+                    <div class="pages-count">Step 4 of 11</div>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-active" style="width: 36%;"></div>
+                    </div>
+                </div>
+                <div class="step-indicators">
+                    <div class="step-dot completed" data-step="1"></div>
+                    <div class="step-dot completed" data-step="2"></div>
+                    <div class="step-dot completed" data-step="3"></div>
+                    <div class="step-dot active" data-step="4"></div>
+                    <div class="step-dot" data-step="5"></div>
+                    <div class="step-dot" data-step="6"></div>
+                    <div class="step-dot" data-step="7"></div>
+                    <div class="step-dot" data-step="8"></div>
+                    <div class="step-dot" data-step="9"></div>
+                    <div class="step-dot" data-step="10"></div>
+                    <div class="step-dot" data-step="11"></div>
+                </div>
+            </div>
+            
+                        
+                <div class="container mx-auto px-4 md:px-20 py-6 md:py-8 pb-10 sm:pb-8 flex justify-between items-center">
+                    <button id="backBtn" class="text-[#25224a] text-base font-medium">Back</button>
+                    <button id="nextBtn" class="btn-next px-6 md:px-8 py-3 md:py-4 text-white text-base font-medium">Next</button>
+                </div>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/js/questionnaire-navigation.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set up location input field and error handling
+            const locationInput = document.getElementById('locationInput');
+            const locationError = document.getElementById('locationError');
+            
+            // Check if there's a saved location value in localStorage
+            const savedLocation = localStorage.getItem('sellerLocation');
+            if (savedLocation) {
+                locationInput.value = savedLocation;
+            }
+            
+            // Add input handler
+            locationInput.addEventListener('input', function() {
+                if (this.value.trim()) {
+                    locationError.classList.add('hidden');
+                    locationInput.classList.remove('border-red-500');
+                }
+            });
+            
+            // Add click handlers for location options
+            const locationOptions = document.querySelectorAll('.location-option');
+            locationOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    // Remove selected class from all options
+                    locationOptions.forEach(opt => opt.classList.remove('selected'));
+                    
+                    // Add selected class to clicked option
+                    this.classList.add('selected');
+                    
+                    // Set the input value
+                    locationInput.value = this.getAttribute('data-value');
+                    
+                    // Hide error if shown
+                    locationError.classList.add('hidden');
+                    locationInput.classList.remove('border-red-500');
+                });
+            });
+            
+            // Add validation function for the navigation script
+            window.validateBeforeNext = function() {
+                // Check if a value has been entered
+                if (!locationInput.value.trim()) {
+                    // Show error
+                    locationError.classList.remove('hidden');
+                    locationInput.classList.add('border-red-500');
+                    locationInput.focus();
+                    return false;
+                }
+                
+                // Save to localStorage
+                localStorage.setItem('sellerLocation', locationInput.value.trim());
+                return true;
+            };
+        });
+        
+        // Google Maps Places Autocomplete Integration
+        let autocomplete;
+        
+        function initMap() {
+            try {
+                const input = document.getElementById('locationInput');
+                if (!input) return;
+                
+                // Initialize the autocomplete with UK bias
+                const options = {
+                    types: ['(cities)'],
+                    componentRestrictions: { country: 'gb' }
+                };
+                
+                autocomplete = new google.maps.places.Autocomplete(input, options);
+                
+                // Set fields to improve performance and limit unnecessary data
+                autocomplete.setFields(['address_components', 'formatted_address', 'geometry', 'name']);
+                
+                // When a place is selected
+                autocomplete.addListener('place_changed', function() {
+                    const place = autocomplete.getPlace();
+                    
+                    if (!place.geometry) {
+                        console.log('No place geometry available');
+                        return;
+                    }
+                    
+                    // Hide error if shown
+                    document.getElementById('locationError').classList.add('hidden');
+                    input.classList.remove('border-red-500');
+                    
+                    // Store the formatted address
+                    localStorage.setItem('sellerLocation', place.formatted_address);
+                    
+                    // Remove selected class from quick options
+                    document.querySelectorAll('.location-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                });
+                
+                console.log('Google Maps Places Autocomplete initialized successfully');
+            } catch (error) {
+                console.error('Error initializing Google Maps Places Autocomplete:', error);
+                document.getElementById('maps-error').style.display = 'block';
+                enableManualLocationEntry();
+            }
+        }
+        
+        // Helper function for enabling manual location entry when maps fails
+        function enableManualLocationEntry() {
+            const locationInput = document.getElementById('locationInput');
+            if (locationInput) {
+                locationInput.setAttribute('placeholder', 'Enter location manually (e.g., London, UK)');
+                locationInput.removeAttribute('readonly');
+                // Optional: Add a class to style the input differently
+                locationInput.classList.add('manual-entry');
+            }
+        }
+    </script>
+
+    <!-- Use environment variable for Google Maps API key -->
+    <script async 
+        src="https://maps.googleapis.com/maps/api/js?key=<%= process.env.GOOGLE_MAPS_API_KEY %>&libraries=places&callback=initMap">
+    </script>
+</body>
+</html>

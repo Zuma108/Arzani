@@ -1,0 +1,130 @@
+/* Production Mobile Navbar Fix */
+/* This file ensures mobile navbar dropdown is always visible in production */
+
+/* Mobile logo switching - show black logo when navbar has white background */
+@media (max-width: 1023px) {
+  /* Default state - white logo visible, black logo hidden */
+  .navbar-logo-white {
+    display: block !important;
+  }
+  
+  .navbar-logo-black {
+    display: none !important;
+  }
+  
+  /* When mobile navbar is scrolled/opened - switch to black logo */
+  .header-light.mobile-scrolled .navbar-logo-white,
+  .header-light.mobile-menu-open .navbar-logo-white {
+    display: none !important;
+  }
+  
+  .header-light.mobile-scrolled .navbar-logo-black,
+  .header-light.mobile-menu-open .navbar-logo-black {
+    display: block !important;
+  }
+  
+  /* Ensure logos have same dimensions */
+  .navbar-logo-white,
+  .navbar-logo-black {
+    height: 1.25rem !important; /* 20px */
+    width: auto !important;
+    transition: opacity 0.3s ease !important;
+  }
+}
+
+/* Force mobile menu visibility and styling */
+@media (max-width: 1023px) {
+  .navbar__menu {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    border: 2px solid #e5e7eb !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+  }
+  
+  .navbar__menu a,
+  .navbar__menu a span,
+  .navbar__menu .text-sm,
+  .navbar__menu .py-2 {
+    color: #111827 !important;
+    font-weight: 600 !important;
+    text-decoration: none !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    text-shadow: none !important;
+    -webkit-text-fill-color: #111827 !important;
+    background-clip: text !important;
+  }
+  
+  .navbar__menu a:hover,
+  .navbar__menu a:focus {
+    background-color: #f3f4f6 !important;
+    color: #3b82f6 !important;
+    -webkit-text-fill-color: #3b82f6 !important;
+  }
+  
+  /* Ensure specific menu items are visible */
+  .navbar__menu a[href="/business-valuation"],
+  .navbar__menu a[href="/ai-insights"],
+  .navbar__menu a[href="/marketplace2"],
+  .navbar__menu a[href="/arzani-x"],
+  .navbar__menu a[href="/features"],
+  .navbar__menu a[href="/pricing"],
+  .navbar__menu a[href="/login"] {
+    color: #1f2937 !important;
+    font-weight: 600 !important;
+    padding: 12px 16px !important;
+    margin: 4px 8px !important;
+    border-radius: 8px !important;
+    transition: all 0.2s ease !important;
+  }
+  
+  /* Override any conflicting styles */
+  .navbar__menu * {
+    color: inherit !important;
+  }
+  
+  /* Additional specificity for production */
+  .header-light .navbar__menu a {
+    color: #1f2937 !important;
+  }
+  
+  .mobile-menu-open .navbar__menu a {
+    color: #1f2937 !important;
+  }
+}
+
+/* High specificity override for all possible states */
+.navbar__menu:not(.hidden) a,
+.navbar__menu.open a,
+#mobileMenu a,
+#mobileMenu:not(.hidden) a {
+  color: #1f2937 !important;
+  font-weight: 600 !important;
+  display: block !important;
+}
+
+/* Ensure burger menu is visible */
+@media (max-width: 1023px) {
+  .burger-line {
+    background-color: #ffffff !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+  
+  .navbar__burger[aria-expanded="true"] .burger-line {
+    background-color: #1f2937 !important;
+  }
+}
+
+/* Debug styles - remove in production if needed */
+.debug-mobile-menu {
+  border: 3px solid red !important;
+}
+
+.debug-mobile-menu a {
+  background-color: yellow !important;
+  color: black !important;
+}

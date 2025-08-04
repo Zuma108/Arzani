@@ -1,0 +1,35 @@
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="auth-token" content="<%= locals.token || '' %>">
+<title><%= title || 'My Marketplace' %></title>
+
+<!-- Include Tailwind CSS -->
+<%- include('./tailwind-setup') %>
+
+<!-- Common CSS -->
+<link rel="stylesheet" href="/css/styles.css">
+
+<!-- Page-specific CSS -->
+<% if (locals.styles && Array.isArray(locals.styles)) { %>
+    <% styles.forEach(style => { %>
+        <link rel="stylesheet" href="<%= style %>">
+    <% }); %>
+<% } %>
+
+<!-- Only include chat styles if this is a chat page -->
+<% if (locals.isChatPage) { %>
+    <link rel="stylesheet" href="/css/chat.css">
+<% } %>
+
+<!-- Authentication token for client-side use -->
+<% if (locals.token) { %>
+    <meta name="auth-token" content="<%= token %>">
+<% } %>
+
+<!-- Add image error handling script -->
+<script src="/js/image-error-handler.js"></script>
+
+<!-- Add auth token synchronization before other scripts -->
+<script src="/js/auth-token-sync.js"></script>
+
+<!-- Removed AI chatbot integration script -->

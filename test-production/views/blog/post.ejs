@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= post.title %> | Arzani Blog</title>
+    <meta name="description" content="<%= post.meta_description || post.excerpt || '' %>">
+    
+    <!-- Add Open Graph tags for social sharing -->
+    <meta property="og:title" content="<%= post.title %> | Arzani Blog">
+    <meta property="og:description" content="<%= post.meta_description || post.excerpt || '' %>">
+    <meta property="og:image" content="<%= post.hero_image || '/figma design exports/images/default-blog-hero.jpg' %>">
+    <meta property="og:url" content="<%= `https://arzani.co.uk/blog/${post.slug}` %>">
+    <meta property="og:type" content="article">
+    
+    <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">
+    <link rel="stylesheet" href="/css/modern.css">
+    <link rel="stylesheet" href="/css/blog.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#316FD4',
+                        dark: '#141414',
+                        'dark-light': '#1E1E1E'
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-W50GKB6F3M"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-W50GKB6F3M');
+    </script>
+    
+    <!-- Blog styles -->
+    <style>
+        /* Reset any margins on html and body */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            overflow-x: hidden;
+        }
+        
+        /* Fix for mobile menu */
+        body.menu-open {
+            overflow: hidden;
+        }
+        
+        /* Ensure page wrapper takes full width */
+        .page-wrapper {
+            width: 100%;
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        /* Fix for scrollbar width compensation */
+        @media (min-width: 768px) {
+            body {
+                overflow-y: scroll;
+            }
+        }
+        
+        /* Ensure header is properly positioned */
+        header.header-transparent {
+            width: 100%;
+            left: 0;
+            right: 0;
+            position: fixed; /* Make the header fixed */
+            top: 0; /* Position at the very top */
+            z-index: 50; /* Ensure it stays above other content */
+        }
+        
+        /* Blog content image sizing */
+        .blog-content img {
+            max-width: 600px !important;
+            height: auto;
+            margin: 2rem auto;
+            display: block;
+            border: none !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border-radius: 8px;
+        }
+        
+        /* Internal link styling */
+        .internal-link {
+            color: #316FD4;
+            text-decoration: underline;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .internal-link:hover {
+            color: #2454A3;
+        }
+    </style>
+</head>
+<body class="bg-white text-gray-900 font-sans">
+    <div class="page-wrapper">
+        <%- include('../partials/navbar') %>
+
+        <!-- Blog Post Content -->
+        <main class="pt-28 md:pt-36">
+            <div class="container mx-auto px-4 md:px-6">
+                <!-- Breadcrumbs -->
+                <div class="mb-6 text-sm text-gray-500">
+                    <a href="/" class="hover:text-primary">Home</a>
+                    <span class="mx-2">/</span>
+                    <a href="/blog" class="hover:text-primary">Blog</a>
+                    <span class="mx-2">/</span>
+                    <span class="text-gray-900"><%= post.title %></span>
+                </div>
+                
+                <!-- Post Title -->
+                <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 leading-tight text-gray-900">
+                    <%= post.title %>
+                </h1>
+                
+                <!-- Author and Date - updated to use direct author fields -->
+                <div class="flex items-center mb-8">
+                    <img src="<%= post.author_image || '/figma design exports/images/default-avatar.png' %>" 
+                         alt="<%= post.author_name || 'Arzani Team' %>" 
+                         class="w-10 h-10 rounded-full mr-3 border border-gray-200">
+                    <div>
+                        <p class="font-medium text-gray-900"><%= post.author_name || 'Arzani Team' %></p>
+                        <div class="text-sm text-gray-500">
+                            <%= new Date(post.publish_date || post.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) %>
+                            <span class="mx-2">•</span>
+                            <%= post.reading_time || 5 %> min read
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Hero Image - Ensuring full image visibility while maintaining smaller size -->
+                <% if (post.hero_image) { %>
+                <div class="w-full flex justify-center mb-8">
+                    <div class="w-full max-w-3xl h-[150px] md:h-[250px] rounded-xl overflow-hidden bg-gray-100">
+                        <img src="<%= post.hero_image %>" 
+                             alt="<%= post.title %>" 
+                             class="w-full h-full object-contain"
+                             onerror="this.onerror=null; this.src='https://arzani-images1.s3.eu-west-2.amazonaws.com/blogs/default-blog-hero.jpg';">
+                    </div>
+                </div>
+                <% } else { %>
+                <div class="w-full flex justify-center mb-8">
+                    <div class="w-full max-w-3xl h-[150px] md:h-[250px] rounded-xl overflow-hidden bg-gray-100">
+                        <img src="https://arzani-images1.s3.eu-west-2.amazonaws.com/blogs/default-blog-hero.jpg" 
+                             alt="<%= post.title %>" 
+                             class="w-full h-full object-contain">
+                    </div>
+                </div>
+                <% } %>
+                
+                <!-- Post Content -->
+                <div class="prose max-w-none blog-content">
+                    <%- post.content %>
+                </div>
+                
+                <!-- Categories and Tags -->
+                <div class="mt-12">
+                    <% if (categories && categories.length > 0) { %>
+                    <div class="mb-4">
+                        <span class="text-gray-600">Categories:</span>
+                        <div class="flex flex-wrap gap-2 mt-2">
+                            <% categories.forEach(category => { %>
+                                <a href="/blog/category/<%= category.slug %>" class="px-3 py-1 bg-gray-100 rounded-full text-sm hover:bg-gray-200 transition-colors text-gray-700">
+                                    <%= category.name %>
+                                </a>
+                            <% }); %>
+                        </div>
+                    </div>
+                    <% } %>
+                    
+                    <% if (tags && tags.length > 0) { %>
+                    <div>
+                        <span class="text-gray-600">Tags:</span>
+                        <div class="flex flex-wrap gap-2 mt-2">
+                            <% tags.forEach(tag => { %>
+                                <a href="/blog/tag/<%= tag.slug %>" class="px-3 py-1 bg-gray-100 rounded-full text-sm hover:bg-gray-200 transition-colors text-gray-700">
+                                    #<%= tag.name %>
+                                </a>
+                            <% }); %>
+                        </div>
+                    </div>
+                    <% } %>
+                </div>
+                
+                <!-- Author Bio - updated to use direct author fields -->
+                <div class="mt-12 p-6 bg-gray-100 border border-gray-200 rounded-xl">
+                    <div class="flex items-start">
+                        <img src="<%= post.author_image || '/figma design exports/images/default-avatar.png' %>" 
+                             alt="<%= post.author_name || 'Arzani Team' %>" 
+                             class="w-16 h-16 rounded-full mr-4 border border-gray-200">
+                        <div>
+                            <h3 class="text-xl font-bold mb-2 text-gray-900">About <%= post.author_name || 'Arzani Team' %></h3>
+                            <p class="text-gray-700"><%= post.author_bio || 'The Arzani team provides expert insights on business valuation, market trends, and growth strategies for UK small businesses.' %></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Related Posts -->
+                <% if (relatedPosts && relatedPosts.length > 0) { %>
+                <div class="mt-16">
+                    <h2 class="text-2xl font-bold mb-8 text-gray-900">Related Articles</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <% relatedPosts.forEach(relatedPost => { %>
+                            <a href="/blog/<%= relatedPost.slug %>" class="block group">
+                                <div class="bg-white border border-gray-200 rounded-xl overflow-hidden hover:border-primary/30 transition-all shadow-sm hover:shadow">
+                                    <div class="h-48 overflow-hidden">
+                                        <img src="<%= relatedPost.hero_image || 'https://arzani-images1.s3.eu-west-2.amazonaws.com/blogs/default-blog-hero.jpg' %>" 
+                                             alt="<%= relatedPost.title %>" 
+                                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                             onerror="this.onerror=null; this.src='https://arzani-images1.s3.eu-west-2.amazonaws.com/blogs/default-blog-hero.jpg';">
+                                    </div>
+                                    <div class="p-6">
+                                        <h3 class="text-lg font-bold mb-2 line-clamp-2 text-gray-900"><%= relatedPost.title %></h3>
+                                        <div class="text-sm text-gray-500">
+                                            <%= new Date(relatedPost.publish_date || relatedPost.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) %>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        <% }); %>
+                    </div>
+                </div>
+                <% } %>
+                  <!-- Newsletter Signup -->
+                <div class="mt-16 p-8 mb-16 bg-primary bg-opacity-5 border border-primary border-opacity-20 rounded-xl text-center">
+                    <h3 class="text-2xl font-bold mb-3 text-gray-900">Subscribe to Our Newsletter</h3>
+                    <p class="text-gray-700 mb-6 max-w-2xl mx-auto">Get the latest insights on business valuation, market trends, and growth strategies delivered to your inbox.</p>
+                    <form action="/subscribe" method="POST" class="flex flex-col sm:flex-row max-w-md mx-auto gap-3">
+                        <input type="email" name="email" placeholder="Your email address" required
+                               class="flex-grow px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                        <input type="hidden" name="source" value="blog-post">
+                        <button type="submit" class="btn-primary whitespace-nowrap">
+                            Subscribe
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </main>
+
+        <%- include('../partials/footer') %>
+    </div>
+
+    <script src="/js/navigation.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add sticky header on scroll
+            const header = document.querySelector('header');
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 50) {
+                    header.classList.add('scrolled', 'bg-dark/80', 'backdrop-blur-md', 'border-b', 'border-gray-800');
+                    
+                    // Change logo colors on scroll
+                    const blackLogo = document.querySelector('.logo-black');
+                    const whiteLogo = document.querySelector('.logo-white');
+                    
+                    if (blackLogo && whiteLogo) {
+                        blackLogo.classList.add('hidden');
+                        whiteLogo.classList.remove('hidden');
+                    }
+                    
+                    // Change nav links color
+                    const navLinks = document.querySelectorAll('.navbar__link, .navbar__drawer_trigger');
+                    navLinks.forEach(link => {
+                        link.classList.remove('text-gray-900');
+                        link.classList.add('text-white');
+                    });
+                    
+                    // Change burger menu color
+                    const burgerLines = document.querySelectorAll('.burger-line');
+                    burgerLines.forEach(line => {
+                        line.classList.remove('bg-gray-900');
+                        line.classList.add('bg-white');
+                    });
+                } else {
+                    header.classList.remove('scrolled', 'bg-dark/80', 'backdrop-blur-md', 'border-b', 'border-gray-800');
+                    
+                    // Reset logo colors
+                    const blackLogo = document.querySelector('.logo-black');
+                    const whiteLogo = document.querySelector('.logo-white');
+                    
+                    if (blackLogo && whiteLogo) {
+                        blackLogo.classList.remove('hidden');
+                        whiteLogo.classList.add('hidden');
+                    }
+                    
+                    // Reset nav links color
+                    const navLinks = document.querySelectorAll('.navbar__link, .navbar__drawer_trigger');
+                    navLinks.forEach(link => {
+                        link.classList.add('text-gray-900');
+                        link.classList.remove('text-white');
+                    });
+                    
+                    // Reset burger menu color
+                    const burgerLines = document.querySelectorAll('.burger-line');
+                    burgerLines.forEach(line => {
+                        line.classList.add('bg-gray-900');
+                        line.classList.remove('bg-white');
+                    });
+                }
+            });
+            
+            // Force immediate visual state update (no waiting for scroll event)
+            if (window.scrollY <= 50) {
+                // At top - ensure initial state is correct
+                const blackLogo = document.querySelector('.logo-black');
+                const whiteLogo = document.querySelector('.logo-white');
+                const navLinks = document.querySelectorAll('.navbar__link, .navbar__drawer_trigger');
+                const burgerLines = document.querySelectorAll('.burger-line');
+                
+                if (blackLogo) blackLogo.classList.remove('hidden');
+                if (whiteLogo) whiteLogo.classList.add('hidden');
+                
+                navLinks.forEach(link => {
+                    if (!link.classList.contains('btn-primary')) {
+                        link.classList.remove('text-white');
+                        link.classList.add('text-gray-900');
+                    }
+                });
+                
+                burgerLines.forEach(line => {
+                    line.classList.remove('bg-white');
+                    line.classList.add('bg-gray-900');
+                });
+            }
+            
+            // Mobile menu toggle with improved handling to prevent layout shift
+            // Find mobile menu button by class or ID (more robust approach)
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn') || document.querySelector('.navbar__drawer_trigger');
+            const mobileMenu = document.getElementById('mobileMenu') || document.querySelector('.mobile-menu') || document.querySelector('.navbar__drawer');
+            
+            if (mobileMenuBtn && mobileMenu) {
+                mobileMenuBtn.addEventListener('click', function() {
+                    // Toggle mobile menu visibility
+                    mobileMenu.classList.toggle('hidden');
+                    
+                    // Toggle aria-expanded state
+                    const isExpanded = mobileMenu.classList.contains('hidden') ? 'false' : 'true';
+                    this.setAttribute('aria-expanded', isExpanded);
+                    
+                    // Toggle burger icon open state
+                    this.classList.toggle('open');
+                    
+                    // Toggle body class to prevent scrolling when menu is open
+                    document.body.classList.toggle('menu-open');
+                    
+                    // Fix for layout shift when scrollbar disappears
+                    if (mobileMenu.classList.contains('hidden')) {
+                        // Menu is closing
+                        document.documentElement.style.removeProperty('overflow');
+                        document.documentElement.style.removeProperty('padding-right');
+                    } else {
+                        // Menu is opening
+                        const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+                        document.documentElement.style.overflow = 'hidden';
+                        document.documentElement.style.paddingRight = scrollbarWidth + 'px';
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

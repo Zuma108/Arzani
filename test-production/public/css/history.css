@@ -1,0 +1,181 @@
+
+
+        .table {
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 20px;
+            border: none;
+            table-layout: fixed; /* This helps maintain consistent column widths */
+        }
+
+        .table thead th {
+            background-color: var(--accent-color);
+            color: #fff;
+            border: none;
+            padding: 16px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .table tbody tr {
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .table tbody tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+
+        .table tbody td {
+            padding: 16px;
+            vertical-align: middle;
+            color: #444;
+            border-right: 1px solid #e5e7eb;
+        }
+
+        /* Add styling for price and industry columns */
+        .table td:nth-child(3),
+        .table td:nth-child(4) {
+            color: var(--button-bg); /* Uses the same blue as marketplace2 buttons */
+            font-weight: 500;
+        }
+
+        /* Keep the hover effect for business name column only */
+        .table td:first-child:hover {
+            color: var(--button-bg);
+            cursor: pointer;
+        }
+
+        .table td span[title] {
+            cursor: help;
+            color: var(--accent-color);
+            font-weight: 500;
+        }
+
+        .table td span[title]:hover {
+            text-decoration: underline dotted;
+        }
+
+        .table th:first-child,
+        .table td:first-child {
+            width: 30%; /* Reduced from 35% */
+            padding-right: 20px;
+            font-weight: 500;
+            color: var(--accent-color);
+        }
+
+        .table th:nth-child(2),
+        .table td:nth-child(2) {
+            width: 15%; /* Reduced from 20% */
+            padding: 16px 20px;
+            white-space: nowrap;
+        }
+
+        .table th:nth-child(3),
+        .table td:nth-child(3) {
+            width: 25%; /* Increased from 20% */
+            padding: 16px 20px;
+            text-align: left; /* Changed from right to left */
+        }
+
+        .table th:nth-child(4),
+        .table td:nth-child(4) {
+            width: 30%; /* Increased from 25% */
+            padding-left: 20px;
+        }
+
+        .table td:first-child:hover {
+            color: var(--button-bg);
+            cursor: pointer;
+        }
+
+        .table td:last-child {
+            border-right: none;
+        }
+
+        .marketplace-heading {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--accent-color);
+            text-align: center;
+            margin: 2rem 0;
+            font-family: 'Arial', sans-serif;
+        }
+
+        .business-row {
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .business-row:hover {
+            background-color: rgba(1, 13, 60, 0.05) !important;
+        }
+
+        .business-name {
+            color: var(--accent-color);
+            font-weight: 500;
+        }
+
+        /* Chatbox styles */
+        .assistant-icon {
+            position: fixed;
+            bottom: 20px;
+            right: 300px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: #fff;
+            cursor: pointer;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .chat-box {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 600px;
+            max-height: 600px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: none;
+            flex-direction: column;
+            z-index: 1000;
+        }
+
+        /* Footer styles */
+        .footer {
+            margin-top: auto;
+            padding: 2rem 0;
+            background-color: var(--main-bg);
+            border-top: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .footer-content {
+            max-width: 100px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        /* Ensure main content doesn't overlap with footer */
+        main {
+            min-height: calc(100vh - 200px);
+            padding-bottom: 4rem;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .chat-box {
+                width: 90%;
+                right: 5%;
+                left: 5%;
+            }
+            
+            .assistant-icon {
+                right: 20px;
+            }
+        }

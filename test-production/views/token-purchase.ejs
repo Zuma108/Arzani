@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchase Contact Tokens - Arzani Marketplace</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Custom Styles -->
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .token-card {
+            transition: all 0.3s ease;
+        }
+        .token-card:hover {
+            transform: translateY(-4px);
+        }
+        .popular-badge {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <div class="gradient-bg text-white py-8">
+        <div class="max-w-4xl mx-auto px-4 text-center">
+            <div class="mb-4">
+                <i class="fas fa-coins text-4xl mb-2"></i>
+            </div>
+            <h1 class="text-3xl md:text-4xl font-bold mb-2">Purchase Contact Tokens</h1>
+            <p class="text-lg opacity-90">Connect with business sellers and expand your network</p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-6xl mx-auto px-4 py-8">
+        <!-- Current Balance Card -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-800 mb-1">Your Current Balance</h2>
+                    <p class="text-gray-600">Available contact tokens</p>
+                </div>
+                <div class="text-right">
+                    <div class="text-3xl font-bold text-blue-600" id="current-balance">
+                        <i class="fas fa-spinner fa-spin"></i>
+                    </div>
+                    <p class="text-sm text-gray-500">tokens</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Package Selection -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Choose Your Package</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="token-packages">
+                <!-- Packages will be loaded here -->
+                <div class="text-center py-12">
+                    <i class="fas fa-spinner fa-spin text-2xl text-gray-400"></i>
+                    <p class="text-gray-500 mt-2">Loading packages...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- How It Works -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">How Contact Tokens Work</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="text-center">
+                    <div class="bg-blue-100 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3">
+                        <i class="fas fa-search text-blue-600"></i>
+                    </div>
+                    <h4 class="font-semibold text-gray-800 mb-2">1. Find Businesses</h4>
+                    <p class="text-gray-600 text-sm">Browse our marketplace and find businesses that match your investment criteria.</p>
+                </div>
+                <div class="text-center">
+                    <div class="bg-green-100 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3">
+                        <i class="fas fa-comments text-green-600"></i>
+                    </div>
+                    <h4 class="font-semibold text-gray-800 mb-2">2. Use Tokens to Contact</h4>
+                    <p class="text-gray-600 text-sm">Each contact requires 1 token. Start meaningful conversations with business owners.</p>
+                </div>
+                <div class="text-center">
+                    <div class="bg-purple-100 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3">
+                        <i class="fas fa-handshake text-purple-600"></i>
+                    </div>
+                    <h4 class="font-semibold text-gray-800 mb-2">3. Make Connections</h4>
+                    <p class="text-gray-600 text-sm">Build relationships and potentially close deals with verified business sellers.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Benefits -->
+        <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 mb-8">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Why Choose Our Token System?</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="flex items-start space-x-3">
+                    <i class="fas fa-check-circle text-green-500 mt-1"></i>
+                    <div>
+                        <h4 class="font-semibold text-gray-800">Quality Connections</h4>
+                        <p class="text-gray-600 text-sm">Connect only with verified, serious business sellers</p>
+                    </div>
+                </div>
+                <div class="flex items-start space-x-3">
+                    <i class="fas fa-check-circle text-green-500 mt-1"></i>
+                    <div>
+                        <h4 class="font-semibold text-gray-800">No Monthly Fees</h4>
+                        <p class="text-gray-600 text-sm">Pay only for the contacts you make, no recurring charges</p>
+                    </div>
+                </div>
+                <div class="flex items-start space-x-3">
+                    <i class="fas fa-check-circle text-green-500 mt-1"></i>
+                    <div>
+                        <h4 class="font-semibold text-gray-800">Instant Access</h4>
+                        <p class="text-gray-600 text-sm">Start contacting businesses immediately after purchase</p>
+                    </div>
+                </div>
+                <div class="flex items-start space-x-3">
+                    <i class="fas fa-check-circle text-green-500 mt-1"></i>
+                    <div>
+                        <h4 class="font-semibold text-gray-800">Secure Payments</h4>
+                        <p class="text-gray-600 text-sm">Protected by Stripe with industry-standard security</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Back to Marketplace -->
+        <div class="text-center">
+            <a href="/marketplace" class="inline-flex items-center space-x-2 text-blue-600 hover:text-blue-800 transition-colors">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back to Marketplace</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/js/token-balance.js"></script>
+    <script src="/js/token-purchase.js"></script>
+    <script src="/js/token-purchase-test.js"></script> <!-- Debug script -->
+    <script src="/js/token-purchase-debug.js"></script> <!-- Debug script -->
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Token purchase page loaded');
+            
+            // Initialize token balance display
+            if (typeof TokenBalance !== 'undefined') {
+                console.log('Initializing TokenBalance');
+                const tokenBalance = new TokenBalance();
+                // Give it a moment to initialize before updating display
+                setTimeout(() => {
+                    tokenBalance.updateDisplay('current-balance');
+                }, 100);
+            } else {
+                console.error('TokenBalance class not available');
+            }
+            
+            // Initialize token purchase system
+            if (typeof TokenPurchase !== 'undefined') {
+                console.log('Initializing TokenPurchase');
+                const tokenPurchase = new TokenPurchase();
+                // Give it a moment to initialize before loading packages
+                setTimeout(() => {
+                    tokenPurchase.loadPackagesIntoContainer('token-packages');
+                }, 200);
+                
+                // Store instance globally for access from other scripts if needed
+                window.tokenPurchaseInstance = tokenPurchase;
+            } else {
+                console.error('TokenPurchase class not available');
+            }
+        });
+    </script>
+</body>
+</html>

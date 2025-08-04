@@ -1,0 +1,6 @@
+# Build Cache Buster
+# This file forces GitHub Actions to create a fresh build
+# Timestamp: 2025-08-04 London Time
+BUILD_VERSION=1.1.5-cache-fix
+LAST_UPDATED=2025-08-04T10:00:00Z
+CACHE_BUSTER=api-files-verified-locally

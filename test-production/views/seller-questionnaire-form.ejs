@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seller Questionnaire - Business Details | Arzani Marketplace</title>
+    <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">
+
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <%- include('../views/partials/tailwind-setup') %>
+    <link rel="stylesheet" href="/css/seller-questionnaire.css">
+    <link rel="stylesheet" href="/css/progress-bar.css">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: white;
+            overflow: hidden; /* Hide scrollbar */
+        }
+        .header {
+            height: 87px;
+            border-bottom: 0.8px solid #bfbcc6;
+        }
+        .content-container {
+            height: calc(100vh - 87px - 100px); /* Header height (87px) and footer height (100px) */
+            overflow-y: auto; /* Enable scrolling inside container if needed */
+            padding-bottom: 20px;
+        }
+        .btn-main {
+            background-color: #25224a;
+            color: white;
+            border-radius: 0 1rem 1rem 1rem;
+        }
+        .btn-next {
+            background-color: #041b76;
+            color: white;
+            border-radius: 0 1rem 1rem 1rem;
+            box-shadow: 7px 7px 17px 0px rgba(25,31,64,0.22);
+        }
+        .progress-bar {
+            background-color: #dee8ff;
+            height: 10px;
+        }
+        .progress-active {
+            background-color: #3e50f7;
+        }
+        .exit-link {
+            color: #25224a;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .profile-pics {
+            display: flex;
+            align-items: center;
+        }
+        .profile-pic {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid white;
+            object-fit: cover;
+        }
+        .profile-pic:not(:first-child) {
+            margin-left: -15px;
+        }
+    </style>
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-W50GKB6F3M"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-W50GKB6F3M');
+    </script>
+</head>
+<body>
+    <div class="w-full h-screen flex flex-col bg-white">
+        <!-- Header -->
+        <header class="header w-full bg-white flex items-center flex-shrink-0">
+            <div class="container mx-auto px-4 md:px-8 flex items-center justify-between">
+                <!-- Logo -->
+                <div class="h-12 md:h-16">
+                    <img src="/figma design exports/logos/Arzani black-white background 2.png" alt="Arzani" class="h-full">
+                </div>
+                
+                <!-- Right section -->
+                <div class="flex items-center gap-4">
+                    <!-- Help button -->
+                    <div class="hidden md:flex mr-4 h-12 px-6 items-center border border-[#bfbcc6] rounded">
+                        <span class="text-[#464154] text-base font-medium">Need help?</span>
+                    </div>
+                    
+                    <!-- Profile pictures -->
+                    <div class="profile-pics mr-4">
+                        <img src="https://randomuser.me/api/portraits/women/32.jpg" alt="Support agent" class="profile-pic">
+                        <img src="https://randomuser.me/api/portraits/men/44.jpg" alt="Support agent" class="profile-pic">
+                        <img src="https://randomuser.me/api/portraits/women/68.jpg" alt="Support agent" class="profile-pic">
+                    </div>
+                    
+                    <!-- Exit link -->
+                    <a href="/" class="exit-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                        <span class="hidden sm:inline">Exit</span>
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main content -->
+        <main class="content-container flex-grow page-transition">
+            <div class="container mx-auto px-4 max-w-2xl pt-8 md:pt-12">
+                <h1 class="text-[#25224a] text-2xl md:text-3xl font-black mb-4 text-center">Tell us about your business</h1>
+                <p class="text-[#5f5770] text-lg mb-8 text-center">This information helps potential buyers understand your business better.</p>
+                
+                <div id="messageContainer"></div>
+                
+                <!-- Business Details Form -->
+                <form id="businessDetailsForm" class="mt-8 space-y-6">
+                    <!-- Business Name -->
+                    <div>
+                        <label for="businessName" class="block text-[#25224a] text-lg font-medium mb-2">Business Name</label>
+                        <input 
+                            type="text" 
+                            id="businessName" 
+                            name="businessName" 
+                            class="w-full px-4 py-3 border border-[#bfbcc6] rounded-md focus:outline-none focus:ring-2 focus:ring-[#3e50f7]"
+                            placeholder="Enter your business name"
+                            required
+                        >
+                        <div class="text-red-500 text-sm hidden" id="businessNameError">Please enter your business name</div>
+                    </div>
+                    
+                    <!-- Industry -->
+                    <div>
+                        <label for="industry" class="block text-[#25224a] text-lg font-medium mb-2">Industry</label>
+                        <select 
+                            id="industry" 
+                            name="industry" 
+                            class="w-full px-4 py-3 border border-[#bfbcc6] rounded-md focus:outline-none focus:ring-2 focus:ring-[#3e50f7]"
+                            required
+                        >
+                            <option value="" disabled selected>Select your industry</option>
+                            <option value="Financial Services">Financial Services</option>
+                            <option value="Health Care & Fitness">Health Care & Fitness</option>
+                            <option value="Manufacturing">Manufacturing</option>
+                            <option value="Online & Technology">Online & Technology</option>
+                            <option value="Pet Services">Pet Services</option>
+                            <option value="Restaurants & Food">Restaurants & Food</option>
+                            <option value="Retail">Retail</option>
+                            <option value="Service Businesses">Service Businesses</option>
+                            <option value="Transportation & Storage">Transportation & Storage</option>
+                            <option value="Travel">Travel</option>
+                            <option value="Wholesale & Distributors">Wholesale & Distributors</option>
+                            <option value="Other">Other</option>
+                        </select>
+                        <div class="text-red-500 text-sm hidden" id="industryError">Please select an industry</div>
+                    </div>
+                    
+                    <!-- Business Description -->
+                    <div>
+                        <label for="description" class="block text-[#25224a] text-lg font-medium mb-2">Business Description</label>
+                        <textarea 
+                            id="description" 
+                            name="description" 
+                            rows="4" 
+                            class="w-full px-4 py-3 border border-[#bfbcc6] rounded-md focus:outline-none focus:ring-2 focus:ring-[#3e50f7]"
+                            placeholder="Describe your business, including its products/services, customers, and unique selling points"
+                            required
+                        ></textarea>
+                        <div class="text-red-500 text-sm hidden" id="descriptionError">Please provide a business description</div>
+                    </div>
+                    
+                    <!-- Year Established -->
+                    <div>
+                        <label for="yearEstablished" class="block text-[#25224a] text-lg font-medium mb-2">Year Established</label>
+                        <input 
+                            type="number" 
+                            id="yearEstablished" 
+                            name="yearEstablished" 
+                            class="w-full px-4 py-3 border border-[#bfbcc6] rounded-md focus:outline-none focus:ring-2 focus:ring-[#3e50f7]"
+                            placeholder="e.g. 2010"
+                            min="1900"
+                            max="2023"
+                            required
+                        >
+                        <div class="text-red-500 text-sm hidden" id="yearEstablishedError">Please enter a valid year</div>
+                    </div>
+                    
+                    <!-- Location - Removed as requested -->
+                    
+                    <!-- Contact Information Section -->
+                    <div class="pt-4 border-t border-gray-200">
+                        <h3 class="text-[#25224a] text-xl font-medium mb-4">Contact Information</h3>
+                        
+                        <!-- Contact Name -->
+                        <div class="mb-4">
+                            <label for="contactName" class="block text-[#25224a] text-base font-medium mb-2">Contact Name</label>
+                            <input 
+                                type="text" 
+                                id="contactName" 
+                                name="contactName" 
+                                class="w-full px-4 py-3 border border-[#bfbcc6] rounded-md focus:outline-none focus:ring-2 focus:ring-[#3e50f7]"
+                                placeholder="Your full name"
+                                required
+                            >
+                            <div class="text-red-500 text-sm hidden" id="contactNameError">Please enter your name</div>
+                        </div>
+                        
+                        <!-- Contact Phone -->
+                        <div>
+                            <label for="contactPhone" class="block text-[#25224a] text-base font-medium mb-2">Contact Phone (optional)</label>
+                            <input 
+                                type="tel" 
+                                id="contactPhone" 
+                                name="contactPhone" 
+                                class="w-full px-4 py-3 border border-[#bfbcc6] rounded-md focus:outline-none focus:ring-2 focus:ring-[#3e50f7]"
+                                placeholder="Your phone number"
+                            >
+                        </div>
+                        
+                        <!-- Email is automatically pulled from previous step -->
+                        <div class="mt-4">
+                            <p class="text-[#5f5770] text-sm italic">We'll use the email you provided in the previous step: <span id="emailDisplay"></span></p>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </main>
+        
+        <!-- Footer progress bar -->
+        <footer class="w-full bg-white flex-shrink-0">
+            <!-- Progress bar system -->
+            <div class="container mx-auto px-4 md:px-20 py-2">
+                <div class="progress-status">
+                    <div class="current-page">Business Details</div>
+                    <div class="pages-count">Step 3 of 11</div>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-active step-3-of-11" style="width: 27.27%;"></div>
+                    </div>
+                </div>
+                <div class="step-indicators">
+                    <% for(let i = 1; i <= 11; i++) { %>
+                        <div class="step-dot <%= i < 3 ? 'completed' : (i === 3 ? 'active' : '') %>" data-step="<%= i %>"></div>
+                    <% } %>
+                </div>
+            </div>
+            
+                        
+            <div class="container mx-auto px-4 md:px-20 py-6 md:py-8 pb-10 sm:pb-8 flex justify-between items-center">
+                <button id="backBtn" class="text-[#25224a] text-base font-medium">Back</button>
+                <button id="nextBtn" class="btn-next px-6 md:px-8 py-3 md:py-4 text-white text-base font-medium">Next</button>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/js/questionnaire-navigation.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Display the email from localStorage
+            const savedEmail = localStorage.getItem('sellerEmail') || '';
+            document.getElementById('emailDisplay').textContent = savedEmail;
+            
+            // Add validation function for form
+            window.validateBeforeNext = function() {
+                let valid = true;
+                let firstInvalidElement = null;
+                
+                // Business Name validation
+                const businessName = document.getElementById('businessName');
+                if (!businessName.value.trim()) {
+                    document.getElementById('businessNameError').classList.remove('hidden');
+                    businessName.classList.add('border-red-500');
+                    valid = false;
+                    if (!firstInvalidElement) firstInvalidElement = businessName;
+                } else {
+                    document.getElementById('businessNameError').classList.add('hidden');
+                    businessName.classList.remove('border-red-500');
+                }
+                
+                // Industry validation
+                const industry = document.getElementById('industry');
+                if (!industry.value) {
+                    document.getElementById('industryError').classList.remove('hidden');
+                    industry.classList.add('border-red-500');
+                    valid = false;
+                    if (!firstInvalidElement) firstInvalidElement = industry;
+                } else {
+                    document.getElementById('industryError').classList.add('hidden');
+                    industry.classList.remove('border-red-500');
+                }
+                
+                // Description validation
+                const description = document.getElementById('description');
+                if (!description.value.trim()) {
+                    document.getElementById('descriptionError').classList.remove('hidden');
+                    description.classList.add('border-red-500');
+                    valid = false;
+                    if (!firstInvalidElement) firstInvalidElement = description;
+                } else {
+                    document.getElementById('descriptionError').classList.add('hidden');
+                    description.classList.remove('border-red-500');
+                }
+                
+                // Year Established validation
+                const yearEstablished = document.getElementById('yearEstablished');
+                const currentYear = new Date().getFullYear();
+                const yearValue = parseInt(yearEstablished.value);
+                if (!yearEstablished.value || isNaN(yearValue) || yearValue < 1900 || yearValue > currentYear) {
+                    document.getElementById('yearEstablishedError').classList.remove('hidden');
+                    yearEstablished.classList.add('border-red-500');
+                    valid = false;
+                    if (!firstInvalidElement) firstInvalidElement = yearEstablished;
+                } else {
+                    document.getElementById('yearEstablishedError').classList.add('hidden');
+                    yearEstablished.classList.remove('border-red-500');
+                }
+                
+                // Contact Name validation
+                const contactName = document.getElementById('contactName');
+                if (!contactName.value.trim()) {
+                    document.getElementById('contactNameError').classList.remove('hidden');
+                    contactName.classList.add('border-red-500');
+                    valid = false;
+                    if (!firstInvalidElement) firstInvalidElement = contactName;
+                } else {
+                    document.getElementById('contactNameError').classList.add('hidden');
+                    contactName.classList.remove('border-red-500');
+                }
+                
+                // If there's an invalid field, scroll to it
+                if (firstInvalidElement) {
+                    // Add a small delay to ensure error messages are visible first
+                    setTimeout(() => {
+                        firstInvalidElement.scrollIntoView({ 
+                            behavior: 'smooth', 
+                            block: 'center' 
+                        });
+                        firstInvalidElement.focus();
+                    }, 100);
+                }
+                
+                // Save form data if valid
+                if (valid) {
+                    localStorage.setItem('sellerBusinessName', businessName.value.trim());
+                    localStorage.setItem('sellerIndustry', industry.value);
+                    localStorage.setItem('sellerDescription', description.value.trim());
+                    localStorage.setItem('sellerYearEstablished', yearEstablished.value);
+                    localStorage.setItem('sellerContactName', contactName.value.trim());
+                    localStorage.setItem('sellerContactPhone', document.getElementById('contactPhone').value.trim());
+                    
+                    // Also save for the years in operation calculation
+                    const yearsInOperation = new Date().getFullYear() - parseInt(yearEstablished.value);
+                    localStorage.setItem('sellerYearsInOperation', yearsInOperation.toString());
+                }
+                
+                return valid;
+            };
+            
+            // Pre-fill form if data exists
+            const businessName = localStorage.getItem('sellerBusinessName');
+            const industry = localStorage.getItem('sellerIndustry');
+            const description = localStorage.getItem('sellerDescription');
+            const yearEstablished = localStorage.getItem('sellerYearEstablished');
+            const contactName = localStorage.getItem('sellerContactName');
+            const contactPhone = localStorage.getItem('sellerContactPhone');
+            
+            if (businessName) document.getElementById('businessName').value = businessName;
+            if (industry) document.getElementById('industry').value = industry;
+            if (description) document.getElementById('description').value = description;
+            if (yearEstablished) document.getElementById('yearEstablished').value = yearEstablished;
+            if (contactName) document.getElementById('contactName').value = contactName;
+            if (contactPhone) document.getElementById('contactPhone').value = contactPhone;
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,199 @@
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Stripe and subscription manager
+        const stripeKey = '<%= stripePublishableKey %>';
+        const planId = '<%= planId %>';
+        const planName = '<%= planName %>';
+        const currentPlanPrice = '<%= planPrice %>';
+        const manager = new SubscriptionManager(stripeKey);
+        
+        // Initialize payment form
+        initializePaymentForm(manager, planId);
+        
+        // Set up event listeners
+        setupFormListeners(manager);
+        
+        // Register form submission handler
+        const form = document.getElementById('payment-form');
+        const submitButton = document.getElementById('submit-button');
+        
+        form.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            
+            // Disable submit button to prevent double clicks
+            submitButton.disabled = true;
+            submitButton.innerHTML = `<div class="loading"></div><span class="ml-2">Processing...</span>`;
+            
+            // Validate inputs
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const name = document.getElementById('name').value;
+            
+            let isValid = true;
+            
+            if (!email) {
+                showError('email-errors', 'Email is required');
+                isValid = false;
+            }
+            
+            if (!password || password.length < 8) {
+                showError('password-errors', 'Password must be at least 8 characters');
+                isValid = false;
+            }
+            
+            if (!name) {
+                showError('payment-errors', 'Full name is required');
+                isValid = false;
+            }
+            
+            if (!isValid) {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Subscribe Now';
+                return;
+            }
+            
+            try {
+                // Create user account
+                const userResponse = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, name })
+                });
+                
+                const userData = await userResponse.json();
+                
+                if (!userResponse.ok) {
+                    throw new Error(userData.error || 'Failed to create account');
+                }
+                
+                // Store the authentication token
+                localStorage.setItem('token', userData.token);
+                
+                // Process payment
+                const success = await manager.confirmPayment(window.location.origin + '/subscription-complete');
+                
+                // If payment failed (the confirmPayment will redirect on success)
+                if (!success) {
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Subscribe Now';
+                }
+            } catch (error) {
+                console.error('Checkout error:', error);
+                showError('payment-errors', error.message || 'An unexpected error occurred');
+                submitButton.disabled = false;
+                submitButton.textContent = 'Subscribe Now';
+            }
+        });
+        
+        // Initialize discount code handling
+        const discountButton = document.getElementById('apply-discount');
+        const discountInput = document.getElementById('discount-code');
+        
+        discountButton.addEventListener('click', async () => {
+            const code = discountInput.value.trim();
+            if (!code) return;
+            
+            try {
+                discountButton.disabled = true;
+                discountButton.textContent = 'Applying...';
+                
+                const result = await manager.applyDiscount(code);
+                
+                if (result.success) {
+                    // Update pricing display
+                    const subtotalEl = document.getElementById('subtotal');
+                    const totalEl = document.getElementById('total');
+                    
+                    if (subtotalEl && totalEl && result.total !== undefined) {
+                        totalEl.textContent = `£${(result.total / 100).toFixed(2)}`;
+                        
+                        // Add success message
+                        discountButton.textContent = 'Applied';
+                        discountButton.classList.remove('bg-white', 'hover:bg-gray-50');
+                        discountButton.classList.add('bg-green-50', 'text-green-700', 'border-green-500');
+                        
+                        // Add discount info
+                        const discountInfo = document.createElement('div');
+                        discountInfo.className = 'text-sm text-green-600 mt-1';
+                        discountInfo.textContent = `${result.discount}% discount applied`;
+                        discountInput.parentNode.appendChild(discountInfo);
+                    }
+                } else {
+                    throw new Error('Invalid discount code');
+                }
+            } catch (error) {
+                discountButton.textContent = 'Invalid';
+                discountButton.classList.add('bg-red-50', 'text-red-700', 'border-red-500');
+                setTimeout(() => {
+                    discountButton.textContent = 'Apply';
+                    discountButton.disabled = false;
+                    discountButton.classList.remove('bg-red-50', 'text-red-700', 'border-red-500');
+                }, 2000);
+            }
+        });
+    });
+    
+    // Helper function to initialize the payment form
+    async function initializePaymentForm(manager, planId) {
+        try {
+            await manager.setupPaymentForm(planId, 'payment-element');
+        } catch (error) {
+            console.error('Failed to initialize payment form:', error);
+            showError('payment-errors', 'Failed to initialize payment form. Please try again later.');
+        }
+    }
+    
+    // Helper function to set up form event listeners
+    function setupFormListeners(manager) {
+        // Email validation
+        const emailInput = document.getElementById('email');
+        
+        emailInput.addEventListener('blur', async () => {
+            const email = emailInput.value.trim();
+            if (!email) return;
+            
+            try {
+                const result = await manager.validateEmail(email);
+                
+                if (result.error) {
+                    showError('email-errors', result.error.message);
+                } else {
+                    hideError('email-errors');
+                }
+            } catch (error) {
+                console.error('Email validation error:', error);
+            }
+        });
+        
+        // Password validation
+        const passwordInput = document.getElementById('password');
+        
+        passwordInput.addEventListener('input', () => {
+            const password = passwordInput.value;
+            
+            if (password.length < 8) {
+                showError('password-errors', 'Password must be at least 8 characters');
+            } else {
+                hideError('password-errors');
+            }
+        });
+    }
+    
+    // Helper function to show error messages
+    function showError(elementId, message) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.textContent = message;
+            element.classList.remove('hidden');
+        }
+    }
+    
+    // Helper function to hide error messages
+    function hideError(elementId) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.textContent = '';
+            element.classList.add('hidden');
+        }
+    }
+</script>

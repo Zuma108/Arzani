@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscription Error | Arzani</title>
+    <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#316FD4',
+                        dark: '#141414',
+                        'dark-light': '#1E1E1E'
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans">
+    <div class="min-h-screen flex flex-col">
+        <%- include('../partials/navbar') %>
+
+        <main class="flex-grow flex items-center justify-center py-16 px-4">
+            <div class="max-w-md w-full bg-white rounded-xl shadow-lg p-8 border border-gray-100 text-center animate-fade-in-up">
+                <!-- Error Icon -->
+                <div class="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-6">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                
+                <h1 class="text-2xl font-bold mb-4 text-gray-900">
+                    Subscription Error
+                </h1>
+                
+                <p class="text-gray-600 mb-6">
+                    <%= message %>
+                </p>
+                
+                <div class="mb-8">
+                    <p class="text-gray-600">
+                        You can try the following:
+                    </p>
+                    <ul class="text-left mt-4 space-y-2">
+                        <li class="flex items-start">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary mr-2 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span>Check if your email address is valid</span>
+                        </li>
+                        <li class="flex items-start">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary mr-2 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span>Try subscribing again in a few minutes</span>
+                        </li>
+                        <li class="flex items-start">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary mr-2 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span>Contact our support team if the problem persists</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="space-x-4">
+                    <a href="/" class="btn-primary px-6 py-2 rounded-lg inline-block">
+                        Return to Home
+                    </a>
+                    <a href="/contact" class="text-primary hover:text-primary/80">
+                        Contact Support
+                    </a>
+                </div>
+            </div>
+        </main>
+
+        <%- include('../partials/footer') %>
+    </div>
+
+    <script src="/js/navigation.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add sticky header on scroll
+            const header = document.querySelector('header');
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 50) {
+                    header.classList.add('scrolled', 'bg-dark/80', 'backdrop-blur-md', 'border-b', 'border-gray-800');
+                } else {
+                    header.classList.remove('scrolled', 'bg-dark/80', 'backdrop-blur-md', 'border-b', 'border-gray-800');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

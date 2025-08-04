@@ -1,0 +1,392 @@
+/* filepath: c:\Users\Micha\OneDrive\Documents\my-marketplace-project\public\css\feature-animations.css */
+/* Feature Animations CSS - Support for the knowledgegraphmemory MCP integration */
+
+/* Base feature styles */
+.feature-row {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.feature-row.animated {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Feature image animations */
+.feature-image {
+    position: relative;
+    perspective: 1000px;
+}
+
+.feature-image-animate {
+    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    opacity: 0;
+    transform: scale(0.8) translateY(20px);
+}
+
+.animated .feature-image-animate {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    animation: featureImagePop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes featureImagePop {
+    0% {
+        opacity: 0;
+        transform: scale(0.8) translateY(20px);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.1) translateY(-10px);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* Feature content animations */
+.feature-content {
+    opacity: 0;
+    transform: translateX(20px);
+    transition: opacity 0.6s ease 0.2s, transform 0.6s ease 0.2s;
+}
+
+.animated .feature-content {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* Glow effects enhancement */
+.glow-circle {
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0) 70%);
+    filter: blur(10px);
+    transition: all 0.5s ease;
+    opacity: 0;
+    transform: scale(0.8);
+}
+
+.animated .glow-circle,
+.feature-card:hover .glow-circle,
+.feature-card:focus .glow-circle {
+    opacity: 0.7;
+    transform: scale(1.2);
+    animation: glowPulse 3s infinite alternate ease-in-out;
+}
+
+.glow-circle.purple {
+    background: radial-gradient(circle, rgba(168, 85, 247, 0.2) 0%, rgba(168, 85, 247, 0) 70%);
+}
+
+.glow-circle.green {
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0) 70%);
+}
+
+@keyframes glowPulse {
+    0% {
+        transform: scale(1);
+        opacity: 0.5;
+    }
+    100% {
+        transform: scale(1.3);
+        opacity: 0.7;
+    }
+}
+
+/* Ready for animation state */
+.feature-row.ready-for-animation {
+    transition-delay: 0.1s;
+}
+
+/* Feature Card Grid Animations */
+.grid .feature-card {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.5s ease, transform 0.5s ease, box-shadow 0.3s ease, scale 0.3s ease;
+}
+
+.grid .feature-card:nth-child(1) {
+    transition-delay: 0.1s;
+}
+
+.grid .feature-card:nth-child(2) {
+    transition-delay: 0.2s;
+}
+
+.grid .feature-card:nth-child(3) {
+    transition-delay: 0.3s;
+}
+
+.grid.animated .feature-card,
+[data-animation="fade-in-up"].animated .feature-card {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Feature card internal animation effects */
+.feature-card .glow-circle {
+    opacity: 0;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.feature-card:hover .glow-circle,
+.feature-card:focus .glow-circle {
+    opacity: 0.7;
+    animation: cardGlowPulse 2s infinite alternate ease-in-out;
+}
+
+@keyframes cardGlowPulse {
+    0% {
+        transform: scale(0.9);
+        opacity: 0.5;
+    }
+    100% {
+        transform: scale(1.2);
+        opacity: 0.7;
+    }
+}
+
+/* Hover effects */
+.feature-image-animate.hover-active {
+    transform: scale(1.1) rotate(2deg);
+    transition: transform 0.3s ease;
+}
+
+/* Sequential reveal for dependent features */
+[data-knowledgegraphmemory="feature-growth"] {
+    transition-delay: 0.1s;
+}
+
+[data-knowledgegraphmemory="feature-sentiment"] {
+    transition-delay: 0.2s;
+}
+
+/* Journey Step Enhanced Animations */
+@keyframes floatAnimation {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+}
+
+.journey-step-visual.glow-effect {
+    animation: floatAnimation 8s ease-in-out infinite;
+}
+
+.journey-step-visual.glow-effect iframe {
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.journey-step-visual.glow-effect:hover iframe {
+    transform: scale(1.015);
+}
+
+/* Shining effect animation for journey visuals */
+.journey-step-visual.glow-effect::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.1) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    transform: rotate(30deg);
+    animation: shiningEffect 6s infinite linear;
+    pointer-events: none;
+    z-index: 2;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+.journey-step-visual.glow-effect.glow-animation-active::before {
+    opacity: 1;
+}
+
+@keyframes shiningEffect {
+    0% { 
+        transform: translateX(-100%) rotate(30deg);
+        opacity: 0;
+    }
+    20% { 
+        opacity: 0;
+    }
+    50% { 
+        opacity: 0.6;
+    }
+    80% { 
+        opacity: 0;
+    }
+    100% { 
+        transform: translateX(100%) rotate(30deg);
+        opacity: 0;
+    }
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .feature-row {
+        flex-direction: column-reverse;
+        margin-bottom: 3rem;
+    }
+    
+    .feature-image, 
+    .feature-content {
+        width: 100%;
+        padding-left: 0;
+    }
+    
+    .feature-content {
+        margin-bottom: 2rem;
+        transform: translateY(20px);
+    }
+    
+    .animated .feature-content {
+        transform: translateY(0);
+    }
+}
+
+/* Mobile responsiveness for feature cards */
+@media (max-width: 768px) {
+    /* Feature cards grid adjustments */
+    .grid.grid-cols-1.md\\:grid-cols-3 {
+        gap: 1.5rem; /* Reduce gap on mobile */
+    }
+    
+    /* Feature card mobile optimizations */
+    .feature-card {
+        margin-bottom: 1rem;
+        transform: none !important; /* Disable hover scale on mobile */
+    }
+    
+    .feature-card:hover {
+        transform: none !important;
+        box-shadow: 0 4px 12px rgba(49, 111, 212, 0.15);
+    }
+    
+    /* Glow circle mobile adjustments */
+    .glow-circle {
+        width: 120px !important;
+        height: 120px !important;
+        filter: blur(8px);
+    }
+    
+    /* Feature card image container mobile */
+    .feature-card .relative.p-1 {
+        padding: 0.5rem;
+        min-height: 160px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Feature card images mobile */
+    .feature-card img {
+        height: auto !important;
+        max-height: 140px !important;
+        width: auto !important;
+        max-width: 85% !important;
+        object-fit: contain;
+    }
+    
+    /* Feature card content mobile */
+    .feature-card .p-6 {
+        padding: 1.25rem;
+    }
+    
+    /* Feature card titles mobile */
+    .feature-card h3 {
+        font-size: 1.375rem; /* text-xl instead of text-2xl */
+        margin-bottom: 0.75rem;
+    }
+    
+    /* Feature card descriptions mobile */
+    .feature-card p.text-gray-300 {
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+    
+    /* Feature card stats mobile */
+    .feature-card .mt-4.flex.items-center {
+        margin-top: 1rem;
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Extra small mobile adjustments */
+    .feature-card .relative.p-1 {
+        min-height: 140px;
+    }
+    
+    .feature-card img {
+        max-height: 120px !important;
+        max-width: 80% !important;
+    }
+    
+    .glow-circle {
+        width: 100px !important;
+        height: 100px !important;
+        filter: blur(6px);
+    }
+    
+    .feature-card .p-6 {
+        padding: 1rem;
+    }
+    
+    .feature-card h3 {
+        font-size: 1.25rem;
+    }
+}
+
+@media (max-width: 360px) {
+    /* Very small mobile devices */
+    .feature-card .relative.p-1 {
+        min-height: 120px;
+    }
+    
+    .feature-card img {
+        max-height: 100px !important;
+        max-width: 75% !important;
+    }
+    
+    .glow-circle {
+        width: 80px !important;
+        height: 80px !important;
+    }
+    
+    .feature-card .p-6 {
+        padding: 0.875rem;
+    }
+}
+
+/* Mobile responsiveness for existing feature rows */
+@media (max-width: 768px) {
+    .feature-row {
+        flex-direction: column-reverse;
+        margin-bottom: 3rem;
+    }
+    
+    .feature-image, 
+    .feature-content {
+        width: 100%;
+        padding-left: 0;
+    }
+    
+    .feature-content {
+        margin-bottom: 2rem;
+        transform: translateY(20px);
+    }
+    
+    .animated .feature-content {
+        transform: translateY(0);
+    }
+}

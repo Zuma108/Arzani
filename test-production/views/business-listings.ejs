@@ -1,0 +1,75 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <meta name="description" content="<%= description %>">
+    <meta name="keywords" content="<%= keywords %>">
+    <link rel="stylesheet" href="/css/tailwind.min.css">
+    <script type="application/ld+json">
+        {
+          "@context": "https://schema.org",
+          "@type": "WebPage",
+          "name": "<%= title %>",
+          "description": "<%= description %>",
+          "mainEntity": {
+            "@type": "ItemList",
+            "itemListElement": [
+              <% businesses.forEach(function(business, index) { %>
+                {
+                  "@type": "Organization",
+                  "name": "<%= business.name %>",
+                  "offers": {
+                    "@type": "Offer",
+                    "price": "<%= business.valuation %>",
+                    "priceCurrency": "GBP"
+                  }
+                }<% if(index < businesses.length - 1) { %>,<% } %>
+              <% }); %>
+            ]
+          }
+        }
+    </script>
+</head>
+<body class="bg-gray-100">
+
+    <div class="container mx-auto p-4">
+        <!-- Hero Section -->
+        <div class="text-center py-12">
+            <h1 class="text-4xl font-bold"><%= page_data.business_count %>+ Profitable Businesses for Sale in <%= page_data.city %> | AI-Verified Valuations</h1>
+            <p class="text-xl mt-4">Browse verified businesses with instant AI valuations. Find your perfect acquisition opportunity with transparent pricing and detailed analytics.</p>
+            <div class="mt-6">
+                <a href="#" class="bg-blue-500 text-white px-6 py-3 rounded-full font-bold">View All Businesses</a>
+                <a href="#" class="bg-green-500 text-white px-6 py-3 rounded-full font-bold ml-4">Get Free AI Valuation</a>
+            </div>
+        </div>
+
+        <!-- Business Listings Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <% businesses.forEach(function(business) { %>
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <img src="<%= business.business_image %>" alt="<%= business.name %>" class="w-full h-48 object-cover">
+                    <div class="p-6">
+                        <h3 class="text-2xl font-bold mb-2"><%= business.name %></h3>
+                        <p class="text-gray-600 mb-2"><%= business.location %></p>
+                        <p class="text-gray-700 font-bold mb-4"><%= business.industry %></p>
+                        <div class="bg-gray-200 text-center py-2 rounded-lg mb-4">
+                            <span class="text-lg font-bold">AI Valuation: <%= business.valuation %></span>
+                            <span class="text-sm text-green-600 block"><%= business.ai_confidence %> Confidence</span>
+                        </div>
+                        <div class="flex justify-between text-sm mb-4">
+                            <span>Revenue: <%= business.revenue %></span>
+                            <span>Profit: <%= business.profit %></span>
+                            <span>Multiple: <%= business.multiple %></span>
+                        </div>
+                        <a href="#" class="bg-blue-500 text-white text-center block w-full py-2 rounded-lg">View Full Details</a>
+                    </div>
+                </div>
+            <% }); %>
+        </div>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,23 @@
+<!-- This partial ensures the AI assistant is present on every page -->
+
+<!-- Include AI Assistant stylesheet -->
+<link rel="stylesheet" href="/css/ai-chatbot.css">
+
+<!-- Include Font Awesome for AI assistant icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<!-- Include the advanced AI assistant interface -->
+<%- include('ai-chatbot') %>
+
+<!-- Add the AI assistant script -->
+<script src="/js/ai-assistant.js"></script>
+
+<!-- Initialize AI Assistant -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    if (window.AIAssistant && !window.aiAssistant) {
+      window.aiAssistant = new AIAssistant();
+      console.log('AI Assistant initialized from ensure-ai-assistant partial');
+    }
+  });
+</script>

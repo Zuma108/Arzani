@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A/B Testing Dashboard | Arzani Analytics</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .metric-card { transition: all 0.3s ease; }
+        .metric-card:hover { transform: translateY(-2px); }
+        .status-green { color: #10B981; }
+        .status-red { color: #EF4444; }
+        .status-yellow { color: #F59E0B; }
+        .bg-green-light { background-color: rgba(16, 185, 129, 0.1); }
+        .bg-red-light { background-color: rgba(239, 68, 68, 0.1); }
+        .bg-yellow-light { background-color: rgba(245, 158, 11, 0.1); }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold text-gray-900">A/B Testing Dashboard</h1>
+                    <span class="ml-3 px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                        Seller-First vs Buyer-First
+                    </span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="text-sm text-gray-500">
+                        Last updated: <span id="lastUpdated">Loading...</span>
+                    </div>
+                    <button onclick="refreshData()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Real-time Alerts -->
+        <div id="alerts" class="mb-6"></div>
+
+        <!-- Key Metrics Row -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Statistical Significance -->
+            <div class="metric-card bg-white rounded-lg shadow p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Statistical Significance</p>
+                        <p id="significance-value" class="text-2xl font-bold text-gray-900">Loading...</p>
+                        <p id="significance-status" class="text-sm text-gray-500">Calculating...</p>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Conversion Lift -->
+            <div class="metric-card bg-white rounded-lg shadow p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Conversion Lift</p>
+                        <p id="lift-value" class="text-2xl font-bold text-gray-900">Loading...</p>
+                        <p id="lift-description" class="text-sm text-gray-500">Seller-first vs Buyer-first</p>
+                    </div>
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total Sessions -->
+            <div class="metric-card bg-white rounded-lg shadow p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Total Sessions</p>
+                        <p id="total-sessions" class="text-2xl font-bold text-gray-900">Loading...</p>
+                        <p id="sessions-split" class="text-sm text-gray-500">Across both variants</p>
+                    </div>
+                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Now -->
+            <div class="metric-card bg-white rounded-lg shadow p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Active Now</p>
+                        <p id="active-now" class="text-2xl font-bold text-gray-900">Loading...</p>
+                        <p class="text-sm text-gray-500">Last hour</p>
+                    </div>
+                    <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <div class="w-3 h-3 bg-orange-500 rounded-full animate-pulse"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Conversion Comparison -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Conversion Rates Chart -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Conversion Rates by Variant</h3>
+                <div class="relative h-64">
+                    <canvas id="conversionChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Funnel Analysis -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Conversion Funnel</h3>
+                <div class="relative h-64">
+                    <canvas id="funnelChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Comparison Table -->
+        <div class="bg-white rounded-lg shadow overflow-hidden mb-8">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">Detailed Comparison</h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Metric</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Seller-First</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Buyer-First</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Difference</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="comparison-table" class="bg-white divide-y divide-gray-200">
+                        <!-- Data will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- CTA Performance -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Top CTAs -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Top Performing CTAs</h3>
+                <div id="top-ctas" class="space-y-3">
+                    <!-- Data will be populated here -->
+                </div>
+            </div>
+
+            <!-- Engagement Metrics -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Engagement Comparison</h3>
+                <div class="relative h-64">
+                    <canvas id="engagementChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Time Series -->
+        <div class="bg-white rounded-lg shadow p-6 mb-8">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Conversion Rate Trend (24h)</h3>
+            <div class="relative h-80">
+                <canvas id="timeSeriesChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Raw Event Stream -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">Recent Events</h3>
+                <button onclick="toggleEventStream()" class="text-sm text-blue-600 hover:text-blue-700">
+                    <span id="stream-toggle">Pause</span> Stream
+                </button>
+            </div>
+            <div id="event-stream" class="bg-gray-50 rounded p-4 h-64 overflow-y-auto font-mono text-sm">
+                <!-- Live events will appear here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let charts = {};
+        let eventStreamActive = true;
+        let currentData = null;
+        let refreshInterval = null;
+        let lastRefreshTime = null;
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCharts();
+            loadDashboardData();
+            startEventStream();
+            
+            // Auto-refresh every 30 seconds for real-time data
+            refreshInterval = setInterval(() => {
+                console.log('Auto-refreshing dashboard data...');
+                loadDashboardData();
+            }, 30000);
+            
+            // Add manual refresh button functionality
+            const refreshButton = document.getElementById('refresh-button');
+            if (refreshButton) {
+                refreshButton.addEventListener('click', () => {
+                    console.log('Manual refresh triggered');
+                    loadDashboardData();
+                });
+            }
+        });
+
+        async function loadDashboardData() {
+            try {
+                // Show loading state
+                showLoadingState();
+                
+                const response = await fetch('/api/analytics/ab-test/report');
+                const data = await response.json();
+                currentData = data;
+                
+                if (data.success) {
+                    updateMetrics(data.report);
+                    updateCharts(data.report);
+                    updateComparisonTable(data.report);
+                    updateLastUpdated();
+                } else {
+                    showError(data.message || 'Failed to load report data');
+                }
+                
+                // Load dashboard-specific data
+                const dashboardResponse = await fetch('/api/analytics/ab-test/dashboard');
+                const dashboardData = await dashboardResponse.json();
+                
+                if (dashboardData.success) {
+                    console.log('Dashboard data received:', dashboardData.dashboard);
+                    updateDashboardMetrics(dashboardData.dashboard);
+                    updateRealtimeStats(dashboardData.dashboard);
+                    updateAlerts(dashboardData.dashboard?.alerts);
+                    updateDataFreshness(dashboardData.lastUpdated);
+                } else {
+                    console.warn('Dashboard API returned error:', dashboardData);
+                    showError(dashboardData.message || dashboardData.error || 'Failed to load dashboard data');
+                }
+                
+                hideLoadingState();
+                
+            } catch (error) {
+                console.error('Failed to load dashboard data:', error);
+                showError('Failed to load data. Please check your connection and try refreshing.');
+                hideLoadingState();
+            }
+        }
+
+        function showLoadingState() {
+            // Add loading indicators to charts
+            document.querySelectorAll('canvas').forEach(canvas => {
+                const container = canvas.parentElement;
+                if (!container.querySelector('.loading-overlay')) {
+                    const overlay = document.createElement('div');
+                    overlay.className = 'loading-overlay absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center';
+                    overlay.innerHTML = '<div class="text-gray-500"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>Loading...</div>';
+                    container.style.position = 'relative';
+                    container.appendChild(overlay);
+                }
+            });
+        }
+
+        function hideLoadingState() {
+            document.querySelectorAll('.loading-overlay').forEach(overlay => {
+                overlay.remove();
+            });
+        }
+
+        function updateMetrics(report) {
+            const stats = report.statistical_significance || {};
+            
+            // Statistical significance - handle missing values with better validation
+            const confidence = Math.round((stats.confidence || 0) * 100);
+            const lift = Math.round((stats.lift || 0) * 100) / 100;
+            const isSignificant = stats.significant || false;
+            
+            // Update significance value and status
+            const significanceElement = document.getElementById('significance-value');
+            if (significanceElement) {
+                significanceElement.textContent = `${confidence}%`;
+            }
+            
+            const statusElement = document.getElementById('significance-status');
+            if (statusElement) {
+                statusElement.textContent = stats.message || 'Insufficient data';
+                statusElement.className = `text-sm ${
+                    isSignificant ? 'status-green' : 
+                    confidence >= 80 ? 'status-yellow' : 
+                    'status-red'
+                }`;
+            }
+
+            // Conversion lift with better formatting
+            const liftElement = document.getElementById('lift-value');
+            if (liftElement) {
+                liftElement.textContent = `${lift > 0 ? '+' : ''}${lift}%`;
+                liftElement.className = `text-2xl font-bold ${
+                    lift > 0 ? 'status-green' : 
+                    lift < 0 ? 'status-red' : 
+                    'text-gray-900'
+                }`;
+            }
+
+            // Total sessions with better data validation
+            const sellerSessions = report.overview?.variants?.seller_first?.sessions || 0;
+            const buyerSessions = report.overview?.variants?.buyer_first?.sessions || 0;
+            const totalSessions = sellerSessions + buyerSessions;
+            
+            const totalSessionsElement = document.getElementById('total-sessions');
+            if (totalSessionsElement) {
+                totalSessionsElement.textContent = totalSessions.toLocaleString();
+            }
+            
+            const sessionsSplitElement = document.getElementById('sessions-split');
+            if (sessionsSplitElement) {
+                sessionsSplitElement.textContent = `SF: ${sellerSessions} | BF: ${buyerSessions}`;
+            }
+            
+            // Add data quality indicators
+            const dataQualityElement = document.getElementById('data-quality');
+            if (dataQualityElement) {
+                let qualityText = 'Good';
+                let qualityClass = 'text-green-600';
+                
+                if (totalSessions < 100) {
+                    qualityText = 'Limited';
+                    qualityClass = 'text-yellow-600';
+                } else if (totalSessions < 30) {
+                    qualityText = 'Insufficient';
+                    qualityClass = 'text-red-600';
+                }
+                
+                dataQualityElement.innerHTML = `
+                    <span class="${qualityClass} font-medium">${qualityText}</span>
+                    <span class="text-xs text-gray-500 ml-1">(${totalSessions} sessions)</span>
+                `;
+            }
+        }
+
+        function updateDashboardMetrics(dashboard) {
+            // Check if dashboard and realtime exist before accessing properties
+            if (dashboard && dashboard.realtime) {
+                const element = document.getElementById('active-now');
+                if (element) {
+                    element.textContent = dashboard.realtime.active_sessions || 0;
+                }
+                
+                // Update additional realtime metrics if elements exist
+                const conversionElement = document.getElementById('realtime-conversion-rate');
+                if (conversionElement) {
+                    conversionElement.textContent = `${dashboard.realtime.conversion_rate || 0}%`;
+                }
+                
+                const winnerElement = document.getElementById('performance-winner');
+                if (winnerElement) {
+                    winnerElement.textContent = dashboard.realtime.performance_winner || 'tie';
+                    winnerElement.className = `font-medium ${
+                        dashboard.realtime.performance_winner === 'seller_first' ? 'text-blue-600' :
+                        dashboard.realtime.performance_winner === 'buyer_first' ? 'text-green-600' :
+                        'text-gray-600'
+                    }`;
+                }
+            } else {
+                console.warn('Dashboard realtime data not available:', dashboard);
+                const element = document.getElementById('active-now');
+                if (element) {
+                    element.textContent = '0';
+                }
+            }
+        }
+
+        function updateRealtimeStats(dashboard) {
+            if (!dashboard || !dashboard.realtime) return;
+            
+            const stats = dashboard.realtime;
+            
+            // Update 24h session count
+            const sessionsElement = document.getElementById('sessions-24h');
+            if (sessionsElement) {
+                sessionsElement.textContent = (stats.total_sessions_24h || 0).toLocaleString();
+            }
+            
+            // Update 24h conversion count
+            const conversionsElement = document.getElementById('conversions-24h');
+            if (conversionsElement) {
+                conversionsElement.textContent = (stats.total_conversions_24h || 0).toLocaleString();
+            }
+            
+            // Update significance level
+            const significanceElement = document.getElementById('significance-level');
+            if (significanceElement) {
+                const confidence = Math.round((stats.significance_level || 0) * 100);
+                significanceElement.textContent = `${confidence}%`;
+                significanceElement.className = `text-sm font-medium ${
+                    confidence >= 95 ? 'text-green-600' :
+                    confidence >= 80 ? 'text-yellow-600' :
+                    'text-red-600'
+                }`;
+            }
+            
+            // Update performance indicator
+            const performanceIndicator = document.getElementById('performance-indicator');
+            if (performanceIndicator) {
+                const winner = stats.performance_winner;
+                const winnerText = winner === 'seller_first' ? 'Seller-First' :
+                                 winner === 'buyer_first' ? 'Buyer-First' : 'Tie';
+                performanceIndicator.innerHTML = `
+                    <span class="${
+                        winner === 'seller_first' ? 'text-blue-600' :
+                        winner === 'buyer_first' ? 'text-green-600' :
+                        'text-gray-600'
+                    }">${winnerText}</span>
+                    ${winner !== 'tie' ? '<span class="text-xs text-gray-500 ml-1">leading</span>' : ''}
+                `;
+            }
+        }
+
+        function updateDataFreshness(lastUpdated) {
+            const freshnessElement = document.getElementById('data-freshness');
+            if (freshnessElement && lastUpdated) {
+                const updateTime = new Date(lastUpdated);
+                const now = new Date();
+                const diffMinutes = Math.floor((now - updateTime) / (1000 * 60));
+                
+                let freshnessText, freshnessClass;
+                if (diffMinutes < 2) {
+                    freshnessText = 'Just updated';
+                    freshnessClass = 'text-green-600';
+                } else if (diffMinutes < 5) {
+                    freshnessText = `${diffMinutes}m ago`;
+                    freshnessClass = 'text-green-600';
+                } else if (diffMinutes < 30) {
+                    freshnessText = `${diffMinutes}m ago`;
+                    freshnessClass = 'text-yellow-600';
+                } else {
+                    freshnessText = `${Math.floor(diffMinutes / 60)}h ago`;
+                    freshnessClass = 'text-red-600';
+                }
+                
+                freshnessElement.innerHTML = `
+                    <span class="${freshnessClass} font-medium">${freshnessText}</span>
+                `;
+            }
+        }
+
+        function updateAlerts(alerts) {
+            const alertsContainer = document.getElementById('alerts');
+            
+            if (alerts && alerts.length > 0) {
+                alertsContainer.innerHTML = alerts.map(alert => `
+                    <div class="rounded-md ${getAlertClass(alert.type)} p-4 mb-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                ${getAlertIcon(alert.type)}
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-medium">${alert.message}</h3>
+                                ${alert.action ? `<p class="text-sm mt-1 opacity-90">${alert.action}</p>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                alertsContainer.innerHTML = '';
+            }
+        }
+
+        function getAlertClass(type) {
+            switch(type) {
+                case 'warning': return 'bg-yellow-light border border-yellow-200';
+                case 'error': return 'bg-red-light border border-red-200';
+                default: return 'bg-blue-50 border border-blue-200';
+            }
+        }
+
+        function getAlertIcon(type) {
+            const iconClass = type === 'warning' ? 'text-yellow-600' : 
+                            type === 'error' ? 'text-red-600' : 'text-blue-600';
+            return `<svg class="w-5 h-5 ${iconClass}" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+            </svg>`;
+        }
+
+        function updateComparisonTable(report) {
+            const tbody = document.getElementById('comparison-table');
+            const sf = report.conversions.seller_first;
+            const bf = report.conversions.buyer_first;
+            
+            const metrics = [
+                {
+                    name: 'Total Sessions',
+                    sellerFirst: sf.totalSessions,
+                    buyerFirst: bf.totalSessions,
+                    format: 'number'
+                },
+                {
+                    name: 'Overall Conversion Rate',
+                    sellerFirst: sf.overallConversionRate,
+                    buyerFirst: bf.overallConversionRate,
+                    format: 'percentage'
+                },
+                {
+                    name: 'Seller CTA Clicks',
+                    sellerFirst: sf.conversions.seller_cta_click?.rate || 0,
+                    buyerFirst: bf.conversions.seller_cta_click?.rate || 0,
+                    format: 'percentage'
+                },
+                {
+                    name: 'Form Submissions',
+                    sellerFirst: sf.conversions.form_submission?.rate || 0,
+                    buyerFirst: bf.conversions.form_submission?.rate || 0,
+                    format: 'percentage'
+                },
+                {
+                    name: 'Avg Time on Page',
+                    sellerFirst: report.engagement.seller_first.avgTimeOnPage,
+                    buyerFirst: report.engagement.buyer_first.avgTimeOnPage,
+                    format: 'time'
+                },
+                {
+                    name: 'Avg Scroll Depth',
+                    sellerFirst: report.engagement.seller_first.avgScrollDepth,
+                    buyerFirst: report.engagement.buyer_first.avgScrollDepth,
+                    format: 'percentage'
+                }
+            ];
+
+            tbody.innerHTML = metrics.map(metric => {
+                const diff = metric.sellerFirst - metric.buyerFirst;
+                const isPositive = diff > 0;
+                const formattedDiff = formatMetric(Math.abs(diff), metric.format);
+                
+                return `
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${metric.name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatMetric(metric.sellerFirst, metric.format)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatMetric(metric.buyerFirst, metric.format)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm ${isPositive ? 'status-green' : 'status-red'}">
+                            ${isPositive ? '+' : '-'}${formattedDiff}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${isPositive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                                ${isPositive ? 'Better' : 'Worse'}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function formatMetric(value, format) {
+            switch(format) {
+                case 'percentage':
+                    return `${value.toFixed(2)}%`;
+                case 'time':
+                    return `${value}s`;
+                case 'number':
+                    return value.toLocaleString();
+                default:
+                    return value.toString();
+            }
+        }
+
+        function initializeCharts() {
+            // Conversion Chart
+            const conversionCtx = document.getElementById('conversionChart').getContext('2d');
+            charts.conversion = new Chart(conversionCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Seller-First', 'Buyer-First'],
+                    datasets: [{
+                        label: 'Conversion Rate (%)',
+                        data: [0, 0],
+                        backgroundColor: ['#3B82F6', '#10B981'],
+                        borderColor: ['#1D4ED8', '#059669'],
+                        borderWidth: 1,
+                        borderRadius: 8,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y.toFixed(2) + '%';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: function(context) {
+                                const max = Math.max(...context.chart.data.datasets[0].data);
+                                return Math.min(100, max * 1.2);
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toFixed(1) + '%';
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Funnel Chart
+            const funnelCtx = document.getElementById('funnelChart').getContext('2d');
+            charts.funnel = new Chart(funnelCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Page Views', 'CTA Clicks', 'Form Starts', 'Conversions'],
+                    datasets: [{
+                        label: 'Seller-First',
+                        data: [0, 0, 0, 0],
+                        backgroundColor: '#3B82F6',
+                        borderColor: '#1D4ED8',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }, {
+                        label: 'Buyer-First',
+                        data: [0, 0, 0, 0],
+                        backgroundColor: '#10B981',
+                        borderColor: '#059669',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toLocaleString();
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Engagement Chart
+            const engagementCtx = document.getElementById('engagementChart').getContext('2d');
+            charts.engagement = new Chart(engagementCtx, {
+                type: 'radar',
+                data: {
+                    labels: ['Time on Page', 'Scroll Depth', 'Page Views', 'CTA Clicks', 'Bounce Rate'],
+                    datasets: [{
+                        label: 'Seller-First',
+                        data: [0, 0, 0, 0, 0],
+                        backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                        borderColor: '#3B82F6',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#3B82F6',
+                        pointBorderColor: '#1D4ED8',
+                        pointRadius: 4
+                    }, {
+                        label: 'Buyer-First',
+                        data: [0, 0, 0, 0, 0],
+                        backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                        borderColor: '#10B981',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#10B981',
+                        pointBorderColor: '#059669',
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                stepSize: 20,
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Time Series Chart
+            const timeSeriesCtx = document.getElementById('timeSeriesChart').getContext('2d');
+            charts.timeSeries = new Chart(timeSeriesCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Seller-First Conversion Rate',
+                        data: [],
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderColor: '#3B82F6',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 3,
+                        pointHoverRadius: 6
+                    }, {
+                        label: 'Buyer-First Conversion Rate',
+                        data: [],
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        borderColor: '#10B981',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 3,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: 'rgba(255, 255, 255, 0.2)',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y.toFixed(2) + '%';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toFixed(1) + '%';
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            },
+                            ticks: {
+                                maxTicksLimit: 12
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateCharts(report) {
+            try {
+                // Update Conversion Chart
+                if (charts.conversion && report.conversions) {
+                    const sfRate = report.conversions.seller_first?.overallConversionRate || 0;
+                    const bfRate = report.conversions.buyer_first?.overallConversionRate || 0;
+                    
+                    charts.conversion.data.datasets[0].data = [sfRate, bfRate];
+                    charts.conversion.update('none');
+                }
+
+                // Update Funnel Chart
+                if (charts.funnel && report.funnel_analysis) {
+                    const sfFunnel = report.funnel_analysis.seller_first || {};
+                    const bfFunnel = report.funnel_analysis.buyer_first || {};
+                    
+                    charts.funnel.data.datasets[0].data = [
+                        sfFunnel.page_views || 0,
+                        sfFunnel.cta_clicks || 0,
+                        sfFunnel.form_starts || 0,
+                        sfFunnel.conversions || 0
+                    ];
+                    
+                    charts.funnel.data.datasets[1].data = [
+                        bfFunnel.page_views || 0,
+                        bfFunnel.cta_clicks || 0,
+                        bfFunnel.form_starts || 0,
+                        bfFunnel.conversions || 0
+                    ];
+                    
+                    charts.funnel.update('none');
+                }
+
+                // Update Engagement Chart (Radar)
+                if (charts.engagement && report.engagement) {
+                    const sfEngagement = report.engagement.seller_first || {};
+                    const bfEngagement = report.engagement.buyer_first || {};
+                    
+                    // Normalize values to percentage scale for radar chart
+                    const normalizeTimeOnPage = (time) => Math.min(100, Math.max(0, (time / 300) * 100)); // 5 minutes = 100%
+                    const normalizeScrollDepth = (depth) => Math.min(100, Math.max(0, depth)); // Already in percentage
+                    const normalizePageViews = (views, maxViews = 10) => Math.min(100, Math.max(0, (views / maxViews) * 100));
+                    const normalizeCTAClicks = (clicks, maxClicks = 5) => Math.min(100, Math.max(0, (clicks / maxClicks) * 100));
+                    const normalizeBounceRate = (rate) => Math.min(100, Math.max(0, 100 - rate)); // Invert so higher is better
+
+                    charts.engagement.data.datasets[0].data = [
+                        normalizeTimeOnPage(sfEngagement.avgTimeOnPage || 0),
+                        normalizeScrollDepth(sfEngagement.avgScrollDepth || 0),
+                        normalizePageViews(sfEngagement.avgPageViews || 0),
+                        normalizeCTAClicks(sfEngagement.avgCTAClicks || 0),
+                        normalizeBounceRate(sfEngagement.bounceRate || 100)
+                    ];
+                    
+                    charts.engagement.data.datasets[1].data = [
+                        normalizeTimeOnPage(bfEngagement.avgTimeOnPage || 0),
+                        normalizeScrollDepth(bfEngagement.avgScrollDepth || 0),
+                        normalizePageViews(bfEngagement.avgPageViews || 0),
+                        normalizeCTAClicks(bfEngagement.avgCTAClicks || 0),
+                        normalizeBounceRate(bfEngagement.bounceRate || 100)
+                    ];
+                    
+                    charts.engagement.update('none');
+                }
+
+                // Update Time Series Chart
+                if (charts.timeSeries && currentData?.dashboard?.trending?.conversion_rate_trend) {
+                    const trendData = currentData.dashboard.trending.conversion_rate_trend;
+                    
+                    if (Array.isArray(trendData) && trendData.length > 0) {
+                        const labels = trendData.map(d => d.hour || '00:00');
+                        const sellerFirstRates = trendData.map(d => d.seller_first_rate || 0);
+                        const buyerFirstRates = trendData.map(d => d.buyer_first_rate || 0);
+                        
+                        charts.timeSeries.data.labels = labels;
+                        charts.timeSeries.data.datasets[0].data = sellerFirstRates;
+                        charts.timeSeries.data.datasets[1].data = buyerFirstRates;
+                        
+                        charts.timeSeries.update('none');
+                    } else {
+                        // No trend data available, show empty state
+                        charts.timeSeries.data.labels = Array(24).fill(0).map((_, i) => {
+                            const hour = String(i).padStart(2, '0');
+                            return `${hour}:00`;
+                        });
+                        charts.timeSeries.data.datasets[0].data = Array(24).fill(0);
+                        charts.timeSeries.data.datasets[1].data = Array(24).fill(0);
+                        charts.timeSeries.update('none');
+                    }
+                }
+
+                // Update Top CTAs section
+                updateTopCTAs(report);
+                
+            } catch (error) {
+                console.error('Error updating charts:', error);
+                showError('Failed to update charts. Data may be incomplete.');
+            }
+        }
+
+        function updateTopCTAs(report) {
+            const topCTAsContainer = document.getElementById('top-ctas');
+            
+            try {
+                if (report.cta_performance) {
+                    const sfCTAs = report.cta_performance.seller_first?.top_ctas || [];
+                    const bfCTAs = report.cta_performance.buyer_first?.top_ctas || [];
+                    
+                    // Combine and sort all CTAs
+                    const allCTAs = [];
+                    sfCTAs.forEach(cta => allCTAs.push({ ...cta, variant: 'Seller-First', color: 'blue' }));
+                    bfCTAs.forEach(cta => allCTAs.push({ ...cta, variant: 'Buyer-First', color: 'green' }));
+                    
+                    allCTAs.sort((a, b) => (b.clicks || 0) - (a.clicks || 0));
+                    
+                    if (allCTAs.length > 0) {
+                        topCTAsContainer.innerHTML = allCTAs.slice(0, 5).map(cta => `
+                            <div class="flex justify-between items-center py-3 px-4 bg-gray-50 rounded-lg border border-gray-200 hover:shadow-sm transition-shadow">
+                                <div class="flex-1">
+                                    <div class="text-sm font-medium text-gray-900">${escapeHtml(cta.cta_text || 'Unknown CTA')}</div>
+                                    <div class="text-xs text-gray-500 mt-1">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-${cta.color}-100 text-${cta.color}-800">
+                                            ${cta.variant}
+                                        </span>
+                                        ${cta.location && cta.location !== 'unknown' ? ` • ${escapeHtml(cta.location)}` : ''}
+                                    </div>
+                                </div>
+                                <div class="text-right ml-4">
+                                    <div class="text-sm font-bold text-${cta.color}-600">${(cta.clicks || 0).toLocaleString()} clicks</div>
+                                    <div class="text-xs text-gray-500">${(((cta.conversion_rate || 0) * 100).toFixed(1))}% CVR</div>
+                                </div>
+                            </div>
+                        `).join('');
+                    } else {
+                        topCTAsContainer.innerHTML = `
+                            <div class="text-center py-8">
+                                <div class="text-gray-400 mb-2">
+                                    <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                                    </svg>
+                                </div>
+                                <div class="text-gray-500 font-medium">No CTA data available</div>
+                                <div class="text-gray-400 text-sm mt-1">Start collecting data by visiting the homepage</div>
+                            </div>
+                        `;
+                    }
+                } else {
+                    topCTAsContainer.innerHTML = `
+                        <div class="text-center py-8">
+                            <div class="animate-pulse">
+                                <div class="h-4 bg-gray-200 rounded w-3/4 mx-auto mb-2"></div>
+                                <div class="h-3 bg-gray-200 rounded w-1/2 mx-auto"></div>
+                            </div>
+                            <div class="text-gray-500 text-sm mt-2">Loading CTA data...</div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error updating CTA data:', error);
+                topCTAsContainer.innerHTML = `
+                    <div class="text-center py-8">
+                        <div class="text-red-500 mb-2">
+                            <svg class="w-8 h-8 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <div class="text-gray-500 text-sm">Error loading CTA data</div>
+                    </div>
+                `;
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function updateLastUpdated() {
+            document.getElementById('lastUpdated').textContent = new Date().toLocaleTimeString();
+        }
+
+        function refreshData() {
+            loadDashboardData();
+        }
+
+        function startEventStream() {
+            // Simulate real-time events for demo
+            setInterval(() => {
+                if (eventStreamActive) {
+                    addEventToStream({
+                        timestamp: new Date().toISOString(),
+                        event: 'page_view',
+                        variant: Math.random() < 0.5 ? 'seller_first' : 'buyer_first',
+                        sessionId: 'session_' + Math.random().toString(36).substr(2, 6)
+                    });
+                }
+            }, 3000);
+        }
+
+        function addEventToStream(event) {
+            const stream = document.getElementById('event-stream');
+            const eventLine = `[${event.timestamp.substring(11, 19)}] ${event.variant} | ${event.event} | ${event.sessionId}`;
+            
+            const div = document.createElement('div');
+            div.textContent = eventLine;
+            div.className = `text-xs mb-1 ${event.variant === 'seller_first' ? 'text-blue-600' : 'text-green-600'}`;
+            
+            stream.insertBefore(div, stream.firstChild);
+            
+            // Keep only last 50 events
+            while (stream.children.length > 50) {
+                stream.removeChild(stream.lastChild);
+            }
+        }
+
+        function toggleEventStream() {
+            eventStreamActive = !eventStreamActive;
+            document.getElementById('stream-toggle').textContent = eventStreamActive ? 'Pause' : 'Resume';
+        }
+
+        function showError(message) {
+            const alertsContainer = document.getElementById('alerts');
+            alertsContainer.innerHTML = `
+                <div class="rounded-md bg-red-light p-4 border border-red-200">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-red-800">${message}</h3>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

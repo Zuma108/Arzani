@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Market Insights | Understand Your Industry | Arzani</title>
+    <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">
+    <link rel="stylesheet" href="/css/modern.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#316FD4',
+                        dark: '#141414',
+                        'dark-light': '#1E1E1E'
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-W50GKB6F3M"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-W50GKB6F3M');
+    </script>
+</head>
+<body class="bg-dark text-white font-sans">
+    <div class="page-wrapper">
+
+        <header class="header-transparent fixed w-full z-50 transition-all duration-300">
+            <nav class="container max-w-[1920px] mx-auto px-4 md:px-6 py-4">
+                 <!-- Navigation content will be loaded via JavaScript -->
+                 <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-4 md:gap-10">
+                        <a href="/" class="navbar__logo">
+                            <img src="/figma design exports/logos/white-arzani-logo.svg" alt="Arzani Logo" class="h-6 md:h-8">
+                        </a>
+                        <div class="hidden md:flex items-center space-x-8">
+                            <!-- Products Dropdown -->
+                            <div class="navbar__drawer group relative">
+                                <div class="navbar__drawer_trigger flex items-center">
+                                    <span class="text-sm font-medium mr-1">Products</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 transition-transform duration-300 group-hover:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </div>
+                                <div class="navbar__drawer_dropdown invisible group-hover:visible opacity-0 group-hover:opacity-100 absolute top-full left-0 mt-1 transition-all duration-300 ease-in-out">
+                                    <div class="navbar__drawer_card w-64">
+                                        <a href="/business-valuation" class="navbar__link block px-4 py-3 hover:bg-gray-700/50">
+                                            <span class="font-medium text-sm">Business Valuation</span>
+                                            <p class="text-xs text-gray-400">Get AI-powered business value.</p>
+                                        </a>
+                                        <a href="/ai-insights" class="navbar__link block px-4 py-3 hover:bg-gray-700/50">
+                                            <span class="font-medium text-sm">AI Market Insights</span>
+                                            <p class="text-xs text-gray-400">Understand market trends.</p>
+                                        </a>
+                                        <a href="/marketplace2" class="navbar__link block px-4 py-3 hover:bg-gray-700/50">
+                                            <span class="font-medium text-sm">Marketplace</span>
+                                            <p class="text-xs text-gray-400">Buy or sell businesses.</p>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Features Dropdown -->
+                            <div class="navbar__drawer group relative">
+                                <div class="navbar__drawer_trigger flex items-center">
+                                    <span class="text-sm font-medium mr-1">Features</span>
+                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 transition-transform duration-300 group-hover:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </div>
+                                <div class="navbar__drawer_dropdown invisible group-hover:visible opacity-0 group-hover:opacity-100 absolute top-full left-0 mt-1 transition-all duration-300 ease-in-out">
+                                     <div class="navbar__drawer_card w-64">
+                                        <a href="/features/brain-ai" class="navbar__link block px-4 py-3 hover:bg-gray-700/50">
+                                            <span class="font-medium text-sm">Brain AI</span>
+                                            <p class="text-xs text-gray-400">Our core intelligence engine.</p>
+                                        </a>
+                                        <a href="/features/power-ups" class="navbar__link block px-4 py-3 hover:bg-gray-700/50">
+                                            <span class="font-medium text-sm">Power-ups</span>
+                                            <p class="text-xs text-gray-400">Enhance your experience.</p>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Company Dropdown -->
+                             <div class="navbar__drawer group relative">
+                                <div class="navbar__drawer_trigger flex items-center">
+                                    <span class="text-sm font-medium mr-1">Company</span>
+                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 transition-transform duration-300 group-hover:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </div>
+                                <div class="navbar__drawer_dropdown invisible group-hover:visible opacity-0 group-hover:opacity-100 absolute top-full left-0 mt-1 transition-all duration-300 ease-in-out">
+                                     <div class="navbar__drawer_card w-64">
+                                        <a href="/about-us" class="navbar__link block px-4 py-3 hover:bg-gray-700/50">
+                                            <span class="font-medium text-sm">About Us</span>
+                                            <p class="text-xs text-gray-400">Our mission and team.</p>
+                                        </a>
+                                        <a href="/contact" class="navbar__link block px-4 py-3 hover:bg-gray-700/50">
+                                            <span class="font-medium text-sm">Contact Us</span>
+                                            <p class="text-xs text-gray-400">Get in touch with us.</p>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <a href="/blog" class="navbar__link">
+                                <span class="text-sm font-medium">Blog</span>
+                            </a>
+
+
+                            <a href="/pricing" class="navbar__link">
+                                <span class="text-sm font-medium">Pricing</span>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4 md:gap-6">
+                        <a href="/login" class="hidden md:block text-sm font-medium">Log in</a>
+                        <a href="/seller-questionnaire" class="btn-primary text-sm md:text-base px-4 py-2 md:px-6">
+                            Get Started
+                        </a>
+                        <button class="navbar__burger md:hidden flex flex-col items-center" id="mobileMenuBtn" aria-expanded="false">
+                            <div class="burger-line"></div>
+                            <div class="burger-line"></div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Mobile menu container -->
+                <div class="navbar__menu hidden md:hidden transition-all duration-300 mt-4 bg-dark-light rounded-lg shadow-lg border border-gray-800" id="mobileMenu">
+                    <div class="flex flex-col space-y-1 p-4">
+                        <!-- Mobile Products -->
+                        <div class="border-b border-gray-700 pb-2 mb-2">
+                            <div class="flex justify-between items-center px-3 py-2">
+                                <span class="font-medium">Products</span>
+                                <button class="mobile-dropdown-toggle p-1">
+                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="mobile-dropdown-content hidden pl-6 space-y-1 pt-1">
+                                <a href="/business-valuation" class="block px-3 py-2 text-gray-300 hover:bg-gray-700/50 rounded">Business Valuation</a>
+                                <a href="/ai-insights" class="block px-3 py-2 text-gray-300 hover:bg-gray-700/50 rounded">AI Market Insights</a>
+                                <a href="/marketplace" class="block px-3 py-2 text-gray-300 hover:bg-gray-700/50 rounded">Marketplace</a>
+                            </div>
+                        </div>
+
+                        <!-- Mobile Features -->
+                         <div class="border-b border-gray-700 pb-2 mb-2">
+                            <div class="flex justify-between items-center px-3 py-2">
+                                <span class="font-medium">Features</span>
+                                <button class="mobile-dropdown-toggle p-1">
+                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="mobile-dropdown-content hidden pl-6 space-y-1 pt-1">
+                                <a href="/features/brain-ai" class="block px-3 py-2 text-gray-300 hover:bg-gray-700/50 rounded">Brain AI</a>
+                                <a href="/features/power-ups" class="block px-3 py-2 text-gray-300 hover:bg-gray-700/50 rounded">Power-ups</a>
+                            </div>
+                        </div>
+
+                        <!-- Mobile Company -->
+                         <div class="border-b border-gray-700 pb-2 mb-2">
+                            <div class="flex justify-between items-center px-3 py-2">
+                                <span class="font-medium">Company</span>
+                                <button class="mobile-dropdown-toggle p-1">
+                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="mobile-dropdown-content hidden pl-6 space-y-1 pt-1">
+                                <a href="/about-us" class="block px-3 py-2 text-gray-300 hover:bg-gray-700/50 rounded">About Us</a>
+                                <a href="/contact" class="block px-3 py-2 text-gray-300 hover:bg-gray-700/50 rounded">Contact Us</a>
+                            </div>
+                        </div>
+
+                        <a href="/blog" class="block px-3 py-2 font-medium hover:bg-gray-700/50 rounded">Blog</a>
+                        <a href="/pricing" class="block px-3 py-2 font-medium hover:bg-gray-700/50 rounded">Pricing</a>
+                        <a href="/login" class="block px-3 py-2 font-medium hover:bg-gray-700/50 rounded">Log in</a>
+                        <a href="/seller-questionnaire" class="btn-primary mt-4 text-center mx-3 py-2.5">Get Started</a>
+                    </div>
+                </div>
+            </nav>
+        </header>
+
+        <!-- Hero Section -->
+        <section class="hero-section pt-32 md:pt-40 pb-20 md:pb-28 relative overflow-hidden bg-primary-dark">
+            <div class="absolute inset-0 grid-pattern opacity-30 z-0"></div>
+             <div class="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
+                <div class="gradient-box-bg absolute top-1/4 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full"></div>
+            </div>
+
+            <div class="container mx-auto px-4 md:px-6 relative z-10">
+                <div class="max-w-4xl mx-auto text-center">
+                    <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight animate-fade-in-up">
+                        Navigate Your Market with <span class="text-gradient-animated">AI Clarity</span>
+                    </h1>
+                    <p class="text-xl md:text-2xl text-gray-300 mb-10 animate-fade-in-up" style="animation-delay: 100ms;">
+                        Leverage real-time data and AI analysis to understand industry trends, identify opportunities, and make smarter decisions for your business.
+                    </p>
+                    <div class="animate-fade-in-up" style="animation-delay: 200ms;">
+                        <a href="/marketplace" class="btn-primary text-lg py-4 px-10">
+                            Explore the Marketplace
+                        </a>
+                    </div>
+                     <p class="text-sm text-gray-400 mt-6 animate-fade-in-up" style="animation-delay: 300ms;">
+                        Powered by Arzani's proprietary AI engine.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- What are Market Insights Section -->
+        <section class="py-20 md:py-24 bg-dark-light relative overflow-hidden">
+             <div class="absolute inset-0 z-0 opacity-10">
+                <div class="grid-pattern"></div>
+            </div>
+            <div class="container mx-auto px-4 md:px-6 relative z-10">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                    <div data-animation="fade-in-right">
+                        <h2 class="text-3xl md:text-4xl font-bold mb-6">Go Beyond Surface-Level Data</h2>
+                        <p class="text-xl text-gray-300 mb-4">Arzani's AI Market Insights dig deep into real-time transaction data, competitor performance, and economic indicators specific to your industry.</p>
+                        <p class="text-gray-400 mb-6">Stop relying on outdated reports. Get actionable intelligence that reflects the current market landscape, helping you anticipate shifts and position your business for success.</p>
+                        <ul class="space-y-3 text-gray-300">
+                            <li class="flex items-start">
+                                <svg class="h-5 w-5 text-primary mr-3 mt-1 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <span>Real-time analysis of comparable business sales.</span>
+                            </li>
+                            <li class="flex items-start">
+                                <svg class="h-5 w-5 text-primary mr-3 mt-1 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <span>Industry-specific performance benchmarks.</span>
+                            </li>
+                            <li class="flex items-start">
+                                <svg class="h-5 w-5 text-primary mr-3 mt-1 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <span>Identification of emerging trends and buyer demand.</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="relative h-80 md:h-96" data-animation="fade-in-left" data-delay="200">
+                        <!-- Replaced SVG placeholder with actual image -->
+                        <div class="absolute inset-0 bg-dark/60 backdrop-blur-md rounded-xl p-6 flex items-center justify-center">
+                            <img src="/figma design exports/images/graph.webp" alt="Market Trend Visualization" class="w-full h-full object-contain">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- How Insights Help You Section -->
+        <section class="py-20 md:py-32 bg-dark relative overflow-hidden">
+             <div class="absolute -top-80 -right-80 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl"></div>
+            <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/5 rounded-full blur-3xl"></div>
+             <div class="absolute inset-0 z-0 opacity-10">
+                <div class="grid-pattern"></div>
+            </div>
+            <div class="container mx-auto px-4 md:px-6 relative z-10">
+                <div class="text-center mb-16" data-animation="fade-in-up">
+                    <h2 class="text-3xl md:text-5xl font-bold mb-6">Turn Data into <span class="text-gradient-animated">Decisions</span></h2>
+                    <p class="text-xl text-gray-300 max-w-3xl mx-auto">Arzani's Market Insights empower you to act strategically, whether you're buying, selling, or growing.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <!-- Card 1: Spot Opportunities -->
+                    <div class="feature-card bg-dark/60 backdrop-blur-md rounded-xl p-6 border border-gray-800/60 transition-all hover:border-primary/30" data-animation="fade-in-up" data-delay="100">
+                         <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-3">Spot Opportunities</h3>
+                        <p class="text-gray-400">Identify undervalued sectors or businesses with high growth potential based on current market dynamics.</p>
+                    </div>
+                    <!-- Card 2: Benchmark Performance -->
+                    <div class="feature-card bg-dark/60 backdrop-blur-md rounded-xl p-6 border border-gray-800/60 transition-all hover:border-primary/30" data-animation="fade-in-up" data-delay="200">
+                         <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-3">Benchmark Performance</h3>
+                        <p class="text-gray-400">See how your business stacks up against competitors in key financial and operational metrics.</p>
+                    </div>
+                    <!-- Card 3: Time Your Move -->
+                    <div class="feature-card bg-dark/60 backdrop-blur-md rounded-xl p-6 border border-gray-800/60 transition-all hover:border-primary/30" data-animation="fade-in-up" data-delay="300">
+                         <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-3">Time Your Move</h3>
+                        <p class="text-gray-400">Understand market cycles and sentiment to determine the optimal time to buy or sell for maximum value.</p>
+                    </div>
+                </div>
+
+                 <div class="mt-16 text-center" data-animation="fade-in-up" data-delay="400">
+                     <a href="/seller-questionnaire" class="btn-secondary text-lg py-4 px-10 mr-4">
+                        Get Your Valuation
+                    </a>
+                     <a href="/marketplace" class="btn-primary text-lg py-4 px-10">
+                        Join the Marketplace
+                    </a>
+                 </div>
+            </div>
+        </section>
+
+       
+
+        <!-- Final CTA Section -->
+        <section class="py-20 md:py-32 bg-dark text-center">
+            <div class="container mx-auto px-4 md:px-6">
+                 <h2 class="text-3xl md:text-4xl font-bold mb-6" data-animation="fade-in-up">Ready to Make Data-Driven Moves?</h2>
+                 <p class="text-xl text-gray-300 mb-10 max-w-2xl mx-auto" data-animation="fade-in-up" data-delay="100">Join the Arzani marketplace to access exclusive AI Market Insights and connect with verified buyers and sellers.</p>
+                 <div data-animation="fade-in-up" data-delay="200">
+                    <a href="/marketplace2" class="btn-primary text-lg py-4 px-10">
+                        Explore the Marketplace Now
+                    </a>
+                 </div>
+            </div>
+        </section>
+
+
+        <!-- Footer (Copied from homepage/business-valuation) -->
+        <footer class="bg-black border-t border-gray-800">
+            <!-- Upper footer -->
+            <div class="container mx-auto px-6 py-16">
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-10">
+                    <!-- Company info -->
+                    <div class="md:col-span-4 space-y-6">
+                        <img src="/figma design exports/logos/white-arzani-logo.svg" alt="Arzani Logo" class="h-8">
+                        <p class="text-gray-400 text-sm pr-8 leading-relaxed">
+                            Arzani uses AI-powered insights to revolutionize how businesses are bought and sold, making transactions smarter, faster, and more profitable.
+                        </p>
+                        <div class="flex space-x-4 social-links">
+                            <!-- TikTok -->
+                            <a href="https://www.tiktok.com/@arzani.co.uk" target="_blank" rel="noopener noreferrer" class="w-9 h-9 rounded-full flex items-center justify-center bg-dark border border-gray-800 text-gray-400 hover:bg-primary/10 hover:text-white transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M9 0h1.98c.144.715.54 1.617 1.235 2.512C12.895 3.389 13.797 4 15 4v2c-1.753 0-3.07-.814-4-1.829V11a5 5 0 1 1-5-5v2a3 3 0 1 0 3 3V0Z"/>
+                                </svg>
+                            </a>
+                            <!-- X (Twitter) -->
+                            <a href="https://x.com/arzaniuk/" target="_blank" rel="noopener noreferrer" class="w-9 h-9 rounded-full flex items-center justify-center bg-dark border border-gray-800 text-gray-400 hover:bg-primary/10 hover:text-white transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M12.6.75h2.454l-5.36 6.142L16 15.25h-4.937l-3.867-5.07-4.425 5.07H.316l5.733-6.57L0 .75h5.063l3.495 4.633L12.6.75Zm-.86 13.028h1.36L4.323 2.145H2.865l8.875 11.633Z"/>
+                                </svg>
+                            </a>
+                            <!-- Instagram -->
+                            <a href="https://www.instagram.com/arzani.co.uk/" target="_blank" rel="noopener noreferrer" class="w-9 h-9 rounded-full flex items-center justify-center bg-dark border border-gray-800 text-gray-400 hover:bg-primary/10 hover:text-white transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.917 3.917 0 0 0-1.417.923A3.927 3.927 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.916 3.916 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.926 3.926 0 0 0-.923-1.417A3.911 3.911 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0h.003zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599.28.28.453.546.598.92.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.47 2.47 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.478 2.478 0 0 1-.92-.598 2.48 2.48 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233 0-2.136.008-2.388.046-3.231.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92.28-.28.546-.453.92-.598.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045v.002zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92zm-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217zm0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334z"/>
+                                </svg>
+                            </a>
+                            <!-- LinkedIn -->
+                            <a href="https://www.linkedin.com/in/arzani.co.uk/" target="_blank" rel="noopener noreferrer" class="w-9 h-9 rounded-full flex items-center justify-center bg-dark border border-gray-800 text-gray-400 hover:bg-primary/10 hover:text-white transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M0 1.146C0 .513.526 0 1.175 0h13.65C15.474 0 16 .513 16 1.146v13.708c0 .633-.526 1.146-1.175 1.146H1.175C.526 16 0 15.487 0 14.854V1.146zm4.943 12.248V6.169H2.542v7.225h2.401zm-1.2-8.212c.837 0 1.358-.554 1.358-1.248-.015-.709-.52-1.248-1.342-1.248-.822 0-1.359.54-1.359 1.248 0 .694.521 1.248 1.327 1.248h.016zm4.908 8.212V9.359c0-.216.016-.432.08-.586.173-.431.568-.878 1.232-.878.869 0 1.216.662 1.216 1.634v3.865h2.401V9.25c0-2.22-1.184-3.252-2.764-3.252-1.274 0-1.845.7-2.165 1.193v.025h-.016a5.54 5.54 0 0 1 .016-.025V6.169h-2.4c.03.678 0 7.225 0 7.225h2.4z"/>
+                                </svg>
+                            </a>
+                            <!-- Facebook -->
+                            <a href="https://www.facebook.com/share/16tLCq5fxo/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" class="w-9 h-9 rounded-full flex items-center justify-center bg-dark border border-gray-800 text-gray-400 hover:bg-primary/10 hover:text-white transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0-.002 3.603-.002 8.05c0 4.017 2.926 7.347 6.75 7.951v-5.625h-2.03V8.05H6.75V6.275c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.157 1.791.157v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.951z"/>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                    <!-- Navigation links -->
+                    <div class="md:col-span-2">
+                        <h5 class="text-sm font-bold tracking-wide text-gray-100 uppercase mb-4">Product</h5>
+                        <ul class="space-y-3">
+                            <li><a href="/business-valuation" class="text-gray-400 text-sm hover:text-white transition-colors">Business Valuation</a></li>
+                            <li><a href="/ai-insights" class="text-gray-400 text-sm hover:text-white transition-colors">AI Market Insights</a></li>
+                            <li><a href="/marketplace2" class="text-gray-400 text-sm hover:text-white transition-colors">Marketplace</a></li>
+                            <li><a href="/arzani-x" class="text-gray-400 text-sm hover:text-white transition-colors">Arzani X</a></li>
+                            <li><a href="/pricing" class="text-gray-400 text-sm hover:text-white transition-colors">Pricing</a></li>
+                        </ul>
+                    </div>
+                    <div class="md:col-span-2">
+                        <h5 class="text-sm font-bold tracking-wide text-gray-100 uppercase mb-4">Resources</h5>
+                        <ul class="space-y-3">
+                            <li><a href="/blog" class="text-gray-400 text-sm hover:text-white transition-colors">Blog</a></li>
+                            <li><a href="/market-reports" class="text-gray-400 text-sm hover:text-white transition-colors">Market Reports</a></li>
+                            <li><a href="/guides" class="text-gray-400 text-sm hover:text-white transition-colors">Seller Guides</a></li>
+                            <li><a href="/webinars" class="text-gray-400 text-sm hover:text-white transition-colors">Webinars</a></li>
+                            <li><a href="/faq" class="text-gray-400 text-sm hover:text-white transition-colors">FAQ</a></li>
+                        </ul>
+                    </div>
+                    <div class="md:col-span-2">
+                        <h5 class="text-sm font-bold tracking-wide text-gray-100 uppercase mb-4">Company</h5>
+                        <ul class="space-y-3">
+                            <li><a href="/about" class="text-gray-400 text-sm hover:text-white transition-colors">About Us</a></li>
+                            <li><a href="/careers" class="text-gray-400 text-sm hover:text-white transition-colors">Careers</a></li>
+                            <li><a href="/contact" class="text-gray-400 text-sm hover:text-white transition-colors">Contact</a></li>
+                            <li><a href="/press" class="text-gray-400 text-sm hover:text-white transition-colors">Press</a></li>
+                        </ul>
+                    </div>
+                    <div class="md:col-span-2">
+                        <h5 class="text-sm font-bold tracking-wide text-gray-100 uppercase mb-4">Legal</h5>
+                        <ul class="space-y-3">
+                            <li><a href="/terms" class="text-gray-400 text-sm hover:text-white transition-colors">Terms of Service</a></li>
+                            <li><a href="/privacy" class="text-gray-400 text-sm hover:text-white transition-colors">Privacy Policy</a></li>
+                            <li><a href="/cookies" class="text-gray-400 text-sm hover:text-white transition-colors">Cookie Policy</a></li>
+                            <li><a href="/security" class="text-gray-400 text-sm hover:text-white transition-colors">Security</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <!-- Bottom footer -->
+            <div class="border-t border-gray-800 bg-black">
+                <div class="container mx-auto px-6 py-6">
+                    <div class="flex flex-col md:flex-row justify-between items-center">
+                        <div class="mt-4 md:mt-0 text-sm text-gray-500 text-center md:text-left">
+                            © <%= new Date().getFullYear() %> Arzani. All rights reserved.
+                        </div>
+                        <div class="flex items-center mt-4 md:mt-0 space-x-6">
+                            <a href="/accessibility" class="text-gray-400 text-xs hover:text-gray-300">Accessibility</a>
+                            <span class="text-gray-700">|</span>
+                            <a href="/sitemap" class="text-gray-400 text-xs hover:text-gray-300">Sitemap</a>
+                            <span class="text-gray-700">|</span>
+                            <div class="flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
+                                <select class="bg-transparent text-gray-400 text-xs focus:outline-none">
+                                    <option value="en" class="bg-dark text-white">English</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </footer>
+
+    </div> <!-- End page-wrapper -->
+
+    <!-- Cookie Consent Popup -->
+    <div id="cookieConsent" class="cookie-consent hidden">
+        <!-- Cookie consent content copied from business-valuation.ejs -->
+         <div class="cookie-content">
+            <div class="cookie-header">
+                <h4 class="text-lg font-medium">Cookie Settings</h4>
+                <button id="cookieClose" class="cookie-close">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="cookie-body">
+                <p class="text-gray-300 text-sm mb-4">We use cookies to enhance your experience on our site. By accepting, you agree to our use of cookies for analytics and personalization. You can manage your preferences below.</p>
+                <div class="cookie-settings mb-4">
+                    <div class="cookie-option flex items-center justify-between mb-2">
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" checked disabled class="sr-only">
+                            <div class="toggle-bg toggle-active"></div>
+                            <span class="ml-3 font-medium text-sm">Essential Cookies</span>
+                        </label>
+                        <span class="text-xs text-gray-400">Always Active</span>
+                    </div>
+                     <p class="text-xs text-gray-400 pl-10 mb-3">These cookies are necessary for the website to function and cannot be switched off.</p>
+
+                    <div class="cookie-option flex items-center justify-between mb-2">
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" id="analyticsCookies" class="sr-only cookie-toggle" data-cookie-type="analytics">
+                            <div class="toggle-bg"></div>
+                            <span class="ml-3 font-medium text-sm">Analytics Cookies</span>
+                        </label>
+                    </div>
+                     <p class="text-xs text-gray-400 pl-10 mb-3">These cookies allow us to count visits and traffic sources so we can measure and improve the performance of our site.</p>
+
+                    <div class="cookie-option flex items-center justify-between">
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" id="marketingCookies" class="sr-only cookie-toggle" data-cookie-type="marketing">
+                            <div class="toggle-bg"></div>
+                            <span class="ml-3 font-medium text-sm">Marketing Cookies</span>
+                        </label>
+                    </div>
+                     <p class="text-xs text-gray-400 pl-10">These cookies may be set through our site by our advertising partners to build a profile of your interests and show you relevant adverts on other sites.</p>
+                </div>
+                 <p class="text-xs text-gray-500 mb-4">For more information, please read our <a href="/privacy" class="underline hover:text-primary">Privacy Policy</a> and <a href="/cookies" class="underline hover:text-primary">Cookie Policy</a>.</p>
+            </div>
+            <div class="cookie-footer">
+                <button id="acceptNecessary" class="btn-secondary cookie-btn">Accept Necessary</button>
+                <button id="acceptAllCookies" class="btn-primary cookie-btn">Accept All</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+    <script src="/js/animations.js"></script>
+    <script src="/js/scroll-animations.js"></script>
+    <script src="/js/cookie-banner.js"></script>
+
+    <script>
+        // Initialize particles.js if available and element exists
+        if (typeof particlesJS !== 'undefined' && document.getElementById('particles-js')) {
+            particlesJS('particles-js', { /* options */ });
+        }
+        // Initialize scroll animations
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeScrollAnimations();
+        });
+    </script>
+
+</body>
+</html>

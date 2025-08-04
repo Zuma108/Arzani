@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> | Arzani</title>
+    <meta name="description" content="Blog content approval system">
+    
+    <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">
+    <link rel="stylesheet" href="/css/modern.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#316FD4',
+                        dark: '#141414',
+                        'dark-light': '#1E1E1E'
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-dark text-white font-sans">
+    <div class="page-wrapper min-h-screen flex flex-col">
+        <header class="bg-dark-light/80 border-b border-gray-800 py-4">
+            <div class="container mx-auto px-4 md:px-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <img src="/figma design exports/logos/white-arzani-logo.svg" alt="Arzani Logo" class="h-8">
+                        <span class="ml-4 text-lg font-medium">Blog Approval System</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="py-12 flex-grow flex items-center">
+            <div class="container mx-auto px-4 md:px-6">
+                <div class="max-w-lg mx-auto text-center">
+                    <div class="bg-dark-light/40 backdrop-blur-sm border border-gray-800 rounded-xl p-8 animate-fade-in-up">
+                        <div class="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                        </div>
+                        
+                        <h1 class="text-2xl font-bold mb-4">Success!</h1>
+                        
+                        <p class="text-gray-300 mb-8">
+                            <%= message %>
+                        </p>
+                        
+                        <a href="https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID_HERE" target="_blank" class="btn-primary">
+                            Go to Content Sheet
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="bg-black py-6 border-t border-gray-800 mt-auto">
+            <div class="container mx-auto px-4 md:px-6 text-center">
+                <p class="text-gray-400 text-sm">
+                    © <%= new Date().getFullYear() %> Arzani. All rights reserved.
+                </p>
+            </div>
+        </footer>
+    </div>
+</body>
+</html>

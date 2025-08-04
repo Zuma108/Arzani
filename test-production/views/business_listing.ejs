@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= business.business_name %> - Handshake</title>
+  <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#064fa3',
+            secondary: '#041b76',
+            accent: '#c0816f',
+            light: '#f9f6f1',
+          }
+        }
+      }
+    }
+    
+    // Add this to set CSS variables that match Tailwind colors
+    document.addEventListener('DOMContentLoaded', function() {
+      document.documentElement.style.setProperty('--primary-color', tailwind.config.theme.extend.colors.primary);
+      document.documentElement.style.setProperty('--secondary-color', tailwind.config.theme.extend.colors.secondary);
+      document.documentElement.style.setProperty('--accent-color', tailwind.config.theme.extend.colors.accent);
+      document.documentElement.style.setProperty('--light-color', tailwind.config.theme.extend.colors.light);
+    });
+  </script>
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/css/marketplace2.css">
+  <!-- Add this line after the other CSS files -->
+  <link rel="stylesheet" href="/css/business_listing.css">
+  <!-- Swiper CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+</head>
+<body class="bg-light text-gray-800 antialiased">
+  <!-- Navigation bar - keeping existing structure -->
+  <nav class="navbar navbar-light">
+    <div class="handshake-logo-container">
+        <img src="/public/figma design exports/logos/Arzani-logo.png" alt="Arzani.co.uk" class="logo-img">
+    </div>
+        <div class="navbar-container">
+            <div class="navbar-icons">
+                <a href="/marketplace2" class="navbar-link" id="marketplace-link">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256" class="icon" aria-hidden="true">
+                        <path d="M216,36H40A20,20,0,0,0,20,56V200a20,20,0,0,0,20,20H216a20,20,0,0,0,20-20V56A20,20,0,0,0,216,36Zm-4,24V76H44V60ZM44,196V100H212v96Zm136-72a52,52,0,0,1-104,0,12,12,0,0,1,24,0,28,28,0,0,0,56,0,12,12,0,0,1,24,0Z"></path>
+                    </svg>
+                    <span>Marketplace</span>
+                </a>
+            <a href="/history" class="navbar-link" id="history-link">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256" class="icon" aria-hidden="true">
+                    <path d="M140,80v41.21l34.17,20.5a12,12,0,1,1-12.34,20.58l-40-24A12,12,0,0,1,116,128V80a12,12,0,0,1,24,0ZM128,28A99.38,99.38,0,0,0,57.24,57.34c-4.69,4.74-9,9.37-13.24,14V64a12,12,0,0,0-24,0v40a12,12,0,0,0,12,12H72a12,12,0,0,0,0-24H57.77C63,86,68.37,80.22,74.26,74.26a76,76,0,1,1,1.58,109,12,12,0,0,0-16.48,17.46A100,100,0,1,0,128,28Z"></path>
+                </svg>
+                <span>History</span>
+            </a>
+            <a href="/talk-to-Arzani" class="navbar-link" id="arzani-link">
+                <img src="/images/arzani-icon.svg" alt="Arzani" class="icon arzani-icon" style="width: 48px; height: 48px;" />
+                <span>Arzani</span>
+            </a>
+            <a href="/saved-searches" class="navbar-link" id="saved-searches-link">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256" class="icon" aria-hidden="true">
+                    <path d="M184,28H72A20,20,0,0,0,52,48V224a12,12,0,0,0,18.36,10.18l57.63-36,57.65,36A12,12,0,0,0,204,224V48A20,20,0,0,0,184,28Zm-4,174.35-45.65-28.53a12,12,0,0,0-12.72,0L76,202.35V52H180Z"></path>
+                </svg>
+                <span>Saved Searches</span>
+            </a>
+            <a href="/off-market-leads" class="navbar-link" id="leads-link">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256" class="icon" aria-hidden="true">
+                    <path d="M148,108a12,12,0,0,1,12-12h28a12,12,0,0,1,0,24H160A12,12,0,0,1,148,108Zm40,28H168a12,12,0,0,0,0,24h20a12,12,0,0,0,0-24Zm48-80V200a20,20,0,0,1-20,20H40a20,20,0,0,1-20-20V56A20,20,0,0,1,40,36H216A20,20,0,0,1,236,56Zm-24,4H44V196H212ZM58.28,159.37A43.82,43.82,0,0,1,71.53,142a36,36,0,1,1,56.94,0,43.84,43.84,0,0,1,13.26,17.37,12,12,0,0,1-22.15,9.26C116.48,161.19,108.42,156,100,156s-16.47,5.2-19.59,12.63a12,12,0,1,1-22.13-9.26ZM88,120a12,12,0,1,0,12-12A12,12,0,0,0,88,120Z"></path>
+                </svg>
+                <span>Off Market Leads</span>
+            </a>
+        </div>
+        <div>
+            <ul class="navbar-nav"> 
+                <!-- Check if user is logged in -->
+                <script>
+                  var isLoggedIn = true; // Replace with actual login check
+                  if (isLoggedIn) {
+                    document.write('<li class="nav-item"><a class="nav-link" href="/post-business">Post a Business</a></li>');
+                  }
+                </script>
+              </ul>
+            </div>
+            <a href="/profile" class="btn profile-btn" id="profileBtn">Profile</a>
+</div>
+</nav>
+
+  <!-- Business Listing -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8 md:py-12">
+    <!-- Business header - modified for right-aligned location -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+      <div class="flex items-center justify-between">
+        <h1 class="text-3xl font-bold text-primary"><%= business.business_name %></h1>
+        <p class="text-lg text-gray-600 flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-accent" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+          </svg>
+          <%= business.location %>
+        </p>
+      </div>
+    </div>
+
+    <!-- Main content -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Left column - Images and Details -->
+      <div class="lg:col-span-2 space-y-8">
+        <!-- Image Gallery -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+          <!-- Main Swiper -->
+          <div class="swiper mainSwiper swiper-container h-[500px] bg-gray-50">
+            <div class="swiper-wrapper">
+              <% if (business.processedImages && business.processedImages.length > 0) { %>
+                <% business.processedImages.forEach(function(image) { %>
+                  <div class="swiper-slide">
+                    <img src="<%= image %>" 
+                         alt="<%= business.business_name %>" 
+                         class="w-full h-full object-cover"
+                         onerror="if(this.src.includes('eu-west-2')){this.src=this.src.replace('eu-west-2','eu-north-1')}else if(this.src.includes('eu-north-1')){this.src=this.src.replace('eu-north-1','eu-west-2')}else{this.src='/images/default-business.jpg';this.onerror=null}" />
+                  </div>
+                <% }); %>
+              <% } else if (business.images && business.images.length > 0) { %>
+                <% business.images.forEach(function(image) { %>
+                  <div class="swiper-slide">
+                    <img src="<%= getImageUrl(image, business.id) %>" 
+                         alt="<%= business.business_name %>" 
+                         class="w-full h-full object-cover"
+                         onerror="if(this.src.includes('eu-west-2')){this.src=this.src.replace('eu-west-2','eu-north-1')}else if(this.src.includes('eu-north-1')){this.src=this.src.replace('eu-north-1','eu-west-2')}else{this.src='/images/default-business.jpg';this.onerror=null}" />
+                  </div>
+                <% }); %>
+              <% } else { %>
+                <div class="swiper-slide">
+                  <img src="/images/default-business.jpg" alt="Default Business Image" class="w-full h-full object-cover" />
+                </div>
+              <% } %>
+            </div>
+            <div class="swiper-button-next"></div>
+            <div class="swiper-button-prev"></div>
+            <div class="swiper-pagination"></div>
+            <div class="image-counter">
+              <span class="current">1</span>/<span class="total"><%= business.images ? business.images.length : 1 %></span>
+            </div>
+          </div>
+
+          <!-- Thumbnails with modern styling -->
+          <div class="flex gap-3 p-4 overflow-x-auto bg-white">
+            <% if (business.processedImages && business.processedImages.length > 0) { %>
+              <% business.processedImages.forEach(function(image, index) { %>
+                <img 
+                  src="<%= image %>" 
+                  alt="Thumbnail" 
+                  class="thumbnail h-16 w-24 object-cover rounded-md cursor-pointer <%= index === 0 ? 'active' : '' %>"
+                  data-index="<%= index %>"
+                  onerror="if(this.src.includes('eu-west-2')){this.src=this.src.replace('eu-west-2','eu-north-1')}else if(this.src.includes('eu-north-1')){this.src=this.src.replace('eu-north-1','eu-west-2')}else{this.src='/images/default-business.jpg';this.onerror=null}"
+                />
+              <% }); %>
+            <% } else if (business.images && business.images.length > 0) { %>
+              <% business.images.forEach(function(image, index) { %>
+                <img 
+                  src="<%= getImageUrl(image, business.id) %>" 
+                  alt="Thumbnail" 
+                  class="thumbnail h-16 w-24 object-cover rounded-md cursor-pointer <%= index === 0 ? 'active' : '' %>"
+                  data-index="<%= index %>"
+                  onerror="if(this.src.includes('eu-west-2')){this.src=this.src.replace('eu-west-2','eu-north-1')}else if(this.src.includes('eu-north-1')){this.src=this.src.replace('eu-north-1','eu-west-2')}else{this.src='/images/default-business.jpg';this.onerror=null}"
+                />
+              <% }); %>
+            <% } %>
+          </div>
+        </div>
+        
+        <!-- Key Metrics -->
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div class="bg-white rounded-xl shadow-md p-5 transition-all hover:shadow-lg hover:translate-y-[-2px]">
+            <p class="text-sm text-gray-500 mb-1">Asking Price</p>
+            <h3 class="text-2xl font-bold text-primary">£<%= business.price %></h3>
+          </div>
+          <div class="bg-white rounded-xl shadow-md p-5 transition-all hover:shadow-lg hover:translate-y-[-2px]">
+            <p class="text-sm text-gray-500 mb-1">Cash Flow</p>
+            <h3 class="text-2xl font-bold text-primary">£<%= business.cash_flow || 'N/A' %></h3>
+          </div>
+          <div class="bg-white rounded-xl shadow-md p-5 transition-all hover:shadow-lg hover:translate-y-[-2px]">
+            <p class="text-sm text-gray-500 mb-1">Gross Revenue</p>
+            <h3 class="text-2xl font-bold text-primary">£<%= business.gross_revenue || 'N/A' %></h3>
+          </div>
+          <div class="bg-white rounded-xl shadow-md p-5 transition-all hover:shadow-lg hover:translate-y-[-2px]">
+            <p class="text-sm text-gray-500 mb-1">Inventory</p>
+            <h3 class="text-2xl font-bold text-primary"><%= business.inventory ? '£' + business.inventory : 'N/A' %></h3>
+          </div>
+          <div class="bg-white rounded-xl shadow-md p-5 transition-all hover:shadow-lg hover:translate-y-[-2px]">
+            <p class="text-sm text-gray-500 mb-1">EBITDA</p>
+            <h3 class="text-2xl font-bold text-primary"><%= business.ebitda ? '£' + business.ebitda : 'N/A' %></h3>
+          </div>
+          <div class="bg-white rounded-xl shadow-md p-5 transition-all hover:shadow-lg hover:translate-y-[-2px]">
+            <p class="text-sm text-gray-500 mb-1">Employees</p>
+            <h3 class="text-2xl font-bold text-primary"><%= business.employees || 'N/A' %></h3>
+          </div>
+        </div>
+
+        <!-- About Section -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+          <h2 class="text-2xl font-bold text-primary mb-4 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            About This Business
+          </h2>
+          <div class="prose max-w-none text-gray-700">
+            <p><%= business.description || "All data can be found in the database table in PostgreSQL called businesses" %></p>
+          </div>
+        </div>
+        
+        <!-- Detailed Information -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+          <h2 class="text-2xl font-bold text-primary mb-4 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            Detailed Information
+          </h2>
+          <div class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="bg-gray-50 p-4 rounded-lg">
+                <p class="text-sm text-gray-500 mb-1">Reason for Selling:</p>
+                <p class="font-medium"><%= business.reason_for_selling || "N/A" %></p>
+              </div>
+              <div class="bg-gray-50 p-4 rounded-lg">
+                <p class="text-sm text-gray-500 mb-1">FFE:</p>
+                <p class="font-medium"><%= business.ffe || "N/A" %></p>
+              </div>
+              <div class="bg-gray-50 p-4 rounded-lg">
+                <p class="text-sm text-gray-500 mb-1">Down Payment:</p>
+                <p class="font-medium"><%= business.down_payment || "N/A" %></p>
+              </div>
+              <div class="bg-gray-50 p-4 rounded-lg">
+                <p class="text-sm text-gray-500 mb-1">Cash on Cash:</p>
+                <p class="font-medium"><%= business.cash_on_cash || "N/A" %></p>
+              </div>
+              <div class="bg-gray-50 p-4 rounded-lg">
+                <p class="text-sm text-gray-500 mb-1">Debt Service:</p>
+                <p class="font-medium"><%= business.debt_service || "N/A" %></p>
+              </div>
+              <div class="bg-gray-50 p-4 rounded-lg">
+                <p class="text-sm text-gray-500 mb-1">Sales Multiple:</p>
+                <p class="font-medium"><%= business.sales_multiple || "N/A" %></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Right column - Contact Form -->
+      <div class="lg:col-span-1">
+        <div class="bg-white rounded-xl shadow-lg p-6 sticky top-4">
+          <div class="mb-6">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-accent/10 text-accent">
+              Opportunity
+            </span>
+            <h2 class="text-2xl font-bold text-primary mt-2">Interested in this business?</h2>
+            <p class="text-gray-600 mt-2">We're excited to help you. Please fill out this form to get started.</p>
+          </div>
+          
+          <form id="contactSellerForm" class="space-y-4">
+            <input type="hidden" name="businessId" value="<%= business.id %>" />
+            <input type="hidden" name="otherUserId" value="<%= business.user_id %>" />
+            
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label for="firstName" class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                <input type="text" id="firstName" name="firstName" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary" />
+              </div>
+              <div>
+                <label for="lastName" class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                <input type="text" id="lastName" name="lastName" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary" />
+              </div>
+            </div>
+            
+            <div>
+              <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <input type="email" id="email" name="email" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary" />
+            </div>
+            
+            <div>
+              <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+              <input type="tel" id="phone" name="phone" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary" />
+            </div>
+            
+            <div>
+              <label for="buyerInterest" class="block text-sm font-medium text-gray-700 mb-1">Your Interest Level</label>
+              <select id="buyerInterest" name="buyerInterest" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary">
+                <option value="" disabled selected>Select your interest level</option>
+                <option value="Very Interested">Very Interested</option>
+                <option value="Somewhat Interested">Somewhat Interested</option>
+                <option value="Just Exploring">Just Exploring</option>
+              </select>
+            </div>
+            
+            <div>
+              <label for="timeframe" class="block text-sm font-medium text-gray-700 mb-1">Purchase Timeframe</label>
+              <select id="timeframe" name="timeframe" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary">
+                <option value="" disabled selected>Select your timeline</option>
+                <option value="Immediately">Immediately</option>
+                <option value="1-3 months">1-3 months</option>
+                <option value="3-6 months">3-6 months</option>
+                <option value="6+ months">6+ months</option>
+              </select>
+            </div>
+            
+            <div>
+              <label for="message" class="block text-sm font-medium text-gray-700 mb-1">Message</label>
+              <textarea id="message" name="message" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary" placeholder="Anything you'd like us to know?"></textarea>
+            </div>
+            
+            <div class="flex items-start">
+              <div class="flex items-center h-5">
+                <input id="newsletter" name="newsletter" type="checkbox" checked class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded" />
+              </div>
+              <div class="ml-3 text-sm">
+                <label for="newsletter" class="text-gray-600">Yes, send me the Buyer Newsletter</label>
+              </div>
+            </div>
+            
+            <button type="submit" id="submitContactForm" class="w-full bg-secondary hover:bg-primary text-white font-bold py-3 px-4 rounded-md transition duration-300 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+              </svg>
+              Send Message
+            </button>
+          </form>
+          
+          <p class="mt-4 text-xs text-gray-500">
+            By clicking the button, you agree to Arzani's
+            <a href="#" class="text-primary hover:underline">Terms of Service</a> and 
+            <a href="#" class="text-primary hover:underline">Privacy Notice</a>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast container for notifications -->
+  <div id="toastContainer" class="toast-container fixed bottom-4 right-4 z-50"></div>
+
+  <!-- Add footer only, remove chatbox -->
+  <%- include('partials/footer') %>
+
+  <!-- Import the new marketplace.js script before other scripts -->
+  <script src="/js/marketplace.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Swiper
+        const swiper = new Swiper('.mainSwiper', {
+            loop: true,
+            lazy: true,
+            effect: 'fade',
+            fadeEffect: {
+                crossFade: true
+            },
+            speed: 500, // Slightly faster for a more responsive feel
+            autoplay: {
+                delay: 5000,
+                disableOnInteraction: false,
+            },
+            navigation: {
+                nextEl: '.swiper-button-next',
+                prevEl: '.swiper-button-prev',
+            },
+            pagination: {
+                el: '.swiper-pagination',
+                clickable: true,
+            },
+            keyboard: {
+                enabled: true,
+            },
+            on: {
+                slideChange: function() {
+                    // Update image counter
+                    document.querySelector('.current').textContent = 
+                        (this.realIndex + 1);
+                    
+                    // Update thumbnails
+                    document.querySelectorAll('.thumbnail').forEach((thumb, idx) => {
+                        if (idx === this.realIndex) {
+                            thumb.classList.add('active');
+                        } else {
+                            thumb.classList.remove('active');
+                        }
+                    });
+                },
+                // Add this event handler to fix S3 image URLs on slide change
+                slideChangeTransitionEnd: function() {
+                    // Fix any S3 images in the current slide
+                    document.querySelectorAll('.swiper-slide-active img').forEach(img => {
+                        if (img.src && img.src.includes('amazonaws.com')) {
+                            // Add error handler for S3 images
+                            img.onerror = function() {
+                                console.log('Image failed to load, trying alternate region:', this.src);
+                                if (this.src.includes('s3.eu-west-2.amazonaws.com')) {
+                                    this.src = this.src.replace('s3.eu-west-2.amazonaws.com', 's3.eu-north-1.amazonaws.com');
+                                } else if (this.src.includes('s3.eu-north-1.amazonaws.com')) {
+                                    this.src = this.src.replace('s3.eu-north-1.amazonaws.com', 's3.eu-west-2.amazonaws.com');
+                                }
+                            };
+                        }
+                    });
+                }
+            }
+        });
+
+        // Fix for S3 URLs in thumbnails
+        document.querySelectorAll('.thumbnail').forEach(thumb => {
+            if (thumb.src && thumb.src.includes('amazonaws.com')) {
+                thumb.onerror = function() {
+                    console.log('Thumbnail failed to load, trying alternate region:', this.src);
+                    const currentSrc = this.src;
+                    if (currentSrc.includes('s3.eu-west-2.amazonaws.com')) {
+                        this.src = currentSrc.replace('s3.eu-west-2.amazonaws.com', 's3.eu-north-1.amazonaws.com');
+                    } else if (currentSrc.includes('s3.eu-north-1.amazonaws.com')) {
+                        this.src = currentSrc.replace('s3.eu-north-1.amazonaws.com', 's3.eu-west-2.amazonaws.com');
+                    }
+                };
+            }
+        });
+
+        // Handle thumbnail clicks
+        const thumbnails = document.querySelectorAll('.thumbnail');
+        thumbnails.forEach((thumbnail, index) => {
+            thumbnail.addEventListener('click', () => {
+                swiper.slideToLoop(index);
+            });
+        });
+
+        // Handle contact form submission
+        document.getElementById('contactSellerForm').addEventListener('submit', function(e) {
+          e.preventDefault();
+          
+          // Check if user is logged in
+          const token = localStorage.getItem('token');
+          if (!token) {
+            window.location.href = `/login2?returnTo=${encodeURIComponent(window.location.pathname)}`;
+            return;
+          }
+          
+          // Get form data
+          const form = document.getElementById('contactSellerForm');
+          if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+          }
+          
+          const formData = new FormData(form);
+          const businessId = formData.get('businessId');
+          const otherUserId = formData.get('otherUserId');
+          
+          // Show loading state
+          const submitButton = document.getElementById('submitContactForm');
+          const originalButtonText = submitButton.innerHTML;
+          submitButton.innerHTML = `<svg class="animate-spin h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>Sending...`;
+          submitButton.disabled = true;
+          
+          // Submit the form data via fetch API
+          fetch('/api/contact-seller', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              businessId: businessId,
+              name: `${formData.get('firstName')} ${formData.get('lastName')}`,
+              email: formData.get('email'),
+              phone: formData.get('phone'),
+              timeframe: formData.get('timeframe'),
+              message: formData.get('message'),
+              interestLevel: formData.get('buyerInterest'),
+              newsletter: formData.get('newsletter') ? true : false
+            })
+          })
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Failed to send inquiry');
+            }
+            return response.json();
+          })
+          .then(data => {
+            // Show success message
+            showToast('Success', 'Your inquiry has been sent to the seller. They will contact you soon!', 'success');
+            
+            // Reset form
+            form.reset();
+            
+            // Optional: Redirect to messages or thank you page
+            // window.location.href = `/messages?inquiry=${data.inquiryId}`;
+          })
+          .catch(error => {
+            console.error('Error sending inquiry:', error);
+            showToast('Error', 'Failed to send inquiry. Please try again.', 'error');
+          })
+          .finally(() => {
+            // Restore button state
+            submitButton.innerHTML = originalButtonText;
+            submitButton.disabled = false;
+          });
+        });
+    });
+    
+    // Helper function to show toast notifications
+    function showToast(title, message, type = 'info') {
+      const toastContainer = document.getElementById('toastContainer');
+      
+      const toast = document.createElement('div');
+      toast.className = `px-4 py-3 rounded-lg shadow-lg mb-3 transform transition-all duration-300 ease-in-out ${
+        type === 'success' ? 'bg-green-500' : 
+        type === 'error' ? 'bg-red-500' : 
+        'bg-blue-500'
+      } text-white max-w-md`;
+      
+      toast.innerHTML = `
+        <div class="flex justify-between items-center">
+          <div>
+            <h3 class="font-semibold">${title}</h3>
+            <p>${message}</p>
+          </div>
+          <button class="text-white focus:outline-none" onclick="this.parentElement.parentElement.remove()">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414z" clip-rule="evenodd" />
+            </svg>
+          </button>
+        </div>
+      `;
+      
+      // Add to container
+      toastContainer.appendChild(toast);
+      
+      // Animate toast entry
+      setTimeout(() => {
+        toast.classList.add('translate-y-0', 'opacity-100');
+      }, 10);
+      
+      // Remove toast after 5 seconds
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => {
+          toast.remove();
+        }, 300);
+      }, 5000);
+    }
+  </script>
+
+<!-- Add this JavaScript before closing body tag -->
+<script>
+  // Add this helper function for handling S3 images
+  function getImageUrl(imageUrl, businessId) {
+    if (!imageUrl) return '/images/default-business.jpg';
+    
+    // If already a full URL, return it
+    if (imageUrl.startsWith('http')) {
+      return imageUrl;
+    }
+    
+    // Handle /uploads/ paths
+    if (imageUrl.startsWith('/uploads/')) {
+      const filename = imageUrl.substring('/uploads/'.length);
+      return `https://arzani-images1.s3.eu-west-2.amazonaws.com/businesses/${businessId}/${filename}`;
+    }
+    
+    // Otherwise assume it's a simple filename
+    return `https://arzani-images1.s3.eu-west-2.amazonaws.com/businesses/${businessId}/${imageUrl}`;
+  }
+  
+  document.addEventListener('DOMContentLoaded', function() {
+    // Process all images to handle multi-region loading
+    document.querySelectorAll('img').forEach(img => {
+      if (img.src && (img.src.includes('/uploads/') || img.src.includes('amazonaws.com'))) {
+        // Add error handler for S3 region fallback
+        img.onerror = function() {
+          console.log('Image failed to load, trying alternate region:', this.src);
+          
+          if (this.src.includes('s3.eu-west-2.amazonaws.com')) {
+            this.src = this.src.replace('s3.eu-west-2.amazonaws.com', 's3.eu-north-1.amazonaws.com');
+          } else if (this.src.includes('s3.eu-north-1.amazonaws.com')) {
+            this.src = this.src.replace('s3.eu-north-1.amazonaws.com', 's3.eu-west-2.amazonaws.com');
+          } else {
+            this.src = '/images/default-business.jpg';
+            this.onerror = null; // Remove handler to prevent loops
+          }
+        };
+      }
+    });
+    
+    // Initialize Swiper
+    const swiper = new Swiper('.mainSwiper', {
+      // ...existing swiper code...
+    });
+
+    // ...existing code...
+  });
+</script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Handle contact seller button click
+    document.querySelector('.contact-seller-btn').addEventListener('click', function(e) {
+      e.preventDefault();
+      
+      // Check if user is logged in
+      const token = localStorage.getItem('token');
+      if (!token) {
+        window.location.href = `/login2?returnTo=${encodeURIComponent(window.location.pathname)}`;
+        return;
+      }
+      
+      // Set form input values
+      document.getElementById('contactBusinessId').value = this.getAttribute('data-business-id');
+      document.getElementById('contactOtherUserId').value = this.getAttribute('data-user-id');
+      
+      // Show contact form modal
+      const contactModal = new bootstrap.Modal(document.getElementById('contactFormModal'));
+      contactModal.show();
+    });
+    
+    // Handle form submission
+    document.getElementById('submitContactForm').addEventListener('click', function() {
+      const form = document.getElementById('preContactForm');
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
+      
+      // Get form data
+      const businessId = document.getElementById('contactBusinessId').value;
+      const otherUserId = document.getElementById('contactOtherUserId').value;
+      const interest = document.getElementById('buyerInterest').value;
+      const timeline = document.getElementById('buyerTimeline').value;
+      const message = document.getElementById('initialMessage').value;
+      const questions = document.getElementById('buyerQuestions').value;
+      
+      // Construct initial message for chat
+      let initialMessage = `**Interest Level:** ${interest}\n**Timeline:** ${timeline}\n\n`;
+      
+      if (message) {
+        initialMessage += `**Message:**\n${message}\n\n`;
+      }
+      
+      if (questions) {
+        initialMessage += `**Questions:**\n${questions}`;
+      }
+      
+      // Encode the message for URL
+      const encodedMessage = encodeURIComponent(initialMessage);
+      
+      // Redirect to chat with initial message
+      window.location.href = `/chat/start-conversation?otherUserId=${otherUserId}&businessId=${businessId}&initialMessage=${encodedMessage}`;
+      
+      // Hide the modal
+      bootstrap.Modal.getInstance(document.getElementById('contactFormModal')).hide();
+    });
+  });
+</script>
+</body>
+</html>
