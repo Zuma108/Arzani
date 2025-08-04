@@ -14,6 +14,15 @@ router.use(cors({
 // Enable parsing JSON request bodies
 router.use(express.json());
 
+// Test endpoint for health checks
+router.get('/test', (req, res) => {
+  res.json({ 
+    status: "valuation OK",
+    timestamp: new Date().toISOString(),
+    service: "valuation-api"
+  });
+});
+
 // Middleware to log all valuation API requests
 router.use((req, res, next) => {
   console.log('Blog API router hit:', req.method, req.path);

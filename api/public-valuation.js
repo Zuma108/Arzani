@@ -8,6 +8,15 @@ import valuationController from '../controllers/valuationController.js';
 
 const router = express.Router();
 
+// Test endpoint for health checks
+router.get('/test', (req, res) => {
+  res.json({ 
+    status: "public valuation OK",
+    timestamp: new Date().toISOString(),
+    service: "public-valuation-api"
+  });
+});
+
 /**
  * Calculate business valuation without requiring authentication
  * POST /api/public/valuation/calculate
