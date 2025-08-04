@@ -241,7 +241,7 @@ jobs:
           --max-instances=10 \
           --timeout=300 \
           --add-cloudsql-instances=${{ env.DB_CONNECTION_NAME }} \
-          --set-env-vars="NODE_ENV=production,PORT=8080,DATABASE_URL=postgresql://${{ env.DB_USER }}:${{ secrets.DB_PASSWORD }}@localhost:5432/${{ env.DB_NAME }}?host=/cloudsql/${{ env.DB_CONNECTION_NAME }},JWT_SECRET=${{ secrets.JWT_SECRET }},STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }},OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }},A2A_AUTH_ENABLED=false,DATABASE_SSL=false"
+          --set-env-vars="NODE_ENV=production,DATABASE_URL=postgresql://${{ env.DB_USER }}:${{ secrets.DB_PASSWORD }}@localhost:5432/${{ env.DB_NAME }}?host=/cloudsql/${{ env.DB_CONNECTION_NAME }},JWT_SECRET=${{ secrets.JWT_SECRET }},STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }},OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }},A2A_AUTH_ENABLED=false,DATABASE_SSL=false"
 
     # Get and test deployment
     - name: Verify deployment
