@@ -154,6 +154,47 @@ jobs:
           fi
         done
 
+    # Add comprehensive debugging before build
+    - name: Debug workspace contents
+      run: |
+        echo "🔍 COMPREHENSIVE WORKSPACE DEBUG"
+        echo "=================================="
+        echo ""
+        echo "📂 Current working directory:"
+        pwd
+        echo ""
+        echo "📋 Root directory contents (detailed):"
+        ls -la
+        echo ""
+        echo "🔍 Checking specific files:"
+        echo "package.json exists: $(test -f package.json && echo 'YES' || echo 'NO')"
+        echo "server.js exists: $(test -f server.js && echo 'YES' || echo 'NO')"
+        echo ""
+        echo "📊 File sizes:"
+        if [ -f "package.json" ]; then
+          echo "package.json: $(wc -c < package.json) bytes"
+        fi
+        if [ -f "server.js" ]; then
+          echo "server.js: $(wc -c < server.js) bytes"
+        fi
+        echo ""
+        echo "📁 Directories present:"
+        for dir in public views routes middleware libs services scripts migrations utils socket; do
+          if [ -d "$dir" ]; then
+            echo "✅ $dir directory found ($(ls $dir | wc -l) files)"
+          else
+            echo "❌ $dir directory missing"
+          fi
+        done
+        echo ""
+        echo "🔍 JavaScript files in root:"
+        find . -maxdepth 1 -name "*.js" -type f | head -10
+        echo ""
+        echo "🔍 JSON files in root:"
+        find . -maxdepth 1 -name "*.json" -type f
+        echo ""
+        echo "=================================="
+
     # Create optimized production build
     - name: Prepare production files
       shell: bash
@@ -175,20 +216,28 @@ jobs:
         echo "🔍 Checking for essential files..."
         
         if [ ! -f "package.json" ]; then
-          echo "❌ ERROR: package.json not found in root directory"
-          echo "📋 Available files:"
-          ls -la *.json 2>/dev/null || echo "No JSON files found"
+          echo "❌ CRITICAL ERROR: package.json not found in root directory"
+          echo "📂 Current directory: $(pwd)"
+          echo "📋 Available files in root:"
+          ls -la
+          echo ""
+          echo "🔍 Searching for package.json anywhere:"
+          find . -name "package.json" -type f 2>/dev/null || echo "No package.json found anywhere"
           exit 1
         fi
         
         if [ ! -f "server.js" ]; then
-          echo "❌ ERROR: server.js not found in root directory"
-          echo "📋 Available JS files:"
-          ls -la *.js 2>/dev/null || echo "No JS files found"
+          echo "❌ CRITICAL ERROR: server.js not found in root directory"
+          echo "� Current directory: $(pwd)"
+          echo "�📋 Available files in root:"
+          ls -la
+          echo ""
+          echo "🔍 Searching for server.js anywhere:"
+          find . -name "server.js" -type f 2>/dev/null || echo "No server.js found anywhere"
           exit 1
         fi
         
-        echo "✅ Essential files verified"
+        echo "✅ Essential files verified in root directory"
         
         # Copy package files first (critical files)
         echo "📦 Copying package files..."
