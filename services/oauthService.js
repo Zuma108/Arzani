@@ -7,7 +7,7 @@ import { OAuth2Client } from 'google-auth-library';
 import axios from 'axios';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
-import config from '../config.js';
+import config from '../public/js/config.js';
 import { createOrUpdateOAuthUser } from '../database.js';
 
 export class OAuthService {

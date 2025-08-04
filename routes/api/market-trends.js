@@ -5,8 +5,8 @@ import { adminAuth } from '../../middleware/adminAuth.js'; // Add this import
 import PDFDocument from 'pdfkit';
 import ExcelJS from 'exceljs';
 import { format as csvFormat } from '@fast-csv/format';
-// Fix the Chart.js import path - it needs the full file path
-import Chart from 'chart.js/auto/auto.js';
+// Fix the Chart.js import path for v4+
+import Chart from 'chart.js/auto';
 import { ChartJSNodeCanvas } from 'chartjs-node-canvas';
 import { diagnoseAndFixMarketTrends } from '../../utils/fixMarketTrends.js';
 

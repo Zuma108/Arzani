@@ -1,9 +1,9 @@
 /**
  * AI-assisted Professional Verification Service
- * Integrates with chatGPT-helper to provide automated verification of professional credentials
+ * Integrates with OpenAI to provide automated verification of professional credentials
  */
 
-import { callOpenAI } from '../chatGPT-helper.js';
+import { callOpenAI } from '../utils/openai-helper.js';
 import pool from '../db.js';
 
 /**

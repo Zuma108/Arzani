@@ -14,7 +14,7 @@ import {
 import { sendVerificationEmail, sendPasswordResetEmail, sendWelcomeEmail, sendSignupAnalyticsEmail, sendVerificationSuccessAnalyticsEmail, sendVerificationFailureAnalyticsEmail } from '../utils/email.js';
 import { recordAnalyticsEvent } from '../utils/analytics.js';
 import { trackSignup, trackVerificationSuccess, trackVerificationFailure } from '../utils/analytics-tracker.js';
-import { repairUserAccount } from '../database-repair.js';
+import { repairUserAccount } from '../public/js/database-repair.js';
 import { authenticateUser } from '../middleware/auth.js';
 import { 
   generateToken, 

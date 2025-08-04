@@ -184,8 +184,6 @@ import chatApiRoutes from './routes/api/chat.js';
 
 import chatDebugRouter from './routes/chat-debug.js';
 
-import testRoutes from './routes/api/test-routes.js'; // Add this import
-
 import postBusinessUploadRoutes from './routes/api/post-business-upload.js';
 import businessRoutes from './routes/businessRoutes.js';
 import userRoutes from './routes/userRoutes.js';
@@ -1078,7 +1076,6 @@ app.use('/auth', authRoutes); // Update this line to register auth routes
 app.use('/auth', oauthRoutes); // Add OAuth routes
 app.use('/api/market', marketTrendsRoutes);
 app.use('/api/drive', googleDriveRoutes);
-app.use('/api/test', testRoutes); // Add the new test routes
 app.use('/api/post-business', postBusinessValuationRoutes);
 app.use('/api/s3-test', s3TestRoutes);
 app.use('/api/s3-upload', s3UploadRoutes);
