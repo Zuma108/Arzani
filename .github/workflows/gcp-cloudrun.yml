@@ -103,7 +103,7 @@ jobs:
         [ -f "package-lock.json" ] && cp package-lock.json production/
         
         # Copy application directories (only if they exist)
-        for dir in views public routes middleware services libs utils migrations socket; do
+        for dir in api views public routes middleware services libs utils migrations socket; do
           [ -d "$dir" ] && cp -r "$dir" production/ || echo "⚠️ $dir not found, skipping"
         done
         
