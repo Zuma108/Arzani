@@ -12,12 +12,27 @@ import { createOrUpdateOAuthUser } from '../database.js';
 
 export class OAuthService {
   constructor() {
-    // Initialize Google OAuth client
-    this.googleClient = new OAuth2Client(
-      config.oauth.google.clientId,
-      config.oauth.google.clientSecret,
-      config.oauth.google.redirectUri
-    );
+    try {
+      // Check if OAuth configuration is available
+      if (!config.oauth?.google?.clientId || !config.oauth?.google?.clientSecret) {
+        console.warn('⚠️ Google OAuth credentials not configured - OAuth service will be disabled');
+        this.isConfigured = false;
+        return;
+      }
+
+      // Initialize Google OAuth client
+      this.googleClient = new OAuth2Client(
+        config.oauth.google.clientId,
+        config.oauth.google.clientSecret,
+        config.oauth.google.redirectUri
+      );
+      
+      this.isConfigured = true;
+      console.log('✅ OAuth service configured successfully');
+    } catch (error) {
+      console.error('❌ OAuth service configuration failed:', error.message);
+      this.isConfigured = false;
+    }
   }
 
   /**

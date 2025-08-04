@@ -29,9 +29,18 @@ RUN npm ci --only=production --silent
 # Copy essential application files only
 COPY server.js ./
 COPY db.js ./
+COPY database.js ./
 COPY config.js ./
 
+# Copy startup and diagnostic scripts
+COPY startup.sh ./
+COPY container-startup-diagnostic.js ./
+RUN chmod +x startup.sh
+
 # Copy essential directories
+COPY api ./api/
+COPY auth ./auth/
+COPY config ./config/
 COPY views ./views/
 COPY public ./public/
 COPY routes ./routes/
@@ -40,6 +49,9 @@ COPY services ./services/
 COPY libs ./libs/
 COPY utils ./utils/
 COPY socket ./socket/
+COPY migrations ./migrations/
+COPY controllers ./controllers/
+COPY models ./models/
 
 # Create scripts directory and add minimal ensure-ai-assets.js
 RUN mkdir -p scripts && \
@@ -50,14 +62,14 @@ RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
 RUN chown -R nodejs:nodejs /app
 USER nodejs
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD curl -f http://localhost:8080/health || exit 1
+# Health check with enhanced error reporting
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
+  CMD curl -f http://localhost:8080/health || (echo "Health check failed" && node container-startup-diagnostic.js --health-check && exit 1)
 
 # Environment
 ENV NODE_ENV=production PORT=8080
 
-# Start application
+# Start application with startup script
 EXPOSE 8080
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["node", "server.js"]
+CMD ["./startup.sh", "node", "server.js"]

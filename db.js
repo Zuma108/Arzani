@@ -14,28 +14,73 @@ const { Pool } = pg;
 
 const isProduction = process.env.NODE_ENV === 'production';
 
-// Create connection configuration
-const connectionConfig = {
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT || 5432
-};
+// Function to determine if SSL should be enabled
+function shouldUseSSL() {
+  // First check for explicit boolean settings
+  if (process.env.ENABLE_SSL === 'false' || process.env.DB_SSL === 'false' || process.env.DATABASE_SSL === 'false') {
+    console.log('SSL explicitly disabled via environment variables');
+    return false;
+  }
+  
+  if (process.env.ENABLE_SSL === 'true' || process.env.DB_SSL === 'true' || process.env.DATABASE_SSL === 'true') {
+    console.log('SSL explicitly enabled via environment variables');
+    return true;
+  }
+  
+  // Automatically disable SSL for localhost connections
+  if (process.env.DATABASE_URL && (process.env.DATABASE_URL.includes('localhost') || process.env.DATABASE_URL.includes('127.0.0.1'))) {
+    console.log('Localhost detected in DATABASE_URL, disabling SSL');
+    return false;
+  }
+  
+  // Check for DATABASE_URL patterns that typically require SSL
+  if (process.env.DATABASE_URL) {
+    if (process.env.DATABASE_URL.includes('azure.com') || 
+        process.env.DATABASE_URL.includes('rds.amazonaws.com') ||
+        process.env.DATABASE_URL.includes('cloudsql')) {
+      console.log('Cloud database detected, enabling SSL by default');
+      return true;
+    }
+  }
+  
+  // Default to SSL in production only
+  if (isProduction) {
+    console.log('Production environment detected, enabling SSL by default');
+    return true;
+  }
+  
+  // Disable SSL by default in development
+  console.log('Development environment detected, disabling SSL by default');
+  return false;
+}
 
-// Check explicit SSL setting before using production check
-if (process.env.DB_SSL && process.env.DB_SSL.toLowerCase() === 'true') {
-  console.log('Enabling SSL for database connection (from DB_SSL env var)');
-  connectionConfig.ssl = { rejectUnauthorized: false };
-} else if (process.env.DB_SSL && process.env.DB_SSL.toLowerCase() === 'false') {
-  console.log('Explicitly disabling SSL for database connection (from DB_SSL env var)');
-  // SSL explicitly disabled, don't add the ssl property
-} else if (isProduction) {
-  // Default behavior for production if DB_SSL not specified
-  console.log('Enabling SSL for database connection (production environment)');
-  connectionConfig.ssl = { rejectUnauthorized: false };
+// Create connection configuration
+let connectionConfig;
+
+// Check for DATABASE_URL first (Cloud SQL proxy format)
+if (process.env.DATABASE_URL) {
+  console.log('Using DATABASE_URL for connection');
+  const useSSL = shouldUseSSL();
+  console.log(`Database SSL setting: ${useSSL ? 'Enabled' : 'Disabled'}`);
+  
+  connectionConfig = {
+    connectionString: process.env.DATABASE_URL,
+    ssl: useSSL ? { rejectUnauthorized: false } : false
+  };
 } else {
-  console.log('SSL disabled for database connection (development environment)');
+  // Fall back to individual parameters
+  console.log('Using individual parameters for connection');
+  const useSSL = shouldUseSSL();
+  console.log(`Database SSL setting: ${useSSL ? 'Enabled' : 'Disabled'}`);
+  
+  connectionConfig = {
+    user: process.env.DB_USER,
+    host: process.env.DB_HOST,
+    database: process.env.DB_NAME,
+    password: process.env.DB_PASSWORD,
+    port: process.env.DB_PORT || 5432,
+    ssl: useSSL ? { rejectUnauthorized: false } : false
+  };
 }
 
 // Create the pool with the appropriate config
