@@ -7,7 +7,6 @@ yarn-error.log*
 # Production build artifacts
 dist
 build
-production
 
 # Environment and config
 .env
