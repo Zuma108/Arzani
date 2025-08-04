@@ -262,17 +262,17 @@ jobs:
         RUN chown -R nodejs:nodejs /app
         USER nodejs
         
-        # Health check
-        HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+        # Health check with extended timeout for large applications
+        HEALTHCHECK --interval=30s --timeout=30s --start-period=180s --retries=5 \
           CMD curl -f http://localhost:8080/health || exit 1
         
         # Environment
         ENV NODE_ENV=production
         
-        # Start application
+        # Start application with startup logging
         EXPOSE 8080
         ENTRYPOINT ["dumb-init", "--"]
-        CMD ["node", "server.js"]
+        CMD ["sh", "-c", "echo 'Starting Arzani Marketplace...' && echo 'Node version:' && node --version && echo 'Environment:' && printenv | grep NODE_ENV && echo 'Starting server...' && node server.js"]
         EOF
 
     # Build and push Docker image
@@ -327,18 +327,40 @@ jobs:
           --add-cloudsql-instances=${{ env.DB_CONNECTION_NAME }} \
           --set-env-vars="NODE_ENV=production,DATABASE_URL=postgresql://${{ env.DB_USER }}:${{ secrets.DB_PASSWORD }}@localhost:5432/${{ env.DB_NAME }}?host=/cloudsql/${{ env.DB_CONNECTION_NAME }},JWT_SECRET=${{ secrets.JWT_SECRET }},STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }},OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }},A2A_AUTH_ENABLED=false,DATABASE_SSL=false"
 
-    # Get and test deployment
+    # Get and test deployment with extended monitoring
     - name: Verify deployment
       run: |
         SERVICE_URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} --region=${{ env.REGION }} --format="value(status.url)")
         echo "🚀 Deployed to: $SERVICE_URL"
         
-        # Wait and test
-        sleep 30
-        if curl -f "$SERVICE_URL/health"; then
-          echo "✅ Deployment successful!"
-          echo "🌐 Application: $SERVICE_URL"
-        else
-          echo "⚠️ Health check failed, but deployment completed"
-          echo "Check logs: gcloud run services logs read ${{ env.SERVICE_NAME }} --region=${{ env.REGION }}"
-        fi
+        # Extended wait for large application startup
+        echo "⏳ Waiting 120 seconds for application startup..."
+        sleep 120
+        
+        # Check Cloud Run logs first
+        echo "📋 Checking recent logs..."
+        gcloud run services logs read ${{ env.SERVICE_NAME }} --region=${{ env.REGION }} --limit=20
+        
+        # Test health endpoint with retry
+        echo "🏥 Testing health endpoint..."
+        for i in {1..5}; do
+          if curl -f --max-time 30 "$SERVICE_URL/health"; then
+            echo "✅ Deployment successful!"
+            echo "🌐 Application: $SERVICE_URL"
+            
+            # Test critical API endpoints
+            echo "🧪 Testing API endpoints..."
+            curl -s --max-time 10 "$SERVICE_URL/api/valuation/test" || echo "⚠️ Valuation API endpoint not responding"
+            curl -s --max-time 10 "$SERVICE_URL/api/public-valuation/test" || echo "⚠️ Public Valuation API endpoint not responding"
+            
+            exit 0
+          else
+            echo "⚠️ Health check attempt $i failed, retrying in 30 seconds..."
+            sleep 30
+          fi
+        done
+        
+        echo "❌ Health check failed after 5 attempts"
+        echo "📋 Final log check:"
+        gcloud run services logs read ${{ env.SERVICE_NAME }} --region=${{ env.REGION }} --limit=50
+        exit 1

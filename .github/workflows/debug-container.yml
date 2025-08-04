@@ -1,0 +1,241 @@
+name: Debug Container Startup
+
+on:
+  workflow_dispatch:
+    inputs:
+      use_minimal_server:
+        description: 'Use minimal server for debugging'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+        - 'true'
+        - 'false'
+
+env:
+  PROJECT_ID: cool-mile-437217-s2
+  REGION: europe-west2
+  SERVICE_NAME: arzani-debug
+  NODE_VERSION: '20.x'
+  IMAGE_NAME: arzani-debug
+  REGISTRY: europe-west2-docker.pkg.dev
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  debug-container:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+
+    # Authenticate to Google Cloud
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
+    # Setup Google Cloud CLI
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
+      with:
+        project_id: ${{ env.PROJECT_ID }}
+
+    # Configure Docker
+    - name: Configure Docker
+      run: gcloud auth configure-docker ${{ env.REGISTRY }}
+
+    # Create minimal production build for debugging
+    - name: Create debug production build
+      run: |
+        echo "🐛 Creating debug production build..."
+        
+        # Create production directory structure
+        mkdir -p production/api
+        
+        # Copy package.json and create minimal package.json if needed
+        cp package.json production/
+        
+        # Choose server file based on input
+        if [ "${{ github.event.inputs.use_minimal_server }}" = "true" ]; then
+          echo "🧪 Using minimal server for debugging"
+          cp server-minimal.js production/server.js
+        else
+          echo "📋 Using full server"
+          cp server.js production/server.js
+        fi
+        
+        # Copy critical API files (these were causing the original issue)
+        cp api/valuation.js production/api/valuation.js
+        cp api/public-valuation.js production/api/public-valuation.js
+        
+        # Copy essential files
+        cp db.js production/ || echo "⚠️ db.js not found, creating minimal version"
+        
+        # Create minimal db.js if it doesn't exist
+        if [ ! -f "production/db.js" ]; then
+          cat > production/db.js << 'EOF'
+        // Minimal db.js for container testing
+        export default {
+          query: () => Promise.resolve({ rows: [] })
+        };
+        EOF
+        fi
+        
+        # Create minimal .env for production
+        cat > production/.env << 'EOF'
+        NODE_ENV=production
+        PORT=8080
+        EOF
+        
+        echo "✅ Debug production build created"
+        echo "📊 Files in production:"
+        find production/ -type f | head -20
+
+    # Install minimal dependencies
+    - name: Install dependencies
+      run: |
+        cd production
+        
+        # Create minimal package.json for production
+        cat > package.json << 'EOF'
+        {
+          "name": "arzani-marketplace-debug",
+          "version": "1.0.0",
+          "type": "module",
+          "main": "server.js",
+          "scripts": {
+            "start": "node server.js"
+          },
+          "dependencies": {
+            "express": "^4.18.2",
+            "dotenv": "^16.3.1"
+          }
+        }
+        EOF
+        
+        npm install
+        echo "✅ Minimal dependencies installed"
+
+    # Create minimal Dockerfile for debugging
+    - name: Create debug Dockerfile
+      run: |
+        cat > Dockerfile << 'EOF'
+        FROM node:20-alpine
+        
+        # Install basic dependencies
+        RUN apk add --no-cache curl dumb-init
+        
+        # Set working directory
+        WORKDIR /app
+        
+        # Copy production files
+        COPY production/ ./
+        
+        # Create non-root user
+        RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
+        RUN chown -R nodejs:nodejs /app
+        USER nodejs
+        
+        # Environment
+        ENV NODE_ENV=production
+        
+        # Health check with longer timeout
+        HEALTHCHECK --interval=30s --timeout=30s --start-period=120s --retries=5 \
+          CMD curl -f http://localhost:8080/health || exit 1
+        
+        # Start application
+        EXPOSE 8080
+        ENTRYPOINT ["dumb-init", "--"]
+        CMD ["node", "server.js"]
+        EOF
+
+    # Build and test container locally first
+    - name: Build and test container locally
+      run: |
+        echo "🐳 Building debug container..."
+        docker build -t debug-test .
+        
+        echo "🧪 Testing container startup..."
+        # Run container in background
+        CONTAINER_ID=$(docker run -d -p 8080:8080 debug-test)
+        
+        # Wait for startup
+        echo "⏳ Waiting for container startup..."
+        sleep 30
+        
+        # Test health endpoint
+        if curl -f http://localhost:8080/health; then
+          echo "✅ Container health check passed"
+        else
+          echo "❌ Container health check failed"
+          docker logs $CONTAINER_ID
+          docker stop $CONTAINER_ID
+          exit 1
+        fi
+        
+        # Stop test container
+        docker stop $CONTAINER_ID
+        echo "✅ Local container test passed"
+
+    # Build and push Docker image
+    - name: Build and push debug image
+      run: |
+        IMAGE_URI="${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.IMAGE_NAME }}:debug-${{ github.run_number }}"
+        
+        echo "🐳 Building debug image: $IMAGE_URI"
+        docker build --platform linux/amd64 -t $IMAGE_URI .
+        
+        echo "📤 Pushing debug image..."
+        docker push $IMAGE_URI
+        
+        echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV
+
+    # Deploy to Cloud Run for testing
+    - name: Deploy debug service to Cloud Run
+      run: |
+        gcloud run deploy ${{ env.SERVICE_NAME }} \
+          --image=${{ env.IMAGE_URI }} \
+          --region=${{ env.REGION }} \
+          --platform=managed \
+          --allow-unauthenticated \
+          --port=8080 \
+          --memory=512Mi \
+          --cpu=1 \
+          --min-instances=0 \
+          --max-instances=2 \
+          --timeout=300 \
+          --set-env-vars="NODE_ENV=production"
+
+    # Test deployment
+    - name: Test debug deployment
+      run: |
+        echo "⏳ Waiting for deployment to be ready..."
+        sleep 60
+        
+        SERVICE_URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} --region=${{ env.REGION }} --format="value(status.url)")
+        echo "🚀 Debug service deployed to: $SERVICE_URL"
+        
+        # Test health endpoint
+        if curl -f "$SERVICE_URL/health"; then
+          echo "✅ Debug deployment successful!"
+          echo "🌐 Debug service: $SERVICE_URL"
+          echo "🏥 Health check: $SERVICE_URL/health"
+          
+          # Test API endpoints
+          curl -s "$SERVICE_URL/api/valuation/test" || echo "⚠️ Valuation API test failed"
+          curl -s "$SERVICE_URL/api/public-valuation/test" || echo "⚠️ Public Valuation API test failed"
+        else
+          echo "❌ Debug deployment health check failed"
+          echo "📋 Checking logs..."
+          gcloud run services logs read ${{ env.SERVICE_NAME }} --region=${{ env.REGION }} --limit=50
+          exit 1
+        fi
