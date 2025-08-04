@@ -875,7 +875,8 @@ if (!process.env.JWT_SECRET) {
     console.warn('⚠️ Using default JWT_SECRET in production - this is insecure!');
     process.env.JWT_SECRET = 'fallback-secret-for-production';
   } else {
-    process.exit(1);
+    console.warn('⚠️ JWT_SECRET missing in development - using fallback');
+    process.env.JWT_SECRET = 'development-fallback-secret';
   }
 }
 
@@ -885,7 +886,8 @@ if (!process.env.REFRESH_TOKEN_SECRET) {
     console.warn('⚠️ Using default REFRESH_TOKEN_SECRET in production - this is insecure!');
     process.env.REFRESH_TOKEN_SECRET = 'fallback-refresh-secret-for-production';
   } else {
-    process.exit(1);
+    console.warn('⚠️ REFRESH_TOKEN_SECRET missing in development - using fallback');
+    process.env.REFRESH_TOKEN_SECRET = 'development-fallback-refresh-secret';
   }
 }
 
