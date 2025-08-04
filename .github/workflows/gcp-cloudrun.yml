@@ -101,6 +101,10 @@ jobs:
         [ -f "api/public-valuation.js" ] || { echo "❌ api/public-valuation.js missing in source"; exit 1; }
         [ -f "auth/auth.js" ] || { echo "❌ auth/auth.js missing in source"; exit 1; }
         [ -d "auth" ] || { echo "❌ auth directory missing in source"; exit 1; }
+        [ -f "config/database.js" ] || { echo "❌ config/database.js missing in source"; exit 1; }
+        [ -d "config" ] || { echo "❌ config directory missing in source"; exit 1; }
+        [ -f "db/index.js" ] || { echo "❌ db/index.js missing in source"; exit 1; }
+        [ -d "db" ] || { echo "❌ db directory missing in source"; exit 1; }
         echo "✅ All critical files verified in source"
         
         # Create production directory with proper structure
@@ -141,7 +145,7 @@ jobs:
         fi
         
         # Copy remaining critical directories (api will be overwritten but files already copied)
-        CRITICAL_DIRS="api auth views public routes middleware services libs utils migrations socket controllers models db"
+        CRITICAL_DIRS="api auth config db views public routes middleware services libs utils migrations socket controllers models"
         for dir in $CRITICAL_DIRS; do
           if [ -d "$dir" ]; then
             echo "📁 Copying $dir directory..."
@@ -209,6 +213,44 @@ jobs:
           fi
         else
           echo "❌ auth directory missing in production build - THIS WILL CAUSE CONTAINER STARTUP FAILURE"
+          exit 1
+        fi
+        
+        # Verify config directory and critical config files
+        if [ -d "production/config" ]; then
+          echo "📁 config directory exists in production build"
+          ls -la production/config/
+          
+          if [ -f "production/config/database.js" ]; then
+            file_size=$(stat -c%s "production/config/database.js" 2>/dev/null || wc -c < "production/config/database.js")
+            echo "✅ config/database.js found in production build (${file_size} bytes)"
+          else
+            echo "❌ config/database.js missing in production build - THIS WILL CAUSE CONTAINER STARTUP FAILURE"
+            echo "🔍 DEBUG: Contents of production/config directory:"
+            find production/config/ -type f -name "*.js" | head -10
+            exit 1
+          fi
+        else
+          echo "❌ config directory missing in production build - THIS WILL CAUSE CONTAINER STARTUP FAILURE"
+          exit 1
+        fi
+        
+        # Verify db directory and critical db files
+        if [ -d "production/db" ]; then
+          echo "📁 db directory exists in production build"
+          ls -la production/db/
+          
+          if [ -f "production/db/index.js" ]; then
+            file_size=$(stat -c%s "production/db/index.js" 2>/dev/null || wc -c < "production/db/index.js")
+            echo "✅ db/index.js found in production build (${file_size} bytes)"
+          else
+            echo "❌ db/index.js missing in production build - THIS WILL CAUSE CONTAINER STARTUP FAILURE"
+            echo "🔍 DEBUG: Contents of production/db directory:"
+            find production/db/ -type f -name "*.js" | head -10
+            exit 1
+          fi
+        else
+          echo "❌ db directory missing in production build - THIS WILL CAUSE CONTAINER STARTUP FAILURE"
           exit 1
         fi
         
