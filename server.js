@@ -3634,7 +3634,17 @@ app.use(async (req, res, next) => {
 
     // Set up blog database tables if they don't exist
     console.log('Checking blog database tables...');
-    await setupBlogDatabase();
+    try {
+      await setupBlogDatabase();
+      console.log('✅ Blog database setup completed');
+    } catch (dbError) {
+      console.error('⚠️ Blog database setup failed:', dbError.message);
+      if (process.env.NODE_ENV === 'production') {
+        console.warn('⚠️ Continuing server startup without blog database - some features may be limited');
+      } else {
+        console.warn('⚠️ Blog database setup failed in development - server will continue');
+      }
+    }
 
     // Start server with updated port handling for Google Cloud Run
     server.listen(PORT, '0.0.0.0', () => {
@@ -3653,12 +3663,50 @@ app.use(async (req, res, next) => {
       // Signal to Cloud Run that the container is ready
       console.log('🚀 Container ready to receive traffic');
     });
+
+    // Add explicit server error handling
+    server.on('error', (error) => {
+      console.error('💥 SERVER ERROR:', error);
+      if (error.code === 'EADDRINUSE') {
+        console.error(`🚨 Port ${PORT} is already in use`);
+      } else if (error.code === 'EACCES') {
+        console.error(`🚨 Permission denied for port ${PORT}`);
+      }
+      
+      // In production, try to recover or provide fallback
+      if (process.env.NODE_ENV === 'production') {
+        console.error('🔧 Attempting to restart server...');
+        setTimeout(() => {
+          process.exit(1);
+        }, 2000);
+      } else {
+        process.exit(1);
+      }
+    });
+
   } catch (error) {
     console.error('💥 SERVER STARTUP ERROR:', error);
     console.error('📋 Error details:', error.message);
     console.error('📊 Stack trace:', error.stack);
-    console.error('🔧 Failed to start server - exiting process');
-    process.exit(1);
+    
+    // In production, try to start the server anyway with minimal configuration
+    if (process.env.NODE_ENV === 'production') {
+      console.warn('⚠️ Starting server with minimal configuration due to startup error...');
+      try {
+        server.listen(PORT, '0.0.0.0', () => {
+          console.log('🆘 EMERGENCY SERVER START SUCCESSFUL');
+          console.log(`✅ Minimal server running on port ${PORT}`);
+          console.log(`🏥 Health check: http://0.0.0.0:${PORT}/health`);
+          console.log('🚀 Container ready to receive traffic (minimal mode)');
+        });
+      } catch (emergencyError) {
+        console.error('� EMERGENCY SERVER START FAILED:', emergencyError);
+        process.exit(1);
+      }
+    } else {
+      console.error('�🔧 Failed to start server - exiting process');
+      process.exit(1);
+    }
   }
 })();
 
