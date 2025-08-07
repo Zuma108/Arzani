@@ -33,11 +33,16 @@ function shouldUseSSL() {
     return false;
   }
   
+  // Disable SSL for Google Cloud SQL connections (they use Cloud SQL proxy)
+  if (process.env.DATABASE_URL && process.env.DATABASE_URL.includes('/cloudsql/')) {
+    console.log('Google Cloud SQL proxy detected, disabling SSL');
+    return false;
+  }
+  
   // Check for DATABASE_URL patterns that typically require SSL
   if (process.env.DATABASE_URL) {
     if (process.env.DATABASE_URL.includes('azure.com') || 
-        process.env.DATABASE_URL.includes('rds.amazonaws.com') ||
-        process.env.DATABASE_URL.includes('cloudsql')) {
+        process.env.DATABASE_URL.includes('rds.amazonaws.com')) {
       console.log('Cloud database detected, enabling SSL by default');
       return true;
     }

@@ -940,12 +940,21 @@
     white-space: nowrap;
 }
 .marketplace-heading {
-    font-family: 'Arial', sans-serif;
-    font-size: 2.5rem;
-    font-weight: bold;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-size: 1.75rem;
+    font-weight: 600;
     color: var(--accent-color);
-    text-align: center;
-    margin: 2rem 0;
+    text-align: left;
+    margin: 1.5rem 0 1rem 0;
+    letter-spacing: -0.025em;
+    padding: 0 15px 0 50px; /* Increased left padding to 50px */
+}
+
+/* Responsive padding to match container at different screen sizes */
+@media (max-width: 768px) {
+    .marketplace-heading {
+        padding: 0 10px 0 35px; /* Increased left padding for mobile to 35px */
+    }
 }
 
 /* Add pagination spacing */
