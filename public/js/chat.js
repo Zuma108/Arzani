@@ -796,8 +796,17 @@ function getCurrentUserId() {
   // For now, try to get from URL or data attribute
   const userIdElement = document.querySelector('[data-user-id]');
   
-  if (diff < 60) return 'Just now';
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (userIdElement && userIdElement.dataset.userId) {
+    return userIdElement.dataset.userId;
+  }
+  
+  // Try meta tag
+  const userIdMeta = document.querySelector('meta[name="user-id"]');
+  if (userIdMeta && userIdMeta.content) {
+    return userIdMeta.content;
+  }
+  
+  return null;
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
   
   return date.toLocaleDateString();

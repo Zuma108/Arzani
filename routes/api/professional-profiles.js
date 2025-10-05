@@ -121,7 +121,8 @@ router.post('/profile', authenticateToken, upload.single('professionalPicture'),
       languagesSpoken,
       socialLinks,
       profileVisibility,
-      allowDirectContact
+      allowDirectContact,
+      featuredProfessional
     } = req.body;
 
     let professionalPictureUrl = null;
@@ -178,7 +179,8 @@ router.post('/profile', authenticateToken, upload.single('professionalPicture'),
           social_links = $15,
           profile_visibility = $16,
           allow_direct_contact = $17,
-          ${professionalPictureUrl ? 'professional_picture_url = $18,' : ''}
+          featured_professional = $18,
+          ${professionalPictureUrl ? 'professional_picture_url = $19,' : ''}
           updated_at = CURRENT_TIMESTAMP
         WHERE user_id = $1
         RETURNING *
@@ -201,7 +203,8 @@ router.post('/profile', authenticateToken, upload.single('professionalPicture'),
         parseJSON(languagesSpoken) || [],
         parseJSON(socialLinks) || {},
         profileVisibility || 'public',
-        allowDirectContact !== 'false'
+        allowDirectContact !== 'false',
+        featuredProfessional === 'true'
       ];
 
       if (professionalPictureUrl) {
@@ -215,11 +218,11 @@ router.post('/profile', authenticateToken, upload.single('professionalPicture'),
           professional_website, services_offered, industries_serviced, specializations,
           professional_contact, availability_schedule, preferred_contact_method,
           pricing_info, service_locations, languages_spoken, social_links,
-          profile_visibility, allow_direct_contact
+          profile_visibility, allow_direct_contact, featured_professional
           ${professionalPictureUrl ? ', professional_picture_url' : ''}
         ) VALUES (
-          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17
-          ${professionalPictureUrl ? ', $18' : ''}
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18
+          ${professionalPictureUrl ? ', $19' : ''}
         ) RETURNING *
       `;
 
@@ -240,7 +243,8 @@ router.post('/profile', authenticateToken, upload.single('professionalPicture'),
         parseJSON(languagesSpoken) || [],
         parseJSON(socialLinks) || {},
         profileVisibility || 'public',
-        allowDirectContact !== 'false'
+        allowDirectContact !== 'false',
+        featuredProfessional === 'true'
       ];
 
       if (professionalPictureUrl) {

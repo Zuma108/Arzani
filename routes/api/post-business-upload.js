@@ -78,20 +78,19 @@ router.post('/', authenticateToken, upload.array('images', 5), async (req, res) 
       // Create an S3 key with user ID for better organization
       const s3Key = `businesses/${userId}/${filenameWithTimestamp}`;
       
-      // Get region and bucket from environment variables
-      const region = process.env.AWS_REGION || 'eu-west-2';
-      const bucket = process.env.AWS_BUCKET_NAME || 'arzani-images1';
+      // Get bucket from environment variables (GCS configuration)
+      const bucket = process.env.GCS_BUCKET_NAME || 'arzani-marketplace-files';
       
-      console.log(`Attempting to upload ${originalName} to ${region}/${bucket}/${s3Key}`);
+      console.log(`Attempting to upload ${originalName} to GCS bucket ${bucket}/${s3Key}`);
 
-      // Upload to S3
-      const s3Url = await uploadToS3(file, s3Key, region, bucket);
-      console.log(`Successfully uploaded ${originalName} to S3: ${s3Url}`);
+      // Upload to GCS (via uploadToS3 compatibility layer)
+      const gcsUrl = await uploadToS3(file, s3Key, file.mimetype, null, bucket);
+      console.log(`Successfully uploaded ${originalName} to GCS: ${gcsUrl}`);
       
       // Add to uploaded files with the structure the client expects
       uploadedFiles.push({
         originalName: originalName,
-        s3Url,
+        s3Url: gcsUrl, // Keep s3Url property name for compatibility
         s3Key
       });
       
@@ -99,14 +98,14 @@ router.post('/', authenticateToken, upload.array('images', 5), async (req, res) 
       return res.json({
         success: true,
         files: uploadedFiles,
-        url: s3Url // Important: Add this for backward compatibility
+        url: gcsUrl // Important: Add this for backward compatibility
       });
       
     } catch (error) {
-      console.error('Error uploading file to S3:', error);
+      console.error('Error uploading file to GCS:', error);
       return res.status(500).json({
         success: false,
-        message: 'Failed to upload file to S3',
+        message: 'Failed to upload file to GCS',
         error: error.message
       });
     }

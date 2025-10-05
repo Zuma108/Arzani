@@ -699,13 +699,45 @@ function handleProfileUpdate(event) {
 /**
  * Handle profile picture selection
  */
-function handleProfilePictureSelection() {
-    const profilePictureModal = new bootstrap.Modal(document.getElementById('profilePictureModal'));
-    profilePictureModal.show();
+function handleProfilePictureSelection(event) {
+    if (event.target.files && event.target.files[0]) {
+        const file = event.target.files[0];
+        
+        // Validate file type
+        if (!file.type.match('image.*')) {
+            showToast('Please select an image file', 'error');
+            return;
+        }
+        
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            showToast('File size must be less than 5MB', 'error');
+            return;
+        }
+        
+        // Show preview immediately
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const previewContainer = document.getElementById('preview-container');
+            const preview = document.getElementById('image-preview');
+            
+            if (preview && previewContainer) {
+                preview.src = e.target.result;
+                previewContainer.classList.remove('hidden');
+            }
+        };
+        reader.readAsDataURL(file);
+        
+        // Show modal
+        const profilePictureModal = document.getElementById('profilePictureModal');
+        if (profilePictureModal) {
+            profilePictureModal.classList.remove('hidden');
+        }
+    }
 }
 
 /**
- * Upload profile picture
+ * Upload profile picture with real-time updates
  */
 function uploadProfilePicture() {
     const token = getAuthToken();
@@ -734,48 +766,76 @@ function uploadProfilePicture() {
     const saveButton = document.getElementById('saveProfilePictureBtn');
     const originalText = saveButton.textContent;
     saveButton.disabled = true;
-    saveButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Uploading...';
+    saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
     
-    // Send upload request
-    fetch('/profile/update-picture', {
-        method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${token}`
-        },
-        body: formData
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`Upload failed: ${response.status}`);
+    // Add progress indicator
+    const progressContainer = createProgressIndicator();
+    const modal = document.getElementById('profilePictureModal');
+    if (modal) {
+        modal.querySelector('.p-6').appendChild(progressContainer);
+    }
+    
+    // Send upload request with XMLHttpRequest for progress tracking
+    const xhr = new XMLHttpRequest();
+    
+    // Track upload progress
+    xhr.upload.addEventListener('progress', function(e) {
+        if (e.lengthComputable) {
+            const percentComplete = (e.loaded / e.total) * 100;
+            updateProgressIndicator(progressContainer, percentComplete);
         }
-        return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            // Update profile picture in UI
-            const profilePictures = document.querySelectorAll('.profile-avatar');
-            profilePictures.forEach(img => {
-                img.src = data.profilePicture;
-            });
-            
-            // Hide modal
-            const profilePictureModal = bootstrap.Modal.getInstance(document.getElementById('profilePictureModal'));
-            profilePictureModal.hide();
-            
-            showToast('Profile picture updated successfully', 'success');
+    });
+    
+    xhr.addEventListener('load', function() {
+        if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+                const data = JSON.parse(xhr.responseText);
+                if (data.success) {
+                    // Update profile picture in UI immediately
+                    updateProfilePictureInUI(data.profilePicture);
+                    
+                    // Hide modal
+                    hideProfilePictureModal();
+                    
+                    showToast('Profile picture updated successfully!', 'success');
+                    
+                    // Reset file input
+                    fileInput.value = '';
+                } else {
+                    showToast(data.error || 'Failed to update profile picture', 'error');
+                }
+            } catch (error) {
+                console.error('Error parsing response:', error);
+                showToast('Error processing upload response', 'error');
+            }
         } else {
-            showToast(data.error || 'Failed to update profile picture', 'error');
+            showToast(`Upload failed: ${xhr.status}`, 'error');
         }
-    })
-    .catch(error => {
-        console.error('Error uploading profile picture:', error);
-        showToast('Error uploading profile picture', 'error');
-    })
-    .finally(() => {
-        // Restore button state
+        
+        // Clean up
+        if (progressContainer && progressContainer.parentNode) {
+            progressContainer.parentNode.removeChild(progressContainer);
+        }
         saveButton.disabled = false;
         saveButton.textContent = originalText;
     });
+    
+    xhr.addEventListener('error', function() {
+        console.error('Upload error');
+        showToast('Error uploading profile picture', 'error');
+        
+        // Clean up
+        if (progressContainer && progressContainer.parentNode) {
+            progressContainer.parentNode.removeChild(progressContainer);
+        }
+        saveButton.disabled = false;
+        saveButton.textContent = originalText;
+    });
+    
+    // Start upload
+    xhr.open('POST', '/profile/update-picture');
+    xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+    xhr.send(formData);
 }
 
 /**
@@ -860,12 +920,230 @@ function handlePasswordUpdate() {
 /**
  * Handle sign out
  */
-function handleSignOut() {
-    // Clear token from localStorage
-    localStorage.removeItem('token');
+async function handleSignOut() {
+    // Load modern modal if not already loaded
+    if (!window.ModernSignOutModal) {
+        await loadModernModal();
+    }
     
-    // Redirect to login page
-    window.location.href = '/login2';
+    // Show modern confirmation modal
+    const confirmed = await ModernSignOutModal.confirm({
+        title: 'Sign out of your account?',
+        message: "You'll be safely signed out and redirected to our homepage. Your data will remain secure."
+    });
+    
+    if (confirmed) {
+        // Make POST request to logout API endpoint
+        fetch('/auth/logout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include' // Include cookies
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Clear any client-side storage
+                try {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('userId');
+                    localStorage.removeItem('user');
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('refreshToken');
+                } catch (error) {
+                    console.log('Could not clear localStorage:', error);
+                }
+                
+                // Redirect to sign-out confirmation page
+                window.location.href = data.redirectTo || '/auth/logout';
+            } else {
+                console.error('Logout failed:', data.message);
+                // Still redirect to logout page even if API fails
+                window.location.href = '/auth/logout';
+            }
+        })
+        .catch(error => {
+            console.error('Logout request failed:', error);
+            // Still redirect to logout page even if request fails
+            window.location.href = '/auth/logout';
+        });
+    }
+}
+
+/**
+ * Load modern modal script dynamically
+ */
+async function loadModernModal() {
+    return new Promise((resolve) => {
+        const script = document.createElement('script');
+        script.src = '/js/modern-signout-modal.js';
+        script.onload = resolve;
+        script.onerror = resolve; // Continue even if fails to load
+        document.head.appendChild(script);
+    });
+}
+
+/**
+ * Create progress indicator for file upload
+ * @returns {HTMLElement} Progress container element
+ */
+function createProgressIndicator() {
+    const container = document.createElement('div');
+    container.className = 'mt-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg';
+    container.innerHTML = `
+        <div class="flex items-center justify-between mb-2">
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Uploading...</span>
+            <span class="text-sm text-gray-500 dark:text-gray-400" id="upload-percent">0%</span>
+        </div>
+        <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+            <div class="bg-primary h-2 rounded-full transition-all duration-300" id="upload-progress" style="width: 0%"></div>
+        </div>
+    `;
+    return container;
+}
+
+/**
+ * Update progress indicator
+ * @param {HTMLElement} container - Progress container
+ * @param {number} percent - Progress percentage
+ */
+function updateProgressIndicator(container, percent) {
+    const progressBar = container.querySelector('#upload-progress');
+    const percentText = container.querySelector('#upload-percent');
+    
+    if (progressBar && percentText) {
+        progressBar.style.width = `${percent}%`;
+        percentText.textContent = `${Math.round(percent)}%`;
+        
+        if (percent >= 100) {
+            const uploadText = container.querySelector('span');
+            if (uploadText) {
+                uploadText.textContent = 'Processing...';
+            }
+        }
+    }
+}
+
+/**
+ * Update profile picture in all UI locations
+ * @param {string} newImageUrl - New profile picture URL
+ */
+function updateProfilePictureInUI(newImageUrl) {
+    // Update all profile pictures on the page
+    const profileImages = document.querySelectorAll('img[src*="profile"], img[alt*="Profile"], .profile-avatar, img[alt*="profile"]');
+    
+    profileImages.forEach(img => {
+        // Add loading animation
+        img.style.opacity = '0.5';
+        img.style.transition = 'opacity 0.3s ease';
+        
+        // Update src with cache busting
+        const cacheBuster = '?t=' + Date.now();
+        img.src = newImageUrl + cacheBuster;
+        
+        // Remove loading animation when loaded
+        img.onload = function() {
+            this.style.opacity = '1';
+        };
+    });
+    
+    // Update sidebar profile picture specifically
+    const sidebarProfileImg = document.querySelector('#sidebar img[alt="Profile Picture"]');
+    if (sidebarProfileImg) {
+        sidebarProfileImg.style.opacity = '0.5';
+        sidebarProfileImg.src = newImageUrl + '?t=' + Date.now();
+        sidebarProfileImg.onload = function() {
+            this.style.opacity = '1';
+        };
+    }
+    
+    // Update main profile overview image
+    const mainProfileImg = document.querySelector('.profile-overview img, .w-32.h-32');
+    if (mainProfileImg) {
+        mainProfileImg.style.opacity = '0.5';
+        mainProfileImg.src = newImageUrl + '?t=' + Date.now();
+        mainProfileImg.onload = function() {
+            this.style.opacity = '1';
+        };
+    }
+}
+
+/**
+ * Hide profile picture modal
+ */
+function hideProfilePictureModal() {
+    const modal = document.getElementById('profilePictureModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        
+        // Reset preview
+        const previewContainer = document.getElementById('preview-container');
+        const preview = document.getElementById('image-preview');
+        
+        if (previewContainer) {
+            previewContainer.classList.add('hidden');
+        }
+        if (preview) {
+            preview.src = '';
+        }
+    }
+}
+
+/**
+ * Enhanced toast notification with better styling
+ * @param {string} message - Message to display
+ * @param {string} type - Toast type (success, error, info, warning)
+ */
+function showEnhancedToast(message, type = 'info') {
+    // Remove existing toasts
+    const existingToasts = document.querySelectorAll('.custom-toast');
+    existingToasts.forEach(toast => toast.remove());
+    
+    const toast = document.createElement('div');
+    toast.className = `custom-toast fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 transform translate-x-full`;
+    
+    // Set colors based on type
+    const colors = {
+        success: 'bg-green-500 text-white',
+        error: 'bg-red-500 text-white',
+        warning: 'bg-yellow-500 text-black',
+        info: 'bg-blue-500 text-white'
+    };
+    
+    toast.className += ' ' + (colors[type] || colors.info);
+    
+    const icons = {
+        success: 'fas fa-check-circle',
+        error: 'fas fa-exclamation-circle',
+        warning: 'fas fa-exclamation-triangle',
+        info: 'fas fa-info-circle'
+    };
+    
+    toast.innerHTML = `
+        <div class="flex items-center">
+            <i class="${icons[type] || icons.info} mr-3"></i>
+            <span>${message}</span>
+            <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-xl leading-none hover:opacity-75">&times;</button>
+        </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Animate in
+    setTimeout(() => {
+        toast.classList.remove('translate-x-full');
+    }, 100);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        toast.classList.add('translate-x-full');
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.remove();
+            }
+        }, 300);
+    }, 5000);
 }
 
 /**

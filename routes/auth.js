@@ -209,17 +209,33 @@ router.post('/login', async (req, res) => {
     const token = jwt.sign(
       { userId: user.id, email: user.email },
       JWT_SECRET,
-      { expiresIn: '4h' }
+      { expiresIn: '14d' }
     );
 
     const refreshToken = jwt.sign(
       { userId: user.id, type: 'refresh' },
       process.env.REFRESH_TOKEN_SECRET || JWT_SECRET,
-      { expiresIn: '7d' }
+      { expiresIn: '30d' }
     );
+
+    // CRITICAL: Set JWT tokens as cookies for middleware compatibility
+    res.cookie('token', token, {
+      httpOnly: false, // Allow JavaScript access for client-side auth
+      maxAge: 14 * 24 * 60 * 60 * 1000, // 14 days
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax'
+    });
+
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true, // Keep refresh token secure
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax'
+    });
 
     // Set session
     req.session.userId = user.id;
+    req.session.token = token; // Also store token in session
     await new Promise(resolve => {
       req.session.save(err => {
         if (err) console.error('Session save error:', err);
@@ -248,14 +264,14 @@ router.post('/login', async (req, res) => {
       console.warn('Failed to update last_login:', error.message);
     }
 
-    // Response
-    console.log('Login successful for user:', user.id, 'sending response');
+    // Response - always redirect to marketplace2, requireAuth middleware will handle onboarding
+    console.log('Login successful for user:', user.id);
     res.status(200).json({
       success: true,
       message: 'Login successful',
       token,
       refreshToken,
-      redirectTo: '/marketplace2', // Add redirectTo for frontend compatibility
+      redirectTo: '/marketplace2', // Always redirect to marketplace2, middleware handles onboarding
       user: {
         id: user.id,
         email: user.email,
@@ -549,15 +565,37 @@ router.post('/google', async (req, res) => {
       providerId: payload.sub
     });
 
-    // Create token
+    // Create tokens
     const token = jwt.sign(
       { userId: user.id, email: user.email },
       JWT_SECRET,
-      { expiresIn: '4h' }
+      { expiresIn: '14d' }
     );
+
+    const refreshToken = jwt.sign(
+      { userId: user.id, type: 'refresh' },
+      process.env.REFRESH_TOKEN_SECRET || JWT_SECRET,
+      { expiresIn: '30d' }
+    );
+
+    // CRITICAL: Set JWT tokens as cookies for middleware compatibility
+    res.cookie('token', token, {
+      httpOnly: false, // Allow JavaScript access for client-side auth
+      maxAge: 14 * 24 * 60 * 60 * 1000, // 14 days
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax'
+    });
+
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true, // Keep refresh token secure
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax'
+    });
 
     // Set session
     req.session.userId = user.id;
+    req.session.token = token; // Also store token in session
     await new Promise(resolve => req.session.save(resolve));
 
     // Return auth data
@@ -565,6 +603,7 @@ router.post('/google', async (req, res) => {
       success: true,
       message: 'Google authentication successful',
       token,
+      refreshToken,
       user: {
         id: user.id,
         email: user.email,
@@ -621,18 +660,62 @@ router.get('/google/callback', async (req, res) => {
       googleTokens: tokens
     });
 
-    // Create JWT token
+    // Create JWT token and refresh token
     const token = jwt.sign(
-      { userId: user.id },
-      process.env.JWT_SECRET,
-      { expiresIn: '4h' }
+      { userId: user.id, email: user.email },
+      JWT_SECRET,
+      { expiresIn: '14d' }
     );
+
+    const refreshToken = jwt.sign(
+      { userId: user.id, type: 'refresh' },
+      process.env.REFRESH_TOKEN_SECRET || JWT_SECRET,
+      { expiresIn: '30d' }
+    );
+
+    // CRITICAL FIX: Set JWT token as HTTP-accessible cookie
+    res.cookie('token', token, {
+      httpOnly: false, // Allow JavaScript access for client-side auth
+      maxAge: 14 * 24 * 60 * 60 * 1000, // 14 days
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax'
+    });
+
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true, // Keep refresh token secure
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax'
+    });
 
     // Set session
     req.session.userId = user.id;
+    req.session.token = token; // Also store token in session
     await new Promise(resolve => req.session.save(resolve));
 
-    // Redirect to marketplace with token handling page instead of direct token in URL
+    // Check onboarding status to determine redirect
+    let redirectPath = '/marketplace2'; // Default redirect
+    try {
+      const onboardingResult = await pool.query(
+        'SELECT onboarding_completed FROM users WHERE id = $1',
+        [user.id]
+      );
+      
+      const onboardingCompleted = onboardingResult.rows[0]?.onboarding_completed;
+      console.log(`🔍 Google OAuth user ${user.id} onboarding status:`, onboardingCompleted);
+      
+      if (!onboardingCompleted) {
+        redirectPath = '/onboarding';
+        console.log(`🚀 Redirecting Google OAuth user ${user.id} to onboarding`);
+      } else {
+        console.log(`✅ Google OAuth user ${user.id} has completed onboarding, redirecting to marketplace`);
+      }
+    } catch (error) {
+      console.error('Failed to check onboarding status for Google OAuth user:', error);
+      // Continue with default redirect on error
+    }
+
+    // UPDATED: Set both localStorage and cookies for maximum compatibility
     const html = `
 <!DOCTYPE html>
 <html>
@@ -679,10 +762,6 @@ router.get('/google/callback', async (req, res) => {
             }
         }
         
-        .loading-dots {
-            display: none;
-        }
-        
         h2 {
             color: #333;
             margin: 20px 0 10px;
@@ -690,46 +769,56 @@ router.get('/google/callback', async (req, res) => {
             font-weight: 400;
         }
         
-        p {
-            display: none;
-        }
-        
-        .success-checkmark {
-            display: none;
-        }
-        
-        .checkmark {
-            display: none;
+        .success-message {
+            color: #28a745;
+            margin: 10px 0;
         }
     </style>
 </head>
 <body>
     <div class="loading-container">
-        <img src="/images/arzani-logo.png" alt="Arzani" class="arzani-logo">
-        <h2>Completing your sign-in</h2>
+        <img src="/images/arzani-logo.png" alt="Arzani" class="arzani-logo" onerror="this.style.display='none'">
+        <h2>Authentication successful!</h2>
+        <p class="success-message">✅ Signed in successfully</p>
+        <p>Redirecting you now...</p>
     </div>
     <script>
-        // Store token in localStorage
-        const token = '${token}';
-        const userId = '${user.id}';
-        
-        if (token) {
-            localStorage.setItem('token', token);
-            localStorage.setItem('userId', userId);
+        try {
+            console.log('Google OAuth success - tokens set as cookies');
+            console.log('User ID: ${user.id}');
             
-            // Clear any old auth data
-            localStorage.removeItem('authTokenUpdated');
-            sessionStorage.clear();
+            // Also set localStorage as backup (with error handling)
+            try {
+                if (typeof Storage !== 'undefined') {
+                    localStorage.setItem('token', '${token}');
+                    localStorage.setItem('userId', '${user.id}');
+                    console.log('Backup localStorage tokens set');
+                } else {
+                    console.log('localStorage not available');
+                }
+            } catch (storageError) {
+                console.log('localStorage error (non-critical):', storageError.message);
+            }
             
-            console.log('Google OAuth: Token stored successfully');
+            // Redirect immediately since tokens are already in cookies
+            console.log('Redirecting to: ${redirectPath}');
             
-            // Redirect to marketplace after token is stored
-            setTimeout(() => {
-                window.location.href = '/marketplace2';
+            // Use a more compatible redirect approach
+            setTimeout(function() {
+                try {
+                    window.location.replace('${redirectPath}');
+                } catch (redirectError) {
+                    console.log('Redirect error, trying alternative method');
+                    window.location.href = '${redirectPath}';
+                }
             }, 1000);
-        } else {
-            console.error('No token received from OAuth');
-            window.location.href = '/login2?error=no_token';
+            
+        } catch (error) {
+            console.error('OAuth callback error:', error);
+            // Fallback redirect even if there's an error
+            setTimeout(function() {
+                window.location.href = '${redirectPath}';
+            }, 2000);
         }
     </script>
 </body>
@@ -788,7 +877,34 @@ router.post('/refresh-token', async (req, res) => {
   }
 });
 
-// Logout endpoint
+// Logout page (GET) - Shows sign-out confirmation
+router.get('/logout', (req, res) => {
+  // If user is not authenticated, redirect directly to homepage
+  const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
+  if (!token) {
+    return res.redirect('/');
+  }
+
+  // Clear session and cookies, then show sign-out page
+  req.session.destroy(err => {
+    if (err) {
+      console.error('Session destruction error during GET logout:', err);
+    }
+
+    // Clear all authentication cookies
+    res.clearCookie('connect.sid', { path: '/', domain: req.hostname });
+    res.clearCookie('token', { path: '/', domain: req.hostname });
+    res.clearCookie('refreshToken', { path: '/', domain: req.hostname });
+    
+    // Show the sign-out confirmation page
+    res.render('signout', {
+      title: 'Signed Out - Arzani',
+      message: 'You have been successfully signed out'
+    });
+  });
+});
+
+// Logout endpoint (POST) - API endpoint for programmatic logout
 router.post('/logout', (req, res) => {
   req.session.destroy(err => {
     if (err) {
@@ -799,10 +915,15 @@ router.post('/logout', (req, res) => {
       });
     }
 
-    res.clearCookie('connect.sid');
+    // Clear all authentication cookies with proper options
+    res.clearCookie('connect.sid', { path: '/', domain: req.hostname });
+    res.clearCookie('token', { path: '/', domain: req.hostname });
+    res.clearCookie('refreshToken', { path: '/', domain: req.hostname });
+    
     res.status(200).json({
       success: true,
-      message: 'Logged out successfully'
+      message: 'Logged out successfully',
+      redirectTo: '/auth/logout' // Redirect to sign-out page
     });
   });
 });

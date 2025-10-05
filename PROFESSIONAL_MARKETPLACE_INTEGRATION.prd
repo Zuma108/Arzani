@@ -1,0 +1,373 @@
+# Professional Marketplace Integration - Product Requirements Document
+
+## Executive Summary
+
+This PRD outlines the integration of verified professionals into the existing Arzani Marketplace platform, extending the current business-focused marketplace to include professional services. The integration will leverage the existing professional verification system and create a comprehensive professional marketplace experience.
+
+## Project Overview
+
+**Objective**: Integrate verified professionals into the marketplace alongside businesses, providing professional profile management, client interaction capabilities, and seamless chat integration.
+
+**Scope**: Frontend marketplace integration, professional profile management system, chat system extension, and UI/UX enhancements.
+
+**Success Metrics**: 
+- Professional profile completion rate > 80%
+- Professional-client chat engagement rate > 60%
+- User satisfaction with professional discovery > 4.5/5
+
+## Current System Analysis
+
+### Existing Infrastructure
+- **Database**: Complete professional system with `professional_profiles`, `professional_verification_requests`, and `professional_reviews` tables
+- **Verification System**: Multi-step professional verification flow in `professional-verification.ejs`
+- **Chat System**: Full-featured chat with WebSocket support, file attachments, and conversation management
+- **Marketplace**: Business listing system with filtering, pagination, and contact functionality
+
+### Integration Points
+- `marketplace.js`: Core listing functionality needs extension for professionals
+- `unified-sidebar.ejs`: Requires "Verified" section for professional access
+- Chat system: Needs professional conversation support
+- Database: Requires `professional_id` field in conversations table
+
+## Technical Requirements
+
+### Database Schema Updates
+
+#### 1. Conversations Table Modification
+```sql
+ALTER TABLE conversations ADD COLUMN professional_id INTEGER REFERENCES professional_profiles(id);
+CREATE INDEX idx_conversations_professional_id ON conversations(professional_id);
+```
+
+#### 2. Professional Profile Enhancements
+- Ensure proper indexing for search and filtering
+- Add performance optimizations for marketplace queries
+
+### Backend API Requirements
+
+#### 1. Professional API Endpoints
+- `GET /api/professionals` - List verified professionals with filtering
+  - Query parameters: `services`, `industries`, `location`, `experience`, `pricing`
+  - Pagination support (page, limit)
+  - Search functionality
+  - Sort options (rating, experience, price)
+
+- `GET /api/professionals/:id` - Get detailed professional profile
+  - Full profile data including portfolio, reviews, availability
+  - Authentication-based data visibility
+
+- `POST /api/contact-professional` - Initiate professional contact
+  - Similar to existing contact-seller flow
+  - Creates conversation with professional_id context
+  - Token-based contact limitation integration
+
+- `PUT /api/professional-profile` - Update professional profile
+  - Authenticated professional profile updates
+  - File upload support for portfolio items
+  - Validation and sanitization
+
+#### 2. Chat System Integration
+- Extend existing chat API to handle professional conversations
+- Update conversation creation logic for professional context
+- Professional-specific conversation metadata
+
+### Frontend Requirements
+
+#### 1. Marketplace.js Extensions
+
+##### Core Functions to Add:
+```javascript
+// Professional listing functions
+async function loadProfessionals(pageNumber = 1, filters = {})
+function renderProfessionals(professionals)
+function generateProfessionalCard(professional, isVisible)
+function initProfessionalFilters()
+
+// View toggle functionality
+function toggleMarketplaceView(viewType) // 'businesses' | 'professionals'
+function updateViewControls(activeView)
+
+// Professional-specific interactions
+function initContactProfessionalButtons()
+function showProfessionalProfile(professionalId)
+function initProfessionalSaveButtons()
+```
+
+##### Integration Requirements:
+- Extend existing filter system for professional-specific criteria
+- Reuse image handling, lazy loading, and pagination systems
+- Integrate with existing save/bookmark functionality
+- Maintain consistent UI patterns with business listings
+
+#### 2. Professional Profile Popup Component
+
+##### Features Required:
+- Modal popup triggered from professional marketplace cards
+- Comprehensive profile display:
+  - Professional headshot and basic info
+  - Services offered and specializations
+  - Experience and certifications
+  - Portfolio showcase (if available)
+  - Client reviews and ratings
+  - Pricing information
+  - Contact methods and availability
+
+##### Functionality:
+- "Chat with Professional" button integration
+- Social links and website integration
+- Responsive design for mobile and desktop
+- Professional-specific action buttons
+
+#### 3. Verified Professional Dashboard
+
+##### Page: `/verified-dashboard`
+- Accessible only to verified professionals
+- Professional profile management interface
+- Portfolio and experience editing
+- Review management and responses
+- Analytics dashboard (contact requests, profile views)
+- Settings and preferences
+
+##### Components:
+- Profile completion progress indicator
+- Drag-and-drop portfolio management
+- Service and pricing configuration
+- Availability calendar integration
+- Client interaction history
+
+#### 4. Sidebar Integration
+
+##### Unified Sidebar Updates:
+- Add "Verified" menu item for verified professionals only
+- Professional status indicator
+- Quick access to professional dashboard
+- Message notifications for professional inquiries
+
+### UI/UX Requirements
+
+#### 1. Marketplace View Toggle
+- Prominent toggle between "Businesses" and "Professionals" views
+- Consistent filtering and search experience
+- Smooth transitions between views
+- Mobile-responsive design
+
+#### 2. Professional Card Design
+Based on the provided design:
+- Professional headshot prominently displayed
+- Name, title, and specialization
+- Star rating system
+- Key services/specializations as badges
+- Experience level indicator
+- "Profile" and "Chat" action buttons
+- Consistent with existing business card styling
+
+#### 3. Filter System Extension
+- Service categories (similar to industry filters for businesses)
+- Experience level ranges
+- Pricing range filters
+- Location-based filtering
+- Specialization tags
+- Rating threshold filters
+
+## Implementation Phases
+
+### Phase 1: Database and Backend Foundation (Week 1-2)
+**Deliverables:**
+- Database schema updates with professional_id in conversations
+- Professional API endpoints implementation
+- Contact professional backend logic
+- Chat system professional integration
+- API testing and documentation
+
+**Acceptance Criteria:**
+- All API endpoints functional and tested
+- Professional conversations can be created and managed
+- Existing business functionality remains unchanged
+- Performance benchmarks met
+
+### Phase 2: Marketplace Frontend Integration (Week 3-4)
+**Deliverables:**
+- Marketplace.js professional listing functions
+- Professional card generation and rendering
+- Filter system extension for professionals
+- View toggle implementation
+- Professional image handling with S3 integration
+
+**Acceptance Criteria:**
+- Professional listings display correctly with all required information
+- Filtering and pagination work for professional views
+- Image loading and error handling functional
+- Mobile responsiveness maintained
+- Performance similar to business listings
+
+### Phase 3: Professional Profile System (Week 5-6)
+**Deliverables:**
+- Professional profile popup component
+- Verified professional dashboard page
+- Profile customization interface
+- Portfolio management system
+- Review display and management
+
+**Acceptance Criteria:**
+- Profile popups display comprehensive professional information
+- Professionals can update their profiles and portfolios
+- Review system integration functional
+- Professional dashboard accessible and functional
+- Data validation and security measures in place
+
+### Phase 4: Chat Integration (Week 7)
+**Deliverables:**
+- Professional chat initiation from profile popups
+- Chat system updates for professional conversations
+- Professional conversation context and titles
+- WebSocket integration for professional chats
+
+**Acceptance Criteria:**
+- Chat functionality works seamlessly with professionals
+- Conversation context properly maintained
+- Real-time messaging functional
+- Chat history and attachments work correctly
+- Authentication and security maintained
+
+### Phase 5: UI/UX Polish and Testing (Week 8)
+**Deliverables:**
+- Sidebar "Verified" section integration
+- Mobile responsiveness optimization
+- Loading states and error handling
+- Comprehensive testing and bug fixes
+- Documentation and training materials
+
+**Acceptance Criteria:**
+- All UI components responsive and accessible
+- Error handling graceful and informative
+- Performance optimizations implemented
+- User acceptance testing completed
+- Documentation complete
+
+## Technical Specifications
+
+### Performance Requirements
+- Professional listings load time < 2 seconds
+- Image lazy loading maintains smooth scrolling
+- Database queries optimized with proper indexing
+- API responses cached appropriately
+- Mobile performance equivalent to desktop
+
+### Security Requirements
+- Professional profile data properly authenticated
+- Contact limitations enforced for professional interactions
+- File uploads validated and sanitized
+- Chat system maintains existing security measures
+- Professional verification status properly validated
+
+### Integration Requirements
+- Maintain compatibility with existing A/B testing system
+- Preserve current analytics and tracking functionality
+- Integrate with existing authentication and authorization
+- Maintain S3 image handling patterns
+- Follow established error handling patterns
+
+## Data Flow Architecture
+
+### Professional Listing Flow
+1. User navigates to marketplace
+2. Selects "Professionals" view toggle
+3. `loadProfessionals()` called with current filters
+4. API call to `/api/professionals` with pagination
+5. `renderProfessionals()` generates professional cards
+6. Lazy loading initializes for professional images
+7. Event handlers attached for interactions
+
+### Professional Contact Flow
+1. User clicks "Chat" on professional card/popup
+2. Professional profile popup displays (if not already open)
+3. "Chat with Professional" button triggers contact flow
+4. API call to `/api/contact-professional`
+5. Conversation created with professional_id context
+6. User redirected to chat interface
+7. Chat loads with professional conversation context
+
+### Profile Management Flow
+1. Verified professional accesses "Verified" sidebar section
+2. Professional dashboard loads with current profile data
+3. Profile editing triggers API calls to update data
+4. Changes reflected in marketplace listings
+5. Review and portfolio updates synchronized
+
+## Testing Strategy
+
+### Unit Testing
+- Individual function testing for all new marketplace.js functions
+- Professional API endpoint testing
+- Database query optimization testing
+- Professional profile component testing
+
+### Integration Testing
+- End-to-end professional discovery and contact flow
+- Chat system integration with professional conversations
+- Professional dashboard functionality
+- Cross-browser compatibility testing
+
+### User Acceptance Testing
+- Professional onboarding and profile setup
+- Client-professional interaction workflows
+- Mobile and desktop user experience
+- Performance under load testing
+
+## Monitoring and Analytics
+
+### Key Metrics
+- Professional profile completion rates
+- Professional-client interaction rates
+- Chat conversation conversion rates
+- Professional marketplace usage analytics
+- System performance metrics
+
+### Tracking Implementation
+- Extend existing tracking system for professional interactions
+- Professional-specific event tracking
+- Chat initiation and completion tracking
+- Profile view and contact analytics
+
+## Risk Assessment
+
+### Technical Risks
+- **Database Performance**: Adding professional queries may impact performance
+  - *Mitigation*: Proper indexing and query optimization
+  
+- **Chat System Complexity**: Extending chat for professionals adds complexity
+  - *Mitigation*: Comprehensive testing and gradual rollout
+
+### Business Risks
+- **User Confusion**: Adding professionals may confuse existing users
+  - *Mitigation*: Clear UI design and user education
+  
+- **Professional Adoption**: Low professional engagement
+  - *Mitigation*: Comprehensive professional onboarding and support
+
+## Success Criteria
+
+### Functional Success
+- ✅ All professional listings display correctly
+- ✅ Professional-client chat functionality works seamlessly
+- ✅ Professional profile management system functional
+- ✅ Existing business marketplace functionality unchanged
+- ✅ Mobile and desktop responsiveness maintained
+
+### Performance Success
+- ✅ Professional listing load times < 2 seconds
+- ✅ Database query performance maintained
+- ✅ No regression in existing system performance
+- ✅ Error rates < 1% for all new functionality
+
+### User Experience Success
+- ✅ User satisfaction scores > 4.5/5 for professional discovery
+- ✅ Professional profile completion rate > 80%
+- ✅ Professional-client interaction rate > 60%
+- ✅ Support ticket volume increase < 10%
+
+## Conclusion
+
+This Professional Marketplace Integration extends the existing Arzani Marketplace to include comprehensive professional services, leveraging the existing infrastructure while adding significant new functionality. The phased approach ensures minimal disruption to existing services while delivering a complete professional marketplace experience.
+
+The integration builds upon the solid foundation of the current system, extending rather than replacing existing functionality, and provides a clear path for verified professionals to showcase their services and interact with potential clients.

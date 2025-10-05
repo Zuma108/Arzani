@@ -19,9 +19,7 @@ import helmet from 'helmet';
 import compression from 'compression';
 import Stripe from 'stripe';
 import bodyParser from 'body-parser';
-// Import S3 routes
-import s3TestRoutes from './routes/api/s3-test.js';
-import s3UploadRoutes from './routes/api/s3-upload.js';
+// S3 routes removed - migrated to Google Cloud Storage
 
 // Import threads API routes
 import threadsApiRoutes from './routes/api/threads.js';
@@ -30,6 +28,7 @@ import buyerDashboardRoutes from './routes/api/buyer-dashboard.js';
 import trustRoutes from './routes/api/trust.js';
 import blogAutomationRoutes from './routes/api/blog-automation.js';
 import tokenRoutes from './routes/api/tokens.js';
+import websiteValidationRoutes from './routes/api/website-validation.js';
 import webhookRoutes from './routes/webhooks.js';
 
 // Add a simple RateLimiter class implementation
@@ -86,8 +85,7 @@ import marketTrendsRoutes from './routes/markettrendsroutes.js';
 import googleDriveRoutes from './routes/googleDriveRoutes.js';
 import googleAuthRoutes from './routes/googleAuthRoutes.js';
 import postBusinessValuationRoutes from './routes/postBusinessValuationRoutes.js';
-import { S3Client, ListBucketsCommand } from '@aws-sdk/client-s3'; // Add ListBucketsCommand
-import { uploadToS3 } from './utils/s3.js';
+// AWS imports removed - migrated to Google Cloud Storage
 import { sendNewsletterSubscriptionNotification } from './utils/email.js';
 import { adminAuth } from './middleware/adminAuth.js'; // Add this import
 import profileApi from './routes/api/profileApi.js'; // New profile API
@@ -102,6 +100,7 @@ import adminRoutes from './routes/adminRoutes.js'; // <-- Import admin routes
 import devRoutes from './routes/dev.js';
 import { stripeWebhookMiddleware, handleStripeWebhook } from './middleware/webhookHandler.js';
 import profileRoutes from './routes/profile.routes.js';
+import onboardingRoutes from './routes/onboarding.js';
 import apiSubRoutes from './routes/api/subscription.js';
 import checkoutRoutes from './routes/checkout.js';
 import subscriptionApiRoutes from './routes/api/subscription.js';
@@ -185,6 +184,7 @@ import chatApiRoutes from './routes/api/chat.js';
 import chatDebugRouter from './routes/chat-debug.js';
 
 import postBusinessUploadRoutes from './routes/api/post-business-upload.js';
+import gcsUploadRoutes from './routes/api/gcs-upload.js';
 import businessRoutes from './routes/businessRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import sellerQuestionnaireRoutes from './routes/sellerQuestionnaire.js';
@@ -211,6 +211,14 @@ import professionalRoutes from './routes/professionalRoutes.js';
 
 // Import professional profiles API routes
 import professionalProfilesRoutes from './routes/api/professional-profiles.js';
+
+// Import professionals API routes
+import professionalsApiRoutes from './routes/api/professionals.js';
+import quotesApiRoutes from './routes/api/quotes.js';
+
+// Import Stripe Connect routes
+import stripeConnectApiRoutes from './routes/api/stripe-connect.js';
+import stripeConnectRoutes from './routes/stripe-connect.js';
 
 // Import valuation payment routes
 import valuationPaymentRoutes from './routes/valuationPaymentRoutes.js';
@@ -249,70 +257,7 @@ const PORT = process.env.PORT || 8080; // Updated for Google Cloud Run compatibi
 const JWT_SECRET = process.env.JWT_SECRET;
 const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;
 
-// Add this initialization check function near the beginning of the file
-const initializeAwsConfig = () => {
-  // Clean up any improperly set environment variables
-  if (process.env.AWS_REGION) {
-    process.env.AWS_REGION = process.env.AWS_REGION.trim().split(',')[0].trim();
-    console.log(`Using AWS region: ${process.env.AWS_REGION}`);
-  }
-  
-  if (process.env.AWS_BUCKET_NAME) {
-    process.env.AWS_BUCKET_NAME = process.env.AWS_BUCKET_NAME.trim().split(',')[0].trim();
-    console.log(`Using S3 bucket: ${process.env.AWS_BUCKET_NAME}`);
-  }
-  
-  // Set defaults if not defined
-  if (!process.env.AWS_REGION) {
-    process.env.AWS_REGION = 'eu-west-2';
-    console.log(`Setting default AWS region: ${process.env.AWS_REGION}`);
-  }
-  
-  if (!process.env.AWS_BUCKET_NAME) {
-    process.env.AWS_BUCKET_NAME = 'arzani-images1';
-    console.log(`Setting default S3 bucket: ${process.env.AWS_BUCKET_NAME}`);
-  }
-};
-
-// Call this right after loading environment variables
-initializeAwsConfig();
-
-// Add this right after your imports
-const validateAwsConfig = () => {
-  const region = process.env.AWS_REGION || 'eu-west-2';
-  const bucketName = process.env.AWS_BUCKET_NAME || 'arzani-images1';
-  
-  // Validate region format - should be a simple string without commas
-  if (region.includes(',')) {
-    console.error('⚠️ WARNING: AWS_REGION contains commas, which will cause S3 errors.');
-    process.env.AWS_REGION = region.split(',')[0].trim();
-    console.log(`Fixed AWS_REGION to "${process.env.AWS_REGION}"`);
-  }
-  
-  // Validate bucket name format - should be a simple string without commas
-  if (bucketName.includes(',')) {
-    console.error('⚠️ WARNING: AWS_BUCKET_NAME contains commas, which will cause S3 errors.');
-    process.env.AWS_BUCKET_NAME = bucketName.split(',')[0].trim();
-    console.log(`Fixed AWS_BUCKET_NAME to "${process.env.AWS_BUCKET_NAME}"`);
-  }
-  
-  // Test S3 client initialization
-  try {
-    const s3Client = new S3Client({
-      region: process.env.AWS_REGION,
-      credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-      }
-    });
-    console.log(`✅ S3 client initialized with region: ${process.env.AWS_REGION}`);
-  } catch (error) {
-    console.error('❌ Failed to initialize S3 client:', error);
-  }
-}
-
-// Call validation function during server startup
-validateAwsConfig();
+// AWS configuration functions removed - migrated to Google Cloud
 
 // Initialize Express and create HTTP server
 
@@ -344,85 +289,10 @@ const webSocketService = new WebSocketService(io);
 // This ensures it takes precedence over any conflicting handlers
 attachRootRoute(app);
 
-// Verify S3 configuration early
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-  }
-});
+// Google Cloud configuration replaces AWS S3
+// S3Client removed - using Google Cloud Storage instead
 
-// Test S3 connection on startup - replace this function with enhanced version
-async function testS3Connection() {
-  try {
-    // SECURITY: Enhanced secret masking function
-    const isSensitiveKey = (key) => {
-      const sensitivePatterns = [
-        'SECRET', 'KEY', 'TOKEN', 'PASSWORD', 'PASS', 'PWD', 
-        'PRIVATE', 'CREDENTIAL', 'AUTH', 'API_KEY', 'CLIENT_SECRET'
-      ];
-      return sensitivePatterns.some(pattern => 
-        key.toUpperCase().includes(pattern)
-      );
-    };
-
-    // Print all environment variables for debugging (without sensitive values)
-    console.log("Environment variables scan:");
-    Object.keys(process.env)
-      .filter(key => key.includes('AWS'))
-      .forEach(key => {
-        const value = isSensitiveKey(key) ? '***' : process.env[key];
-        console.log(`${key}=${value}`);
-      });
-    
-    // Explicitly set AWS environment variables to ensure correct values
-    // This will override any incorrect values that might be coming from elsewhere
-    const forcedCredentials = {
-      AWS_REGION: process.env.AWS_REGION || 'eu-west-2',
-      AWS_BUCKET_NAME: process.env.AWS_BUCKET_NAME || 'arzani-images1'
-    };
-    
-    // Forcibly override with correct values
-    Object.entries(forcedCredentials).forEach(([key, value]) => {
-      process.env[key] = value;
-    });
-    
-    console.log("Set AWS region and bucket name to correct values");
-    
-    // Now try connecting with the configured credentials
-    const s3Client = new S3Client({
-      region: process.env.AWS_REGION,
-      credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-      }
-    });
-    
-    // Log the actual credentials being used (without revealing secrets)
-    console.log("Using AWS credentials:", {
-      region: process.env.AWS_REGION,
-      bucketName: process.env.AWS_BUCKET_NAME,
-      hasAccessKeyId: !!process.env.AWS_ACCESS_KEY_ID,
-      hasSecretKey: !!process.env.AWS_SECRET_ACCESS_KEY
-    });
-    
-    // Test connection
-    await s3Client.send(new ListBucketsCommand({}));
-    console.log('✅ Successfully connected to AWS S3');
-  } catch (error) {
-    console.error('❌ Error connecting to AWS S3:', error);
-    console.error('This might be due to incorrect credentials in environment files.');
-    console.error('Please ensure AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are correct in your .env files.');
-    
-    // In production, warn but don't exit - allow server to start without S3
-    if (process.env.NODE_ENV === 'production') {
-      console.warn('⚠️ S3 connection failed in production - continuing without S3 functionality');
-    } else {
-      process.exit(1); // Exit only in development
-    }
-  }
-}
+// S3 connection test removed - migrated to Google Cloud Storage
 
 // Add chat-interface route - make sure it's only accessible at the exact /chat-interface path
 app.get('/chat-interface', (req, res) => {
@@ -538,6 +408,25 @@ app.get('/valuation-payment', (req, res, next) => {
     return res.redirect('/valuation-confirmation' + req.originalUrl.substring(req.originalUrl.indexOf('?')));
   }
   next();
+});
+
+// Add payment success route for quote payments
+app.get('/payment-success', (req, res) => {
+  try {
+    const { session_id, quote_id } = req.query;
+    
+    res.render('payment-success', {
+      title: 'Payment Successful',
+      sessionId: session_id,
+      quoteId: quote_id
+    });
+  } catch (error) {
+    console.error('Error rendering payment success page:', error);
+    res.status(500).render('error', { 
+      message: 'Error loading payment confirmation',
+      error: process.env.NODE_ENV === 'development' ? error : {}
+    });
+  }
 });
 
 // Add valuation confirmation route
@@ -792,19 +681,33 @@ app.use(session({
   name: 'sessionId' // Custom cookie name
 }));
 
-// Add comprehensive session debugging middleware
+// Add comprehensive session debugging middleware (filtered to important paths)
 app.use((req, res, next) => {
-  const token = req.headers['authorization']?.split(' ')[1];
-  console.log('Request debug:', {
-    path: req.path,
-    sessionID: req.sessionID,
-    hasSession: !!req.session,
-    sessionUserId: req.session?.userId,
-    hasAuthHeader: !!req.headers['authorization'],
-    tokenPresent: !!token
-  });
+  // Only log important authentication-related paths
+  const importantPaths = ['/auth/', '/api/', '/marketplace', '/profile', '/login', '/dashboard'];
+  const shouldLog = importantPaths.some(path => req.path.startsWith(path)) || req.path === '/';
+  
+  if (shouldLog && !req.path.match(/\.(css|js|png|jpg|gif|ico|svg|woff|woff2)$/i)) {
+    const token = req.headers['authorization']?.split(' ')[1];
+    console.log('Request debug:', {
+      path: req.path,
+      sessionID: req.sessionID,
+      hasSession: !!req.session,
+      sessionUserId: req.session?.userId,
+      hasAuthHeader: !!req.headers['authorization'],
+      tokenPresent: !!token,
+      cookieTokenPresent: !!req.cookies?.token,
+      sessionTokenPresent: !!req.session?.token
+    });
+  }
   next();
 });
+
+// TEMPORARY: Enhanced auth debugging (disabled to reduce log noise)
+// import { debugAuthMiddleware, debugAuthResults } from './debug-auth-middleware.js';
+// if (process.env.NODE_ENV === 'development') {
+//   app.use(debugAuthMiddleware);
+// }
 
 // Add token refresh configuration
 const TOKEN_EXPIRY = '14d';
@@ -836,7 +739,7 @@ app.use(async (req, res, next) => {
     }    const token = authHeader.split(' ')[1];
     
     // Add token validation debugging - fixed string comparison issue
-    if (!token || token.trim() === '' || token === null || token === undefined) {
+    if (!token || token.trim() === '' || token === null || token === undefined || token === 'null' || token === 'undefined') {
       console.log('Empty or invalid token received, continuing without auth');
       return next();
     }
@@ -1096,11 +999,11 @@ app.use('/auth', (req, res, next) => {
 
 app.use('/auth', authRoutes); // Update this line to register auth routes
 app.use('/auth', oauthRoutes); // Add OAuth routes
+app.use('/onboarding', onboardingRoutes); // User onboarding flow
 app.use('/api/market', marketTrendsRoutes);
 app.use('/api/drive', googleDriveRoutes);
 app.use('/api/post-business', postBusinessValuationRoutes);
-app.use('/api/s3-test', s3TestRoutes);
-app.use('/api/s3-upload', s3UploadRoutes);
+// S3 routes removed - migrated to Google Cloud Storage
 // Mount the API routes - ensure these come BEFORE the authenticated routes
 // Use explicit bypass for the public business API routes
 app.use('/api/business', (req, res, next) => {
@@ -1143,7 +1046,10 @@ app.use('/api/admin', adminRoutes); // <-- Register admin routes
 
 app.use('/api/profile', authenticateToken, profileApi); // Keep this one, remove the duplicate below
 // app.use('/api/profile', profileApi); // REMOVE THIS DUPLICATE LINE
-app.use('/api/business', businessRoutes);
+// Website validation for onboarding (must be before general /api routes)
+app.use('/api', websiteValidationRoutes);
+app.use('/api/business', businessRoutes); 
+app.use('/api', professionalsApiRoutes); // Add professionals API routes
 app.use('/api', apiRoutes);
 app.use('/api/business', savedBusinessesRoutes); 
 app.use('/api/debug', debugApiRoutes);
@@ -1158,7 +1064,7 @@ app.use('/debug', chatDebugRouter);
 app.use('/blog', blogRoutes);  // Frontend blog routes
 app.use('/blog-approval', blogApprovalRoutes);  // Blog approval routes
 app.use('/api/blog', blogApiRoutes);  // API blog endpoints
-app.use('/api', blogApiRoutes);  // ALSO register at /api to support both URL patterns
+// REMOVED: app.use('/api', blogApiRoutes) - This was causing routing conflicts with specific API routes
 // Register the AI assistant routes
 app.use('/api/assistant', aiAssistantRoutes);
 
@@ -1227,8 +1133,10 @@ const postBusinessUploadLimits = {
 };
 
 // Register post-business-upload route with higher limits
-app.use('/api/post-business-upload', postBusinessUploadRoutes);
+// New GCS upload endpoint
+app.use('/api/gcs-upload', gcsUploadRoutes);
 
+// Keep old endpoint for backward compatibility
 app.use('/api/post-business-upload', postBusinessUploadRoutes);
 
 app.use('/dashboard', authMiddleware);
@@ -1329,14 +1237,153 @@ app.get('/faq', (req, res) => {
   res.render('faq');
 });
 
-// Token Purchase page route
+// Token Purchase page routes
 app.get('/purchase-tokens', (req, res) => {
   res.render('token-purchase', {
     title: 'Purchase Contact Tokens | Arzani',
-    user: req.user || null
+    user: req.user || null,
+    error: req.query.error || null
   });
 });
 
+// Alternative token purchase route (for Stripe redirects)
+app.get('/tokens/purchase', (req, res) => {
+  const errorMessages = {
+    'no_session': 'Payment session not found. Please try again.',
+    'payment_not_completed': 'Payment was not completed. Please try again.',
+    'no_user': 'User authentication required. Please log in and try again.',
+    'token_update_failed': 'Payment successful but tokens could not be added. Please contact support.',
+    'processing_failed': 'An error occurred processing your payment. Please contact support.'
+  };
+
+  res.render('token-purchase', {
+    title: 'Purchase Contact Tokens | Arzani',
+    user: req.user || null,
+    error: req.query.error || null,
+    errorMessage: errorMessages[req.query.error] || null
+  });
+});
+
+// Token Purchase Success Route
+app.get('/tokens/success', async (req, res) => {
+  const sessionId = req.query.session_id;
+  
+  if (!sessionId) {
+    console.error('No session_id provided in success URL');
+    return res.redirect('/tokens/purchase?error=no_session');
+  }
+
+  try {
+    // Import Stripe directly
+    const Stripe = (await import('stripe')).default;
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+    
+    // Retrieve the checkout session
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    console.log('Retrieved Stripe session:', {
+      id: session.id,
+      payment_status: session.payment_status,
+      customer: session.customer,
+      client_reference_id: session.client_reference_id,
+      metadata: session.metadata
+    });
+
+    // Verify payment was successful
+    if (session.payment_status !== 'paid') {
+      console.error('Payment not completed:', session.payment_status);
+      return res.redirect('/tokens/purchase?error=payment_not_completed');
+    }
+
+    // Get user information
+    const userId = session.client_reference_id || req.user?.id;
+    if (!userId) {
+      console.error('No user ID found in session or request');
+      return res.redirect('/tokens/purchase?error=no_user');
+    }
+
+    // Get package details from metadata
+    const packageId = session.metadata?.package_id;
+    const tokenAmount = parseInt(session.metadata?.token_amount || 0);
+    const bonusTokens = parseInt(session.metadata?.bonus_tokens || 0);
+    const totalTokens = parseInt(session.metadata?.total_tokens || tokenAmount + bonusTokens);
+    const packageName = session.metadata?.package_type || 'Token Package';
+
+    console.log('Processing token addition:', {
+      userId,
+      packageId,
+      tokenAmount,
+      bonusTokens,
+      totalTokens,
+      packageName
+    });
+
+    // Add tokens to user account
+    let tokenUpdateResult;
+    try {
+      const { addTokensToUser } = await import('./routes/api/tokens.js');
+      tokenUpdateResult = await addTokensToUser(userId, totalTokens, {
+        source: 'stripe_purchase',
+        package_id: packageId,
+        session_id: sessionId,
+        package_name: packageName,
+        base_tokens: tokenAmount,
+        bonus_tokens: bonusTokens,
+        stripePaymentIntentId: session.payment_intent
+      });
+      
+      console.log('Token update result:', tokenUpdateResult);
+    } catch (tokenError) {
+      console.error('Error adding tokens to user:', tokenError);
+      console.error('Token error stack:', tokenError.stack);
+      console.error('User ID:', userId);
+      console.error('Total tokens:', totalTokens);
+      console.error('Session payment intent:', session.payment_intent);
+      return res.redirect('/tokens/purchase?error=token_update_failed');
+    }
+
+    // Log successful purchase for analytics
+    try {
+      await pool.query(
+        `INSERT INTO purchase_analytics (user_id, package_id, amount_paid, tokens_received, stripe_session_id, created_at) 
+         VALUES ($1, $2, $3, $4, $5, NOW())`,
+        [userId, packageId, session.amount_total, totalTokens, sessionId]
+      );
+    } catch (analyticsError) {
+      console.warn('Failed to log purchase analytics:', analyticsError);
+      // Continue anyway - this isn't critical
+    }
+
+    // Render success page with purchase details
+    res.render('token-purchase-success', {
+      title: 'Purchase Successful | Arzani',
+      user: req.user || { id: userId },
+      purchase: {
+        sessionId,
+        packageName: packageName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        tokensReceived: totalTokens,
+        baseTokens: tokenAmount,
+        bonusTokens: bonusTokens,
+        amountPaid: (session.amount_total / 100).toFixed(2),
+        currency: session.currency?.toUpperCase() || 'GBP',
+        timestamp: new Date().toISOString(),
+        newBalance: tokenUpdateResult?.newBalance || 'Unknown'
+      }
+    });
+
+  } catch (error) {
+    console.error('Error processing token purchase success:', error);
+    res.redirect('/tokens/purchase?error=processing_failed');
+  }
+});
+
+// Token Purchase Cancelled Route
+app.get('/tokens/cancelled', (req, res) => {
+  res.render('token-purchase-cancelled', {
+    title: 'Purchase Cancelled | Arzani',
+    user: req.user || null,
+    message: 'Your token purchase was cancelled. You can try again anytime.'
+  });
+});
 
 // Add routes for static pages like About Us, FAQ, etc.
 app.get('/about-us', (req, res) => {
@@ -1542,6 +1589,76 @@ app.get('/api/verify-token', async (req, res) => {
   }
 });
 
+// TEST ROUTE: Check authentication status
+app.get('/api/test-auth', (req, res) => {
+  const authHeader = req.headers['authorization'];
+  const headerToken = authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
+  const cookieToken = req.cookies?.token;
+  const sessionUserId = req.session?.userId;
+  const sessionToken = req.session?.token;
+
+  console.log('🧪 AUTH TEST REQUEST:', {
+    path: req.path,
+    sessionID: req.sessionID,
+    sessionUserId,
+    hasAuthHeader: !!authHeader,
+    hasHeaderToken: !!headerToken,
+    hasCookieToken: !!cookieToken,
+    hasSessionToken: !!sessionToken,
+    hasReqUser: !!req.user,
+    userAgent: req.headers['user-agent']?.substring(0, 50)
+  });
+
+  // Try to extract and verify tokens
+  const tokenSources = [];
+  
+  if (headerToken) {
+    try {
+      const decoded = jwt.verify(headerToken, JWT_SECRET);
+      tokenSources.push({ source: 'header', valid: true, userId: decoded.userId });
+    } catch (err) {
+      tokenSources.push({ source: 'header', valid: false, error: err.message });
+    }
+  }
+  
+  if (cookieToken) {
+    try {
+      const decoded = jwt.verify(cookieToken, JWT_SECRET);
+      tokenSources.push({ source: 'cookie', valid: true, userId: decoded.userId });
+    } catch (err) {
+      tokenSources.push({ source: 'cookie', valid: false, error: err.message });
+    }
+  }
+  
+  if (sessionToken) {
+    try {
+      const decoded = jwt.verify(sessionToken, JWT_SECRET);
+      tokenSources.push({ source: 'session', valid: true, userId: decoded.userId });
+    } catch (err) {
+      tokenSources.push({ source: 'session', valid: false, error: err.message });
+    }
+  }
+
+  res.json({
+    authStatus: {
+      hasSession: !!req.session,
+      sessionID: req.sessionID,
+      sessionUserId: req.session?.userId,
+      hasReqUser: !!req.user,
+      reqUserId: req.user?.userId
+    },
+    tokens: {
+      headerToken: headerToken ? headerToken.substring(0, 20) + '...' : null,
+      cookieToken: cookieToken ? cookieToken.substring(0, 20) + '...' : null,
+      sessionToken: sessionToken ? sessionToken.substring(0, 20) + '...' : null
+    },
+    tokenValidation: tokenSources,
+    recommendation: tokenSources.length > 0 ? 
+      (tokenSources.some(t => t.valid) ? 'Valid authentication found' : 'All tokens invalid') :
+      (sessionUserId ? 'Session exists but no JWT tokens found' : 'No authentication found')
+  });
+});
+
 // Add route debugging middleware to log requests
 app.use((req, res, next) => {
   console.log(`Request: ${req.method} ${req.path}`);
@@ -1560,10 +1677,14 @@ app.use('/', businessRoutes); // <-- Ensure this line is present
 app.use('/', voiceRoutes); // Now this will work
 app.use('/', googleAuthRoutes);
 
-// Apply routes
-app.use('/professional', professionalRoutes);
-app.use('/api/professional', professionalRoutes);
+// Apply routes - Fixed: Clean professional route mounting (Fix 1.1)
+app.use('/', professionalRoutes); // Mount at root to allow both /professional-* web routes and /api/* API routes  
 app.use('/api/professional-profiles', professionalProfilesRoutes); // Add professional profiles API routes
+app.use('/api/quotes', quotesApiRoutes); // Add quotes API routes
+
+// Register Stripe Connect routes
+app.use('/api/stripe-connect', stripeConnectApiRoutes); // Stripe Connect API routes
+app.use('/stripe-connect', stripeConnectRoutes); // Stripe Connect web pages
 app.use('/api/verification', verificationUploadRoutes); // Add the verification upload routes
 
 // Serve static files from the 'views/partials/public' directory
@@ -1902,51 +2023,96 @@ app.get('/marketplace-landing', (req, res) => {
     abTestVariant: 'seller_first'
   });
 });
-  
+
+// Marketplace2 route - accessible to all users
 app.get('/marketplace2', async (req, res) => {
   try {
     // Explicitly mark as NOT a chat page - this is crucial
     res.locals.isChatPage = false;
       
-      // Pass user data if authenticated
-      let userData = null;
-      if (req.user && req.user.userId) {
-        // Fetch user data if available
-        try {
-          const user = await getUserById(req.user.userId);
-          if (user) {
-            userData = {
-              userId: user.id,
-              username: user.username,
-              email: user.email,
-              profile_picture: user.profile_picture || '/images/default-profile.png'
-            };
-          }
-        } catch (error) {
-          console.error('Error fetching user data for marketplace:', error);
+    // Pass user data if authenticated
+    let userData = null;
+    if (req.user && req.user.userId) {
+      // Fetch user data if available
+      try {
+        const user = await getUserById(req.user.userId);
+        if (user) {
+          userData = {
+            userId: user.id,
+            username: user.username,
+            email: user.email,
+            profile_picture: user.profile_picture || '/images/default-profile.png'
+          };
         }
+      } catch (error) {
+        console.error('Error fetching user data for marketplace:', error);
       }
-      
-      // Create a non-writable isChatPage property
-      Object.defineProperty(res.locals, 'isChatPage', {
-        value: false,
-        writable: false,
-        configurable: false
-      });
-      
-      // Render the marketplace2 template with guaranteed non-chat page settings
-      res.render('marketplace2', {
-        title: 'Business Marketplace',
-        isChatPage: false, // Explicitly set to false for redundancy
-        user: userData,
-        isAuthenticated: !!userData,
-        isMarketplacePage: true  // Add an explicit marketplace flag
-      });
-    } catch (error) {
-      console.error('Error rendering marketplace2:', error);
-      res.status(500).send('Error loading marketplace');
     }
-  });
+    
+    // Create a non-writable isChatPage property
+    Object.defineProperty(res.locals, 'isChatPage', {
+      value: false,
+      writable: false,
+      configurable: false
+    });
+    
+    // Render the marketplace2 template with guaranteed non-chat page settings
+    res.render('marketplace2', {
+      title: 'Business Marketplace',
+      isChatPage: false, // Explicitly set to false for redundancy
+      user: userData,
+      isAuthenticated: !!userData,
+      isMarketplacePage: true  // Add an explicit marketplace flag
+    });
+  } catch (error) {
+    console.error('Error rendering marketplace2:', error);
+    res.status(500).send('Error loading marketplace');
+  }
+});
+
+// Market trends page route - accessible to all users  
+app.get('/market-trends', async (req, res) => {
+  try {
+    // Explicitly mark as NOT a chat page
+    res.locals.isChatPage = false;
+      
+    // Pass user data if authenticated
+    let userData = null;
+    if (req.user && req.user.userId) {
+      try {
+        const user = await getUserById(req.user.userId);
+        if (user) {
+          userData = {
+            userId: user.id,
+            username: user.username,
+            email: user.email,
+            profile_picture: user.profile_picture || '/images/default-profile.png'
+          };
+        }
+      } catch (error) {
+        console.error('Error fetching user data for market trends:', error);
+      }
+    }
+    
+    // Render the market trends template
+    res.render('market_trends', {
+      title: 'Market Trends Analysis | Arzani',
+      user: userData,
+      isAuthenticated: !!userData,
+      chartConfig: {
+        timeRanges: [
+          { value: '7', label: 'Last 7 Days' },
+          { value: '30', label: 'Last 30 Days' },
+          { value: '90', label: 'Last 90 Days' },
+          { value: '365', label: 'Last Year' }
+        ]
+      }
+    });
+  } catch (error) {
+    console.error('Error rendering market trends:', error);
+    res.status(500).send('Error loading market trends');
+  }
+});
   
 // Token purchase page route
 app.get('/token-purchase', authDebug.enforceNonChatPage, async (req, res) => {
@@ -2045,11 +2211,25 @@ app.get('/history', authenticateToken, async (req, res) => {
   }
 });
 
-app.get('/professional-verification', authenticateToken, (req, res) => {
-  res.render('professional-verification', {
-    title: 'Professional Verification',
-    user: req.user
-  });
+app.get('/professional-verification', authenticateToken, async (req, res) => {
+  try {
+    // Get user data for sidebar
+    const user = await getUserById(req.user.userId);
+    if (!user) {
+      return res.redirect('/login2');
+    }
+    
+    // Set user data for sidebar
+    res.locals.user = user;
+    
+    res.render('professional-verification', {
+      title: 'Professional Verification',
+      user: user
+    });
+  } catch (error) {
+    console.error('Professional verification error:', error);
+    res.redirect('/login2');
+  }
 });
 
 // Professional dashboard page route - only accessible to verified professionals
@@ -2298,17 +2478,86 @@ app.get('/profile', authenticateToken, async (req, res) => {
       });
     }
 
+    // Get purchase history and token data
+    let purchaseHistory = [];
+    let lastPurchase = null;
+    let tokenBalance = 0;
+    
+    try {
+      // Get recent token transactions (purchases only)
+      const purchaseTransactions = await pool.query(
+        `SELECT tt.*, tp.name as package_name, tp.price_gbp
+         FROM token_transactions tt
+         LEFT JOIN token_packages tp ON (tt.metadata->>'package_id')::integer = tp.id
+         WHERE tt.user_id = $1 AND tt.transaction_type = 'purchase'
+         ORDER BY tt.created_at DESC
+         LIMIT 10`,
+        [user.id]
+      );
+      
+      purchaseHistory = purchaseTransactions.rows.map(transaction => ({
+        id: transaction.id,
+        date: transaction.created_at,
+        packageName: transaction.package_name || 'Token Package',
+        tokensReceived: transaction.tokens_amount,
+        amountPaid: transaction.price_gbp ? (transaction.price_gbp / 100).toFixed(2) : 'N/A',
+        stripePaymentId: transaction.stripe_payment_intent_id,
+        metadata: transaction.metadata
+      }));
+      
+      // Get last purchase
+      if (purchaseHistory.length > 0) {
+        lastPurchase = purchaseHistory[0];
+      }
+      
+      // Get current token balance
+      const balanceResult = await pool.query(
+        `SELECT COALESCE(token_balance, 0) as balance FROM users WHERE id = $1`,
+        [user.id]
+      );
+      tokenBalance = balanceResult.rows[0]?.balance || 0;
+      
+    } catch (purchaseError) {
+      console.warn('Error fetching purchase data:', purchaseError);
+      // Continue without purchase data
+    }
+
+    // Set user data for both template and sidebar
+    const userData = {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      profile_picture: user.profile_picture || '/images/default-profile.png',
+      auth_provider: user.auth_provider,
+      created_at: user.created_at,
+      last_login: user.last_login,
+      is_verified_professional: user.is_verified_professional || false,
+      token_balance: tokenBalance,
+      last_purchase: lastPurchase,
+      purchase_history: purchaseHistory
+    };
+    
+    // Debug: Log user data being passed to sidebar
+    console.log('Profile route - User data for sidebar:', {
+      username: userData.username,
+      profile_picture: userData.profile_picture,
+      is_verified_professional: userData.is_verified_professional
+    });
+    
+    // Make user data available to sidebar
+    res.locals.user = userData;
+    
+    // Generate JWT token for frontend API calls
+    const jwtToken = jwt.sign(
+      { userId: user.id, username: user.username },
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+    
     // Otherwise render the profile template
     res.render('profile', { 
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        profile_picture: user.profile_picture || '/images/default-profile.png',
-        auth_provider: user.auth_provider,
-        created_at: user.created_at,
-        last_login: user.last_login
-      }
+      user: userData,
+      token: jwtToken
     });
   } catch (error) {
     console.error('Profile error:', error);
@@ -2602,56 +2851,9 @@ app.use('/api/*', (req, res) => {
   res.status(404).json({ error: 'API endpoint not found' });
 });
 
-// Add this BEFORE the catch-all route
-app.get('/market-trends', authenticateToken, async (req, res) => {
-    try {
-        console.log('Market trends page requested, user:', req.user);
-        
-        // Check user authentication
-        if (!req.user?.userId) {
-            console.log('No user ID found, redirecting to login');
-            return res.redirect('/login2?redirect=/market-trends');
-        }
 
-        // Get user data for personalization
-        console.log('Fetching user data for ID:', req.user.userId);
-        const userQuery = await pool.query(
-            'SELECT username, subscription_type FROM users WHERE id = $1',
-            [req.user.userId]
-        );
-        
-        if (userQuery.rows.length === 0) {
-            console.log('User not found in database');
-            return res.redirect('/login2?redirect=/market-trends');
-        }
 
-        const user = userQuery.rows[0];
-        console.log('User found:', user.username);
 
-        // Render the market trends page
-        res.render('market_trends', {
-            user: {
-                username: user.username,
-                subscription: user.subscription_type || 'free'
-            },
-            title: 'Market Trends Analysis',
-            chartConfig: {
-                timeRanges: [
-                    { value: '7', label: 'Last 7 Days' },
-                    { value: '30', label: 'Last 30 Days' },
-                    { value: '90', label: 'Last 90 Days' },
-                    { value: '365', label: 'Last Year' }
-                ]
-            }
-        });
-    } catch (error) {
-        console.error('Market trends page error:', error);
-        res.status(500).render('error', { 
-            message: 'Failed to load market trends',
-            error: process.env.NODE_ENV === 'development' ? error : {}
-        });
-    }
-});
 
 // Remove or comment out this catch-all route
 // app.get('*', (req, res) => {
@@ -2763,46 +2965,9 @@ app.use('/api/market/*', async (req, res, next) => {
     }
 });
 
-// Market Trends Page Route - Add this before catch-all routes
-app.get('/market-trends', authenticateToken, async (req, res) => {
-    try {
-        // Check user authentication
-        if (!req.user?.userId) {
-            return res.redirect('/login2?redirect=/market-trends');
-        }
-
-        // Get user data for personalization
-        const userQuery = await pool.query(
-            'SELECT username, subscription_type FROM users WHERE id = $1',
-            [req.user.userId]
-        );
+// Removed duplicate market-trends route - using the one defined earlier
         
-        const user = userQuery.rows[0];
 
-        // Render the market trends page
-        res.render('market_trends', {
-            user: {
-                username: user.username,
-                subscription: user.subscription_type || 'free'
-            },
-            title: 'Market Trends Analysis',
-            chartConfig: {
-                timeRanges: [
-                    { value: '7', label: 'Last 7 Days' },
-                    { value: '30', label: 'Last 30 Days' },
-                    { value: '90', label: 'Last 90 Days' },
-                    { value: '365', label: 'Last Year' }
-                ]
-            }
-        });
-    } catch (error) {
-        console.error('Market trends page error:', error);
-        res.status(500).render('error', { 
-            message: 'Failed to load market trends',
-            error: process.env.NODE_ENV === 'development' ? error : {}
-        });
-    }
-});
 
 
 // Add this with your other routes, before any catch-all routes
@@ -3153,13 +3318,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Add this near your other routes, before any catch-all routes
-app.get('/s3-test', authenticateToken, (req, res) => {
-  res.render('s3-test', {
-    title: 'S3 Configuration Test',
-    user: req.user
-  });
-});
+// S3 test page removed - migrated to Google Cloud Storage
 
 
 // Update the business listings API to include image data needed for optimization
@@ -3366,19 +3525,143 @@ async function getMarketplaceListings() {
 }
 async function setupBlogDatabase() {
   try {
+    console.log('Checking blog database tables...');
+    
+    // Check if blog tables already exist
+    const tablesCheck = await pool.query(`
+      SELECT tablename FROM pg_tables 
+      WHERE schemaname = 'public' 
+      AND tablename IN ('blog_posts', 'blog_categories', 'blog_tags', 'blog_post_categories', 'blog_post_tags')
+    `);
+    
+    if (tablesCheck.rows.length >= 5) {
+      console.log('✅ Blog database setup completed - tables already exist');
+      return { success: true };
+    }
+    
     console.log('Setting up blog database tables...');
     
-    // Read the SQL file containing blog table definitions
-    const blogTablesSQL = fs.readFileSync(path.join(__dirname, 'migrations/blog_tables.sql'), 'utf8');
+    // Try to execute individual SQL statements with error handling
+    const sqlStatements = [
+      // Create categories table
+      `CREATE TABLE IF NOT EXISTS blog_categories (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        slug VARCHAR(100) NOT NULL UNIQUE,
+        description TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )`,
+      
+      // Create tags table
+      `CREATE TABLE IF NOT EXISTS blog_tags (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        slug VARCHAR(100) NOT NULL UNIQUE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )`,
+      
+      // Create posts table (most likely to exist)
+      `CREATE TABLE IF NOT EXISTS blog_posts (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        slug VARCHAR(255) NOT NULL UNIQUE,
+        content TEXT NOT NULL,
+        excerpt TEXT,
+        meta_description VARCHAR(255),
+        hero_image VARCHAR(255),
+        author_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        status VARCHAR(20) NOT NULL DEFAULT 'Draft',
+        is_featured BOOLEAN DEFAULT FALSE,
+        view_count INTEGER DEFAULT 0,
+        reading_time INTEGER DEFAULT 5,
+        publish_date TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )`,
+      
+      // Create junction tables
+      `CREATE TABLE IF NOT EXISTS blog_post_categories (
+        post_id INTEGER REFERENCES blog_posts(id) ON DELETE CASCADE,
+        category_id INTEGER REFERENCES blog_categories(id) ON DELETE CASCADE,
+        PRIMARY KEY (post_id, category_id)
+      )`,
+      
+      `CREATE TABLE IF NOT EXISTS blog_post_tags (
+        post_id INTEGER REFERENCES blog_posts(id) ON DELETE CASCADE,
+        tag_id INTEGER REFERENCES blog_tags(id) ON DELETE CASCADE,
+        PRIMARY KEY (post_id, tag_id)
+      )`
+    ];
     
-    // Execute the SQL to create blog tables
-    await pool.query(blogTablesSQL);
+    // Execute statements one by one
+    for (const statement of sqlStatements) {
+      try {
+        await pool.query(statement);
+      } catch (err) {
+        console.log(`Info: Skipping SQL statement (likely already exists): ${err.message}`);
+      }
+    }
     
-    console.log('Blog database setup completed successfully');
+    // Try to create indexes (these might fail due to permissions, but are not critical)
+    const indexStatements = [
+      'CREATE INDEX IF NOT EXISTS blog_posts_slug_idx ON blog_posts(slug)',
+      'CREATE INDEX IF NOT EXISTS blog_posts_status_idx ON blog_posts(status)',
+      'CREATE INDEX IF NOT EXISTS blog_posts_publish_date_idx ON blog_posts(publish_date)'
+    ];
+    
+    for (const indexStatement of indexStatements) {
+      try {
+        await pool.query(indexStatement);
+      } catch (err) {
+        console.log(`Info: Could not create index (likely due to permissions): ${err.message}`);
+      }
+    }
+    
+    // Insert default data only if tables are empty
+    try {
+      const categoryCount = await pool.query('SELECT COUNT(*) FROM blog_categories');
+      if (parseInt(categoryCount.rows[0].count) === 0) {
+        await pool.query(`
+          INSERT INTO blog_categories (name, slug, description)
+          VALUES 
+            ('Business Valuation', 'business-valuation', 'Learn how to accurately value your business in the UK market'),
+            ('Market Trends', 'market-trends', 'Stay updated with the latest UK small business market trends'),
+            ('Growth Strategies', 'growth-strategies', 'Effective strategies to grow your business value before selling'),
+            ('Selling Advice', 'selling-advice', 'Expert advice on selling your business for maximum value'),
+            ('Buying Advice', 'buying-advice', 'Tips and guidance for purchasing an existing business'),
+            ('Funding', 'funding', 'Information about funding options for business acquisition')
+        `);
+      }
+      
+      const tagCount = await pool.query('SELECT COUNT(*) FROM blog_tags');
+      if (parseInt(tagCount.rows[0].count) === 0) {
+        await pool.query(`
+          INSERT INTO blog_tags (name, slug)
+          VALUES 
+            ('SME', 'sme'),
+            ('Startups', 'startups'),
+            ('Exit Strategy', 'exit-strategy'),
+            ('Due Diligence', 'due-diligence'),
+            ('Valuation', 'valuation'),
+            ('UK Market', 'uk-market'),
+            ('eCommerce', 'ecommerce'),
+            ('Service Business', 'service-business'),
+            ('Retail', 'retail'),
+            ('Tech', 'tech')
+        `);
+      }
+    } catch (err) {
+      console.log(`Info: Could not insert default data: ${err.message}`);
+    }
+    
+    console.log('✅ Blog database setup completed');
     return { success: true };
   } catch (error) {
     console.error('Error setting up blog database:', error);
     // Don't fail server startup if blog tables can't be created
+    console.log('✅ Blog database setup completed with warnings');
     return { success: false, error: error.message };
   }
 }
@@ -3616,11 +3899,8 @@ app.use(async (req, res, next) => {
       console.warn('Some market trend features may not work correctly');
     }
     
-    // Test S3 connection only in development
-    if (process.env.NODE_ENV !== 'production') {
-      await testS3Connection();
-    }
-
+    // S3 connection test removed - migrated to Google Cloud Storage
+    
     // Ensure AI assistant tables exist before starting server
     try {
       console.log('Ensuring AI assistant database tables exist...');
@@ -4236,6 +4516,15 @@ app.get('/chat', authenticateToken, async (req, res) => {
     
     const userId = req.user?.userId;
     
+    // Get user data for sidebar
+    const user = await getUserById(userId);
+    if (!user) {
+      return res.redirect('/login2');
+    }
+    
+    // Set user data for sidebar
+    res.locals.user = user;
+    
     // Get conversation ID from query parameters
     const conversationId = req.query.conversation;
     
@@ -4257,7 +4546,7 @@ app.get('/chat', authenticateToken, async (req, res) => {
     // IMPORTANT: Render chat.ejs instead of chat-interface.ejs
     res.render('chat', {
       title: conversation ? `Chat with ${conversation.recipient?.name || 'User'}` : 'Chat',
-      user: req.user,
+      user: user,
       userId,
       conversations: conversations || [],
       conversation,
@@ -4304,54 +4593,6 @@ app.use(authDebug.routeDebugger);
 
 // Apply the hard-blocking middleware specifically to marketplace2 routes
 app.use(authDebug.enforceNonChatPage);
-app.use('/marketplace2', authDebug.enforceNonChatPage);
-app.use('/marketplace2/*', authDebug.enforceNonChatPage);
-
-// Update the marketplace2 route to use our specialized error prevention
-app.get('/marketplace2', authDebug.enforceNonChatPage, async (req, res) => {
-  try {
-    // Triple assurance this is not a chat page
-    res.locals.isChatPage = false;
-    
-    // Pass user data if authenticated
-    let userData = null;
-    if (req.user && req.user.userId) {
-      // Fetch user data if available
-      try {
-        const user = await getUserById(req.user.userId);
-        if (user) {
-          userData = {
-            userId: user.id,
-            username: user.username,
-            email: user.email,
-            profile_picture: user.profile_picture || '/images/default-profile.png'
-          };
-        }
-      } catch (error) {
-        console.error('Error fetching user data for marketplace:', error);
-      }
-    }
-    
-    // Create a non-writable isChatPage property
-    Object.defineProperty(res.locals, 'isChatPage', {
-      value: false,
-      writable: false,
-      configurable: false
-    });
-    
-    // Render the marketplace2 template with guaranteed non-chat page settings
-    res.render('marketplace2', {
-      title: 'Business Marketplace',
-      isChatPage: false, // Explicitly set to false for redundancy
-      user: userData,
-      isAuthenticated: !!userData,
-      isMarketplacePage: true  // Add an explicit marketplace flag
-    });
-  } catch (error) {
-    console.error('Error rendering marketplace2:', error);
-    res.status(500).send('Error loading marketplace');
-  }
-});
 
 
 // Improve API error handling to show detailed errors for debugging

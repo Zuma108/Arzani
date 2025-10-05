@@ -24,7 +24,7 @@ const upload = multer({
 // Endpoint for handling business image uploads
 router.post('/', authenticateToken, upload.single('file'), async (req, res) => {
   try {
-    console.log('S3 upload request received:', {
+    console.log('GCS upload request received:', {
       userId: req.user?.userId,
       fileName: req.file?.originalname,
       fileSize: req.file?.size
@@ -52,34 +52,33 @@ router.post('/', authenticateToken, upload.single('file'), async (req, res) => {
     const timestamp = Date.now();
     const sanitizedName = sanitizeFilename(`${timestamp}-${file.originalname}`);
     
-    // Create an S3 key with user ID for better organization
-    const s3Key = `businesses/${req.user.userId}/${sanitizedName}`;
+    // Create a GCS key with user ID for better organization
+    const gcsKey = `businesses/${req.user.userId}/${sanitizedName}`;
     
-    // Get region and bucket from request headers or use defaults
-    const region = req.headers['x-aws-region'] || process.env.AWS_REGION || 'eu-west-2';
-    const bucket = req.headers['x-aws-bucket'] || process.env.AWS_BUCKET_NAME || 'arzani-images1';
+    // Get bucket from request headers or use default
+    const bucket = req.headers['x-gcs-bucket'] || process.env.GCS_BUCKET_NAME || 'arzani-marketplace-files';
     
-    console.log(`Uploading ${file.originalname} to ${region}/${bucket}/${s3Key}`);
+    console.log(`Uploading ${file.originalname} to GCS bucket ${bucket}/${gcsKey}`);
 
-    // Upload to S3
-    const s3Url = await uploadToS3(
+    // Upload to Google Cloud Storage (using the converted uploadToS3 function)
+    const gcsUrl = await uploadToS3(
       file.buffer, 
-      s3Key,
-      file.mimetype, 
-      region,
+      gcsKey,
+      file.mimetype,
+      null, // region parameter not needed for GCS
       bucket
     );
     
-    console.log(`Successfully uploaded to S3: ${s3Url}`);
+    console.log(`Successfully uploaded to GCS: ${gcsUrl}`);
 
     res.json({
       success: true,
-      url: s3Url,
-      key: s3Key,
+      url: gcsUrl,
+      key: gcsKey,
       fileName: file.originalname
     });
   } catch (error) {
-    console.error('S3 upload error:', error);
+    console.error('GCS upload error:', error);
     res.status(500).json({
       success: false,
       error: error.message || 'Server error during upload'

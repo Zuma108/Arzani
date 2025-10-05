@@ -170,14 +170,52 @@ class TokenService {
    */
   static async getUserBalance(userId) {
     try {
-      const result = await pool.query(
+      // First try to get balance using the stored function
+      let result = await pool.query(
         'SELECT get_user_token_balance($1) as balance',
         [userId]
       );
-      return result.rows[0].balance;
+      
+      let balance = result.rows[0].balance;
+      
+      // If balance is null, user record doesn't exist - create it
+      if (balance === null || balance === undefined) {
+        console.log(`Creating token record for user ${userId}`);
+        await pool.query(
+          `INSERT INTO user_tokens (user_id, token_balance, tokens_purchased, tokens_consumed, lifetime_purchased)
+           VALUES ($1, 0, 0, 0, 0)
+           ON CONFLICT (user_id) DO NOTHING`,
+          [userId]
+        );
+        balance = 0;
+      }
+      
+      return balance || 0;
     } catch (error) {
       console.error('Error getting user balance:', error);
-      return 0;
+      
+      // Fallback: try direct query
+      try {
+        const fallbackResult = await pool.query(
+          'SELECT token_balance FROM user_tokens WHERE user_id = $1',
+          [userId]
+        );
+        
+        if (fallbackResult.rows.length === 0) {
+          // Create user record if it doesn't exist
+          await pool.query(
+            `INSERT INTO user_tokens (user_id, token_balance, tokens_purchased, tokens_consumed, lifetime_purchased)
+             VALUES ($1, 0, 0, 0, 0)`,
+            [userId]
+          );
+          return 0;
+        }
+        
+        return fallbackResult.rows[0].token_balance || 0;
+      } catch (fallbackError) {
+        console.error('Fallback balance query failed:', fallbackError);
+        return 0;
+      }
     }
   }
 

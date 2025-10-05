@@ -17,25 +17,22 @@ document.addEventListener('DOMContentLoaded', async function() {
         cookieToken: getCookie('token')
     });
     
-    // Get S3 configuration if available
-    const s3ConfigEl = document.getElementById('s3-config');
-    if (s3ConfigEl) {
+    // Get GCS configuration if available
+    const gcsConfigEl = document.getElementById('gcs-config');
+    if (gcsConfigEl) {
         try {
-            const config = JSON.parse(s3ConfigEl.textContent);
-            window.AWS_REGION = config.region || 'eu-west-2'; // Default to London region
-            window.AWS_BUCKET_NAME = config.bucketName || 'arzani-images1';
-            console.log('Using S3 config:', { region: window.AWS_REGION, bucket: window.AWS_BUCKET_NAME });
+            const config = JSON.parse(gcsConfigEl.textContent);
+            window.GCS_BUCKET_NAME = config.bucketName || 'arzani-marketplace-files';
+            console.log('Using GCS config:', { bucket: window.GCS_BUCKET_NAME });
         } catch (e) {
-            console.error('Failed to parse S3 config:', e);
+            console.error('Failed to parse GCS config:', e);
             // Set defaults if parsing fails
-            window.AWS_REGION = 'eu-west-2'; // London region
-            window.AWS_BUCKET_NAME = 'arzani-images1';
+            window.GCS_BUCKET_NAME = 'arzani-marketplace-files';
         }
     } else {
         // Set defaults if config element is missing
-        window.AWS_REGION = 'eu-west-2'; // London region
-        window.AWS_BUCKET_NAME = 'arzani-images1';
-        console.log('No S3 config found, using defaults:', { region: window.AWS_REGION, bucket: window.AWS_BUCKET_NAME });
+        window.GCS_BUCKET_NAME = 'arzani-marketplace-files';
+        console.log('No GCS config found, using defaults:', { bucket: window.GCS_BUCKET_NAME });
     }
     
     // Get token from various sources
@@ -234,142 +231,170 @@ function getCookie(name) {
 
 function initializeForm(token) {
     console.log('Initializing form with valid token');
+
+    const dropzoneElement = document.getElementById('imageDropzone');
+    if (!dropzoneElement) {
+        console.error('Dropzone element #imageDropzone not found');
+        console.log('Available elements:', document.querySelectorAll('[id*="ropzone"]'));
+        return;
+    }
+
+    console.log('Dropzone element found:', dropzoneElement);
+    console.log('Dropzone element classes:', dropzoneElement.className);
+    console.log('Dropzone element innerHTML:', dropzoneElement.innerHTML);
+
+    if (typeof Dropzone === 'undefined') {
+        console.error('Dropzone library not loaded; cannot initialize uploader');
+        const statusEl = document.getElementById('uploadStatus');
+        if (statusEl) {
+            statusEl.innerHTML = '<div class="alert alert-danger mb-0">Image uploader failed to load. Please refresh the page.</div>';
+        }
+        return;
+    }
+
+    console.log('Dropzone library loaded, version:', Dropzone.version);
     
-    // Update Dropzone configuration with enhanced error handling
-    imageDropzone = new Dropzone("#imageDropzone", {
-        url: "/api/s3-upload", // Use dedicated S3 upload endpoint
-        autoProcessQueue: true, // Change to true to process uploads immediately when files are added
-        uploadMultiple: false, // Upload one file at a time
-        parallelUploads: 2, // Process two uploads in parallel for better performance
-        maxFiles: 5,
-        minFiles: 3,
-        acceptedFiles: "image/*",
-        maxFilesize: 5,
-        addRemoveLinks: true,
-        createImageThumbnails: true,
-        dictDefaultMessage: "<span>Drop 3-5 images here or click to upload</span>",
-        dictMaxFilesExceeded: "You can only upload up to 5 images",
-        dictMinFilesExceeded: "You must upload at least 3 images",
-        headers: {
-            'Authorization': `Bearer ${token}`,
-            'X-AWS-Region': window.AWS_REGION || 'eu-west-2',
-            'X-AWS-Bucket': window.AWS_BUCKET_NAME || 'arzani-images1'
-        },
-        init: function() {
-            const dz = this;
-            window.submitDropzone = dz; // Make it accessible for debugging
-            
-            // Log file count for debugging
-            console.log(`Dropzone initialized with ${dz.files.length} files`);
+    // Initialize clean GCS-based Dropzone configuration
+    try {
+        imageDropzone = new Dropzone("#imageDropzone", {
+            url: "/api/gcs-upload", // New GCS upload endpoint
+            method: "post",
+            autoProcessQueue: true,
+            uploadMultiple: false,
+            paramName: 'images',
+            maxFiles: 5,
+            maxFilesize: 10, // 10MB limit for GCS
+            acceptedFiles: "image/jpeg,image/jpg,image/png,image/webp",
+            addRemoveLinks: true,
+            createImageThumbnails: true,
+            clickable: true, // Ensure click functionality is enabled
+            dictDefaultMessage: "<span>Drop 3-5 business images here or click to upload</span>",
+            dictFileTooBig: "File is too big ({{filesize}}MB). Max filesize: {{maxFilesize}}MB.",
+            dictInvalidFileType: "Only JPEG, PNG and WebP images are allowed",
+            dictMaxFilesExceeded: "Maximum 5 images allowed",
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            init: function() {
+                const dz = this;
+                window.gcsDropzone = dz; // Make it globally accessible
+                
+                console.log('GCS Dropzone initialized successfully');
+                
+                // Ensure dropzone is visible and clickable
+                setTimeout(() => {
+                    const messageEl = dz.element.querySelector('.dz-message');
+                    if (messageEl) {
+                        messageEl.style.display = 'block';
+                        messageEl.style.visibility = 'visible';
+                        messageEl.style.cursor = 'pointer';
+                        messageEl.style.pointerEvents = 'auto';
+                    }
+                    
+                    // Ensure the dropzone element itself is clickable
+                    dz.element.style.cursor = 'pointer';
+                    dz.element.style.pointerEvents = 'auto';
+                    
+                    // Log click areas for debugging
+                    console.log('Dropzone clickable areas configured:', {
+                        element: dz.element,
+                        message: messageEl,
+                        hiddenFileInput: dz.hiddenFileInput
+                    });
+                }, 100);
             
             this.on("sending", function(file, xhr, formData) {
-                // Always use the current token
                 const currentToken = getAuthToken();
-                xhr.setRequestHeader('Authorization', `Bearer ${currentToken}`);
+                if (currentToken) {
+                    xhr.setRequestHeader('Authorization', `Bearer ${currentToken}`);
+                }
                 
-                // Add S3 configuration headers
-                xhr.setRequestHeader('X-AWS-Region', window.AWS_REGION || 'eu-west-2');
-                xhr.setRequestHeader('X-AWS-Bucket', window.AWS_BUCKET_NAME || 'arzani-images1');
-                
-                // Add the region and bucket to formData as well
-                formData.append('awsRegion', window.AWS_REGION || 'eu-west-2');
-                formData.append('awsBucket', window.AWS_BUCKET_NAME || 'arzani-images1');
-                
-                // Log what we're sending
-                console.log(`Sending file: ${file.name}, size: ${file.size} bytes, status: ${file.status}`);
-                console.log(`Using region: ${window.AWS_REGION || 'eu-west-2'}, bucket: ${window.AWS_BUCKET_NAME || 'arzani-images1'}`);
-            });
+                console.log(`Uploading to GCS: ${file.name} (${(file.size/1024/1024).toFixed(2)}MB)`);
+            });            this.on("success", function(file, response) {
+                console.log('GCS upload successful:', file.name);
+                console.log('GCS response:', response);
 
-            // Enhanced success handling
-            this.on("success", function(file, response) {
-                console.log('File uploaded successfully:', file.name, 'Status:', file.status);
-                console.log('S3 upload response:', response);
-                
-                if (response && response.success && response.url) {
-                    // Store the S3 URL in the file object for later use
-                    file.s3Url = response.url;
-                    console.log('Assigned S3 URL to file:', file.s3Url);
+                if (response?.success && response?.url) {
+                    const uploadId = `gcs_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+                    file.gcsUrl = response.url;
+                    file.uploadId = uploadId;
                     
-                    // Add a hidden field to the form with the S3 URL
+                    // Add hidden input for form submission
                     const form = document.getElementById('postBusinessForm');
                     const input = document.createElement('input');
                     input.type = 'hidden';
                     input.name = 'imageUrls[]';
                     input.value = response.url;
-                    input.className = 's3-image-url';
+                    input.className = 'gcs-image-url';
+                    input.dataset.fileName = file.name;
+                    input.dataset.uploadId = uploadId;
                     form.appendChild(input);
-                    
-                    // Update the UI to show success
+
                     file.previewElement.classList.add('dz-success');
+                    
+                    console.log('Image ready for submission:', response.url);
                 } else {
-                    console.warn('No valid URL returned in response:', response);
-                }
-                
-                // Force a status update
-                if (typeof updateUploadStatus === 'function') {
-                    updateUploadStatus();
+                    console.error('Invalid GCS upload response:', response);
+                    this.emit("error", file, response?.error || "Upload failed");
                 }
             });
 
-            // Enhanced file validation
             this.on("addedfile", function(file) {
-                console.log(`File added: ${file.name}, size: ${file.size} bytes, type: ${file.type}`);
+                console.log(`File added: ${file.name} (${(file.size/1024/1024).toFixed(2)}MB)`);
                 
-                // Use a more user-friendly way to handle validation errors instead of alerts
+                // Validate file type and size
                 let errorMessage = null;
                 
-                // Validate file type more strictly
-                if (!file.type.match(/^image\/(jpeg|jpg|png)$/i)) {
-                    errorMessage = 'Only JPG and PNG images are allowed';
-                } 
-                // Validate file size
-                else if (file.size > 5 * 1024 * 1024) { // 5MB
-                    errorMessage = 'File too large (max 5MB)';
-                }
-                // Check for empty files
-                else if (file.size === 0) {
-                    errorMessage = 'Empty file detected';
+                if (!file.type.match(/^image\/(jpeg|jpg|png|webp)$/i)) {
+                    errorMessage = 'Only JPEG, PNG, and WebP images are allowed';
+                } else if (file.size > 10 * 1024 * 1024) {
+                    errorMessage = 'File too large (max 10MB)';
+                } else if (file.size === 0) {
+                    errorMessage = 'Empty file not allowed';
                 }
                 
-                // If we found an error, handle it gracefully
                 if (errorMessage) {
-                    // Mark the file as rejected
-                    file.rejected = true;
-                    
-                    // Add custom error UI
-                    dz.emit("error", file, errorMessage);
-                    
-                    // Add a small delay before updating the UI to ensure the preview is created
                     setTimeout(() => {
-                        // Find the preview element for this file
-                        const preview = file.previewElement;
-                        if (preview) {
-                            // Add a special class for rejected files
-                            preview.classList.add('dz-rejected');
-                            
-                            // Update error message display
-                            const errorDisplay = preview.querySelector('.dz-error-message span');
-                            if (errorDisplay) {
-                                errorDisplay.textContent = errorMessage;
-                            }
-                            
-                            // Make the remove button more prominent
-                            const removeLink = preview.querySelector('.dz-remove');
-                            if (removeLink) {
-                                removeLink.classList.add('dz-remove-rejected');
-                                removeLink.textContent = 'Remove rejected file';
-                            }
-                        }
+                        dz.emit("error", file, errorMessage);
+                        dz.removeFile(file);
                     }, 100);
-                    
                     return;
                 }
                 
-                // Update message based on current file count
                 updateDropzoneMessage(dz);
+            });
+            
+            this.on("error", function(file, errorMessage) {
+                console.error('Upload error:', file.name, errorMessage);
+                
+                // Show user-friendly error
+                const preview = file.previewElement;
+                if (preview) {
+                    preview.classList.add('dz-error');
+                    const errorEl = preview.querySelector('.dz-error-message');
+                    if (errorEl) {
+                        errorEl.textContent = typeof errorMessage === 'string' ? errorMessage : 'Upload failed';
+                    }
+                }
             });
 
             this.on("removedfile", function(file) {
+                // Remove corresponding hidden input
+                if (file?.uploadId) {
+                    document
+                        .querySelectorAll(`input.gcs-image-url[data-upload-id='${file.uploadId}']`)
+                        .forEach(input => input.remove());
+                } else if (file?.gcsUrl) {
+                    document
+                        .querySelectorAll('input.gcs-image-url')
+                        .forEach(input => {
+                            if (input.value === file.gcsUrl) {
+                                input.remove();
+                            }
+                        });
+                }
+                
+                console.log('Removed file and form input:', file.name);
                 updateDropzoneMessage(dz);
             });
 
@@ -378,77 +403,12 @@ function initializeForm(token) {
                 alert('Maximum 5 files allowed');
             });
 
-            // Enhanced success handling
-            this.on("success", function(file, response) {
-                console.log('File uploaded successfully:', file.name);
-                if (response && response.images && response.images.length > 0) {
-                    // Find the matching image URL for this file
-                    const imageUrl = response.images.find(url => url.includes(file.name.replace(/[^a-zA-Z0-9.-]/g, '_')));
-                    file.s3url = imageUrl || response.images[0];
-                    console.log('Assigned S3 URL:', file.s3url);
-                } else {
-                    console.warn('No image URLs returned in response:', response);
-                }
-            });
+            // Removed duplicate success handler to avoid inconsistent response parsing
             
-            // Enhanced error handling
-            this.on("error", function(file, errorMessage, xhr) {
-                console.error("File upload error:", {
-                    file: file.name,
-                    error: errorMessage,
-                    status: xhr?.status,
-                    responseText: xhr?.responseText
-                });
-                
-                // Parse error if it's a string that might be JSON
-                if (typeof errorMessage === 'string' && errorMessage.startsWith('{')) {
-                    try {
-                        const parsedError = JSON.parse(errorMessage);
-                        errorMessage = parsedError.error || parsedError.message || errorMessage;
-                    } catch (e) {
-                        // Not JSON, use as is
-                    }
-                }
-                
-                // Clearly mark as error
-                file.status = Dropzone.ERROR;
-                file.previewElement.classList.add('dz-error');
-                file.uploadFailed = true;
-                
-                // Set an error flag on the file for later reference
-                file.uploadError = errorMessage;
-                
-                // Show error on the file
-                const errorDisplay = file.previewElement.querySelector('.dz-error-message span');
-                if (errorDisplay) {
-                    errorDisplay.textContent = errorMessage;
-                }
-                
-                // Force a status update
-                if (typeof updateUploadStatus === 'function') {
-                    updateUploadStatus();
-                }
-            });
-            
-            // Add new handler for queuecomplete event
+            // Add handler for queuecomplete event
             this.on("queuecomplete", function() {
                 console.log('All queued files processed');
-                // Force a status update
-                if (typeof updateUploadStatus === 'function') {
-                    updateUploadStatus();
-                }
-            });
-            
-            // Handle when files are added
-            this.on("addedfile", function(file) {
-                console.log(`File added: ${file.name}, status: ${file.status}`);
-                // Force upload to start immediately
-                if (file.status !== Dropzone.UPLOADING && file.status !== Dropzone.SUCCESS) {
-                    setTimeout(() => {
-                        console.log(`Auto-processing file ${file.name}`);
-                        dz.processFile(file);
-                    }, 100);
-                }
+                updateDropzoneMessage(dz);
             });
 
             // Add this function to resize images before upload
@@ -573,6 +533,17 @@ function initializeForm(token) {
         }
     });
     
+    console.log('Dropzone created successfully:', imageDropzone);
+    
+    } catch (error) {
+        console.error('Failed to create Dropzone:', error);
+        const statusEl = document.getElementById('uploadStatus');
+        if (statusEl) {
+            statusEl.innerHTML = '<div class="alert alert-danger mb-0">Failed to initialize uploader: ' + error.message + '</div>';
+        }
+        return;
+    }
+    
     // Initialize the stock image gallery
     initializeStockImageGallery();
     
@@ -616,28 +587,28 @@ function initializeStockImageGallery() {
     const stockImagesContainer = document.getElementById('stock-images-container');
     if (!stockImagesContainer) return;
     
-    // Define stock images (these URLs should point to your pre-uploaded S3 images)
+    // Define stock images (these URLs should point to your pre-uploaded GCS images)
     const stockImages = [
-        { id: 'stock1', url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/stock/business_1.jpg', title: 'Stock Image 1' },
-        { id: 'stock2', url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/stock/business_2.jpg', title: 'Stock Image 2' },
-        { id: 'stock3', url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/stock/business_3.jpg', title: 'Stock Image 3' },
-        { id: 'stock4', url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/stock/business_4.png', title: 'Stock Image 4' },
-        { id: 'stock5', url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/stock/business_5.jpg', title: 'Stock Image 5' },
-        { id: 'stock6', url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/stock/business_6.jpg', title: 'Stock Image 6' },
-        { id: 'stock7', url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/stock/business_7.jpeg', title: 'Stock Image 7' },
-        { id: 'stock8', url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/stock/business_8.jpg', title: 'Stock Image 8' },
-        { id: 'stock9', url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/stock/business_9.jpg', title: 'Stock Image 9' },
-        { id: 'stock10', url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/stock/business_10.jpg', title: 'Stock Image 10' },
-        { id: 'stock11', url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/stock/business_11.jpg', title: 'Stock Image 11' },
-        { id: 'stock12', url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/stock/business_12.jpg', title: 'Stock Image 12' },
-        { id: 'stock13', url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/stock/business_13.png', title: 'Stock Image 13' },
-        { id: 'stock14', url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/stock/business_14.png', title: 'Stock Image 14' },
-        { id: 'stock15', url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/stock/business_15.jpg', title: 'Stock Image 15' },
-        { id: 'stock16', url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/stock/business_16.jpg', title: 'Stock Image 16' },
-        { id: 'stock17', url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/stock/business_17.jpg', title: 'Stock Image 17' },
-        { id: 'stock18', url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/stock/business_18.jpg', title: 'Stock Image 18' },
-        { id: 'stock19', url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/stock/business_19.jpg', title: 'Stock Image 19' },
-        { id: 'stock20', url: 'https://arzani-images1.s3.eu-west-2.amazonaws.com/stock/business_20.jpg', title: 'Stock Image 20' }
+        { id: 'stock1', url: 'https://storage.googleapis.com/arzani-marketplace-files/stock/business_1.jpg', title: 'Stock Image 1' },
+        { id: 'stock2', url: 'https://storage.googleapis.com/arzani-marketplace-files/stock/business_2.jpg', title: 'Stock Image 2' },
+        { id: 'stock3', url: 'https://storage.googleapis.com/arzani-marketplace-files/stock/business_3.jpg', title: 'Stock Image 3' },
+        { id: 'stock4', url: 'https://storage.googleapis.com/arzani-marketplace-files/stock/business_4.png', title: 'Stock Image 4' },
+        { id: 'stock5', url: 'https://storage.googleapis.com/arzani-marketplace-files/stock/business_5.jpg', title: 'Stock Image 5' },
+        { id: 'stock6', url: 'https://storage.googleapis.com/arzani-marketplace-files/stock/business_6.jpg', title: 'Stock Image 6' },
+        { id: 'stock7', url: 'https://storage.googleapis.com/arzani-marketplace-files/stock/business_7.jpeg', title: 'Stock Image 7' },
+        { id: 'stock8', url: 'https://storage.googleapis.com/arzani-marketplace-files/stock/business_8.jpg', title: 'Stock Image 8' },
+        { id: 'stock9', url: 'https://storage.googleapis.com/arzani-marketplace-files/stock/business_9.jpg', title: 'Stock Image 9' },
+        { id: 'stock10', url: 'https://storage.googleapis.com/arzani-marketplace-files/stock/business_10.jpg', title: 'Stock Image 10' },
+        { id: 'stock11', url: 'https://storage.googleapis.com/arzani-marketplace-files/stock/business_11.jpg', title: 'Stock Image 11' },
+        { id: 'stock12', url: 'https://storage.googleapis.com/arzani-marketplace-files/stock/business_12.jpg', title: 'Stock Image 12' },
+        { id: 'stock13', url: 'https://storage.googleapis.com/arzani-marketplace-files/stock/business_13.png', title: 'Stock Image 13' },
+        { id: 'stock14', url: 'https://storage.googleapis.com/arzani-marketplace-files/stock/business_14.png', title: 'Stock Image 14' },
+        { id: 'stock15', url: 'https://storage.googleapis.com/arzani-marketplace-files/stock/business_15.jpg', title: 'Stock Image 15' },
+        { id: 'stock16', url: 'https://storage.googleapis.com/arzani-marketplace-files/stock/business_16.jpg', title: 'Stock Image 16' },
+        { id: 'stock17', url: 'https://storage.googleapis.com/arzani-marketplace-files/stock/business_17.jpg', title: 'Stock Image 17' },
+        { id: 'stock18', url: 'https://storage.googleapis.com/arzani-marketplace-files/stock/business_18.jpg', title: 'Stock Image 18' },
+        { id: 'stock19', url: 'https://storage.googleapis.com/arzani-marketplace-files/stock/business_19.jpg', title: 'Stock Image 19' },
+        { id: 'stock20', url: 'https://storage.googleapis.com/arzani-marketplace-files/stock/business_20.jpg', title: 'Stock Image 20' }
     ];
     
     // Clear loading message
@@ -916,9 +887,9 @@ async function handleFormSubmission(event) {
             }
         }
         
-        // Add S3 region information
-        submissionData.awsRegion = window.AWS_REGION || 'eu-west-2';
-        submissionData.awsBucket = window.AWS_BUCKET_NAME || 'arzani-images1';
+        // Add GCS bucket information
+        submissionData.gcsBucket = window.GCS_BUCKET_NAME || 'arzani-marketplace-images';
+        submissionData.storageType = 'gcs';
         
         console.log('Submitting business data:', submissionData);
         
@@ -993,9 +964,9 @@ async function handleFormSubmission(event) {
     }
 }
 
-// Update Dropzone configuration
+// Configure Dropzone
 Dropzone.autoDiscover = false;
-var imageDropzone;
+var imageDropzone; // GCS-based dropzone instance
 
 function updateDropzoneMessage(dropzone) {
     const messageElement = dropzone.element.querySelector('.dz-message');

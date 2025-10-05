@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Storefront | Arzani Marketplace</title>
+    <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        .logo-img {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+        }
+        
+        .product-card {
+            transition: all 0.2s ease-in-out;
+        }
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .btn-primary {
+            background-color: #2563eb;
+            color: white;
+            font-weight: 500;
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: inline-flex;
+            align-items: center;
+            text-decoration: none;
+        }
+        
+        .btn-primary:hover {
+            background-color: #1d4ed8;
+        }
+        
+        .btn-secondary {
+            background-color: #6b7280;
+            color: white;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #4b5563;
+        }
+        
+        .price-tag {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans antialiased">
+    <div class="min-h-screen">
+        <!-- Header -->
+        <header class="bg-white shadow-sm border-b">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <div class="flex items-center space-x-3">
+                        <img src="/figma design exports/images.webp/arzani-icon-nobackground.png" 
+                             alt="Arzani" class="logo-img">
+                        <div>
+                            <h1 class="text-xl font-semibold text-gray-900">Professional Storefront</h1>
+                            <p class="text-sm text-gray-600">Powered by Arzani Marketplace</p>
+                        </div>
+                    </div>
+                    <a href="/" class="text-gray-600 hover:text-gray-900">
+                        <i class="fas fa-home mr-2"></i>Back to Arzani
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Store Info Section -->
+            <div id="storeInfo" class="mb-8">
+                <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border p-6">
+                    <div class="flex items-center justify-center py-4">
+                        <div class="spinner"></div>
+                        <span class="ml-2 text-gray-600">Loading store information...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Products Section -->
+            <div class="mb-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900">
+                        <i class="fas fa-store mr-2 text-blue-600"></i>
+                        Available Products
+                    </h2>
+                    <div id="productCount" class="text-gray-600"></div>
+                </div>
+                
+                <div id="productsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Loading state -->
+                    <div class="col-span-full flex items-center justify-center py-12">
+                        <div class="spinner"></div>
+                        <span class="ml-2 text-gray-600">Loading products...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty state -->
+            <div id="emptyState" class="hidden text-center py-16">
+                <div class="max-w-md mx-auto">
+                    <i class="fas fa-box-open text-6xl text-gray-300 mb-6"></i>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">No Products Available</h3>
+                    <p class="text-gray-600 mb-6">This store doesn't have any products available for purchase yet.</p>
+                    <a href="/" class="btn-primary">
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        Browse Other Professionals
+                    </a>
+                </div>
+            </div>
+
+            <!-- Error state -->
+            <div id="errorState" class="hidden text-center py-16">
+                <div class="max-w-md mx-auto">
+                    <i class="fas fa-exclamation-triangle text-6xl text-red-300 mb-6"></i>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Store Not Available</h3>
+                    <p class="text-gray-600 mb-6" id="errorMessage">This store is currently not available.</p>
+                    <a href="/" class="btn-primary">
+                        <i class="fas fa-home mr-2"></i>
+                        Return to Arzani
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="bg-white border-t mt-16">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div class="text-center text-gray-600">
+                    <p class="mb-2">
+                        <i class="fas fa-shield-alt mr-2 text-green-600"></i>
+                        Secure payments powered by Stripe
+                    </p>
+                    <p class="text-sm">
+                        This storefront is hosted on <a href="/" class="text-blue-600 hover:text-blue-800">Arzani Marketplace</a>
+                    </p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Get account ID from URL
+        const pathParts = window.location.pathname.split('/');
+        const accountId = pathParts[pathParts.length - 1];
+
+        // Initialize the storefront
+        document.addEventListener('DOMContentLoaded', function() {
+            if (accountId && accountId.startsWith('acct_')) {
+                loadStorefront(accountId);
+            } else {
+                showError('Invalid store URL');
+            }
+        });
+
+        // Load storefront data
+        async function loadStorefront(accountId) {
+            try {
+                const response = await fetch(`/api/stripe-connect/storefront/${accountId}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    displayStoreInfo(data);
+                    displayProducts(data.products);
+                } else {
+                    showError(data.error || 'Failed to load store');
+                }
+            } catch (error) {
+                console.error('Error loading storefront:', error);
+                showError('Failed to connect to store');
+            }
+        }
+
+        // Display store information
+        function displayStoreInfo(data) {
+            const storeInfoHtml = `
+                <div class="text-center">
+                    <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
+                        <i class="fas fa-store text-2xl text-blue-600"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-2">Professional Store</h2>
+                    <p class="text-gray-600 mb-4">Browse and purchase professional services and products</p>
+                    <div class="inline-flex items-center text-sm text-gray-500">
+                        <i class="fas fa-shield-check mr-2 text-green-500"></i>
+                        Verified Professional • Secure Checkout
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('storeInfo').innerHTML = `
+                <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border p-8">
+                    ${storeInfoHtml}
+                </div>
+            `;
+        }
+
+        // Display products
+        function displayProducts(products) {
+            const productCount = document.getElementById('productCount');
+            
+            if (products.length === 0) {
+                document.getElementById('productsGrid').innerHTML = '';
+                document.getElementById('emptyState').classList.remove('hidden');
+                productCount.textContent = 'No products available';
+                return;
+            }
+
+            productCount.textContent = `${products.length} product${products.length !== 1 ? 's' : ''} available`;
+
+            const productsHtml = products.map(product => `
+                <div class="product-card bg-white rounded-lg shadow-sm border overflow-hidden">
+                    ${product.images && product.images.length > 0 ? 
+                        `<div class="aspect-w-16 aspect-h-9 bg-gray-200">
+                            <img src="${product.images[0]}" alt="${product.name}" 
+                                 class="w-full h-48 object-cover">
+                         </div>` :
+                        `<div class="h-48 bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
+                            <i class="fas fa-box text-4xl text-gray-400"></i>
+                         </div>`
+                    }
+                    
+                    <div class="p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">${product.name}</h3>
+                        <p class="text-gray-600 text-sm mb-4 line-clamp-2">
+                            ${product.description || 'Professional service or product'}
+                        </p>
+                        
+                        <div class="flex justify-between items-center">
+                            <span class="price-tag">${product.price.formatted}</span>
+                            <button onclick="purchaseProduct('${product.id}', '${product.price.id}')" 
+                                    class="btn-primary">
+                                <i class="fas fa-shopping-cart mr-2"></i>
+                                Buy Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('productsGrid').innerHTML = productsHtml;
+        }
+
+        // Purchase product
+        async function purchaseProduct(productId, priceId) {
+            try {
+                // Show loading state
+                const button = event.target;
+                const originalText = button.innerHTML;
+                button.innerHTML = '<div class="spinner" style="width: 16px; height: 16px;"></div><span class="ml-2">Processing...</span>';
+                button.disabled = true;
+
+                const response = await fetch('/api/stripe-connect/create-checkout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        account_id: accountId,
+                        product_id: productId,
+                        quantity: 1
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Redirect to Stripe Checkout
+                    window.location.href = data.checkout_url;
+                } else {
+                    throw new Error(data.error || 'Failed to create checkout session');
+                }
+            } catch (error) {
+                console.error('Error creating checkout:', error);
+                alert('Error: ' + error.message);
+                
+                // Restore button state
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        }
+
+        // Show error state
+        function showError(message) {
+            document.getElementById('productsGrid').innerHTML = '';
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('errorState').classList.remove('hidden');
+        }
+
+        // Utility function to copy store link
+        function copyStoreLink() {
+            navigator.clipboard.writeText(window.location.href).then(() => {
+                alert('Store link copied to clipboard!');
+            });
+        }
+    </script>
+</body>
+</html>

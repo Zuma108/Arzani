@@ -55,9 +55,14 @@ export async function getConversationsForUser(userId) {
         SELECT 
           u.id, 
           u.username,
-          u.profile_picture
+          COALESCE(
+            pp.professional_picture_url,
+            u.profile_picture,
+            '/images/default-profile.png'
+          ) as profile_picture
         FROM conversation_participants cp
         JOIN users u ON cp.user_id = u.id
+        LEFT JOIN professional_profiles pp ON u.id = pp.user_id
         WHERE cp.conversation_id = $1 AND cp.user_id != $2
         LIMIT 1
       `;
@@ -130,10 +135,15 @@ export async function getConversationById(conversationId, userId) {
           SELECT json_build_object(
             'id', u.id, 
             'name', u.username,
-            'profile_picture', COALESCE(u.profile_picture, '/images/default-profile.png')
+            'profile_picture', COALESCE(
+              pp.professional_picture_url,
+              u.profile_picture,
+              '/images/default-profile.png'
+            )
           )
           FROM conversation_participants cp
           JOIN users u ON cp.user_id = u.id
+          LEFT JOIN professional_profiles pp ON u.id = pp.user_id
           WHERE cp.conversation_id = c.id AND cp.user_id != $2
           LIMIT 1
         ) as recipient
@@ -167,6 +177,8 @@ export async function getConversationById(conversationId, userId) {
         m.content,
         m.sender_id,
         m.created_at,
+        m.message_type,
+        m.quote_id,
         u.username as sender_name,
         u.profile_picture as sender_profile_pic,
         m.is_system_message

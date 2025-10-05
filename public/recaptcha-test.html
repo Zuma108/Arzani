@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>reCAPTCHA Enterprise Test</title>
+    <script src="https://www.google.com/recaptcha/enterprise.js?render=6Lfo9NwrAAAAAPrlDclHQbWWIXpipvYksdZ3xNxi"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .button { background: #007cba; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+        .button:hover { background: #005a87; }
+        .result { margin-top: 20px; padding: 15px; border-radius: 4px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .info { background: #e2e3e5; border: 1px solid #d6d8db; color: #383d41; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>reCAPTCHA Enterprise Test</h1>
+        <p>This page tests the reCAPTCHA Enterprise implementation for your marketplace.</p>
+        
+        <div>
+            <h3>Actions to Test:</h3>
+            <button class="button" onclick="testAction('ONBOARDING')">Test Onboarding Action</button>
+            <button class="button" onclick="testAction('LOGIN')">Test Login Action</button>
+            <button class="button" onclick="testAction('CONTACT')">Test Contact Action</button>
+        </div>
+        
+        <div id="results"></div>
+        
+        <div style="margin-top: 30px;">
+            <h3>Setup Instructions:</h3>
+            <ol>
+                <li>Make sure your <code>.env</code> file has the correct reCAPTCHA site key</li>
+                <li>Ensure your Google Cloud project is set up with reCAPTCHA Enterprise API</li>
+                <li>Configure your domain in the reCAPTCHA Enterprise console</li>
+                <li>Test with the PowerShell script: <code>.\test-recaptcha-api.ps1 -Token "YOUR_TOKEN"</code></li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        function addResult(message, type = 'info') {
+            const resultsDiv = document.getElementById('results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `result ${type}`;
+            resultDiv.innerHTML = message;
+            resultsDiv.appendChild(resultDiv);
+        }
+
+        function testAction(action) {
+            addResult(`Testing action: ${action}...`, 'info');
+            
+            grecaptcha.enterprise.ready(async () => {
+                try {
+                    const token = await grecaptcha.enterprise.execute('6Lfo9NwrAAAAAPrlDclHQbWWIXpipvYksdZ3xNxi', {
+                        action: action
+                    });
+                    
+                    addResult(`✅ Token generated successfully for action: ${action}`, 'success');
+                    addResult(`<strong>Token:</strong><br><pre>${token}</pre>`, 'info');
+                    
+                    // You can now test this token with your PowerShell script:
+                    addResult(`<strong>Test with PowerShell:</strong><br><code>.\\test-recaptcha-api.ps1 -Token "${token}" -Action "${action}"</code>`, 'info');
+                    
+                } catch (error) {
+                    addResult(`❌ Error generating token for action ${action}: ${error.message}`, 'error');
+                    console.error('reCAPTCHA error:', error);
+                }
+            });
+        }
+
+        // Auto-test onboarding when page loads
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                addResult('Page loaded. reCAPTCHA Enterprise is ready!', 'success');
+                // Uncomment the next line to auto-test onboarding
+                // testAction('ONBOARDING');
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

@@ -35,6 +35,12 @@
 			"id": "dataforseo_password",
 			"description": "DataForSEO Password",
 			"password": true
+		},
+		{
+			"type": "promptString",
+			"id": "postgres_connection_string",
+			"description": "PostgreSQL Connection String",
+			"password": true
 		}
 	],
 	"servers": {
@@ -108,8 +114,22 @@
 				"PERPLEXITY_API_KEY": "${input:perplexity_api_key}"
 			}
 		},
-			"Notion": {
-			"url": "https://mcp.notion.com/mcp"
+		"postgresql": {
+			"type": "stdio",
+			"command": "node",
+			"args": [
+				"mcp-postgres-limited.js"
+			],
+			"env": {
+				"POSTGRES_CONNECTION_STRING": "postgresql://postgres:Olumide123!@localhost:5432/my-marketplace"
 			}
+		},
+		"figma": {
+			"type": "http",
+			"url": "http://127.0.0.1:3845/mcp"
+		},
+		"Notion": {
+			"url": "https://mcp.notion.com/mcp"
 		}
 	}
+}

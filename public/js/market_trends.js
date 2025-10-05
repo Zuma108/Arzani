@@ -101,12 +101,14 @@ function generateColorPalette(count) {
 async function fetchMarketTrends(filters = activeFilters) {
     const token = localStorage.getItem('token');
     
-    if (!token) {
-        console.error('No authentication token found');
-        // Try to get the current URL to use as redirect after login
-        const currentPage = encodeURIComponent(window.location.pathname);
-        window.location.href = `/login2?redirect=${currentPage}`;
-        throw new Error('Authentication required');
+    // Check for token first, then fall back to session-based auth
+    const headers = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        console.log('Using token authentication');
+    } else {
+        console.log('No token found, using session-based authentication');
+        // Session cookies will be sent automatically with the request
     }
     
     const queryParams = new URLSearchParams({
@@ -117,12 +119,13 @@ async function fetchMarketTrends(filters = activeFilters) {
     if (filters.location) queryParams.append('location', filters.location);
     
     try {
-        console.log('Fetching market trends with token:', token ? 'Present' : 'Missing');
+        console.log('Fetching market trends with auth:', token ? 'Token' : 'Session');
         const response = await fetch(`/api/market-trends/data?${queryParams.toString()}`, {
             headers: {
-                'Authorization': `Bearer ${token}`,
+                ...headers,
                 'Content-Type': 'application/json'
-            }
+            },
+            credentials: 'include' // Ensure cookies are sent for session-based auth
         });
 
         if (!response.ok) {
@@ -150,10 +153,14 @@ async function fetchMarketTrends(filters = activeFilters) {
 
 async function fetchFilters() {
     const token = localStorage.getItem('token');
+    const headers = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+    
     const response = await fetch('/api/market-trends/filters', {
-        headers: {
-            'Authorization': `Bearer ${token}`
-        }
+        headers: headers,
+        credentials: 'include' // Include cookies for session-based auth
     });
 
     if (!response.ok) {

@@ -37,17 +37,18 @@
     <style>
         /* Custom scrollbar */
         ::-webkit-scrollbar {
-            width: 6px;
+            width: 8px;
         }
         ::-webkit-scrollbar-track {
             background: #f1f1f1;
+            border-radius: 4px;
         }
         ::-webkit-scrollbar-thumb {
-            background: #c1c1c1;
-            border-radius: 3px;
+            background: linear-gradient(135deg, #041b76, #064fa3);
+            border-radius: 4px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #a8a8a8;
+            background: linear-gradient(135deg, #064fa3, #041b76);
         }
 
         /* Dark mode scrollbar */
@@ -55,24 +56,78 @@
             background: #374151;
         }
         .dark ::-webkit-scrollbar-thumb {
-            background: #6b7280;
+            background: linear-gradient(135deg, #6b7280, #9ca3af);
         }
         .dark ::-webkit-scrollbar-thumb:hover {
-            background: #9ca3af;
+            background: linear-gradient(135deg, #9ca3af, #6b7280);
+        }
+
+        /* Professional gradients */
+        .gradient-primary {
+            background: linear-gradient(135deg, #041b76 0%, #064fa3 100%);
+        }
+        .gradient-secondary {
+            background: linear-gradient(135deg, #f7f5f2 0%, #ffffff 100%);
+        }
+        .gradient-gold {
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+        }
+
+        /* Enhanced card styling */
+        .professional-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .professional-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+        .dark .professional-card {
+            background: rgba(31, 41, 55, 0.95);
+            border: 1px solid rgba(75, 85, 99, 0.3);
+        }
+
+        /* Token balance enhancements */
+        .token-display {
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 800;
+            text-shadow: 0 2px 4px rgba(255, 215, 0, 0.3);
+        }
+        
+        .token-icon {
+            filter: drop-shadow(0 2px 4px rgba(255, 215, 0, 0.5));
+            animation: tokenGlow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes tokenGlow {
+            from { filter: drop-shadow(0 2px 4px rgba(255, 215, 0, 0.5)); }
+            to { filter: drop-shadow(0 4px 8px rgba(255, 215, 0, 0.8)); }
+        }
+
+        /* Premium button styling */
+        .btn-premium {
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            border: none;
+            color: #041b76;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+            transition: all 0.3s ease;
+        }
+        .btn-premium:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.6);
+            color: #041b76;
         }
 
         /* Sidebar transitions */
         #sidebar {
             transition: transform 0.3s ease-in-out;
-        }
-
-        /* Toggle switch styles for two-factor auth */
-        #twoFactorSwitch:checked + label .dot {
-            transform: translateX(24px);
-            background-color: #041b76;
-        }
-        #twoFactorSwitch:checked + label {
-            background-color: #e5e7eb;
         }
 
         /* Animation keyframes */
@@ -84,6 +139,14 @@
             from { transform: translateY(20px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
         }
+        @keyframes scaleIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(4, 27, 118, 0.4); }
+            50% { box-shadow: 0 0 0 10px rgba(4, 27, 118, 0); }
+        }
 
         /* Custom animations */
         .fade-in {
@@ -91,6 +154,12 @@
         }
         .slide-up {
             animation: slideUp 0.3s ease-out;
+        }
+        .scale-in {
+            animation: scaleIn 0.3s ease-out;
+        }
+        .pulse-glow {
+            animation: pulseGlow 2s infinite;
         }
 
         /* Focus styles for accessibility */
@@ -102,128 +171,101 @@
         .hover\:bg-accent:hover {
             background-color: #064fa3;
         }
+
+        /* Progress bar styling */
+        .progress-bar {
+            background: linear-gradient(90deg, #041b76 0%, #064fa3 50%, #ffd700 100%);
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Modal backdrop */
+        .modal-backdrop {
+            backdrop-filter: blur(8px);
+            background: rgba(0, 0, 0, 0.6);
+        }
+
+        /* Professional typography */
+        .text-gradient {
+            background: linear-gradient(135deg, #041b76 0%, #064fa3 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        /* Custom SVG token icons */
+        .token-icon-svg {
+            filter: drop-shadow(0 2px 4px rgba(255, 215, 0, 0.5));
+            animation: tokenGlow 2s ease-in-out infinite alternate;
+        }
+        
+        .token-stack-icon {
+            fill: url(#goldGradient);
+        }
+        
+        .token-balance-icon {
+            fill: url(#goldGradient);
+        }
+        
+        .chart-icon {
+            fill: url(#blueGradient);
+        }
+        
+        .purchase-icon {
+            fill: url(#greenGradient);
+        }
     </style>
+    
+    <!-- SVG Definitions for Icons -->
+    <svg width="0" height="0" style="position: absolute;">
+        <defs>
+            <!-- Gold Gradient for Token Icons -->
+            <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#ffd700;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#ffed4e;stop-opacity:1" />
+            </linearGradient>
+            
+            <!-- Blue Gradient for Chart Icons -->
+            <linearGradient id="blueGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#1d4ed8;stop-opacity:1" />
+            </linearGradient>
+            
+            <!-- Green Gradient for Purchase Icons -->
+            <linearGradient id="greenGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#10b981;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#059669;stop-opacity:1" />
+            </linearGradient>
+            
+            <!-- Purple Gradient for Features -->
+            <linearGradient id="purpleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:1" />
+            </linearGradient>
+            
+            <!-- Red Gradient for Support -->
+            <linearGradient id="redGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#ef4444;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#dc2626;stop-opacity:1" />
+            </linearGradient>
+            
+            <!-- Indigo Gradient for Reports -->
+            <linearGradient id="indigoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#4f46e5;stop-opacity:1" />
+            </linearGradient>
+        </defs>
+    </svg>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 min-h-screen flex">
-    <!-- Mobile menu button -->
-    <button id="mobile-menu-button" class="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-        <i class="fas fa-bars text-gray-600 dark:text-gray-300"></i>
-    </button>
-
-    <!-- Sidebar -->
-    <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-gray-800 shadow-lg transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
-        <div class="flex flex-col h-full">
-            <!-- Logo -->
-            <div class="flex items-center px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                <img src="/figma design exports/images.webp/arzani-icon-nobackground.png" alt="Arzani" class="h-8 w-8">
-                <span class="ml-3 text-xl font-semibold text-gray-900 dark:text-white">Arzani</span>
-            </div>
-
-            <!-- Navigation -->
-            <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-                <a href="/marketplace2" class="flex items-center px-3 py-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                    <i class="fas fa-store mr-3 w-5"></i>
-                    <span>Marketplace</span>
-                </a>
-                <a href="/market-trends" class="flex items-center px-3 py-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                    <i class="fas fa-chart-line mr-3 w-5"></i>
-                    <span>Market Trends</span>
-                </a>
-                <a href="/chat" class="flex items-center px-3 py-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                    <i class="fas fa-comments mr-3 w-5"></i>
-                    <span>Chat</span>
-                </a>
-                <a href="/profile" class="flex items-center px-3 py-2 bg-primary text-white rounded-lg">
-                    <i class="fas fa-user-circle mr-3 w-5"></i>
-                    <span>My Profile</span>
-                </a>
-                <a href="/saved-searches" class="flex items-center px-3 py-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                    <i class="fas fa-bookmark mr-3 w-5"></i>
-                    <span>Saved Searches</span>
-                </a>
-                <a href="/history" class="flex items-center px-3 py-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                    <i class="fas fa-history mr-3 w-5"></i>
-                    <span>History</span>
-                </a>
-                <a href="/professional-verification" class="flex items-center px-3 py-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                    <i class="fas fa-user-check mr-3 w-5"></i>
-                    <span>Professional Verification</span>
-                </a>
-                
-                <!-- Add Buyer Dashboard link if buyer is premium -->
-                <% if (locals.user && locals.user.buyer_plan === 'premium') { %>
-                <a href="/buyer-dashboard" class="flex items-center px-3 py-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                    <i class="fas fa-shopping-cart mr-3 w-5"></i>
-                    <span>Buyer Dashboard</span>
-                </a>
-                <% } %>
-                
-                <!-- Add Professional Dashboard link if verified -->
-                <% if (locals.user && locals.user.is_verified_professional) { %>
-                <a href="/professional-dashboard" class="flex items-center px-3 py-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                    <i class="fas fa-tachometer-alt mr-3 w-5"></i>
-                    <span>Professional Dashboard</span>
-                </a>
-                <% } %>
-                
-                <!-- Admin Verification Review link -->
-                <% if (locals.user && locals.user.role === 'admin') { %>
-                <a href="/admin/verification-review" class="flex items-center px-3 py-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                    <i class="fas fa-user-shield mr-3 w-5"></i>
-                    <span>Admin Verification</span>
-                    <span class="ml-auto bg-red-500 text-white text-xs px-2 py-1 rounded-full">Admin</span>
-                </a>
-                <% } %>
-            </nav>
-
-            <!-- Sign out button -->
-            <div class="p-4 border-t border-gray-200 dark:border-gray-700">
-                <button id="signOutBtn" class="w-full flex items-center justify-center px-4 py-2 text-red-600 dark:text-red-400 border border-red-600 dark:border-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
-                    <i class="fas fa-sign-out-alt mr-2"></i>
-                    <span>Sign Out</span>
-                </button>
-            </div>
-        </div>
-    </aside>
-
-    <!-- Mobile sidebar overlay -->
-    <div id="sidebar-overlay" class="lg:hidden fixed inset-0 z-30 bg-black bg-opacity-50 hidden"></div>
+    <!-- Include Unified Sidebar -->
+    <%- include('partials/unified-sidebar') %>
 
     <!-- Main Content -->
-    <main class="flex-1 lg:ml-64 flex flex-col overflow-y-auto">
-        <!-- Top Navbar -->
-        <nav class="bg-white dark:bg-gray-800 shadow-md sticky top-0 z-30">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex items-center justify-between h-16">
-                    <!-- Left side - Hamburger and Page Title -->
-                    <div class="flex items-center">
-                        <button id="sidebarToggle" class="lg:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 mr-4">
-                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                            </svg>
-                        </button>
-                        <h1 class="text-xl font-semibold text-gray-800 dark:text-white">My Profile</h1>
-                    </div>
-                    
-                    <!-- Center - Token Balance Widget -->
-                    <div id="token-balance-navbar-widget"></div>
-                    
-                    <!-- Right side - Breadcrumb -->
-                    <nav class="hidden md:flex" aria-label="Breadcrumb">
-                        <ol class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
-                            <li><a href="/marketplace2" class="hover:text-gray-700 dark:hover:text-gray-200">Home</a></li>
-                            <li><i class="fas fa-chevron-right text-xs"></i></li>
-                            <li class="text-gray-700 dark:text-gray-300">My Profile</li>
-                        </ol>
-                    </nav>
-                </div>
-            </div>
-        </nav>
-
+    <main id="content" class="flex-1 flex flex-col overflow-y-auto transition-all duration-300">
         <!-- Page Content -->
-        <div class="p-6">
+        <div class="p-4">
         <!-- Header -->
-        <div class="mb-8">
+        <div class="mb-6">
             <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">My Profile</h1>
             <p class="text-gray-600 dark:text-gray-400">Manage your account settings and preferences</p>
         </div>
@@ -231,19 +273,25 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- Profile Overview Card -->
             <div class="lg:col-span-1">
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-                    <div class="p-6 border-b border-gray-200 dark:border-gray-700">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Profile Overview</h3>
+                <div class="professional-card rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 scale-in">
+                    <div class="gradient-primary p-6 rounded-t-xl">
+                        <h3 class="text-lg font-bold text-white flex items-center">
+                            <i class="fas fa-user-circle mr-2"></i>
+                            Profile Overview
+                        </h3>
                     </div>
                     <div class="p-6 text-center">
-                        <div class="relative inline-block mb-4">
-                            <img 
-                                src="<%= user.profile_picture || '/images/default-profile.png' %>" 
-                                alt="Profile Picture" 
-                                class="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
-                                onerror="this.src='/images/default-profile.png'"
-                            >
-                            <label for="profile-picture-input" class="absolute bottom-0 right-0 bg-primary text-white rounded-full w-10 h-10 flex items-center justify-center cursor-pointer hover:bg-accent transition-colors">
+                        <div class="relative inline-block mb-6">
+                            <div class="relative">
+                                <img 
+                                    src="<%= user.profile_picture || '/images/default-profile.png' %>" 
+                                    alt="Profile Picture" 
+                                    class="w-36 h-36 rounded-full object-cover border-4 border-gradient-primary shadow-2xl transition-all duration-300 hover:scale-105"
+                                    onerror="this.src='/images/default-profile.png'"
+                                >
+                                <div class="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent"></div>
+                            </div>
+                            <label for="profile-picture-input" class="absolute bottom-2 right-2 gradient-primary text-white rounded-full w-12 h-12 flex items-center justify-center cursor-pointer hover:scale-110 transition-all duration-300 shadow-lg pulse-glow">
                                 <i class="fas fa-camera text-sm"></i>
                             </label>
                             <input 
@@ -253,204 +301,372 @@
                                 class="hidden"
                             >
                         </div>
-                        <h5 class="text-xl font-semibold text-gray-900 dark:text-white mb-1"><%= user.username %></h5>
-                        <p class="text-gray-600 dark:text-gray-400 mb-4">Member since <%= new Date(user.created_at).toLocaleDateString() %></p>
-                        <div class="flex justify-center mb-4">
-                            <span class="bg-secondary text-primary px-4 py-2 rounded-full text-sm font-medium">
+                        <h5 class="text-2xl font-bold text-gradient mb-2"><%= user.username %></h5>
+                        <p class="text-gray-600 dark:text-gray-400 mb-6 flex items-center justify-center">
+                            <i class="fas fa-calendar-alt mr-2 text-primary"></i>
+                            Member since <%= new Date(user.created_at).toLocaleDateString() %>
+                        </p>
+                        <div class="flex justify-center mb-6">
+                            <span class="gradient-secondary text-primary px-6 py-3 rounded-full text-sm font-semibold shadow-md border border-primary/20">
+                                <i class="fas fa-star mr-2"></i>
                                 Free Plan
                             </span>
                         </div>
-                        <button class="w-full bg-primary text-white py-2 px-4 rounded-lg hover:bg-accent transition-colors" id="upgradeBtn">
+                        <button class="btn-premium w-full py-3 px-6 rounded-xl font-bold text-lg transition-all duration-300" id="upgradeBtn">
+                            <i class="fas fa-crown mr-2"></i>
                             Upgrade to Premium
                         </button>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-3">
+                            <i class="fas fa-lock mr-1"></i>
+                            Unlock exclusive features
+                        </p>
                     </div>
                 </div>
             </div>
 
             <!-- Profile Information Cards -->
             <div class="lg:col-span-2 space-y-6">
-                <!-- Account Information Card -->
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-                    <div class="p-6 border-b border-gray-200 dark:border-gray-700">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Account Information</h3>
-                    </div>
-                    <div class="p-6">
-                        <form id="profile-edit-form" class="space-y-4">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Username</label>
-                                    <input 
-                                        type="text" 
-                                        id="username" 
-                                        name="username" 
-                                        value="<%= user.username %>"
-                                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
-                                    >
-                                </div>
-                                <div>
-                                    <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email Address</label>
-                                    <input 
-                                        type="email" 
-                                        id="email" 
-                                        name="email" 
-                                        value="<%= user.email %>"
-                                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
-                                    >
-                                </div>
-                            </div>
-                            <div>
-                                <label for="bio" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Bio</label>
-                                <textarea 
-                                    id="bio" 
-                                    name="bio" 
-                                    rows="3"
-                                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
-                                ><%= user.bio || '' %></textarea>
-                            </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label for="location" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Location</label>
-                                    <input 
-                                        type="text" 
-                                        id="location" 
-                                        name="location" 
-                                        value="<%= user.location || '' %>"
-                                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
-                                    >
-                                </div>
-                                <div>
-                                    <label for="website" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Website</label>
-                                    <input 
-                                        type="url" 
-                                        id="website" 
-                                        name="website" 
-                                        value="<%= user.website || '' %>"
-                                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:text-white"
-                                    >
-                                </div>
-                            </div>
-                            <div class="flex justify-end">
-                                <button type="submit" class="bg-primary text-white py-2 px-6 rounded-lg hover:bg-accent transition-colors">
-                                    Save Changes
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- Security Settings Card -->
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-                    <div class="p-6 border-b border-gray-200 dark:border-gray-700">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Security Settings</h3>
-                    </div>
-                    <div class="p-6 space-y-6">
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <h6 class="text-base font-medium text-gray-900 dark:text-white mb-1">Password</h6>
-                                <p class="text-sm text-gray-600 dark:text-gray-400">Last changed on <%= new Date().toLocaleDateString() %></p>
-                            </div>
-                            <a href="/auth/forgot-password" class="bg-white border border-primary text-primary py-2 px-4 rounded-lg hover:bg-primary hover:text-white transition-colors">
-                                Change Password
-                            </a>
-                        </div>
-
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <h6 class="text-base font-medium text-gray-900 dark:text-white mb-1">Two-Factor Authentication</h6>
-                                <p class="text-sm text-gray-600 dark:text-gray-400">Add an extra layer of security</p>
-                            </div>
-                            <div class="flex items-center">
-                                <input type="checkbox" id="twoFactorSwitch" class="sr-only">
-                                <label for="twoFactorSwitch" class="relative cursor-pointer">
-                                    <div class="block bg-gray-600 w-14 h-8 rounded-full"></div>
-                                    <div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition"></div>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Token Balance & Management Card -->
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-                    <div class="p-6 border-b border-gray-200 dark:border-gray-700">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Token Balance & Management</h3>
+                <div class="professional-card rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 slide-up">
+                    <div class="gradient-primary p-6 rounded-t-xl">
+                        <h3 class="text-lg font-bold text-white flex items-center">
+                            <svg width="24" height="24" viewBox="0 0 24 24" class="mr-2 token-icon-svg">
+                                <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L12 4L3 7V9C3 14.55 6.84 19.74 12 21C17.16 19.74 21 14.55 21 9ZM12 11.5C10.62 11.5 9.5 10.38 9.5 9S10.62 6.5 12 6.5S14.5 7.62 14.5 9S13.38 11.5 12 11.5ZM12 8C11.45 8 11 8.45 11 9S11.45 10 12 10S13 9.55 13 9S12.55 8 12 8Z" fill="#ffd700"/>
+                            </svg>
+                            Token Balance & Management
+                        </h3>
                     </div>
                     <div class="p-6">
-                        <div class="flex items-center justify-between mb-6">
-                            <div>
-                                <h6 class="text-base font-medium text-gray-900 dark:text-white mb-1">Current Balance</h6>
+                        <!-- Main Balance Display -->
+                        <div class="text-center mb-8 p-6 gradient-secondary rounded-xl border border-primary/10">
+                            <div class="mb-3">
+                                <h6 class="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">Current Balance</h6>
                                 <p class="text-sm text-gray-600 dark:text-gray-400">Use tokens to contact sellers and access premium features</p>
                             </div>
-                            <div class="text-right">
-                                <div class="flex items-center gap-2">
-                                    <i class="fas fa-coins text-yellow-500 text-xl"></i>
-                                    <span id="token-balance-display" class="text-2xl font-bold text-gray-900 dark:text-white">0</span>
-                                    <span class="text-sm text-gray-600 dark:text-gray-400">Tokens</span>
+                            <div class="flex items-center justify-center gap-4 mb-4">
+                                <svg width="60" height="60" viewBox="0 0 24 24" class="token-icon-svg">
+                                    <g>
+                                        <!-- Stack of coins -->
+                                        <ellipse cx="12" cy="18" rx="8" ry="2" class="token-stack-icon" opacity="0.8"/>
+                                        <ellipse cx="12" cy="16" rx="8" ry="2" class="token-stack-icon" opacity="0.9"/>
+                                        <ellipse cx="12" cy="14" rx="8" ry="2" class="token-stack-icon"/>
+                                        <!-- Main coin with token symbol -->
+                                        <circle cx="12" cy="8" r="6" class="token-balance-icon" stroke="#041b76" stroke-width="1"/>
+                                        <text x="12" y="12" text-anchor="middle" font-family="Inter, sans-serif" font-weight="bold" font-size="6" fill="#041b76">T</text>
+                                    </g>
+                                </svg>
+                                <div class="text-center">
+                                    <span id="token-balance-display" class="token-display text-4xl font-black">0</span>
+                                    <div class="text-sm font-medium text-gray-600 dark:text-gray-400">Tokens Available</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Token Usage Progress -->
+                            <div class="mt-4">
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span class="text-gray-600 dark:text-gray-400">Monthly Usage</span>
+                                    <span class="font-semibold" id="usage-percentage">0%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-3">
+                                    <div class="progress-bar h-3 rounded-full" id="usage-progress-bar" style="width: 0%"></div>
                                 </div>
                             </div>
                         </div>
                         
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                        <!-- Statistics Cards -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div class="gradient-secondary rounded-xl p-5 border border-blue-100 dark:border-gray-600 hover:shadow-lg transition-all duration-300">
                                 <div class="flex items-center justify-between">
                                     <div>
-                                        <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Tokens Used This Month</p>
-                                        <p class="text-lg font-semibold text-gray-900 dark:text-white" id="tokens-used-month">0</p>
+                                        <p class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Tokens Used This Month</p>
+                                        <p class="text-2xl font-bold text-blue-600 dark:text-blue-400" id="tokens-used-month">0</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Track your usage</p>
                                     </div>
-                                    <i class="fas fa-chart-line text-blue-500"></i>
+                                    <div class="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-full">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" class="chart-icon">
+                                            <path d="M16,6L18.29,8.29L13.41,13.17L9.41,9.17L2,16.59L3.41,18L9.41,12L13.41,16L19.71,9.71L22,12V6H16Z"/>
+                                        </svg>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                            <div class="gradient-secondary rounded-xl p-5 border border-green-100 dark:border-gray-600 hover:shadow-lg transition-all duration-300">
                                 <div class="flex items-center justify-between">
                                     <div>
-                                        <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Last Purchase</p>
-                                        <p class="text-sm text-gray-600 dark:text-gray-400" id="last-purchase-date">Never</p>
+                                        <p class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Last Purchase</p>
+                                        <% if (user.last_purchase) { %>
+                                            <p class="text-lg font-bold text-green-600 dark:text-green-400" id="last-purchase-date">
+                                                <%= new Date(user.last_purchase.date).toLocaleDateString('en-GB', { 
+                                                    day: 'numeric', 
+                                                    month: 'short', 
+                                                    year: 'numeric' 
+                                                }) %>
+                                            </p>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                <%= user.last_purchase.packageName %> - <%= user.last_purchase.tokensReceived %> tokens
+                                            </p>
+                                        <% } else { %>
+                                            <p class="text-lg font-bold text-gray-400 dark:text-gray-500" id="last-purchase-date">Never</p>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">No purchases yet</p>
+                                        <% } %>
                                     </div>
-                                    <i class="fas fa-shopping-cart text-green-500"></i>
+                                    <div class="p-3 bg-green-100 dark:bg-green-900/30 rounded-full">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" class="purchase-icon">
+                                            <path d="M7,4V2A1,1 0 0,0 6,1H4A1,1 0 0,0 3,2V4H2V6H4.83L6.94,15.55C7.18,16.8 8.26,17.7 9.5,17.95V19A1,1 0 0,0 10.5,20H19.5A1,1 0 0,0 20.5,19V17.95C21.74,17.7 22.82,16.8 23.06,15.55L25.17,6H22V4H7M9,8H11V10H9V8M9,12H11V14H9V12M13,8H15V10H13V8M13,12H15V14H13V12M17,8H19V10H17V8M17,12H19V14H17V12Z"/>
+                                        </svg>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                         
-                        <div class="flex gap-3">
+                        <!-- Action Buttons -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <button 
-                                class="flex-1 bg-primary text-white py-2 px-4 rounded-lg hover:bg-accent transition-colors" 
+                                class="gradient-primary text-white py-4 px-6 rounded-xl font-semibold text-lg hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl flex flex-col items-center" 
                                 onclick="TokenPurchase.showModal()"
                             >
-                                <i class="fas fa-plus mr-2"></i>
-                                Buy Tokens
+                                <div class="flex items-center mb-1">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" class="mr-2" fill="white">
+                                        <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M12,6A6,6 0 0,1 18,12A6,6 0 0,1 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6M11,8V11H8V13H11V16H13V13H16V11H13V8H11Z"/>
+                                    </svg>
+                                    Buy Tokens
+                                </div>
+                                <div class="text-xs opacity-80">Starting from £5</div>
                             </button>
                             <button 
-                                class="flex-1 bg-white border border-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600 transition-colors"
+                                class="bg-white dark:bg-gray-700 border-2 border-primary text-primary dark:text-white py-4 px-6 rounded-xl font-semibold text-lg hover:bg-primary hover:text-white dark:hover:bg-primary transition-all duration-300 shadow-lg hover:shadow-xl flex flex-col items-center"
                                 onclick="showTokenUsageHistory()"
                             >
-                                <i class="fas fa-history mr-2"></i>
-                                Usage History
+                                <div class="flex items-center mb-1">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" class="mr-2" fill="currentColor">
+                                        <path d="M13.5,8H12V13L16.28,15.54L17,14.33L13.5,12.25V8M13,3A9,9 0 0,0 4,12H1L4.96,16.03L9,12H6A7,7 0 0,1 13,5A7,7 0 0,1 20,12A7,7 0 0,1 13,19C11.07,19 9.32,18.21 8.06,16.94L6.64,18.36C8.27,20 10.5,21 13,21A9,9 0 0,0 22,12A9,9 0 0,0 13,3Z"/>
+                                    </svg>
+                                    Usage History
+                                </div>
+                                <div class="text-xs opacity-80">View transactions</div>
                             </button>
+                        </div>
+                        
+                        <!-- Quick Token Packages -->
+                        <div class="mt-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                            <h6 class="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300 flex items-center">
+                                <svg width="16" height="16" viewBox="0 0 24 24" class="mr-2" fill="#eab308">
+                                    <path d="M11,4H6L10.5,12H5.5L14,20L11,13H16L11,4Z"/>
+                                </svg>
+                                Quick Purchase Options
+                            </h6>
+                            <div class="grid grid-cols-3 gap-2">
+                                <button class="p-3 text-center border border-gray-200 dark:border-gray-600 rounded-lg hover:border-primary hover:bg-primary/5 transition-all duration-200" onclick="quickPurchaseTokens(50)">
+                                    <div class="font-bold text-primary">50</div>
+                                    <div class="text-xs text-gray-500">£5</div>
+                                </button>
+                                <button class="p-3 text-center border border-gray-200 dark:border-gray-600 rounded-lg hover:border-primary hover:bg-primary/5 transition-all duration-200" onclick="quickPurchaseTokens(100)">
+                                    <div class="font-bold text-primary">100</div>
+                                    <div class="text-xs text-gray-500">£9</div>
+                                </button>
+                                <button class="p-3 text-center border border-gray-200 dark:border-gray-600 rounded-lg hover:border-primary hover:bg-primary/5 transition-all duration-200" onclick="quickPurchaseTokens(250)">
+                                    <div class="font-bold text-primary">250</div>
+                                    <div class="text-xs text-gray-500">£20</div>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Purchase History Section -->
+                        <div class="mt-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                            <h6 class="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300 flex items-center">
+                                <svg width="16" height="16" viewBox="0 0 24 24" class="mr-2" fill="#10b981">
+                                    <path d="M13,9H11V7H13M13,17H11V11H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/>
+                                </svg>
+                                Purchase History
+                            </h6>
+                            <% if (user.purchase_history && user.purchase_history.length > 0) { %>
+                                <div class="space-y-2 max-h-40 overflow-y-auto">
+                                    <% user.purchase_history.forEach(purchase => { %>
+                                        <div class="flex justify-between items-center p-3 bg-white dark:bg-gray-600 rounded-lg border border-gray-200 dark:border-gray-500">
+                                            <div class="flex items-center space-x-3">
+                                                <div class="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="#10b981">
+                                                        <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M11,16.5L18,9.5L16.59,8.09L11,13.67L7.91,10.59L6.5,12L11,16.5Z"/>
+                                                    </svg>
+                                                </div>
+                                                <div>
+                                                    <div class="font-medium text-sm">
+                                                        <%= purchase.tokens_purchased %> tokens
+                                                        <% if (purchase.package_name) { %>
+                                                            (<%= purchase.package_name %>)
+                                                        <% } %>
+                                                    </div>
+                                                    <div class="text-xs text-gray-500 dark:text-gray-400">
+                                                        <%= new Date(purchase.created_at).toLocaleDateString('en-GB', { 
+                                                            year: 'numeric', 
+                                                            month: 'short', 
+                                                            day: 'numeric',
+                                                            hour: '2-digit',
+                                                            minute: '2-digit'
+                                                        }) %>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="text-right">
+                                                <div class="font-semibold text-green-600 dark:text-green-400">
+                                                    £<%= (purchase.amount / 100).toFixed(2) %>
+                                                </div>
+                                                <div class="text-xs text-gray-500 dark:text-gray-400 capitalize">
+                                                    <%= purchase.status %>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <% }); %>
+                                </div>
+                                <% if (user.purchase_history.length > 3) { %>
+                                    <div class="mt-3 text-center">
+                                        <button class="text-xs text-primary hover:underline" onclick="showAllPurchaseHistory()">
+                                            View all <%= user.purchase_history.length %> purchases
+                                        </button>
+                                    </div>
+                                <% } %>
+                            <% } else { %>
+                                <div class="text-center py-4 text-gray-500 dark:text-gray-400">
+                                    <svg width="32" height="32" viewBox="0 0 24 24" class="mx-auto mb-2 opacity-50">
+                                        <path d="M7,4V2A1,1 0 0,0 6,1H4A1,1 0 0,0 3,2V4H2V6H4.83L6.94,15.55C7.18,16.8 8.26,17.7 9.5,17.95V19A1,1 0 0,0 10.5,20H19.5A1,1 0 0,0 20.5,19V17.95C21.74,17.7 22.82,16.8 23.06,15.55L25.17,6H22V4H7M9,8H11V10H9V8M9,12H11V14H9V12M13,8H15V10H13V8M13,12H15V14H13V12M17,8H19V10H17V8M17,12H19V14H17V12Z" fill="currentColor"/>
+                                    </svg>
+                                    <p class="text-sm">No purchases yet</p>
+                                    <p class="text-xs mt-1">Your token purchase history will appear here</p>
+                                </div>
+                            <% } %>
                         </div>
                     </div>
                 </div>
 
-                <!-- Buyer Status & Verification Card -->
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-                    <div class="p-6 border-b border-gray-200 dark:border-gray-700">
-                        <div class="flex justify-between items-center">
-                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Buyer Status & Verification</h3>
-                            <span class="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm" id="buyer-status-badge">Loading...</span>
+            </div>
+        </div>
+        <!-- End Page Content -->
+    </main>
+
+    <!-- Premium Upgrade Popup Modal -->
+    <div id="premiumUpgradeModal" class="fixed inset-0 z-50 hidden modal-backdrop flex items-center justify-center p-4">
+        <div class="professional-card rounded-2xl max-w-lg w-full max-h-96 overflow-y-auto scale-in">
+            <div class="gradient-primary p-6 rounded-t-2xl text-center">
+                <div class="mb-4">
+                    <i class="fas fa-crown text-6xl text-yellow-300 token-icon"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-white mb-2">Upgrade to Premium</h2>
+                <p class="text-blue-100">Unlock exclusive opportunities and advanced features</p>
+            </div>
+            
+            <div class="p-6">
+                <!-- Pricing Display -->
+                <div class="text-center mb-6">
+                    <div class="text-4xl font-black text-gradient mb-2">
+                        £35<span class="text-lg font-medium text-gray-500">/month</span>
+                    </div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Cancel anytime • 30-day money-back guarantee</p>
+                </div>
+                
+                <!-- Premium Benefits -->
+                <div class="space-y-4 mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+                        <i class="fas fa-star mr-2 text-yellow-500"></i>
+                        What You'll Get:
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 gap-3">
+                        <div class="flex items-center p-3 gradient-secondary rounded-lg border border-green-100 dark:border-gray-600">
+                            <div class="p-2 bg-green-100 dark:bg-green-900/30 rounded-full mr-3">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="url(#greenGradient)">
+                                    <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="font-semibold text-gray-900 dark:text-white">500+ Exclusive Off-Market Listings</div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">Access deals not available to the public</div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center p-3 gradient-secondary rounded-lg border border-blue-100 dark:border-gray-600">
+                            <div class="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full mr-3">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="url(#blueGradient)">
+                                    <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M16.2,16.2L11,13V7H12.5V12.2L17,14.9L16.2,16.2Z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="font-semibold text-gray-900 dark:text-white">24-72 Hour Early Access</div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">See new listings before other buyers</div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center p-3 gradient-secondary rounded-lg border border-purple-100 dark:border-gray-600">
+                            <div class="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-full mr-3">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="url(#purpleGradient)">
+                                    <path d="M12,2A2,2 0 0,1 14,4C14,4.74 13.6,5.39 13,5.73V7H14A7,7 0 0,1 21,14H22A1,1 0 0,1 23,15V18A1,1 0 0,1 22,19H21V20A2,2 0 0,1 19,22H5A2,2 0 0,1 3,20V19H2A1,1 0 0,1 1,18V15A1,1 0 0,1 2,14H3A7,7 0 0,1 10,7H11V5.73C10.4,5.39 10,4.74 10,4A2,2 0 0,1 12,2M7.5,13A2.5,2.5 0 0,0 5,15.5A2.5,2.5 0 0,0 7.5,18A2.5,2.5 0 0,0 10,15.5A2.5,2.5 0 0,0 7.5,13M16.5,13A2.5,2.5 0 0,0 14,15.5A2.5,2.5 0 0,0 16.5,18A2.5,2.5 0 0,0 19,15.5A2.5,2.5 0 0,0 16.5,13Z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="font-semibold text-gray-900 dark:text-white">Unlimited AI Deal Advisor</div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">Get expert analysis on every opportunity</div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center p-3 gradient-secondary rounded-lg border border-red-100 dark:border-gray-600">
+                            <div class="p-2 bg-red-100 dark:bg-red-900/30 rounded-full mr-3">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="url(#redGradient)">
+                                    <path d="M12,1C17.5,1 22,5.5 22,11V17C22,18.11 21.11,19 20,19H18V11A6,6 0 0,0 12,5A6,6 0 0,0 6,11V19H4C2.89,19 2,18.11 2,17V11C2,5.5 6.5,1 12,1M8,11A4,4 0 0,1 12,7A4,4 0 0,1 16,11V19A2,2 0 0,1 14,21H10A2,2 0 0,1 8,19V11Z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="font-semibold text-gray-900 dark:text-white">Priority Support</div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">Get help when you need it most</div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center p-3 gradient-secondary rounded-lg border border-indigo-100 dark:border-gray-600">
+                            <div class="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-full mr-3">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="url(#indigoGradient)">
+                                    <path d="M22,21H2V3H4V19H6V10H10V19H12V6H16V19H18V14H22V21Z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="font-semibold text-gray-900 dark:text-white">Advanced Due Diligence Reports</div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">Detailed business analysis and insights</div>
+                            </div>
                         </div>
                     </div>
-                    <div class="p-6">
-                        <div id="buyer-status-content">
-                            <div class="text-center py-8">
-                                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                                <p class="text-gray-600 dark:text-gray-400 mt-4">Loading buyer status...</p>
-                            </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="flex gap-3">
+                    <button 
+                        type="button" 
+                        id="closePremiumModal"
+                        class="flex-1 px-4 py-3 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-semibold"
+                    >
+                        Maybe Later
+                    </button>
+                    <button 
+                        type="button" 
+                        id="upgradeToPremiumBtn"
+                        class="btn-premium flex-1 py-3 px-6 rounded-xl font-bold text-lg transition-all duration-300"
+                    >
+                        <i class="fas fa-crown mr-2"></i>
+                        Upgrade Now
+                    </button>
+                </div>
+                
+                <!-- Trust Indicators -->
+                <div class="mt-4 text-center">
+                    <div class="flex justify-center items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                        <div class="flex items-center">
+                            <i class="fas fa-shield-alt mr-1 text-green-500"></i>
+                            Secure Payment
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-users mr-1 text-blue-500"></i>
+                            2000+ Happy Members
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <!-- End Page Content -->
-    </main>
+    </div>
 
     <!-- Profile Picture Upload Modal -->
     <div id="profilePictureModal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-50 flex items-center justify-center p-4">
@@ -496,27 +712,192 @@
     </div>
 
     <script>
-        // Mobile menu functionality
-        document.getElementById('mobile-menu-button').addEventListener('click', function() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebar-overlay');
-            
-            sidebar.classList.toggle('-translate-x-full');
-            overlay.classList.toggle('hidden');
+        // Enhanced Profile picture functionality with instant upload
+        document.getElementById('profile-picture-input').addEventListener('change', function(event) {
+            if (event.target.files && event.target.files[0]) {
+                const file = event.target.files[0];
+                
+                // Validate file type
+                if (!file.type.match('image.*')) {
+                    showEnhancedToast('Please select an image file', 'error');
+                    return;
+                }
+                
+                // Validate file size (max 5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    showEnhancedToast('File size must be less than 5MB', 'error');
+                    return;
+                }
+                
+                // Show custom confirmation modal
+                showUploadConfirmationModal(file, event.target);
+            }
         });
 
-        document.getElementById('sidebar-overlay').addEventListener('click', function() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebar-overlay');
+        // Get authentication token function
+        function getAuthToken() {
+            // Try meta tag first
+            const metaToken = document.querySelector('meta[name="auth-token"]')?.content;
+            if (metaToken) return metaToken;
             
-            sidebar.classList.add('-translate-x-full');
-            overlay.classList.add('hidden');
-        });
+            // Try localStorage
+            return localStorage.getItem('token');
+        }
 
-        // Profile picture modal functionality
-        document.getElementById('profile-picture-input').addEventListener('change', function() {
-            document.getElementById('profilePictureModal').classList.remove('hidden');
-        });
+        // Show custom upload confirmation modal
+        function showUploadConfirmationModal(file, fileInput) {
+            // Create custom modal
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4';
+            modal.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full shadow-xl">
+                    <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Update Profile Picture</h3>
+                    </div>
+                    <div class="p-6 text-center">
+                        <div class="mb-4">
+                            <i class="fas fa-camera text-primary text-3xl mb-2"></i>
+                        </div>
+                        <p class="text-gray-600 dark:text-gray-400 mb-4">Upload "${file.name}" as your new profile picture?</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-500">File size: ${(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                    </div>
+                    <div class="p-6 border-t border-gray-200 dark:border-gray-700 flex justify-end space-x-3">
+                        <button 
+                            type="button" 
+                            class="cancel-upload-btn px-4 py-2 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button 
+                            type="button" 
+                            class="confirm-upload-btn px-4 py-2 bg-primary text-white rounded-lg hover:bg-accent transition-colors"
+                        >
+                            <i class="fas fa-upload mr-2"></i>Upload
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // Store file and fileInput references
+            modal.uploadFile = file;
+            modal.fileInput = fileInput;
+            
+            document.body.appendChild(modal);
+            
+            // Add event listeners
+            const cancelBtn = modal.querySelector('.cancel-upload-btn');
+            const confirmBtn = modal.querySelector('.confirm-upload-btn');
+            
+            cancelBtn.addEventListener('click', function() {
+                modal.remove();
+                fileInput.value = '';
+            });
+            
+            confirmBtn.addEventListener('click', function() {
+                uploadProfilePictureInstantly(file);
+                modal.remove();
+            });
+            
+            // Add click outside to close
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.remove();
+                    fileInput.value = '';
+                }
+            });
+        }
+
+
+
+        // Instant upload function
+        function uploadProfilePictureInstantly(file) {
+            const token = getAuthToken();
+            if (!token) {
+                showEnhancedToast('Authentication required. Please sign in again.', 'error');
+                return;
+            }
+            
+            // Show immediate feedback
+            showEnhancedToast('Uploading profile picture...', 'info');
+            
+            // Create form data
+            const formData = new FormData();
+            formData.append('profilePicture', file);
+            
+            // Create and show progress indicator in a toast-like element
+            const progressToast = document.createElement('div');
+            progressToast.className = 'fixed top-16 right-4 z-50 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 min-w-80';
+            progressToast.innerHTML = `
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Uploading profile picture...</span>
+                    <span class="text-sm text-gray-500 dark:text-gray-400" id="upload-percent-instant">0%</span>
+                </div>
+                <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                    <div class="bg-primary h-2 rounded-full transition-all duration-300" id="upload-progress-instant" style="width: 0%"></div>
+                </div>
+            `;
+            document.body.appendChild(progressToast);
+            
+            // Send upload request with XMLHttpRequest for progress tracking
+            const xhr = new XMLHttpRequest();
+            
+            // Track upload progress
+            xhr.upload.addEventListener('progress', function(e) {
+                if (e.lengthComputable) {
+                    const percentComplete = (e.loaded / e.total) * 100;
+                    const progressBar = document.getElementById('upload-progress-instant');
+                    const percentText = document.getElementById('upload-percent-instant');
+                    
+                    if (progressBar && percentText) {
+                        progressBar.style.width = `${percentComplete}%`;
+                        percentText.textContent = `${Math.round(percentComplete)}%`;
+                    }
+                }
+            });
+            
+            xhr.addEventListener('load', function() {
+                // Remove progress toast
+                if (progressToast && progressToast.parentNode) {
+                    progressToast.remove();
+                }
+                
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    try {
+                        const data = JSON.parse(xhr.responseText);
+                        if (data.success) {
+                            // Update profile picture in UI immediately
+                            updateProfilePictureInUI(data.profilePicture);
+                            
+                            showEnhancedToast('Profile picture updated successfully!', 'success');
+                            
+                            // Reset file input
+                            document.getElementById('profile-picture-input').value = '';
+                        } else {
+                            showEnhancedToast(data.error || 'Failed to update profile picture', 'error');
+                        }
+                    } catch (error) {
+                        console.error('Error parsing response:', error);
+                        showEnhancedToast('Error processing upload response', 'error');
+                    }
+                } else {
+                    showEnhancedToast(`Upload failed: ${xhr.status}`, 'error');
+                }
+            });
+            
+            xhr.addEventListener('error', function() {
+                // Remove progress toast
+                if (progressToast && progressToast.parentNode) {
+                    progressToast.remove();
+                }
+                console.error('Upload error');
+                showEnhancedToast('Error uploading profile picture', 'error');
+            });
+            
+            // Start upload
+            xhr.open('POST', '/profile/update-picture');
+            xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+            xhr.send(formData);
+        }
 
         document.getElementById('cancelUploadBtn').addEventListener('click', function() {
             document.getElementById('profilePictureModal').classList.add('hidden');
@@ -539,54 +920,272 @@
         if (localStorage.getItem('darkMode') === 'true') {
             document.documentElement.classList.add('dark');
         }
+        
+        // Premium Upgrade Popup System
+        function initializePremiumPopup() {
+            const lastShown = localStorage.getItem('lastPremiumPopupShown');
+            const now = new Date().getTime();
+            const twentyFourHours = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+            
+            // Check if 24 hours have passed since last shown
+            if (!lastShown || (now - parseInt(lastShown)) > twentyFourHours) {
+                // Show popup after 3 seconds delay for better UX
+                setTimeout(() => {
+                    showPremiumUpgradePopup();
+                }, 3000);
+            }
+        }
+        
+        function showPremiumUpgradePopup() {
+            const modal = document.getElementById('premiumUpgradeModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                // Update last shown timestamp
+                localStorage.setItem('lastPremiumPopupShown', new Date().getTime().toString());
+                
+                // Add entrance animation
+                setTimeout(() => {
+                    modal.querySelector('.professional-card').classList.add('scale-in');
+                }, 100);
+            }
+        }
+        
+        function hidePremiumUpgradePopup() {
+            const modal = document.getElementById('premiumUpgradeModal');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+        }
+        
+        // Enhanced Token Management Functions
+        function updateTokenUsageProgress() {
+            const usedTokens = parseInt(document.getElementById('tokens-used-month')?.textContent || '0');
+            const totalBalance = parseInt(document.getElementById('token-balance-display')?.textContent || '0');
+            const maxUsage = Math.max(100, totalBalance + usedTokens); // Assume monthly limit
+            
+            const percentage = totalBalance > 0 ? Math.min((usedTokens / maxUsage) * 100, 100) : 0;
+            
+            const progressBar = document.getElementById('usage-progress-bar');
+            const percentageText = document.getElementById('usage-percentage');
+            
+            if (progressBar && percentageText) {
+                progressBar.style.width = `${percentage}%`;
+                percentageText.textContent = `${Math.round(percentage)}%`;
+            }
+        }
+        
+        function quickPurchaseTokens(amount) {
+            // Calculate price based on token amount
+            let price;
+            switch(amount) {
+                case 50: price = 5; break;
+                case 100: price = 9; break;
+                case 250: price = 20; break;
+                default: price = Math.ceil(amount * 0.1);
+            }
+            
+            // Show confirmation with UK pricing
+            if (confirm(`Purchase ${amount} tokens for £${price}?`)) {
+                purchaseTokens(amount, price);
+            }
+        }
+        
+        function purchaseTokens(amount, price) {
+            const token = getAuthToken();
+            if (!token) {
+                showEnhancedToast('Please sign in to purchase tokens', 'error');
+                return;
+            }
+            
+            // Show loading state
+            showEnhancedToast(`Processing purchase of ${amount} tokens...`, 'info');
+            
+            fetch('/api/tokens/purchase', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    amount: amount,
+                    price: price,
+                    currency: 'GBP'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showEnhancedToast(`Successfully purchased ${amount} tokens!`, 'success');
+                    // Refresh token balance
+                    if (window.profileTokenBalance) {
+                        window.profileTokenBalance.refreshBalance();
+                    }
+                    loadTokenUsageStats();
+                    updateTokenUsageProgress();
+                } else {
+                    showEnhancedToast(data.error || 'Purchase failed', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Purchase error:', error);
+                showEnhancedToast('Error processing purchase', 'error');
+            });
+        }
+        
+        // Enhanced Toast Notifications
+        function showEnhancedToast(message, type = 'info', duration = 5000) {
+            // Remove existing toasts
+            const existingToasts = document.querySelectorAll('.enhanced-toast');
+            existingToasts.forEach(toast => toast.remove());
+            
+            const toast = document.createElement('div');
+            toast.className = `enhanced-toast fixed top-4 right-4 z-50 p-4 rounded-xl shadow-2xl transition-all duration-300 transform translate-x-full max-w-sm`;
+            
+            // Set colors based on type
+            const colors = {
+                success: 'bg-green-500 text-white',
+                error: 'bg-red-500 text-white',
+                warning: 'bg-yellow-500 text-white',
+                info: 'bg-blue-500 text-white'
+            };
+            
+            const icons = {
+                success: 'fas fa-check-circle',
+                error: 'fas fa-exclamation-circle',
+                warning: 'fas fa-exclamation-triangle',
+                info: 'fas fa-info-circle'
+            };
+            
+            toast.className += ` ${colors[type] || colors.info}`;
+            
+            toast.innerHTML = `
+                <div class="flex items-center">
+                    <i class="${icons[type] || icons.info} mr-3 text-lg"></i>
+                    <span class="font-medium">${message}</span>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-3 text-white/80 hover:text-white">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            // Animate in
+            setTimeout(() => {
+                toast.style.transform = 'translateX(0)';
+            }, 100);
+            
+            // Auto remove after duration
+            setTimeout(() => {
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+        }
+        
+        // Initialize premium popup when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initializePremiumPopup();
+            
+            // Set up premium modal event listeners
+            const closePremiumBtn = document.getElementById('closePremiumModal');
+            const upgradePremiumBtn = document.getElementById('upgradeToPremiumBtn');
+            const premiumModal = document.getElementById('premiumUpgradeModal');
+            
+            if (closePremiumBtn) {
+                closePremiumBtn.addEventListener('click', hidePremiumUpgradePopup);
+            }
+            
+            if (upgradePremiumBtn) {
+                upgradePremiumBtn.addEventListener('click', function() {
+                    // Handle premium upgrade
+                    showEnhancedToast('Redirecting to premium upgrade...', 'info');
+                    // Add your premium upgrade logic here
+                    setTimeout(() => {
+                        window.location.href = '/premium/upgrade';
+                    }, 1500);
+                });
+            }
+            
+            if (premiumModal) {
+                premiumModal.addEventListener('click', function(e) {
+                    if (e.target === premiumModal) {
+                        hidePremiumUpgradePopup();
+                    }
+                });
+            }
+            
+            // Update token usage progress when token stats load
+            const originalLoadTokenUsageStats = window.loadTokenUsageStats;
+            if (originalLoadTokenUsageStats) {
+                window.loadTokenUsageStats = function() {
+                    originalLoadTokenUsageStats().then(() => {
+                        setTimeout(updateTokenUsageProgress, 500);
+                    }).catch(() => {
+                        setTimeout(updateTokenUsageProgress, 500);
+                    });
+                };
+            }
+        });
     </script>
     
-    <!-- Token System Components -->
-    <script src="/js/token-balance.js"></script>
+    <!-- Enhanced Token System Components -->
+    <script src="/js/token-balance-enhanced.js"></script>
     <script src="/js/token-purchase.js"></script>
     
     <script src="/js/profile.js"></script>
+    <script src="/js/profile-enhancements.js"></script></script>
     
-    <!-- Initialize Token Balance System -->
+    <!-- Initialize Enhanced Token Balance System -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialize token balance system for profile page
-            if (typeof TokenBalance !== 'undefined') {
-                console.log('Initializing Token Balance for profile page');
+            // Initialize enhanced token balance system for profile page
+            if (typeof TokenBalanceEnhanced !== 'undefined') {
+                console.log('Initializing Enhanced Token Balance for profile page');
                 
-                // Create a custom instance for the profile page
-                window.profileTokenBalance = new TokenBalance();
+                // Use the global enhanced token balance instance
+                window.profileTokenBalance = window.tokenBalanceEnhanced;
                 
-                // Override the findWidgetContainer method to target our specific navbar widget
-                window.profileTokenBalance.findWidgetContainer = function() {
-                    return document.getElementById('token-balance-navbar-widget');
-                };
-                
-                // Also update the profile page token display
+                // Add custom balance listener for profile page displays
                 window.profileTokenBalance.addBalanceListener(function(balance) {
                     const displayElement = document.getElementById('token-balance-display');
                     if (displayElement) {
                         displayElement.textContent = balance;
                     }
+                    
+                    // Update any other token displays on profile page
+                    const tokenElements = document.querySelectorAll('.token-count, .token-balance-amount');
+                    tokenElements.forEach(element => {
+                        element.textContent = balance;
+                    });
                 });
                 
                 // Load usage statistics
                 loadTokenUsageStats();
                 
             } else {
-                console.error('TokenBalance class not available');
+                console.error('TokenBalanceEnhanced class not available');
             }
         });
         
         // Function to load token usage statistics
         async function loadTokenUsageStats() {
             try {
+                // Use enhanced authentication headers if available
+                let headers = { 'Content-Type': 'application/json' };
+                if (window.tokenBalanceEnhanced && typeof window.tokenBalanceEnhanced.getAuthHeaders === 'function') {
+                    headers = window.tokenBalanceEnhanced.getAuthHeaders();
+                } else {
+                    // Fallback authentication method
+                    const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+                    if (token && token !== 'null' && token !== 'undefined') {
+                        headers['Authorization'] = `Bearer ${token}`;
+                    }
+                }
+                
                 const response = await fetch('/api/tokens/usage-stats', {
                     method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-                        'Content-Type': 'application/json'
-                    }
+                    credentials: 'include',
+                    headers: headers
                 });
                 
                 if (response.ok) {
@@ -701,5 +1300,8 @@
             }
         }
     </script>
+    
+    <!-- Unified Sidebar Script -->
+    <script src="/js/unified-sidebar.js"></script>
 </body>
 </html>

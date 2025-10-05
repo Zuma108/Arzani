@@ -29,7 +29,7 @@ async function createUserTable() {
           microsoft_id VARCHAR(255) UNIQUE,
           linkedin_id VARCHAR(255) UNIQUE,
           auth_provider VARCHAR(50) NOT NULL DEFAULT 'email',
-          profile_picture VARCHAR(255) DEFAULT '/images/default_profile1.png',
+          profile_picture VARCHAR(255) DEFAULT '/images/default-profile.png',
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           last_login TIMESTAMP
@@ -188,14 +188,20 @@ async function getUserByEmail(email) {
   }
 }
 
-// Update getUserById to handle errors better
+// Update getUserById to handle errors better and include professional profile pictures
 async function getUserById(id) {
   try {
     console.log('Fetching user with ID:', id);
     const result = await pool.query(
-      `SELECT u.*, ua.password_hash, ua.verified 
+      `SELECT u.*, ua.password_hash, ua.verified,
+       COALESCE(
+         pp.professional_picture_url,
+         u.profile_picture,
+         '/images/default-profile.png'
+       ) as profile_picture_url
        FROM users u 
-       JOIN users_auth ua ON u.id = ua.user_id 
+       LEFT JOIN users_auth ua ON u.id = ua.user_id 
+       LEFT JOIN professional_profiles pp ON u.id = pp.user_id
        WHERE u.id = $1`,
       [id]
     );
@@ -206,7 +212,11 @@ async function getUserById(id) {
     }
     
     console.log('User found:', result.rows[0].username);
-    return result.rows[0];
+    // Update the profile_picture field with the coalesced value
+    const user = result.rows[0];
+    user.profile_picture = user.profile_picture_url;
+    delete user.profile_picture_url; // Clean up the temporary field
+    return user;
   } catch (error) {
     console.error('Database error in getUserById:', error);
     throw error;

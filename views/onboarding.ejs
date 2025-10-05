@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/onboarding.css">
+    
+    <!-- reCAPTCHA Enterprise Script -->
+    <script src="https://www.google.com/recaptcha/enterprise.js?render=<%= process.env.RECAPTCHA_SITE_KEY || '6Lfo9NwrAAAAAPrlDclHQbWWIXpipvYksdZ3xNxi' %>"></script>
+    
+    <!-- reCAPTCHA Enterprise - loaded on demand by JavaScript -->
+    <script>
+        // Make reCAPTCHA Enterprise site key available to JavaScript
+        window.RECAPTCHA_SITE_KEY = '<%= process.env.RECAPTCHA_SITE_KEY || "6Lfo9NwrAAAAAPrlDclHQbWWIXpipvYksdZ3xNxi" %>';
+        console.log('reCAPTCHA Enterprise site key loaded:', window.RECAPTCHA_SITE_KEY);
+    </script>
+</head>
+<body class="font-['Roboto'] overflow-hidden">
+    <div class="content-stretch flex items-start relative size-full min-h-screen" id="onboarding-container">
+        <!-- Left Panel -->
+        <div class="left-panel-enhanced">
+            <!-- Logo Section -->
+            <div class="content-stretch flex flex-col items-start relative shrink-0 w-full">
+                <div class="content-stretch flex h-auto items-start overflow-clip relative shrink-0">
+                    <div class="logo-enhanced">
+                        <img src="/figma design exports/images/arzanilogo blue gradient.png" alt="Arzani Marketplace" class="logo-responsive">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Main Content Area -->
+            <div class="content-main">
+                <div class="content-stretch flex flex-col gap-5 items-center relative shrink-0 w-full">
+                    <!-- Onboarding Video -->
+                    <div class="onboarding-illustration">
+                        <video autoplay loop muted playsinline class="w-full h-auto max-w-full object-contain">
+                            <source src="/video/onboarding2.mp4" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                    
+                    <!-- Tagline -->
+                    <div class="content-stretch flex flex-col items-center relative shrink-0 w-full">
+                        <div class="heading-secondary">
+                            Let's connect you with the perfect<br/>business opportunities
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div class="content-stretch flex flex-col items-start relative shrink-0 w-full">
+                <button class="manage-cookies">
+                    Manage Cookies
+                </button>
+            </div>
+        </div>
+        
+        <!-- Right Panel -->
+        <div class="right-panel-enhanced">
+            <div class="right-panel-content">
+                <div class="form-section">
+                    <!-- Spacer -->
+                    <div class="progress-section"></div>
+                    
+                    <!-- Content Container -->
+                    <div class="content-container">
+                        <!-- Progress Indicator -->
+                        <div class="progress-container">
+                            <div class="progress-wrapper">
+                                <div class="progress-indicator-enhanced">
+                                    <div class="progress-text">1 of 10</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Header -->
+                        <div class="header-section">
+                            <h1 class="heading-primary" id="step-title">Welcome, what's your name?</h1>
+                            <p class="subtitle-text" id="step-subtitle" style="display: none;"></p>
+                        </div>
+                        
+                        <!-- Form -->
+                        <form id="onboarding-form" class="form-enhanced">
+                            <div id="form-fields">
+                                <!-- First Name Field -->
+                                <div class="form-field">
+                                    <div class="form-label-container">
+                                        <label class="label-text" for="firstName">First name</label>
+                                    </div>
+                                    <input 
+                                        type="text" 
+                                        id="firstName" 
+                                        name="firstName"
+                                        class="form-input"
+                                        placeholder="John"
+                                        required
+                                    />
+                                </div>
+                                
+                                <!-- Last Name Field -->
+                                <div class="form-field">
+                                    <div class="form-label-container">
+                                        <label class="label-text" for="lastName">Last name</label>
+                                    </div>
+                                    <input 
+                                        type="text" 
+                                        id="lastName" 
+                                        name="lastName"
+                                        class="form-input"
+                                        placeholder="Doe"
+                                        required
+                                    />
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Navigation Footer -->
+                <div class="navigation-footer-enhanced">
+                    <div class="flex-1">
+                        <div class="back-button-container">
+                            <button 
+                                type="button" 
+                                id="back-btn"
+                                class="btn-secondary-enhanced"
+                                disabled
+                            >
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                    <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                Back
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="next-button-container">
+                        <button 
+                            type="submit" 
+                            form="onboarding-form"
+                            id="next-btn"
+                            class="btn-primary-enhanced"
+                        >
+                            Next
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Progress indicator for loading -->
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <span class="label-text">Saving your progress...</span>
+        </div>
+    </div>
+    
+    <script src="/js/onboarding.js"></script>
+</body>
+</html>

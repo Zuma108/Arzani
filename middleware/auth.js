@@ -134,15 +134,20 @@ const authenticateToken = (req, res, next) => {
     return next();
   }
 
-  // Debug auth bypass analysis
-  console.log('Auth check debug:', {
-    path: req.path,
-    method: req.method,
-    hasXRequestSource: !!req.headers['x-request-source'],
-    xRequestSource: req.headers['x-request-source'],
-    hasXSkipAuth: !!req.headers['x-skip-auth'],
-    isValuationEndpoint: req.path === '/api/business/calculate-valuation' || req.path.includes('/api/valuation')
-  });
+  // Debug auth bypass analysis (only for important paths)
+  const importantPaths = ['/auth/', '/api/', '/marketplace', '/profile', '/login', '/dashboard'];
+  const shouldLog = importantPaths.some(path => req.path.startsWith(path)) || req.path === '/';
+  
+  if (shouldLog && !req.path.match(/\.(css|js|png|jpg|gif|ico|svg|woff|woff2)$/i)) {
+    console.log('Auth check debug:', {
+      path: req.path,
+      method: req.method,
+      hasXRequestSource: !!req.headers['x-request-source'],
+      xRequestSource: req.headers['x-request-source'],
+      hasXSkipAuth: !!req.headers['x-skip-auth'],
+      isValuationEndpoint: req.path === '/api/business/calculate-valuation' || req.path.includes('/api/valuation')
+    });
+  }
 
   // Critical fix: Ensure we check the headers and path properly for valuation-related endpoints
   if (req.path === '/api/business/calculate-valuation') {
@@ -204,7 +209,9 @@ const authenticateToken = (req, res, next) => {
     /^\/(seller-questionnaire)/i,
     /^\/marketplace-landing$/i,
     /^\/buyer-landing$/i,
-    /^\/seller-landing$/i
+    /^\/seller-landing$/i,
+    /^\/marketplace2$/i,
+    /^\/market-trends$/i
   ];
   
   if (publicPatterns.some(pattern => pattern.test(req.path))) {
@@ -281,16 +288,54 @@ const authenticateToken = (req, res, next) => {
     
     next();
   } else {
-    // No valid token found
-    console.log(`No valid token found for ${req.path}`);
-    
-    // Clear any invalid tokens
-    if (cookieToken) {
-      res.clearCookie('token');
+    // Check if user has valid session authentication as fallback
+    if (req.session && req.session.userId) {
+      console.log(`Using session authentication for user ${req.session.userId} on ${req.path}`);
+      req.user = { userId: req.session.userId };
+      
+      try {
+        // Generate a new JWT token for the session user to maintain consistency
+        const sessionToken = jwt.sign(
+          { userId: req.session.userId },
+          JWT_SECRET,
+          { expiresIn: TOKEN_EXPIRY }
+        );
+        
+        // Set the new token in both session and cookie
+        req.session.token = sessionToken;
+        req.token = sessionToken;
+        
+        res.cookie('token', sessionToken, {
+          httpOnly: false,
+          maxAge: 14 * 24 * 60 * 60 * 1000, // 14 days
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax'
+        });
+        
+        console.log(`Generated new JWT token for session user ${req.session.userId}`);
+        
+        // Save session with new token
+        req.session.save(err => {
+          if (err) console.error('Error saving session with new token:', err);
+        });
+      } catch (tokenError) {
+        console.error('Error generating token for session user:', tokenError);
+        // Continue with session auth even if token generation fails
+      }
+      
+      next();
+    } else {
+      // No valid token or session found
+      console.log(`No valid token or session found for ${req.path}`);
+      
+      // Clear any invalid tokens
+      if (cookieToken) {
+        res.clearCookie('token');
+      }
+      
+      // Continue without auth - requireAuth or other middleware will handle redirection if needed
+      next();
     }
-    
-    // Continue without auth - requireAuth or other middleware will handle redirection if needed
-    next();
   }
 };
 
@@ -345,91 +390,152 @@ const validateToken = async (req, res, next) => {
 };
 
 /**
- * Enhanced auth middleware that checks for a valid user and redirects if needed
+ * Simplified auth middleware that handles authentication and onboarding in one flow
  * Use this for routes that should only be accessible to authenticated users
  */
-const requireAuth = (req, res, next) => {
-  // If this is an auth page, check if the user is already authenticated
-  const isAuthPage = req.path.match(/^\/(login2|signup|logout|login|auth\/login|auth\/signup)/i);
-    if (isAuthPage) {
-    // Extract token and verify
-    const token = extractTokenFromRequest(req);
-    if (token) {
+const requireAuth = async (req, res, next) => {
+  try {
+    // Skip authentication for public paths
+    if (
+      req.path.match(/^\/(public|css|js|images|fonts|favicon|login|signup|auth)/i) ||
+      req.path.match(/\.(css|js|png|jpg|jpeg|gif|svg|ico|woff|woff2)$/i)
+    ) {
+      return next();
+    }
+
+    // Get token from various sources
+    const authHeader = req.headers['authorization'];
+    const headerToken = authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
+    const cookieToken = req.cookies?.token;
+    const sessionUserId = req.session?.userId;
+    
+    let userId = null;
+    let token = null;
+
+    // Try to get userId from token or session
+    if (headerToken) {
       try {
-        const decoded = jwt.verify(token, JWT_SECRET);
-        // User is already authenticated, redirect appropriately
-        console.log('User already authenticated, redirecting from auth page');
-        
-        // Check for returnTo parameter first
-        const returnTo = req.query.returnTo;
-        if (returnTo) {
-          const safeReturnUrl = sanitizeRedirectUrl(returnTo);
-          console.log('Redirecting authenticated user to returnTo:', safeReturnUrl);
-          return res.redirect(safeReturnUrl);
-        }
-        
-        // Default redirect to marketplace
-        return res.redirect('/marketplace2');
-      } catch (error) {
-        // Token invalid, continue to auth page
-        console.log('Invalid token on auth page access, continuing to auth page');
+        const decoded = jwt.verify(headerToken, JWT_SECRET);
+        userId = decoded.userId;
+        token = headerToken;
+      } catch (err) {
+        console.log('Invalid header token:', err.message);
       }
     }
-  }
+    
+    if (!userId && cookieToken) {
+      try {
+        const decoded = jwt.verify(cookieToken, JWT_SECRET);
+        userId = decoded.userId;
+        token = cookieToken;
+      } catch (err) {
+        console.log('Invalid cookie token:', err.message);
+      }
+    }
+    
+    if (!userId && sessionUserId) {
+      userId = sessionUserId;
+    }
 
-  // Skip authentication for public paths
-  if (
-    req.path.match(/^\/(public|css|js|images|fonts|favicon)/i) ||
-    req.path.match(/\.(css|js|png|jpg|jpeg|gif|svg|ico|woff|woff2)$/i)
-  ) {
-    return next();
-  }
-
-  // First run the token authentication
-  authenticateToken(req, res, () => {
-    // If user exists after token authentication, proceed
-    if (req.user && req.user.userId) {
-      next();
-    } else {
-      // For API routes, return a 401 status
+    // If no valid authentication found, redirect to login
+    if (!userId) {
+      console.log(`No authentication found for ${req.path}, redirecting to login`);
+      
+      // For API routes, return JSON error
       if (req.path.startsWith('/api/')) {
         return res.status(401).json({ 
-          error: 'Unauthorized', 
-          message: 'Authentication required',
-          redirectTo: '/login2?returnTo=' + encodeURIComponent(req.originalUrl)
+          error: 'Authentication required',
+          redirectTo: '/login2'
         });
       }
       
-      // Track redirects in session to prevent loops
-      if (!req.session.redirectHistory) {
-        req.session.redirectHistory = [];
-      }
-      
-      // Add current path to history
-      req.session.redirectHistory.push(req.originalUrl);
-      
-      // Keep only the last 5 entries
-      if (req.session.redirectHistory.length > 5) {
-        req.session.redirectHistory.shift();
-      }
-      
-      // Check for redirect loops
-      const redirectCount = req.session.redirectHistory.filter(
-        url => url === req.originalUrl
-      ).length;
-      
-      if (redirectCount > 2) {
-        console.log('Detected redirect loop, redirecting to marketplace');
-        return res.redirect('/marketplace2');
-      }
-      
-      // Sanitize the return URL to prevent redirect loops
-      const safeReturnUrl = sanitizeRedirectUrl(req.originalUrl);
-      
-      // For regular routes, redirect to login page
-      res.redirect('/login2?returnTo=' + encodeURIComponent(safeReturnUrl));
+      // For regular routes, redirect to login with return URL
+      const returnUrl = req.originalUrl !== '/marketplace2' ? req.originalUrl : '/marketplace2';
+      return res.redirect(`/login2?returnTo=${encodeURIComponent(returnUrl)}`);
     }
-  });
+
+    // Get user data from database
+    const userResult = await pool.query(
+      `SELECT u.*, 
+              COALESCE(u.onboarding_completed, false) as onboarding_completed,
+              COALESCE(u.user_type, 'buyer') as user_type,
+              COALESCE(u.role, 'user') as role
+       FROM users u 
+       WHERE u.id = $1`,
+      [userId]
+    );
+
+    if (userResult.rows.length === 0) {
+      console.log(`User ${userId} not found in database`);
+      
+      // Clear invalid session/token
+      if (req.session) {
+        req.session.destroy();
+      }
+      res.clearCookie('token');
+      
+      return res.redirect('/login2');
+    }
+
+    const user = userResult.rows[0];
+    
+    // Set user in request
+    req.user = {
+      userId: user.id,
+      ...user,
+      isAuthenticated: true
+    };
+
+    // Ensure session consistency
+    if (req.session) {
+      req.session.userId = user.id;
+      if (token) {
+        req.session.token = token;
+      }
+    }
+
+    // Set cookie if we have a token but no cookie
+    if (token && !cookieToken) {
+      res.cookie('token', token, {
+        httpOnly: false,
+        maxAge: 14 * 24 * 60 * 60 * 1000, // 14 days
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax'
+      });
+    }
+
+    console.log(`User ${user.id} authenticated. Onboarding: ${user.onboarding_completed}`);
+    
+    // Check if accessing marketplace2 but onboarding not completed
+    if (req.path === '/marketplace2' && !user.onboarding_completed) {
+      console.log(`User ${user.id} needs onboarding, redirecting to /onboarding`);
+      return res.redirect('/onboarding');
+    }
+    
+    // Check if accessing onboarding but already completed
+    if (req.path.startsWith('/onboarding') && user.onboarding_completed) {
+      console.log(`User ${user.id} already completed onboarding, redirecting to marketplace`);
+      return res.redirect('/marketplace2');
+    }
+
+    // All good, proceed
+    next();
+    
+  } catch (error) {
+    console.error('Auth middleware error:', error);
+    
+    if (req.path.startsWith('/api/')) {
+      return res.status(500).json({ error: 'Authentication error' });
+    }
+    
+    // Clear potentially corrupted session/token
+    if (req.session) {
+      req.session.destroy();
+    }
+    res.clearCookie('token');
+    
+    return res.redirect('/login2');
+  }
 };
 
 /**
@@ -446,8 +552,7 @@ const populateUser = (req, res, next) => {
         const userResult = await pool.query(
           `SELECT u.id, u.username, u.email, u.profile_picture, 
                   u.created_at, u.updated_at,
-                  COALESCE(u.last_login, now()) as last_login,
-                  COALESCE(u.role, 'user') as role
+                  COALESCE(u.last_login, now()) as last_login
            FROM users u 
            WHERE u.id = $1`,
           [req.user.userId]
@@ -560,13 +665,13 @@ const enhancedAuth = async (req, res, next) => {
       return res.redirect(`/login2?returnTo=${encodeURIComponent(req.originalUrl)}`);
     }
     
-    // Get complete user profile data - FIX: use plan_type instead of plan_name
+    // Get complete user profile data - FIX: use correct column names
     const query = `
       SELECT 
         u.*,
         s.plan_type AS subscription_plan,
-        s.active AS subscription_active,
-        s.next_billing_date
+        s.status AS subscription_status,
+        s.current_period_end AS next_billing_date
       FROM 
         users u
       LEFT JOIN 
@@ -603,7 +708,7 @@ const enhancedAuth = async (req, res, next) => {
     req.user = {
       ...req.user,
       ...user,
-      hasSubscription: user.subscription_active === true,
+      hasSubscription: user.subscription_status === 'active',
       subscriptionPlan: user.subscription_plan || 'free'
     };
     

@@ -478,9 +478,59 @@
             }
             const signOutBtn = document.getElementById('signOutBtn');
             if (signOutBtn) {
-                signOutBtn.addEventListener('click', () => {
-                    localStorage.removeItem('token');
-                    window.location.href = '/login2';
+                signOutBtn.addEventListener('click', async () => {
+                    // Load modern modal if not already loaded
+                    if (!window.ModernSignOutModal) {
+                        await loadModernModal();
+                    }
+                    
+                    // Show modern confirmation modal
+                    const confirmed = await ModernSignOutModal.confirm({
+                        title: 'Sign out of your account?',
+                        message: "You'll be safely signed out and redirected to our homepage. Your data will remain secure."
+                    });
+                    
+                    if (confirmed) {
+                        // Make POST request to logout API endpoint
+                        fetch('/auth/logout', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            credentials: 'include'
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            // Clear client-side storage
+                            try {
+                                localStorage.removeItem('token');
+                                localStorage.removeItem('userId');
+                                localStorage.removeItem('user');
+                                localStorage.removeItem('authToken');
+                                localStorage.removeItem('refreshToken');
+                            } catch (error) {
+                                console.log('Could not clear localStorage:', error);
+                            }
+                            
+                            // Redirect to sign-out confirmation page
+                            window.location.href = data.redirectTo || '/auth/logout';
+                        })
+                        .catch(error => {
+                            console.error('Logout request failed:', error);
+                            window.location.href = '/auth/logout';
+                        });
+                    }
+                });
+            }
+            
+            // Helper function to load modern modal
+            async function loadModernModal() {
+                return new Promise((resolve) => {
+                    const script = document.createElement('script');
+                    script.src = '/js/modern-signout-modal.js';
+                    script.onload = resolve;
+                    script.onerror = resolve; // Continue even if fails to load
+                    document.head.appendChild(script);
                 });
             }
         }

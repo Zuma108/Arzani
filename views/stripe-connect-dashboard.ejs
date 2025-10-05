@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stripe Connect Dashboard | Arzani Marketplace</title>
+    <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        .logo-img {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+        }
+        
+        /* Status indicators */
+        .status-pending { 
+            background-color: #fef3c7; 
+            color: #92400e; 
+            border-color: #fde68a; 
+        }
+        .status-complete { 
+            background-color: #dcfce7; 
+            color: #166534; 
+            border-color: #bbf7d0; 
+        }
+        .status-error { 
+            background-color: #fee2e2; 
+            color: #991b1b; 
+            border-color: #fecaca; 
+        }
+        
+        /* Card hover effects */
+        .hover-card {
+            transition: all 0.2s ease-in-out;
+        }
+        .hover-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Loading spinner */
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Form styling */
+        .form-input {
+            width: 100%;
+            padding: 8px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: transparent;
+            box-shadow: 0 0 0 2px #3b82f6;
+        }
+        
+        .btn-primary {
+            background-color: #2563eb;
+            color: white;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .btn-primary:hover {
+            background-color: #1d4ed8;
+        }
+        
+        .btn-secondary {
+            background-color: #e5e7eb;
+            color: #374151;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #d1d5db;
+        }
+        
+        .btn-success {
+            background-color: #059669;
+            color: white;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .btn-success:hover {
+            background-color: #047857;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans antialiased">
+    <div class="min-h-screen">
+        <!-- Header -->
+        <header class="bg-white shadow-sm border-b">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <div class="flex items-center space-x-3">
+                        <img src="/figma design exports/images.webp/arzani-icon-nobackground.png" 
+                             alt="Arzani" class="logo-img">
+                        <h1 class="text-xl font-semibold text-gray-900">Stripe Connect Dashboard</h1>
+                    </div>
+                    <a href="/dashboard" class="text-gray-600 hover:text-gray-900">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Account Status Section -->
+            <div class="mb-8">
+                <div class="bg-white rounded-lg shadow-sm border p-6">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-4">
+                        <i class="fas fa-credit-card mr-2 text-blue-600"></i>
+                        Payment Account Status
+                    </h2>
+                    
+                    <div id="accountStatus" class="space-y-4">
+                        <div class="flex items-center justify-center py-8">
+                            <div class="spinner"></div>
+                            <span class="ml-2 text-gray-600">Loading account status...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Create Account Section (shown if no account exists) -->
+            <div id="createAccountSection" class="mb-8 hidden">
+                <div class="bg-white rounded-lg shadow-sm border p-6">
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">
+                        <i class="fas fa-plus-circle mr-2 text-green-600"></i>
+                        Set Up Payment Account
+                    </h3>
+                    <p class="text-gray-600 mb-6">
+                        Create your Stripe Connect account to start accepting payments from customers.
+                        You'll have full control over your payment settings and receive funds directly.
+                    </p>
+                    
+                    <form id="createAccountForm" class="space-y-4">
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+                                Email Address
+                            </label>
+                            <input type="email" id="email" name="email" required 
+                                   class="form-input" placeholder="your@email.com">
+                        </div>
+                        
+                        <div>
+                            <label for="country" class="block text-sm font-medium text-gray-700 mb-2">
+                                Country
+                            </label>
+                            <select id="country" name="country" class="form-input">
+                                <option value="GB">United Kingdom</option>
+                                <option value="US">United States</option>
+                                <option value="CA">Canada</option>
+                                <option value="AU">Australia</option>
+                                <!-- Add more countries as needed -->
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="businessType" class="block text-sm font-medium text-gray-700 mb-2">
+                                Business Type
+                            </label>
+                            <select id="businessType" name="businessType" class="form-input">
+                                <option value="individual">Individual</option>
+                                <option value="company">Company</option>
+                            </select>
+                        </div>
+                        
+                        <button type="submit" class="btn-primary w-full">
+                            <i class="fas fa-rocket mr-2"></i>
+                            Create Payment Account
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Onboarding Section (shown if account exists but not onboarded) -->
+            <div id="onboardingSection" class="mb-8 hidden">
+                <div class="bg-white rounded-lg shadow-sm border p-6">
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">
+                        <i class="fas fa-user-check mr-2 text-orange-600"></i>
+                        Complete Account Setup
+                    </h3>
+                    <p class="text-gray-600 mb-6">
+                        Complete your account verification to start accepting payments. 
+                        This process is handled securely by Stripe and typically takes 2-3 minutes.
+                    </p>
+                    
+                    <div id="requirementsList" class="mb-6"></div>
+                    
+                    <button id="onboardBtn" class="btn-success w-full">
+                        <i class="fas fa-external-link-alt mr-2"></i>
+                        Complete Account Setup
+                    </button>
+                </div>
+            </div>
+
+            <!-- Products Section (shown if account is ready) -->
+            <div id="productsSection" class="mb-8 hidden">
+                <div class="bg-white rounded-lg shadow-sm border">
+                    <div class="p-6 border-b">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-xl font-semibold text-gray-900">
+                                <i class="fas fa-box mr-2 text-purple-600"></i>
+                                Your Products
+                            </h3>
+                            <button id="addProductBtn" class="btn-primary">
+                                <i class="fas fa-plus mr-2"></i>
+                                Add Product
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="productsList" class="p-6">
+                        <div class="flex items-center justify-center py-8">
+                            <div class="spinner"></div>
+                            <span class="ml-2 text-gray-600">Loading products...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Storefront Link Section (shown if account is ready) -->
+            <div id="storefrontSection" class="mb-8 hidden">
+                <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border p-6">
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">
+                        <i class="fas fa-store mr-2 text-blue-600"></i>
+                        Your Storefront
+                    </h3>
+                    <p class="text-gray-600 mb-4">
+                        Share your storefront link with customers so they can browse and purchase your products.
+                    </p>
+                    <div class="flex items-center space-x-3">
+                        <input id="storefrontUrl" type="text" readonly 
+                               class="flex-1 px-4 py-2 bg-white border rounded-lg text-gray-700">
+                        <button id="copyStorefrontBtn" class="btn-secondary">
+                            <i class="fas fa-copy mr-2"></i>
+                            Copy
+                        </button>
+                        <button id="viewStorefrontBtn" class="btn-primary">
+                            <i class="fas fa-external-link-alt mr-2"></i>
+                            View
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Product Modal -->
+    <div id="addProductModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+            <div class="p-6 border-b">
+                <div class="flex justify-between items-center">
+                    <h4 class="text-lg font-semibold text-gray-900">Add New Product</h4>
+                    <button id="closeProductModal" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <form id="addProductForm" class="p-6 space-y-4">
+                <div>
+                    <label for="productName" class="block text-sm font-medium text-gray-700 mb-2">
+                        Product Name *
+                    </label>
+                    <input type="text" id="productName" name="name" required 
+                           class="form-input" placeholder="Enter product name">
+                </div>
+                
+                <div>
+                    <label for="productDescription" class="block text-sm font-medium text-gray-700 mb-2">
+                        Description
+                    </label>
+                    <textarea id="productDescription" name="description" rows="3" 
+                              class="form-input" placeholder="Describe your product..."></textarea>
+                </div>
+                
+                <div>
+                    <label for="productPrice" class="block text-sm font-medium text-gray-700 mb-2">
+                        Price *
+                    </label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-2 text-gray-500">£</span>
+                        <input type="number" id="productPrice" name="price" step="0.01" min="0.01" required 
+                               class="form-input pl-8" placeholder="0.00">
+                    </div>
+                </div>
+                
+                <div class="flex space-x-3 pt-4">
+                    <button type="button" id="cancelProductBtn" class="btn-secondary flex-1">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn-primary flex-1">
+                        <i class="fas fa-plus mr-2"></i>
+                        Create Product
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let currentAccount = null;
+        let products = [];
+
+        // Initialize the dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAccountStatus();
+            initEventListeners();
+        });
+
+        // Event listeners
+        function initEventListeners() {
+            // Create account form
+            document.getElementById('createAccountForm').addEventListener('submit', handleCreateAccount);
+            
+            // Onboarding button
+            document.getElementById('onboardBtn').addEventListener('click', handleOnboarding);
+            
+            // Product modal
+            document.getElementById('addProductBtn').addEventListener('click', () => {
+                document.getElementById('addProductModal').classList.remove('hidden');
+            });
+            
+            document.getElementById('closeProductModal').addEventListener('click', closeProductModal);
+            document.getElementById('cancelProductBtn').addEventListener('click', closeProductModal);
+            document.getElementById('addProductForm').addEventListener('submit', handleAddProduct);
+            
+            // Storefront actions
+            document.getElementById('copyStorefrontBtn').addEventListener('click', copyStorefrontUrl);
+            document.getElementById('viewStorefrontBtn').addEventListener('click', viewStorefront);
+        }
+
+        // Load account status from API
+        async function loadAccountStatus() {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    showError('Please log in to access this page');
+                    return;
+                }
+
+                const response = await fetch('/api/stripe-connect/account-status', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    if (data.has_account) {
+                        currentAccount = data.account;
+                        displayAccountStatus(data.account);
+                        
+                        if (data.account.onboarding_complete) {
+                            loadProducts();
+                            showStorefrontSection();
+                        } else {
+                            showOnboardingSection(data.account);
+                        }
+                    } else {
+                        showCreateAccountSection();
+                    }
+                } else {
+                    showError(data.error || 'Failed to load account status');
+                }
+            } catch (error) {
+                console.error('Error loading account status:', error);
+                showError('Failed to connect to server');
+            }
+        }
+
+        // Display account status
+        function displayAccountStatus(account) {
+            const statusHtml = `
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <div class="flex items-center">
+                            <i class="fas fa-user-circle text-blue-600 text-xl mr-3"></i>
+                            <div>
+                                <p class="text-sm text-gray-600">Account ID</p>
+                                <p class="font-medium text-gray-900">${account.id}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <div class="flex items-center">
+                            <i class="fas fa-credit-card text-green-600 text-xl mr-3"></i>
+                            <div>
+                                <p class="text-sm text-gray-600">Charges</p>
+                                <span class="px-2 py-1 rounded-full text-xs font-medium border ${account.charges_enabled ? 'status-complete' : 'status-pending'}">
+                                    ${account.charges_enabled ? 'Enabled' : 'Disabled'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <div class="flex items-center">
+                            <i class="fas fa-money-bill-wave text-purple-600 text-xl mr-3"></i>
+                            <div>
+                                <p class="text-sm text-gray-600">Payouts</p>
+                                <span class="px-2 py-1 rounded-full text-xs font-medium border ${account.payouts_enabled ? 'status-complete' : 'status-pending'}">
+                                    ${account.payouts_enabled ? 'Enabled' : 'Disabled'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                ${account.onboarding_complete ? 
+                    '<div class="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg"><p class="text-green-800"><i class="fas fa-check-circle mr-2"></i>Your account is ready to accept payments!</p></div>' :
+                    '<div class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg"><p class="text-yellow-800"><i class="fas fa-clock mr-2"></i>Please complete your account setup to start accepting payments.</p></div>'
+                }
+            `;
+            
+            document.getElementById('accountStatus').innerHTML = statusHtml;
+        }
+
+        // Show create account section
+        function showCreateAccountSection() {
+            document.getElementById('accountStatus').innerHTML = '<p class="text-gray-600">No payment account found. Create one to start accepting payments.</p>';
+            document.getElementById('createAccountSection').classList.remove('hidden');
+        }
+
+        // Show onboarding section
+        function showOnboardingSection(account) {
+            const requirementsHtml = account.has_outstanding_requirements ? 
+                `<div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <h4 class="font-medium text-yellow-800 mb-2">Required Information:</h4>
+                    <ul class="text-sm text-yellow-700 space-y-1">
+                        ${account.requirements.currently_due.map(req => `<li>• ${req.replace(/_/g, ' ')}</li>`).join('')}
+                    </ul>
+                </div>` : '';
+            
+            document.getElementById('requirementsList').innerHTML = requirementsHtml;
+            document.getElementById('onboardingSection').classList.remove('hidden');
+        }
+
+        // Show storefront section
+        function showStorefrontSection() {
+            if (currentAccount) {
+                const storefrontUrl = `${window.location.origin}/stripe-connect/storefront/${currentAccount.id}`;
+                document.getElementById('storefrontUrl').value = storefrontUrl;
+                document.getElementById('storefrontSection').classList.remove('hidden');
+            }
+        }
+
+        // Handle create account
+        async function handleCreateAccount(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const data = {
+                email: formData.get('email'),
+                country: formData.get('country'),
+                business_type: formData.get('businessType')
+            };
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/stripe-connect/create-account', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showSuccess('Account created successfully!');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showError(result.error || 'Failed to create account');
+                }
+            } catch (error) {
+                console.error('Error creating account:', error);
+                showError('Failed to connect to server');
+            }
+        }
+
+        // Handle onboarding
+        async function handleOnboarding() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/stripe-connect/create-onboarding-link', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Redirect to Stripe onboarding
+                    window.location.href = result.onboarding_url;
+                } else {
+                    showError(result.error || 'Failed to create onboarding link');
+                }
+            } catch (error) {
+                console.error('Error creating onboarding link:', error);
+                showError('Failed to connect to server');
+            }
+        }
+
+        // Load products
+        async function loadProducts() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/stripe-connect/products', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    products = data.products;
+                    displayProducts(products);
+                    document.getElementById('productsSection').classList.remove('hidden');
+                } else {
+                    showError(data.error || 'Failed to load products');
+                }
+            } catch (error) {
+                console.error('Error loading products:', error);
+                showError('Failed to connect to server');
+            }
+        }
+
+        // Display products
+        function displayProducts(products) {
+            const productsHtml = products.length > 0 ? 
+                products.map(product => `
+                    <div class="hover-card bg-gray-50 rounded-lg p-4 border">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="font-medium text-gray-900">${product.name}</h4>
+                                <p class="text-sm text-gray-600 mt-1">${product.description || 'No description'}</p>
+                                <p class="text-lg font-semibold text-blue-600 mt-2">
+                                    ${product.price_info ? product.price_info.formatted : 'Price not set'}
+                                </p>
+                            </div>
+                            <div class="text-xs text-gray-500">
+                                Created ${new Date(product.created * 1000).toLocaleDateString()}
+                            </div>
+                        </div>
+                    </div>
+                `).join('') :
+                '<div class="text-center py-8 text-gray-600"><i class="fas fa-box-open text-4xl mb-4"></i><p>No products yet. Create your first product to get started!</p></div>';
+            
+            document.getElementById('productsList').innerHTML = productsHtml;
+        }
+
+        // Handle add product
+        async function handleAddProduct(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const data = {
+                name: formData.get('name'),
+                description: formData.get('description'),
+                price: formData.get('price')
+            };
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/stripe-connect/create-product', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showSuccess('Product created successfully!');
+                    closeProductModal();
+                    loadProducts(); // Reload products list
+                } else {
+                    showError(result.error || 'Failed to create product');
+                }
+            } catch (error) {
+                console.error('Error creating product:', error);
+                showError('Failed to connect to server');
+            }
+        }
+
+        // Close product modal
+        function closeProductModal() {
+            document.getElementById('addProductModal').classList.add('hidden');
+            document.getElementById('addProductForm').reset();
+        }
+
+        // Copy storefront URL
+        function copyStorefrontUrl() {
+            const input = document.getElementById('storefrontUrl');
+            input.select();
+            document.execCommand('copy');
+            showSuccess('Storefront URL copied to clipboard!');
+        }
+
+        // View storefront
+        function viewStorefront() {
+            const url = document.getElementById('storefrontUrl').value;
+            window.open(url, '_blank');
+        }
+
+        // Utility functions
+        function showSuccess(message) {
+            // Simple toast notification - you could use a proper toast library
+            alert('Success: ' + message);
+        }
+
+        function showError(message) {
+            alert('Error: ' + message);
+        }
+    </script>
+</body>
+</html>

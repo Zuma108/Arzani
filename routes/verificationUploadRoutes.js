@@ -2,6 +2,7 @@ import express from 'express';
 import multer from 'multer';
 import { authenticateToken } from '../middleware/auth.js';
 import { uploadToS3 } from '../utils/s3.js';
+import { sendProfessionalVerificationNotification } from '../utils/email.js';
 import pool from '../db.js';
 
 const router = express.Router();
@@ -26,7 +27,8 @@ router.post('/upload', authenticateToken, upload.fields([
       servicesOffered,
       industriesServiced,
       profileVisibility,
-      allowDirectContact
+      allowDirectContact,
+      featuredProfessional
     } = req.body;
 
     const documents = req.files?.documents || [];
@@ -38,6 +40,21 @@ router.post('/upload', authenticateToken, upload.fields([
 
     if (!professionalType) {
       return res.status(400).json({ error: 'Professional type is required' });
+    }
+
+    // Validate services offered (minimum 3 required)
+    let parsedServices = [];
+    try {
+      parsedServices = JSON.parse(servicesOffered || '[]');
+    } catch (error) {
+      return res.status(400).json({ error: 'Invalid services format' });
+    }
+
+    if (!Array.isArray(parsedServices) || parsedServices.length < 3) {
+      return res.status(400).json({ 
+        error: 'Minimum 3 services are required for professional verification',
+        details: `You have provided ${parsedServices.length} services, but 3 are required.`
+      });
     }
 
     // Start transaction
@@ -102,10 +119,11 @@ router.post('/upload', authenticateToken, upload.fields([
         website: professionalWebsite,
         phone: professionalPhone,
         profilePictureUrl,
-        servicesOffered: JSON.parse(servicesOffered || '[]'),
+        servicesOffered: parsedServices,
         industriesServiced: JSON.parse(industriesServiced || '[]'),
         visibility: profileVisibility || 'public',
-        allowDirectContact: allowDirectContact === 'true' || allowDirectContact === true
+        allowDirectContact: allowDirectContact === 'true' || allowDirectContact === true,
+        featuredProfessional: featuredProfessional === 'true'
       };
 
       const verificationResult = await client.query(
@@ -128,6 +146,34 @@ router.post('/upload', authenticateToken, upload.fields([
       );
 
       await client.query('COMMIT');
+
+      // Get user information for email notification
+      const userInfoQuery = await pool.query(
+        'SELECT email, username FROM users WHERE id = $1',
+        [req.user.userId]
+      );
+      
+      const userData = userInfoQuery.rows[0];
+      
+      // Send email notification to admin (async, don't wait for it)
+      if (userData) {
+        const submissionData = {
+          licenseNumber,
+          documentsCount: uploadedDocuments.length,
+          notes: verificationNotes
+        };
+        
+        // Send notification email asynchronously (don't block the response)
+        sendProfessionalVerificationNotification(
+          userData.email,
+          userData.username,
+          professionalType,
+          verificationResult.rows[0].id,
+          submissionData
+        ).catch(error => {
+          console.error('Error sending professional verification notification email:', error);
+        });
+      }
 
       res.status(201).json({
         success: true,
@@ -275,27 +321,106 @@ router.post('/admin/process/:requestId', authenticateToken, async (req, res) => 
       [status, notes, req.user.userId, requestId]
     );
 
-    // If approved, update user's verification status
-    if (status === 'approved') {
-      // Get user ID from request
-      const userIdQuery = await pool.query(
-        'SELECT user_id, professional_type FROM professional_verification_requests WHERE id = $1',
-        [requestId]
-      );
-      
-      if (userIdQuery.rows.length > 0) {
-        const userId = userIdQuery.rows[0].user_id;
-        const professionalType = userIdQuery.rows[0].professional_type;
-        
-        await pool.query(
+    // Get user information for email notifications
+    const userInfoQuery = await pool.query(
+      `SELECT pvr.user_id, pvr.professional_type, u.email, u.username 
+       FROM professional_verification_requests pvr 
+       JOIN users u ON pvr.user_id = u.id 
+       WHERE pvr.id = $1`,
+      [requestId]
+    );
+    
+    const userData = userInfoQuery.rows[0];
+
+    // If approved, update user's verification status and create professional profile
+    if (status === 'approved' && userData) {
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+
+        // Update user verification status
+        await client.query(
           `UPDATE users 
            SET is_verified_professional = TRUE, 
                professional_verification_date = NOW(),
                professional_type = $1
            WHERE id = $2`,
-          [professionalType, userId]
+          [userData.professional_type, userData.user_id]
         );
+
+        // Get the profile data from the verification request
+        const requestDataQuery = await client.query(
+          'SELECT profile_data FROM professional_verification_requests WHERE id = $1',
+          [requestId]
+        );
+
+        const profileData = requestDataQuery.rows[0]?.profile_data || {};
+
+        // Create professional profile with featured flag set to true
+        const createProfileQuery = `
+          INSERT INTO professional_profiles (
+            user_id, professional_bio, professional_tagline, years_experience,
+            professional_website, services_offered, industries_serviced,
+            professional_contact, profile_visibility, allow_direct_contact,
+            featured_professional, professional_picture_url
+          ) VALUES (
+            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
+          )
+          ON CONFLICT (user_id) DO UPDATE SET
+            professional_bio = EXCLUDED.professional_bio,
+            professional_tagline = EXCLUDED.professional_tagline,
+            years_experience = EXCLUDED.years_experience,
+            professional_website = EXCLUDED.professional_website,
+            services_offered = EXCLUDED.services_offered,
+            industries_serviced = EXCLUDED.industries_serviced,
+            professional_contact = EXCLUDED.professional_contact,
+            profile_visibility = EXCLUDED.profile_visibility,
+            allow_direct_contact = EXCLUDED.allow_direct_contact,
+            featured_professional = EXCLUDED.featured_professional,
+            professional_picture_url = EXCLUDED.professional_picture_url,
+            updated_at = CURRENT_TIMESTAMP
+        `;
+
+        const professionalContact = {
+          phone: profileData.phone || null
+        };
+
+        await client.query(createProfileQuery, [
+          userData.user_id,
+          profileData.bio || '',
+          profileData.tagline || '',
+          profileData.yearsExperience || 0,
+          profileData.website || null,
+          profileData.servicesOffered || [],
+          profileData.industriesServiced || [],
+          professionalContact,
+          profileData.visibility || 'public',
+          profileData.allowDirectContact !== false,
+          profileData.featuredProfessional !== false, // Default to true for newly verified professionals
+          profileData.profilePictureUrl || null
+        ]);
+
+        await client.query('COMMIT');
+      } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error creating professional profile:', error);
+        throw error;
+      } finally {
+        client.release();
       }
+    }
+
+    // Send email notification to user (async, don't wait for it)
+    if (userData && (status === 'approved' || status === 'rejected')) {
+      sendVerificationStatusEmail(
+        userData.email,
+        userData.username,
+        status,
+        userData.professional_type,
+        notes
+      ).catch(error => {
+        console.error('Error sending verification status email:', error);
+      });
     }
 
     res.json({

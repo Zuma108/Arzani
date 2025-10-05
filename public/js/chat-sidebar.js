@@ -305,7 +305,8 @@
         // Get recipient info
         const recipient = conversation.recipient || {};
         const recipientName = recipient.username || 'Unknown';
-        const recipientPic = recipient.profile_picture || '/images/default-profile.png';
+        // Use enhanced profile picture with professional fallback
+        const recipientPic = getEnhancedProfilePicture(recipient);
         
         // Build HTML for conversation item
         return `
@@ -313,8 +314,9 @@
                data-conversation-id="${conversation.id}">
             <div class="flex-shrink-0 mr-3">
               <img src="${recipientPic}" alt="${recipientName}" 
-                class="w-10 h-10 rounded-full"
-                onerror="this.src='/images/default-profile.png'">
+                class="w-10 h-10 rounded-full conversation-avatar"
+                data-conversation-id="${conversation.id}"
+                onerror="handleProfilePictureError(this)">
             </div>
             <div class="flex-grow min-w-0">
               <div class="flex items-center justify-between">
@@ -379,4 +381,33 @@
     // To implement: update UI based on data
     // Could refresh the list or update specific conversations
   };
+
+  /**
+   * Get enhanced profile picture with professional fallback
+   */
+  function getEnhancedProfilePicture(recipient) {
+    // Priority order: professional_picture_url -> profile_picture -> default
+    return recipient.professional_picture_url || 
+           recipient.profile_picture || 
+           '/images/default-profile.png';
+  }
+
+  /**
+   * Handle profile picture error with proper fallback
+   */
+  function handleProfilePictureError(img) {
+    if (!img.classList.contains('using-fallback')) {
+      img.src = '/images/default-profile.png';
+      img.classList.add('using-fallback');
+      console.log('Profile picture failed, using fallback:', img.src);
+    }
+  }
+
+  // Make functions available globally for chat-interface.js integration
+  window.chatSidebar = {
+    getEnhancedProfilePicture,
+    handleProfilePictureError,
+    refreshConversations: loadConversations
+  };
+
 })();

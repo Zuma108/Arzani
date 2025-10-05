@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Successful | Arzani Marketplace</title>
+    <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @keyframes bounce {
+            0%, 20%, 53%, 80%, 100% {
+                animation-timing-function: cubic-bezier(0.215, 0.610, 0.355, 1.000);
+                transform: translate3d(0,0,0);
+            }
+            40%, 43% {
+                animation-timing-function: cubic-bezier(0.755, 0.050, 0.855, 0.060);
+                transform: translate3d(0, -15px, 0);
+            }
+            70% {
+                animation-timing-function: cubic-bezier(0.755, 0.050, 0.855, 0.060);
+                transform: translate3d(0, -7px, 0);
+            }
+            90% {
+                transform: translate3d(0,-2px,0);
+            }
+        }
+        
+        .bounce-animation {
+            animation: bounce 2s infinite;
+        }
+        
+        .celebration {
+            animation: pulse 0.6s ease-in-out 3;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-green-50 to-blue-50 min-h-screen flex items-center justify-center">
+    <div class="max-w-md w-full mx-4">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 text-center celebration">
+            <!-- Success Icon -->
+            <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 bounce-animation">
+                <i class="fas fa-check text-green-600 text-3xl"></i>
+            </div>
+            
+            <!-- Success Message -->
+            <h1 class="text-3xl font-bold text-gray-900 mb-4">
+                Payment Successful! 🎉
+            </h1>
+            
+            <p class="text-gray-600 mb-6">
+                Your quote payment has been processed successfully. The professional can now begin work on your project.
+            </p>
+            
+            <!-- Payment Details -->
+            <div class="bg-gray-50 rounded-lg p-4 mb-6" id="paymentDetails">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-gray-600">Quote ID:</span>
+                    <span class="font-semibold" id="quoteId">Loading...</span>
+                </div>
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-gray-600">Session ID:</span>
+                    <span class="font-mono text-sm" id="sessionId">Loading...</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-600">Status:</span>
+                    <span class="text-green-600 font-semibold">
+                        <i class="fas fa-check-circle mr-1"></i>
+                        Completed
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="space-y-3">
+                <button onclick="returnToChat()" class="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-semibold">
+                    <i class="fas fa-comments mr-2"></i>
+                    Return to Chat
+                </button>
+                
+                <button onclick="goToDashboard()" class="w-full bg-gray-100 text-gray-700 py-3 px-6 rounded-lg hover:bg-gray-200 transition-colors duration-200 font-semibold">
+                    <i class="fas fa-tachometer-alt mr-2"></i>
+                    Go to Dashboard
+                </button>
+            </div>
+        </div>
+        
+        <!-- Additional Info -->
+        <div class="mt-6 text-center text-sm text-gray-500">
+            <p><i class="fas fa-shield-alt mr-1"></i> Your payment is secure and protected</p>
+            <p class="mt-1">Receipt sent to your email address</p>
+        </div>
+    </div>
+
+    <script>
+        // Extract URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionId = urlParams.get('session_id');
+        const quoteId = urlParams.get('quote_id');
+        
+        // Update UI with payment details
+        if (sessionId) {
+            document.getElementById('sessionId').textContent = sessionId;
+        }
+        
+        if (quoteId) {
+            document.getElementById('quoteId').textContent = `#${quoteId}`;
+        }
+        
+        // Navigation functions
+        function returnToChat() {
+            if (quoteId) {
+                // Try to find the conversation ID from the quote
+                fetch(`/api/quotes/${quoteId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.quote.conversation_id) {
+                        window.location.href = `/chat?conversation=${data.quote.conversation_id}`;
+                    } else {
+                        window.location.href = '/chat';
+                    }
+                })
+                .catch(() => {
+                    window.location.href = '/chat';
+                });
+            } else {
+                window.location.href = '/chat';
+            }
+        }
+        
+        function goToDashboard() {
+            window.location.href = '/buyer-dashboard';
+        }
+        
+        // Show success animation after page load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                // Trigger confetti effect if available
+                if (typeof confetti === 'function') {
+                    confetti({
+                        particleCount: 100,
+                        spread: 70,
+                        origin: { y: 0.6 }
+                    });
+                }
+            }, 500);
+        });
+        
+        // Auto-redirect after 30 seconds if no action taken
+        setTimeout(() => {
+            const userInteracted = document.querySelector('button:hover, button:focus, button:active');
+            if (!userInteracted) {
+                returnToChat();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>

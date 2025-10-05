@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Token System Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Simulate authentication token for testing -->
+    <meta name="auth-token" content="test-token-123">
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-8 text-center">Enhanced Token System Test</h1>
+        
+        <!-- Test Authentication Methods -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">Authentication Test</h2>
+            <div id="auth-test-results" class="space-y-2">
+                <div>Testing authentication methods...</div>
+            </div>
+            <button onclick="testAuthentication()" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                Test Authentication
+            </button>
+        </div>
+        
+        <!-- Token Balance Display Test -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">Token Balance Display</h2>
+            <div id="token-balance-navbar-widget" class="mb-4">
+                <!-- Enhanced token widget will appear here -->
+            </div>
+            <div id="token-balance-display" class="text-2xl font-bold mb-4">
+                Loading...
+            </div>
+            <button onclick="refreshBalance()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                Refresh Balance
+            </button>
+        </div>
+        
+        <!-- Token Consumption Test -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">Token Consumption Test</h2>
+            <input type="number" id="consume-amount" value="1" min="1" class="border rounded px-3 py-2 mr-2">
+            <button onclick="testTokenConsumption()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                Test Consume Tokens
+            </button>
+            <div id="consumption-results" class="mt-4"></div>
+        </div>
+        
+        <!-- API Test Results -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">API Test Results</h2>
+            <div id="api-test-results" class="space-y-2 max-h-64 overflow-y-auto">
+                <!-- API test results will appear here -->
+            </div>
+        </div>
+        
+        <!-- Console Log Display -->
+        <div class="bg-gray-900 text-green-400 rounded-lg p-6">
+            <h2 class="text-xl font-semibold mb-4 text-white">Console Logs</h2>
+            <div id="console-logs" class="space-y-1 max-h-64 overflow-y-auto font-mono text-sm">
+                <!-- Console logs will appear here -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Include Enhanced Token System -->
+    <script src="/js/token-balance-enhanced.js"></script>
+    
+    <script>
+        // Override console.log to display in UI
+        const originalConsoleLog = console.log;
+        const originalConsoleError = console.error;
+        
+        function addConsoleLog(message, type = 'log') {
+            const logsDiv = document.getElementById('console-logs');
+            const logEntry = document.createElement('div');
+            logEntry.className = type === 'error' ? 'text-red-400' : 'text-green-400';
+            logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logsDiv.appendChild(logEntry);
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+        
+        console.log = function(message) {
+            originalConsoleLog(message);
+            addConsoleLog(message, 'log');
+        };
+        
+        console.error = function(message) {
+            originalConsoleError(message);
+            addConsoleLog(message, 'error');
+        };
+        
+        // Test authentication methods
+        function testAuthentication() {
+            const resultsDiv = document.getElementById('auth-test-results');
+            resultsDiv.innerHTML = '<div>Testing authentication methods...</div>';
+            
+            if (window.tokenBalanceEnhanced) {
+                // Test token retrieval
+                const token = window.tokenBalanceEnhanced.getAuthToken();
+                resultsDiv.innerHTML += `<div>✅ Token retrieved: ${token ? token.substring(0, 20) + '...' : 'null'}</div>`;
+                
+                // Test auth headers
+                const headers = window.tokenBalanceEnhanced.getAuthHeaders();
+                resultsDiv.innerHTML += `<div>✅ Auth headers: ${JSON.stringify(headers, null, 2)}</div>`;
+                
+                // Test auth status
+                window.tokenBalanceEnhanced.checkAuthStatus().then(isAuth => {
+                    resultsDiv.innerHTML += `<div>${isAuth ? '✅' : '❌'} Authentication status: ${isAuth}</div>`;
+                });
+            } else {
+                resultsDiv.innerHTML += '<div>❌ TokenBalanceEnhanced not available</div>';
+            }
+        }
+        
+        // Refresh balance
+        function refreshBalance() {
+            if (window.tokenBalanceEnhanced) {
+                window.tokenBalanceEnhanced.refreshBalance()
+                    .then(balance => {
+                        document.getElementById('token-balance-display').textContent = balance;
+                        addAPIResult('✅ Balance refreshed', 'success');
+                    })
+                    .catch(error => {
+                        addAPIResult('❌ Balance refresh failed: ' + error.message, 'error');
+                    });
+            } else {
+                addAPIResult('❌ TokenBalanceEnhanced not available', 'error');
+            }
+        }
+        
+        // Test token consumption
+        function testTokenConsumption() {
+            const amount = parseInt(document.getElementById('consume-amount').value);
+            const resultsDiv = document.getElementById('consumption-results');
+            
+            if (window.tokenBalanceEnhanced) {
+                window.tokenBalanceEnhanced.consumeTokens(amount, 'test-consumption', { test: true })
+                    .then(result => {
+                        resultsDiv.innerHTML = `<div class="text-green-600">✅ Consumed ${amount} tokens. Remaining: ${result.remainingBalance}</div>`;
+                        addAPIResult(`✅ Token consumption successful: ${amount} tokens`, 'success');
+                    })
+                    .catch(error => {
+                        resultsDiv.innerHTML = `<div class="text-red-600">❌ Consumption failed: ${error.message}</div>`;
+                        addAPIResult(`❌ Token consumption failed: ${error.message}`, 'error');
+                    });
+            } else {
+                resultsDiv.innerHTML = '<div class="text-red-600">❌ TokenBalanceEnhanced not available</div>';
+            }
+        }
+        
+        // Add API result
+        function addAPIResult(message, type) {
+            const resultsDiv = document.getElementById('api-test-results');
+            const resultEntry = document.createElement('div');
+            resultEntry.className = type === 'success' ? 'text-green-600' : 'text-red-600';
+            resultEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            resultsDiv.appendChild(resultEntry);
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+        }
+        
+        // Initialize test when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Enhanced Token System Test Page Loaded');
+            
+            // Wait for token system to initialize
+            setTimeout(() => {
+                if (window.tokenBalanceEnhanced) {
+                    console.log('TokenBalanceEnhanced system detected');
+                    addAPIResult('✅ Enhanced token system initialized', 'success');
+                    
+                    // Add balance listener
+                    window.tokenBalanceEnhanced.addBalanceListener(function(balance) {
+                        document.getElementById('token-balance-display').textContent = balance;
+                        addAPIResult(`🔄 Balance updated: ${balance}`, 'success');
+                    });
+                    
+                    // Test initial balance fetch
+                    refreshBalance();
+                } else {
+                    console.error('TokenBalanceEnhanced system not found');
+                    addAPIResult('❌ Enhanced token system not found', 'error');
+                }
+                
+                // Auto-test authentication
+                testAuthentication();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

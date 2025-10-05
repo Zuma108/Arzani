@@ -5,7 +5,7 @@
 
 document.addEventListener('DOMContentLoaded', function() {
   // Log debug info about user authentication
-  console.log('Chat Interface Initialized:', {
+  console.log('🚀 Chat Interface Initialized:', {
     hasToken: !!localStorage.getItem('token'),
     hasAuthMeta: !!document.querySelector('meta[name="auth-token"]')?.content,
     profilePicture: document.querySelector('.profile-picture, .avatar-image')?.src,
@@ -21,8 +21,13 @@ document.addEventListener('DOMContentLoaded', function() {
   // Quill editor setup for rich text messaging
   initEditor();
   
-  // WebSocket connection for real-time messaging
-  initWebSocket();
+  // WebSocket connection for real-time messaging - Enhanced
+  console.log('🔌 Initializing real-time connection...');
+  setTimeout(() => {
+    initWebSocket();
+    // Show connection status
+    // Connection status shown in console only
+  }, 1000);
   
   // Voice message recording functionality
   initVoiceRecording();
@@ -383,6 +388,14 @@ function initWebSocket() {
   if (window.chatSocket) return;
   
   try {
+    // Prefer Socket.IO if available, fallback to WebSocket
+    if (typeof io === 'function') {
+      console.log('🔌 Initializing Socket.IO connection...');
+      initSocketIO();
+      return;
+    }
+    
+    console.log('🔌 Falling back to WebSocket connection...');
     // Create WebSocket connection
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const host = window.location.host;
@@ -412,14 +425,76 @@ function initWebSocket() {
         // Handle different message types
         switch(data.type) {
           case 'message':
-            addMessageToUI(data.message);
+          case 'new_message':
+            console.log('📨 Real-time message received:', data.message || data);
+            const messageData = data.message || data;
+            addMessageToUI(messageData);
+            // Auto-scroll to bottom
+            scrollToBottom();
             break;
+            
+          case 'quote_message':
+            console.log('📋 Real-time quote message received:', data);
+            // Handle quote-specific message display
+            if (typeof window.QuoteFunctionality !== 'undefined' && window.QuoteFunctionality.addQuoteMessageToChat) {
+              window.QuoteFunctionality.addQuoteMessageToChat(data.message, data.quote);
+            } else {
+              addMessageToUI(data.message);
+            }
+            scrollToBottom();
+            break;
+            
+          case 'quote_created':
+            console.log('✨ Quote created in real-time:', data);
+            handleQuoteStatusUpdate(data.quoteId || data.quote?.id, 'pending');
+            if (data.message) {
+              addMessageToUI(data.message);
+              scrollToBottom();
+            }
+            console.log('New quote received');
+            break;
+            
+          case 'quote_accepted':
+            console.log('✅ Quote accepted in real-time:', data);
+            handleQuoteStatusUpdate(data.quoteId || data.quote?.id, 'accepted');
+            // Don't display system message as text - status update handles the UI changes
+            // showToast is called from handleQuoteStatusUpdate
+            scrollToBottom();
+            break;
+            
+          case 'quote_declined':
+            console.log('❌ Quote declined in real-time:', data);
+            handleQuoteStatusUpdate(data.quoteId || data.quote?.id, 'declined');
+            // Don't display system message as text - status update handles the UI changes
+            // showToast is called from handleQuoteStatusUpdate
+            scrollToBottom();
+            break;
+            
+          case 'quote_paid':
+            console.log('💰 Quote paid in real-time:', data);
+            handleQuoteStatusUpdate(data.quoteId || data.quote?.id, 'paid');
+            // Don't display system message as text - status update handles the UI changes
+            
+            // Enhanced celebration for payments
+            if (typeof celebratePaymentSuccess === 'function') {
+              celebratePaymentSuccess(data.quoteId || data.quote?.id);
+            }
+            
+            // showToast is called from handleQuoteStatusUpdate
+            scrollToBottom();
+            break;
+            
           case 'status':
             updateUserStatus(data.userId, data.status);
             break;
+            
           case 'error':
             console.error('WebSocket error:', data.message);
+            console.error('Connection error:', data.message);
             break;
+            
+          default:
+            console.log('📡 Unhandled WebSocket event:', data.type, data);
         }
       } catch (error) {
         console.error('Error parsing WebSocket message:', error);
@@ -1130,6 +1205,35 @@ function addMessageToUI(message) {
     return;
   }
   
+  // Filter out system messages for quote status updates - these should only update the quote card, not display as text
+  const systemMessageTypes = ['quote_accepted', 'quote_declined', 'quote_paid'];
+  if (message.message_type && systemMessageTypes.includes(message.message_type)) {
+    console.log('System message detected, updating quote status instead of displaying as text:', message.message_type);
+    // Extract quote ID and update status instead of showing as message
+    if (message.quote_id) {
+      const statusMap = {
+        'quote_accepted': 'accepted',
+        'quote_declined': 'declined', 
+        'quote_paid': 'paid'
+      };
+      handleQuoteStatusUpdate(message.quote_id, statusMap[message.message_type]);
+    }
+    return; // Don't display system messages as regular chat messages
+  }
+  
+  // Check if message already exists to prevent duplicates from real-time updates
+  const msgContainer = document.getElementById('messages-list') || 
+                       document.getElementById('chatMessages') || 
+                       document.querySelector('.chat-messages');
+  
+  if (msgContainer && message.id) {
+    const existingMessage = msgContainer.querySelector(`[data-message-id="${message.id}"]`);
+    if (existingMessage) {
+      console.log('Message already exists, skipping:', message.id);
+      return;
+    }
+  }
+  
   // Get current user ID from multiple sources
   const currentUserId = 
     window.currentUserId || 
@@ -1154,6 +1258,11 @@ function addMessageToUI(message) {
   // Define the user labels
   const userLabel = isCurrentUser ? 'User 1 (You)' : 'User 2';
   
+  // Initialize quote status storage if not exists
+  if (!window.quoteStatuses) {
+    window.quoteStatuses = {};
+  }
+  
   // If there's an avatar image in the message, add error handling
   if (message.sender_id && !message.is_system_message) {
     const defaultImg = '/images/default-profile.png';
@@ -1173,7 +1282,7 @@ function addMessageToUI(message) {
     messageElement.innerHTML = avatarHtml + `
       <div class="message-wrapper">
         ${!isCurrentUser ? `<div class="message-sender">${message.sender_name || userLabel}</div>` : ''}
-        <div class="message-content">${message.content}</div>
+        <div class="message-content">${formatMessageContent(message)}</div>
         <div class="message-time">${formatTime(message.created_at || new Date())}</div>
         ${isCurrentUser ? `<div class="message-sender text-right">${userLabel}</div>` : ''}
       </div>
@@ -1182,7 +1291,7 @@ function addMessageToUI(message) {
     // System message doesn't need an avatar
     messageElement.innerHTML = `
       <div class="message-wrapper">
-        <div class="message-content">${message.content}</div>
+        <div class="message-content">${formatMessageContent(message)}</div>
         <div class="message-time">${formatTime(message.created_at || new Date())}</div>
       </div>
     `;
@@ -1337,6 +1446,262 @@ function openImageViewer(imageUrl) {
   
   // Add to body
   document.body.appendChild(modal);
+}
+
+/**
+ * Format message content based on message type
+ */
+function formatMessageContent(message) {
+  if (message.message_type === 'quote') {
+    return formatQuoteMessage(message);
+  }
+  
+  return message.content;
+}
+
+/**
+ * Format quote message as a special card
+ */
+function formatQuoteMessage(message) {
+  const currentUserId = window.currentUserId || 
+    document.querySelector('[data-user-id]')?.dataset.userId || 
+    document.querySelector('meta[name="user-id"]')?.content;
+    
+  const isCurrentUser = String(message.sender_id) === String(currentUserId);
+  const quoteId = message.quote_id;
+  
+  // Extract quote details from message content (fallback if quote API fails)
+  const titleMatch = message.content.match(/\*\*Quote Sent: (.+?)\*\*/);
+  const amountMatch = message.content.match(/\*\*Amount:\*\* £(.+?)\n/);
+  const descriptionMatch = message.content.match(/\*\*Description:\*\* (.+?)\n/);
+  
+  const title = titleMatch ? titleMatch[1] : 'Quote';
+  const amount = amountMatch ? amountMatch[1] : '0.00';
+  const description = descriptionMatch ? descriptionMatch[1] : 'Service quote';
+  
+  // Get quote status (default to pending for new quotes)
+  const status = getQuoteStatus(quoteId) || 'pending';
+  const statusText = getQuoteStatusText(status, isCurrentUser);
+  const statusClass = `quote-status-${status}`;
+  
+  return `
+    <div class="quote-card bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4 mb-2 hover:shadow-lg transition-all duration-200 cursor-pointer" 
+         data-quote-id="${quoteId}" 
+         onclick="viewQuoteDetails('${quoteId}')">
+      <div class="quote-header flex justify-between items-start mb-3">
+        <div class="quote-title-section">
+          <h4 class="font-semibold text-blue-800 dark:text-blue-200 flex items-center">
+            <i class="fas fa-file-invoice-dollar mr-2"></i>
+            <span class="underline decoration-dashed">${title}</span>
+          </h4>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">${description}</p>
+          <p class="text-xs text-blue-500 dark:text-blue-400 mt-1 italic">
+            <i class="fas fa-mouse-pointer mr-1"></i>Click to view full quote details
+          </p>
+          <div class="real-time-indicator hidden" data-quote-update="${quoteId}">
+            <span class="text-xs text-green-500 animate-pulse">
+              <i class="fas fa-circle"></i> Live updates enabled
+            </span>
+          </div>
+        </div>
+        <div class="quote-status">
+          <span class="px-3 py-1 rounded-full text-xs font-medium ${statusClass}" data-quote-status="${quoteId}">
+            ${statusText}
+          </span>
+        </div>
+      </div>
+      
+      <div class="quote-amount mb-3">
+        <div class="text-2xl font-bold text-green-600 dark:text-green-400">
+          £${parseFloat(amount).toFixed(2)}
+        </div>
+      </div>
+      
+      <div class="quote-actions" onclick="event.stopPropagation()">
+        ${getQuoteActionButtons(quoteId, status, isCurrentUser)}
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Get quote status from storage or API
+ */
+function getQuoteStatus(quoteId) {
+  // Check if we have cached status
+  const cachedStatus = window.quoteStatuses?.[quoteId];
+  if (cachedStatus) {
+    return cachedStatus;
+  }
+  
+  // Default to pending for new quotes
+  return 'pending';
+}
+
+/**
+ * Get quote status text based on user role
+ */
+function getQuoteStatusText(status, isCurrentUser) {
+  const statusMap = {
+    professional: {
+      pending: 'Quote Sent',
+      accepted: 'Quote Accepted',
+      declined: 'Quote Declined', 
+      paid: 'Quote Paid ✅'
+    },
+    client: {
+      pending: 'Quote Received',
+      accepted: 'Payment Required',
+      declined: 'Quote Declined',
+      paid: 'Quote Paid ✅'
+    }
+  };
+  
+  return statusMap[isCurrentUser ? 'professional' : 'client'][status] || status;
+}
+
+/**
+ * Get quote action buttons based on status and user role
+ */
+function getQuoteActionButtons(quoteId, status, isCurrentUser) {
+  if (status === 'pending' && !isCurrentUser) {
+    return `
+      <div class="flex gap-2">
+        <button onclick="acceptQuote('${quoteId}')" class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors text-sm font-medium">
+          <i class="fas fa-check mr-1"></i> Accept Quote
+        </button>
+        <button onclick="declineQuote('${quoteId}')" class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors text-sm font-medium">
+          <i class="fas fa-times mr-1"></i> Decline
+        </button>
+      </div>
+    `;
+  } else if (status === 'accepted' && !isCurrentUser) {
+    return `
+      <button onclick="proceedToPayment('${quoteId}')" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors text-sm font-medium">
+        <i class="fas fa-credit-card mr-1"></i> Proceed to Payment
+      </button>
+    `;
+  } else if (status === 'paid') {
+    return `
+      <div class="text-green-600 dark:text-green-400 font-medium text-sm">
+        <i class="fas fa-check-circle mr-1"></i> Payment completed successfully
+      </div>
+    `;
+  }
+  
+  return '';
+}
+
+/**
+ * Handle quote status updates from WebSocket
+ */
+/**
+ * Get quote status information with styling
+ */
+function getQuoteStatusInfo(status) {
+  const statusMap = {
+    'pending': {
+      text: 'Pending',
+      class: 'bg-yellow-100 text-yellow-800 border border-yellow-200'
+    },
+    'accepted': {
+      text: 'Accepted - Pay Now',
+      class: 'bg-orange-100 text-orange-800 border border-orange-200'
+    },
+    'declined': {
+      text: 'Declined',
+      class: 'bg-red-100 text-red-800 border border-red-200'
+    },
+    'paid': {
+      text: 'Paid ✓',
+      class: 'bg-green-100 text-green-800 border border-green-200'
+    }
+  };
+  
+  return statusMap[status] || statusMap['pending'];
+}
+
+/**
+ * Get updated quote action buttons based on status
+ */
+function getUpdatedQuoteActions(quoteId, status) {
+  const currentUserId = window.currentUserId || 
+    document.querySelector('[data-user-id]')?.dataset.userId || 
+    document.querySelector('meta[name="user-id"]')?.content;
+    
+  // Find the quote card to determine if current user is professional
+  const quoteCard = document.querySelector(`[data-quote-id="${quoteId}"]`);
+  const messageElement = quoteCard?.closest('.message');
+  const isCurrentUser = messageElement?.classList.contains('outgoing');
+  
+  return getQuoteActionButtons(quoteId, status, isCurrentUser);
+}
+
+function handleQuoteStatusUpdate(quoteId, newStatus) {
+  console.log(`🔄 Updating quote ${quoteId} status to: ${newStatus}`);
+  
+  // Update cached status
+  if (!window.quoteStatuses) {
+    window.quoteStatuses = {};
+  }
+  window.quoteStatuses[quoteId] = newStatus;
+  
+  // Find all quote cards with this ID and update them
+  const quoteCards = document.querySelectorAll(`[data-quote-id="${quoteId}"]`);
+  
+  quoteCards.forEach(card => {
+    // Update status badge
+    const statusBadge = card.querySelector(`[data-quote-status="${quoteId}"]`);
+    if (statusBadge) {
+      const statusInfo = getQuoteStatusInfo(newStatus);
+      statusBadge.textContent = statusInfo.text;
+      statusBadge.className = `px-3 py-1 rounded-full text-xs font-medium ${statusInfo.class}`;
+    }
+    
+    // Update action buttons
+    const actionsContainer = card.querySelector('.quote-actions');
+    if (actionsContainer) {
+      const newActions = getUpdatedQuoteActions(quoteId, newStatus);
+      actionsContainer.innerHTML = newActions;
+    }
+    
+    // Show real-time update indicator
+    const indicator = card.querySelector(`[data-quote-update="${quoteId}"]`);
+    if (indicator) {
+      indicator.classList.remove('hidden');
+      indicator.innerHTML = `<span class="text-xs text-green-500 animate-pulse"><i class="fas fa-sync fa-spin"></i> Status updated to ${newStatus}</span>`;
+      
+      // Hide indicator after 3 seconds
+      setTimeout(() => {
+        if (indicator) {
+          indicator.classList.add('hidden');
+        }
+      }, 3000);
+    }
+    
+    // Add visual feedback for status change
+    card.style.transform = 'scale(1.02)';
+    card.style.transition = 'transform 0.3s ease';
+    
+    setTimeout(() => {
+      // Update the entire card classes and styling based on new status
+      if (newStatus === 'paid') {
+        card.classList.add('border-green-300', 'bg-gradient-to-r', 'from-green-50', 'to-emerald-50');
+        card.classList.remove('from-blue-50', 'to-indigo-50', 'border-blue-200');
+      } else if (newStatus === 'accepted') {
+        card.classList.add('border-orange-300', 'bg-gradient-to-r', 'from-orange-50', 'to-yellow-50');
+        card.classList.remove('from-blue-50', 'to-indigo-50', 'border-blue-200');
+      }
+      
+      // Reset transform
+      card.style.transform = 'scale(1)';
+    }, 150);
+  });
+  
+  // Toast notifications for quote status updates removed to prevent spam
+  // Status updates are now handled visually through the quote cards only
+  
+  console.log(`Quote ${quoteId} status updated to: ${newStatus}`);
 }
 
 // Helper function to format time
@@ -2291,4 +2656,928 @@ function getFormattedProfilePictureUrl(url) {
   return url;
 }
 
-// ...existing code...
+// Quote action functions for global access
+/**
+ * Accept quote function (called from action buttons)
+ */
+window.acceptQuote = async function(quoteId) {
+  try {
+    const token = localStorage.getItem('token') || 
+                  document.querySelector('meta[name="auth-token"]')?.content;
+    
+    if (!token) {
+      alert('Authentication required');
+      return;
+    }
+
+    const response = await fetch(`/api/quotes/${quoteId}/accept`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      // Status will be updated via WebSocket
+      console.log('Quote accepted successfully');
+      
+      // Check if we need to redirect to payment
+      if (result.checkoutUrl || result.clientSecret) {
+        // Redirect to Stripe Checkout page
+        const checkoutUrl = result.checkoutUrl || result.clientSecret;
+        console.log('Redirecting to payment:', checkoutUrl);
+        
+        // Small delay to let the WebSocket update process
+        setTimeout(() => {
+          window.location.href = checkoutUrl;
+        }, 500);
+      }
+    } else {
+      if (result.shouldRetry) {
+        // Automatically retry once for expired payment setups
+        console.log('Retrying quote acceptance...');
+        setTimeout(() => acceptQuote(quoteId), 1000);
+        return;
+      }
+      console.error(result.error || 'Failed to accept quote');
+    }
+  } catch (error) {
+    console.error('Error accepting quote:', error);
+    console.error('Failed to accept quote');
+  }
+};
+
+/**
+ * Decline quote function (called from action buttons)
+ */
+window.declineQuote = async function(quoteId) {
+  try {
+    const token = localStorage.getItem('token') || 
+                  document.querySelector('meta[name="auth-token"]')?.content;
+    
+    if (!token) {
+      alert('Authentication required');
+      return;
+    }
+
+    const response = await fetch(`/api/quotes/${quoteId}/decline`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      // Status will be updated via WebSocket
+      console.log('Quote declined successfully');
+    } else {
+      console.error(result.error || 'Failed to decline quote');
+    }
+  } catch (error) {
+    console.error('Error declining quote:', error);
+    console.error('Failed to decline quote');
+  }
+};
+
+/**
+ * View quote details function (called when quote card is clicked)
+ */
+window.viewQuoteDetails = async function(quoteId) {
+  try {
+    const quoteCard = document.querySelector(`[data-quote-id="${quoteId}"]`);
+    if (quoteCard) {
+      // Add visual feedback
+      quoteCard.classList.add('ring-2', 'ring-blue-300');
+      setTimeout(() => {
+        quoteCard.classList.remove('ring-2', 'ring-blue-300');
+      }, 1000);
+    }
+    
+    // Get token for API call
+    const token = localStorage.getItem('token') || 
+                  document.querySelector('meta[name="auth-token"]')?.content;
+    
+    if (!token) {
+      alert('Authentication required to view quote details');
+      return;
+    }
+
+    // Fetch detailed quote information from API
+    const response = await fetch(`/api/quotes/${quoteId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (response.ok) {
+      const quoteData = await response.json();
+      if (quoteData.success) {
+        showQuoteDetailsModal(quoteData.quote);
+      } else {
+        showBasicQuoteInfo(quoteCard, quoteId);
+      }
+    } else {
+      showBasicQuoteInfo(quoteCard, quoteId);
+    }
+  } catch (error) {
+    console.error('Error fetching quote details:', error);
+    const quoteCard = document.querySelector(`[data-quote-id="${quoteId}"]`);
+    showBasicQuoteInfo(quoteCard, quoteId);
+  }
+};
+
+/**
+ * Show quote details in a modal
+ */
+function showQuoteDetailsModal(quote) {
+  const modal = document.createElement('div');
+  modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+  modal.innerHTML = `
+    <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+      <div class="flex justify-between items-start mb-4">
+        <h3 class="text-lg font-bold text-gray-900 dark:text-white">Quote Details</h3>
+        <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      
+      <div class="space-y-3">
+        <div>
+          <label class="text-sm font-medium text-gray-500">Title:</label>
+          <p class="text-gray-900 dark:text-white">${quote.title}</p>
+        </div>
+        
+        <div>
+          <label class="text-sm font-medium text-gray-500">Amount:</label>
+          <p class="text-2xl font-bold text-green-600">£${parseFloat(quote.total_amount).toFixed(2)}</p>
+        </div>
+        
+        <div>
+          <label class="text-sm font-medium text-gray-500">Description:</label>
+          <p class="text-gray-900 dark:text-white">${quote.description}</p>
+        </div>
+        
+        <div>
+          <label class="text-sm font-medium text-gray-500">Status:</label>
+          <span class="px-2 py-1 rounded text-sm font-medium quote-status-${quote.status}">
+            ${quote.status.charAt(0).toUpperCase() + quote.status.slice(1)}
+          </span>
+        </div>
+        
+        ${quote.valid_until ? `
+        <div>
+          <label class="text-sm font-medium text-gray-500">Valid Until:</label>
+          <p class="text-gray-900 dark:text-white">${new Date(quote.valid_until).toLocaleDateString()}</p>
+        </div>
+        ` : ''}
+        
+        ${quote.notes ? `
+        <div>
+          <label class="text-sm font-medium text-gray-500">Notes:</label>
+          <p class="text-gray-900 dark:text-white">${quote.notes}</p>
+        </div>
+        ` : ''}
+      </div>
+      
+      <div class="mt-6 flex justify-end">
+        <button onclick="this.closest('.fixed').remove()" 
+                class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+          Close
+        </button>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+}
+
+/**
+ * Show basic quote info when API call fails
+ */
+function showBasicQuoteInfo(quoteCard, quoteId) {
+  if (!quoteCard) return;
+  
+  const title = quoteCard.querySelector('h4 span')?.textContent || 'Quote';
+  const amount = quoteCard.querySelector('.text-2xl')?.textContent || '£0.00';
+  const status = quoteCard.querySelector('[data-quote-status]')?.textContent || 'Unknown';
+  const description = quoteCard.querySelector('.text-sm.text-gray-600')?.textContent || 'No description';
+  
+  alert(`Quote Details:\n\nTitle: ${title}\nAmount: ${amount}\nStatus: ${status}\nDescription: ${description}\n\nUse the action buttons below to accept, decline, or proceed to payment.`);
+}
+
+/**
+ * Proceed to payment function with Stripe Elements integration
+ */
+window.proceedToPayment = async function(quoteId) {
+  try {
+    // Show loading state
+    const paymentButton = document.querySelector(`[onclick="proceedToPayment('${quoteId}')"]`);
+    if (paymentButton) {
+      paymentButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Processing...';
+      paymentButton.disabled = true;
+    }
+
+    const token = localStorage.getItem('token') || 
+                  document.querySelector('meta[name="auth-token"]')?.content;
+    
+    if (!token) {
+      alert('Authentication required');
+      return;
+    }
+
+    // Call the quote accept endpoint which creates the Stripe PaymentIntent
+    const response = await fetch(`/api/quotes/${quoteId}/accept`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const result = await response.json();
+
+    if (result.success && (result.checkoutUrl || result.clientSecret)) {
+      // Redirect to Stripe Checkout page
+      const checkoutUrl = result.checkoutUrl || result.clientSecret;
+      
+      // Open Stripe Checkout in the same window
+      window.location.href = checkoutUrl;
+    } else {
+      if (result.shouldRetry) {
+        // Show retry message and automatically retry
+        if (paymentButton) {
+          paymentButton.innerHTML = '<i class="fas fa-refresh fa-spin mr-1"></i> Retrying...';
+        }
+        console.log('Payment setup expired, retrying...');
+        setTimeout(() => proceedToPayment(quoteId), 1500);
+        return;
+      }
+      
+      alert(result.error || 'Failed to initiate payment');
+      // Reset button state
+      if (paymentButton) {
+        paymentButton.innerHTML = '<i class="fas fa-credit-card mr-1"></i> Proceed to Payment';
+        paymentButton.disabled = false;
+      }
+    }
+  } catch (error) {
+    console.error('Error initiating payment:', error);
+    alert('Failed to initiate payment');
+    // Reset button state
+    const paymentButton = document.querySelector(`[onclick="proceedToPayment('${quoteId}')"]`);
+    if (paymentButton) {
+      paymentButton.innerHTML = '<i class="fas fa-credit-card mr-1"></i> Proceed to Payment';
+      paymentButton.disabled = false;
+    }
+  }
+};
+
+/**
+ * Get current conversation ID from the page
+ */
+function getCurrentConversationId() {
+  // Try multiple methods to get conversation ID
+  const metaTag = document.querySelector('meta[name="conversation-id"]');
+  if (metaTag) return metaTag.content;
+  
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('conversation')) return urlParams.get('conversation');
+  
+  const formElement = document.getElementById('message-form');
+  if (formElement && formElement.dataset.conversationId) {
+    return formElement.dataset.conversationId;
+  }
+  
+  // Extract from URL path if chat interface
+  const pathMatch = window.location.pathname.match(/\/chat\/(\d+)/);
+  if (pathMatch) return pathMatch[1];
+  
+  return null;
+}
+
+/**
+ * Auto-scroll to bottom of messages container
+ */
+function scrollToBottom() {
+  const messagesContainer = document.getElementById('messages-list') || 
+                           document.getElementById('chatMessages') || 
+                           document.querySelector('.chat-messages');
+  
+  if (messagesContainer) {
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  }
+}
+
+/**
+ * Show typing indicator
+ */
+function showTypingIndicator(userId, username) {
+  const messagesContainer = document.getElementById('messages-list') || 
+                           document.getElementById('chatMessages') || 
+                           document.querySelector('.chat-messages');
+  
+  if (!messagesContainer) return;
+  
+  // Remove existing typing indicator for this user
+  const existingIndicator = messagesContainer.querySelector(`[data-typing-user="${userId}"]`);
+  if (existingIndicator) {
+    existingIndicator.remove();
+  }
+  
+  // Create new typing indicator
+  const typingDiv = document.createElement('div');
+  typingDiv.className = 'typing-indicator message incoming';
+  typingDiv.setAttribute('data-typing-user', userId);
+  typingDiv.innerHTML = `
+    <div class="message-content">
+      <span class="typing-text">${username || 'Someone'} is typing</span>
+      <div class="typing-dots">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+  `;
+  
+  messagesContainer.appendChild(typingDiv);
+  scrollToBottom();
+}
+
+/**
+ * Hide typing indicator
+ */
+function hideTypingIndicator(userId) {
+  const indicator = document.querySelector(`[data-typing-user="${userId}"]`);
+  if (indicator) {
+    indicator.remove();
+  }
+}
+
+/**
+ * Show toast notification
+ */
+function showToast(message, type = 'info') {
+  // Create toast if it doesn't exist
+  let toastContainer = document.getElementById('toast-container');
+  
+  if (!toastContainer) {
+    toastContainer = document.createElement('div');
+    toastContainer.id = 'toast-container';
+    toastContainer.className = 'fixed top-4 right-4 z-50 space-y-2';
+    document.body.appendChild(toastContainer);
+  }
+  
+  const toast = document.createElement('div');
+  const colorClasses = {
+    success: 'bg-green-500 text-white',
+    error: 'bg-red-500 text-white',
+    warning: 'bg-yellow-500 text-white',
+    info: 'bg-blue-500 text-white'
+  };
+  
+  toast.className = `px-4 py-2 rounded-lg shadow-lg ${colorClasses[type] || colorClasses.info} transform transition-all duration-300 translate-x-full`;
+  toast.innerHTML = `
+    <div class="flex items-center gap-2">
+      <span>${message}</span>
+      <button onclick="this.parentElement.parentElement.remove()" class="ml-2 text-white hover:text-gray-200">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  `;
+  
+  toastContainer.appendChild(toast);
+  
+  // Animate in
+  setTimeout(() => toast.classList.remove('translate-x-full'), 10);
+  
+  // Auto remove after 5 seconds
+  setTimeout(() => {
+    if (toast.parentElement) {
+      toast.classList.add('translate-x-full');
+      setTimeout(() => toast.remove(), 300);
+    }
+  }, 5000);
+}
+
+/**
+ * Initialize Socket.IO connection for enhanced real-time features
+ */
+function initSocketIO() {
+  try {
+    const socket = io();
+    
+    // Get authentication token
+    const token = localStorage.getItem('token') || 
+                  document.querySelector('meta[name="auth-token"]')?.content;
+    
+    socket.on('connect', () => {
+      console.log('✅ Socket.IO connected:', socket.id);
+      
+      // Authenticate with server
+      if (token) {
+        socket.emit('authenticate', { token });
+      }
+      
+      // Join current conversation if available
+      const conversationId = getCurrentConversationId();
+      if (conversationId) {
+        socket.emit('join', { conversationId });
+        console.log('🏠 Joined conversation:', conversationId);
+      }
+      
+      console.log('✅ Real-time chat connected!');
+    });
+    
+    socket.on('disconnect', () => {
+      console.log('❌ Socket.IO disconnected');
+      console.log('⚠️ Connection lost. Reconnecting...');
+    });
+    
+    socket.on('reconnect', () => {
+      console.log('🔄 Socket.IO reconnected');
+      showToast('Connection restored!', 'success');
+    });
+    
+    // Handle all real-time events
+    socket.on('new_message', (data) => {
+      console.log('📨 New message via Socket.IO:', data);
+      const messageData = data.message || data;
+      addMessageToUI(messageData);
+      scrollToBottom();
+      
+      // Show notification if not current conversation
+      if (messageData.conversation_id != getCurrentConversationId()) {
+        showToast(`New message from ${messageData.sender_name || 'Unknown'}`, 'info');
+      }
+    });
+    
+    socket.on('quote_created', (data) => {
+      console.log('📋 Quote created via Socket.IO:', data);
+      handleQuoteStatusUpdate(data.quoteId || data.quote?.id, 'pending');
+      if (data.message) {
+        addMessageToUI(data.message);
+        scrollToBottom();
+      }
+      console.log('New quote received');
+    });
+    
+    socket.on('quote_accepted', (data) => {
+      console.log('✅ Quote accepted via Socket.IO:', data);
+      handleQuoteStatusUpdate(data.quoteId || data.quote?.id, 'accepted');
+      if (data.message) {
+        addMessageToUI(data.message);
+        scrollToBottom();
+      }
+      console.log('Quote accepted');
+    });
+    
+    socket.on('quote_declined', (data) => {
+      console.log('❌ Quote declined via Socket.IO:', data);
+      handleQuoteStatusUpdate(data.quoteId || data.quote?.id, 'declined');
+      if (data.message) {
+        addMessageToUI(data.message);
+        scrollToBottom();
+      }
+      console.log('Quote declined');
+    });
+    
+    socket.on('quote_paid', (data) => {
+      console.log('💰 Quote paid via Socket.IO:', data);
+      handleQuoteStatusUpdate(data.quoteId || data.quote?.id, 'paid');
+      if (data.message) {
+        addMessageToUI(data.message);
+        scrollToBottom();
+      }
+      
+      // Enhanced celebration for payments
+      if (typeof celebratePaymentSuccess === 'function') {
+        celebratePaymentSuccess(data.quoteId || data.quote?.id);
+      }
+      
+      showToast('Payment completed! 🎉', 'success');
+    });
+    
+    socket.on('typing', (data) => {
+      showTypingIndicator(data.userId, data.username);
+    });
+    
+    socket.on('stop_typing', (data) => {
+      hideTypingIndicator(data.userId);
+    });
+    
+    socket.on('user_joined', (data) => {
+      console.log('👋 User joined conversation:', data.userId);
+    });
+    
+    socket.on('error', (data) => {
+      console.error('Socket.IO error:', data);
+      console.error('Connection error:', data.message);
+    });
+    
+    // Store socket instance globally
+    window.chatSocket = socket;
+    window.socketType = 'socketio';
+    
+    // Set up message sending via Socket.IO
+    window.sendMessageViaSocket = (conversationId, content) => {
+      socket.emit('message', { conversationId, content });
+    };
+    
+    console.log('✨ Socket.IO fully initialized with real-time features');
+    
+  } catch (error) {
+    console.error('Socket.IO initialization error:', error);
+    // Fallback to regular WebSocket
+    initWebSocketFallback();
+  }
+}
+
+/**
+ * Fallback WebSocket initialization
+ */
+function initWebSocketFallback() {
+  try {
+    // Create WebSocket connection
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const host = window.location.host;
+    const wsUrl = `${protocol}//${host}/ws`;
+    
+    const socket = new WebSocket(wsUrl);
+    
+    socket.onopen = () => {
+      console.log('✅ WebSocket connected');
+      showToast('Chat connection established', 'success');
+    };
+    
+    socket.onclose = () => {
+      console.log('❌ WebSocket disconnected');
+      showToast('Connection lost', 'warning');
+    };
+    
+    socket.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        handleWebSocketMessage(data);
+      } catch (error) {
+        console.error('Error parsing WebSocket message:', error);
+      }
+    };
+    
+    window.chatSocket = socket;
+    window.socketType = 'websocket';
+    
+  } catch (error) {
+    console.error('WebSocket fallback initialization error:', error);
+  }
+}
+
+/**
+ * Handle WebSocket messages
+ */
+function handleWebSocketMessage(data) {
+  // Handle different message types
+  switch(data.type) {
+    case 'message':
+    case 'new_message':
+      console.log('📨 Real-time message received:', data.message || data);
+      const messageData = data.message || data;
+      addMessageToUI(messageData);
+      scrollToBottom();
+      break;
+      
+    case 'quote_message':
+      console.log('📋 Real-time quote message received:', data);
+      if (typeof window.QuoteFunctionality !== 'undefined' && window.QuoteFunctionality.addQuoteMessageToChat) {
+        window.QuoteFunctionality.addQuoteMessageToChat(data.message, data.quote);
+      } else {
+        addMessageToUI(data.message);
+      }
+      scrollToBottom();
+      break;
+      
+    case 'quote_created':
+      console.log('✨ Quote created in real-time:', data);
+      handleQuoteStatusUpdate(data.quoteId || data.quote?.id, 'pending');
+      if (data.message) {
+        addMessageToUI(data.message);
+        scrollToBottom();
+      }
+      console.log('New quote received');
+      break;
+      
+    case 'quote_accepted':
+      console.log('✅ Quote accepted in real-time:', data);
+      handleQuoteStatusUpdate(data.quoteId || data.quote?.id, 'accepted');
+      // Don't display system message as text - status update handles the UI changes
+      scrollToBottom();
+      break;
+      
+    case 'quote_declined':
+      console.log('❌ Quote declined in real-time:', data);
+      handleQuoteStatusUpdate(data.quoteId || data.quote?.id, 'declined');
+      // Don't display system message as text - status update handles the UI changes
+      scrollToBottom();
+      break;
+      
+    case 'quote_paid':
+      console.log('💰 Quote paid in real-time:', data);
+      handleQuoteStatusUpdate(data.quoteId || data.quote?.id, 'paid');
+      // Don't display system message as text - status update handles the UI changes
+      
+      // Enhanced celebration for payments
+      if (typeof celebratePaymentSuccess === 'function') {
+        celebratePaymentSuccess(data.quoteId || data.quote?.id);
+      }
+      
+      scrollToBottom();
+      break;
+      
+    case 'status':
+      updateUserStatus(data.userId, data.status);
+      break;
+      
+    case 'error':
+      console.error('WebSocket error:', data.message);
+      console.error('Connection error:', data.message);
+      break;
+      
+    default:
+      console.log('📡 Unhandled WebSocket event:', data.type, data);
+  }
+}
+
+/**
+ * Update conversation profile pictures with proper fallback logic
+ */
+function updateConversationProfilePictures() {
+  console.log('🖼️ Updating conversation profile pictures...');
+  
+  // Find all conversation items
+  const conversationItems = document.querySelectorAll('.conversation-item');
+  
+  conversationItems.forEach(item => {
+    const img = item.querySelector('img');
+    if (!img) return;
+    
+    const conversationId = item.getAttribute('data-conversation-id');
+    if (!conversationId) return;
+    
+    // Fix hardcoded fallback images
+    fixHardcodedProfilePicture(img);
+    
+    // Try to get updated profile picture from server
+    fetchConversationProfilePicture(conversationId)
+      .then(profilePicture => {
+        if (profilePicture && profilePicture !== img.src) {
+          console.log(`Updating profile picture for conversation ${conversationId}:`, profilePicture);
+          img.src = profilePicture;
+          img.classList.remove('using-fallback');
+        }
+      })
+      .catch(error => {
+        console.error(`Failed to update profile picture for conversation ${conversationId}:`, error);
+      });
+  });
+}
+
+/**
+ * Fix hardcoded profile pictures in conversation items
+ */
+function fixHardcodedProfilePicture(img) {
+  // List of hardcoded/fallback images that should be replaced
+  const fallbackImages = [
+    '/images/default-avatar.png',
+    '/images/default_profile1.png',
+    '/images/default_profile2.png',
+    '/images/default_profile3.png',
+    '/images/default_profile4.png',
+    '/images/default_profile5.png',
+    'http://localhost:5000/images/default_profile1.png',
+    'default-avatar.png'
+  ];
+  
+  const currentSrc = img.src;
+  const isUsingFallback = img.classList.contains('using-fallback');
+  
+  // Check if current image is a fallback that should be replaced
+  const isFallbackImage = fallbackImages.some(fallback => 
+    currentSrc.includes(fallback) || currentSrc.endsWith(fallback)
+  );
+  
+  if (isFallbackImage || isUsingFallback) {
+    console.log(`Found hardcoded/fallback image: ${currentSrc}`);
+    
+    // Set proper fallback handling with enhanced error handling
+    img.onerror = function() {
+      if (!this.classList.contains('using-fallback')) {
+        this.src = '/images/default-profile.png';
+        this.classList.add('using-fallback');
+        console.log('Profile picture failed, using fallback:', this.src);
+      }
+    };
+    
+    // Try to use the data-original-src if available
+    const originalSrc = img.getAttribute('data-original-src');
+    if (originalSrc && !fallbackImages.some(fallback => originalSrc.includes(fallback))) {
+      console.log(`Attempting to use original source: ${originalSrc}`);
+      img.src = originalSrc;
+      img.classList.remove('using-fallback');
+    }
+  }
+}
+
+/**
+ * Fetch profile picture for a specific conversation
+ */
+async function fetchConversationProfilePicture(conversationId) {
+  try {
+    const token = localStorage.getItem('token') || 
+                  document.querySelector('meta[name="auth-token"]')?.content;
+    
+    if (!token) {
+      console.warn('No authentication token available');
+      return null;
+    }
+
+    const response = await fetch(`/api/conversations/${conversationId}/profile-picture`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.profile_picture || null;
+  } catch (error) {
+    console.error('Error fetching conversation profile picture:', error);
+    return null;
+  }
+}
+
+/**
+ * Initialize profile picture updates and set up periodic refresh
+ */
+function initProfilePictureUpdates() {
+  // Fix any existing hardcoded profile pictures immediately
+  fixAllHardcodedProfilePictures();
+  
+  // Update immediately
+  updateConversationProfilePictures();
+  
+  // Set up periodic updates every 30 seconds
+  setInterval(updateConversationProfilePictures, 30000);
+  
+  // Update when page regains focus
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      fixAllHardcodedProfilePictures();
+      updateConversationProfilePictures();
+    }
+  });
+}
+
+/**
+ * Fix all hardcoded profile pictures on the page
+ */
+function fixAllHardcodedProfilePictures() {
+  console.log('🔧 Scanning for hardcoded profile pictures...');
+  
+  // Find all images that might be profile pictures
+  const allImages = document.querySelectorAll('img');
+  
+  allImages.forEach(img => {
+    // Check if it's likely a profile picture
+    const src = img.src;
+    const classes = img.className;
+    const alt = img.alt;
+    
+    // Profile picture indicators
+    const isProfilePicture = 
+      classes.includes('profile') ||
+      classes.includes('avatar') ||
+      classes.includes('conversation-avatar') ||
+      alt.includes('profile') ||
+      alt.includes('avatar') ||
+      src.includes('profile') ||
+      src.includes('avatar');
+    
+    if (isProfilePicture) {
+      fixHardcodedProfilePicture(img);
+    }
+  });
+  
+  // Also update conversation avatars specifically
+  updateConversationAvatars();
+}
+
+/**
+ * Update conversation avatars in sidebar
+ */
+function updateConversationAvatars() {
+  const conversationAvatars = document.querySelectorAll('.conversation-avatar');
+  
+  conversationAvatars.forEach(img => {
+    const conversationId = img.getAttribute('data-conversation-id');
+    if (conversationId) {
+      // Try to get updated profile picture from server
+      fetchConversationProfilePicture(conversationId)
+        .then(profilePicture => {
+          if (profilePicture && profilePicture !== img.src) {
+            console.log(`Updating conversation avatar for ${conversationId}:`, profilePicture);
+            img.src = profilePicture;
+            img.classList.remove('using-fallback');
+          }
+        })
+        .catch(error => {
+          console.error(`Failed to update conversation avatar for ${conversationId}:`, error);
+        });
+    }
+  });
+}
+
+// Initialize profile picture updates when the page loads
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    initProfilePictureUpdates();
+    
+    // Initialize sidebar functionality if not already done
+    if (typeof initializeSidebar === 'function') {
+      initializeSidebar();
+    }
+  }, 2000); // Wait 2 seconds for everything to load
+});
+
+// Make profile picture functions available globally
+window.profilePictureManager = {
+  updateConversationProfilePictures,
+  fetchConversationProfilePicture,
+  fixAllHardcodedProfilePictures,
+  updateConversationAvatars
+};
+
+/**
+ * Initialize sidebar functionality (replacing chat-sidebar.js)
+ */
+function initializeSidebar() {
+  console.log('🎛️ Initializing sidebar functionality...');
+  
+  // Get DOM elements
+  const sidebarOverlay = document.getElementById('sidebarOverlay');
+  const chatSidebar = document.getElementById('chatSidebar');
+  const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
+  const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+  const newConversationBtn = document.getElementById('new-conversation-btn');
+  const conversationItems = document.querySelectorAll('.conversation-item');
+  
+  // Set up event listeners
+  if (toggleSidebarBtn) {
+    toggleSidebarBtn.addEventListener('click', () => {
+      if (chatSidebar) chatSidebar.classList.toggle('-translate-x-full');
+      if (sidebarOverlay) sidebarOverlay.classList.toggle('hidden');
+    });
+  }
+  
+  if (closeSidebarBtn) {
+    closeSidebarBtn.addEventListener('click', () => {
+      if (chatSidebar) chatSidebar.classList.add('-translate-x-full');
+      if (sidebarOverlay) sidebarOverlay.classList.add('hidden');
+    });
+  }
+  
+  if (sidebarOverlay) {
+    sidebarOverlay.addEventListener('click', () => {
+      if (chatSidebar) chatSidebar.classList.add('-translate-x-full');
+      sidebarOverlay.classList.add('hidden');
+    });
+  }
+  
+  // Handle conversation item clicks
+  conversationItems.forEach(item => {
+    item.addEventListener('click', (e) => {
+      e.preventDefault();
+      const conversationId = item.getAttribute('data-conversation-id');
+      if (conversationId) {
+        window.location.href = `/chat?conversation=${conversationId}`;
+      }
+    });
+  });
+  
+  // Handle new conversation button
+  if (newConversationBtn) {
+    newConversationBtn.addEventListener('click', () => {
+      window.location.href = '/professionals';
+    });
+  }
+  
+  console.log('✅ Sidebar functionality initialized');
+}

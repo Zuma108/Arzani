@@ -900,6 +900,137 @@ export async function sendWeeklyAnalyticsSummaryEmail(stats) {
   }
 }
 
+export async function sendProfessionalVerificationNotification(userEmail, username, professionalType, requestId, submissionData = {}) {
+  console.log('Sending professional verification notification for:', userEmail);
+
+  const SERVER_URL = process.env.NODE_ENV === 'production' ? 'https://www.arzani.co.uk' : 'http://localhost:5000';
+  
+  // Format professional type for display
+  const formattedProfessionalType = professionalType.split('_').map(word => 
+    word.charAt(0).toUpperCase() + word.slice(1)
+  ).join(' ');
+
+  // Email content for admin notification
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background-color: #041b76; color: white; padding: 20px; text-align: center;">
+        <h2>🔍 New Professional Verification Request</h2>
+      </div>
+      <div style="padding: 20px; border: 1px solid #ddd; border-top: none;">
+        <p><strong>A new professional verification request needs your review!</strong></p>
+        
+        <div style="background-color: #f8f9fa; padding: 15px; margin: 20px 0; border-left: 4px solid #041b76; border-radius: 4px;">
+          <h3 style="margin-top: 0; color: #333;">Applicant Details</h3>
+          <p><strong>👤 Name:</strong> ${username}</p>
+          <p><strong>📧 Email:</strong> ${userEmail}</p>
+          <p><strong>🏢 Professional Type:</strong> ${formattedProfessionalType}</p>
+          <p><strong>🆔 Request ID:</strong> #${requestId}</p>
+          <p><strong>📅 Submitted:</strong> ${new Date().toLocaleString('en-GB', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            timeZone: 'Europe/London'
+          })}</p>
+          ${submissionData.licenseNumber ? `<p><strong>📄 License Number:</strong> ${submissionData.licenseNumber}</p>` : ''}
+          ${submissionData.documentsCount ? `<p><strong>📎 Documents Submitted:</strong> ${submissionData.documentsCount} file(s)</p>` : ''}
+        </div>
+        
+        <div style="background-color: #fff3cd; padding: 15px; margin: 20px 0; border-radius: 4px; border-left: 4px solid #ffc107;">
+          <h3 style="margin-top: 0; color: #856404;">⏱️ Action Required</h3>
+          <p>This verification request is now <strong>pending review</strong>. Please review the submitted documents and credentials to approve or reject the application.</p>
+          <p>Typical review time: 1-2 business days</p>
+        </div>
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${SERVER_URL}/admin/verification-review" 
+             style="background-color: #041b76; color: white; padding: 15px 30px; text-decoration: none; border-radius: 4px; display: inline-block; font-weight: bold; margin-right: 10px;">
+            🔍 Review Request
+          </a>
+          <a href="${SERVER_URL}/admin/verification-review#request-${requestId}" 
+             style="background-color: #28a745; color: white; padding: 15px 30px; text-decoration: none; border-radius: 4px; display: inline-block; font-weight: bold;">
+            📋 View Details
+          </a>
+        </div>
+        
+        ${submissionData.notes ? `
+          <div style="background-color: #e9ecef; padding: 15px; margin: 20px 0; border-radius: 4px;">
+            <h4 style="margin-top: 0; color: #333;">📝 Additional Notes:</h4>
+            <p style="margin: 0;">${submissionData.notes}</p>
+          </div>
+        ` : ''}
+        
+        <div style="border-top: 1px solid #dee2e6; padding-top: 15px; margin-top: 25px;">
+          <p><strong>Next Steps:</strong></p>
+          <ol style="padding-left: 20px; line-height: 1.6;">
+            <li>Review the submitted documentation</li>
+            <li>Verify professional credentials and license information</li>
+            <li>Approve or reject the request with appropriate notes</li>
+            <li>The applicant will be automatically notified of your decision</li>
+          </ol>
+        </div>
+        
+        <p style="color: #666; font-size: 14px; margin-top: 20px;">
+          This is an automated notification. You're receiving this because you're an admin responsible for professional verification reviews.
+        </p>
+      </div>
+    </div>
+  `;
+
+  try {
+    // Send to admin email (the user we just made admin)
+    const adminEmail = 'michaaldekoya@gmail.com';
+    
+    if (useSendGrid) {
+      const msg = {
+        to: adminEmail,
+        from: {
+          email: 'hello@arzani.co.uk',
+          name: 'Arzani Professional Verification'
+        },
+        subject: `🔍 Professional Verification Request - ${formattedProfessionalType} (#${requestId})`,
+        html: htmlContent,
+        tracking_settings: {
+          click_tracking: {
+            enable: true
+          },
+          open_tracking: {
+            enable: true
+          }
+        }
+      };
+
+      const response = await sgMail.send(msg);
+      console.log('Professional verification notification sent successfully via SendGrid');
+      return response;
+    } else {
+      const transporter = getTransporter();
+      const info = await transporter.sendMail({
+        from: '"Arzani Professional Verification" <hello@arzani.co.uk>',
+        to: adminEmail,
+        subject: `🔍 Professional Verification Request - ${formattedProfessionalType} (#${requestId})`,
+        html: htmlContent
+      });
+      
+      console.log('Professional verification notification sent successfully via Nodemailer:', info.messageId);
+      
+      if (process.env.NODE_ENV === 'development' && info.previewUrl) {
+        console.log('Preview URL:', info.previewUrl);
+      }
+      
+      return info;
+    }
+  } catch (error) {
+    console.error('Failed to send professional verification notification:', error);
+    if (error.response) {
+      console.error(error.response.body);
+    }
+    // Don't throw error - we don't want verification submission to fail if notification fails
+    return null;
+  }
+}
+
 export async function sendNewsletterSubscriptionNotification(subscriberEmail, subscriberName, source, subscriberId, timestamp = new Date().toISOString()) {
   console.log('Sending newsletter subscription notification for:', subscriberEmail);
 
@@ -1005,4 +1136,4 @@ export async function sendNewsletterSubscriptionNotification(subscriberEmail, su
   }
 }
 
-export default { sendVerificationEmail, sendPasswordResetEmail, sendWelcomeEmail, sendContactEmail, sendVerificationStatusEmail, sendSignupAnalyticsEmail, sendVerificationSuccessAnalyticsEmail, sendVerificationFailureAnalyticsEmail, sendWeeklyAnalyticsSummaryEmail, sendNewsletterSubscriptionNotification };
+export default { sendVerificationEmail, sendPasswordResetEmail, sendWelcomeEmail, sendContactEmail, sendVerificationStatusEmail, sendProfessionalVerificationNotification, sendSignupAnalyticsEmail, sendVerificationSuccessAnalyticsEmail, sendVerificationFailureAnalyticsEmail, sendWeeklyAnalyticsSummaryEmail, sendNewsletterSubscriptionNotification };

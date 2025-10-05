@@ -14,6 +14,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/marketplace2.css">
+    <!-- Featured Experts styling -->
+    <link rel="stylesheet" href="/css/featured-experts.css">
     <!-- Add Font Awesome for AI assistant icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Add AI Assistant styling -->
@@ -66,31 +68,67 @@
         "bucketName": "arzani-images1"
       }
     </script>
-    <!-- Debug flag configuration -->
-    <script>
-      // Debug flag - enable for development, disable for production
-      window.DEBUG_MODE = "<%= typeof debugMode !== 'undefined' && debugMode ? 'true' : 'false' %>" === "true";
-      console.log('Debug mode:', window.DEBUG_MODE ? 'enabled' : 'disabled');
-      
-      // Initialize with debugMode when requested
-      document.addEventListener('DOMContentLoaded', function() {
-        if (window.DEBUG_MODE) {
-          console.log('🔍 Loading marketplace in DEBUG mode');
-          const debugScript = document.createElement('script');
-          debugScript.src = '/js/marketplace-debug.js';
-          debugScript.type = 'module';
-          document.head.appendChild(debugScript);
-        }
-      });
-    </script>
+    <!-- Debug mode removed - image issues resolved -->
     <!-- After the S3 config script, ensure we have proper debug mode configuration -->
+    <!-- Debug mode completely removed - image issues resolved -->
+    
+    <!-- Remove browser extension overlays -->
     <script>
-      // Debug flag - false by default, enable via URL parameter ?debug=true
-      window.DEBUG_MODE = "<%= typeof debugMode !== 'undefined' && debugMode ? 'true' : 'false' %>" === "true";
+      // Remove browser extension overlays that interfere with the marketplace
+      function removeExtensionOverlays() {
+        // Remove elements with data-demoway-ignore attribute
+        document.querySelectorAll('[data-demoway-ignore]').forEach(el => {
+          el.remove();
+        });
+        
+        // Remove shadow DOM templates from extensions
+        document.querySelectorAll('template[shadowrootmode]').forEach(el => {
+          if (el.parentElement) {
+            el.parentElement.remove();
+          }
+        });
+        
+        // Remove any extension divs with specific patterns
+        document.querySelectorAll('div').forEach(el => {
+          const shadowRoot = el.shadowRoot;
+          if (shadowRoot) {
+            const extensionElements = shadowRoot.querySelectorAll('[class*="toaster"], [class*="indicator"], button[class*="Start Capturing"]');
+            if (extensionElements.length > 0) {
+              el.remove();
+            }
+          }
+        });
+      }
       
-      // Only log this when debug is enabled
-      if (window.DEBUG_MODE) {
-        console.log('Debug mode enabled - detailed logging will be shown');
+      // Run on page load
+      document.addEventListener('DOMContentLoaded', removeExtensionOverlays);
+      
+      // Run periodically to catch dynamically added extension elements
+      setInterval(removeExtensionOverlays, 2000);
+      
+      // Run on mutations to catch extension injections
+      if (typeof MutationObserver !== 'undefined') {
+        const observer = new MutationObserver((mutations) => {
+          mutations.forEach((mutation) => {
+            mutation.addedNodes.forEach((node) => {
+              if (node.nodeType === Node.ELEMENT_NODE) {
+                if (node.hasAttribute && node.hasAttribute('data-demoway-ignore')) {
+                  node.remove();
+                }
+                if (node.tagName === 'TEMPLATE' && node.hasAttribute('shadowrootmode')) {
+                  if (node.parentElement) {
+                    node.parentElement.remove();
+                  }
+                }
+              }
+            });
+          });
+        });
+        
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true
+        });
       }
     </script>
     
@@ -467,7 +505,14 @@
    
     <!-- Marketplace Section -->
     <div class="container mt-5">
-      <h1 class="marketplace-heading">Marketplace Listings</h1>
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="marketplace-heading mb-0">Marketplace Listings</h1>
+        
+        <!-- Marketplace View Toggle -->
+        <div id="marketplace-view-toggle">
+          <!-- Toggle buttons will be inserted here by JavaScript -->
+        </div>
+      </div>
       
       <!-- Horizontal Scroll Container -->
       <div class="horizontal-marketplace-wrapper">
@@ -486,8 +531,8 @@
         </button>
       </div>
       
-      <div id="pagination">
-        <!-- Pagination controls will be loaded here -->
+      <div id="pagination" style="display: none;">
+        <!-- Pagination controls removed -->
       </div>
     </div>
 
@@ -696,132 +741,25 @@ window.formatImageUrl = formatImageUrl;
 <!-- Initialize Onboarding System -->
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    console.log('Marketplace2 loaded - checking for post-login onboarding needs');
+    console.log('Marketplace2 loaded - onboarding handled at server level');
     
-    // Check for post-login indicators immediately
+    // Check for post-login success messages
     const urlParams = new URLSearchParams(window.location.search);
-    const isPostLogin = urlParams.get('login') === 'success' || 
-                       sessionStorage.getItem('justLoggedIn') === 'true' ||
-                       document.referrer.includes('/login') ||
-                       document.referrer.includes('/register');
+    const isOnboarded = urlParams.get('onboarded') === 'true';
     
-    if (isPostLogin) {
-      console.log('🔄 Post-login detected - prioritizing onboarding check');
-      sessionStorage.setItem('justLoggedIn', 'true'); // Ensure it's set
+    if (isOnboarded) {
+      console.log('✅ User successfully completed onboarding');
+      // Optional: Show a welcome message or tutorial
+      // Clean up URL parameter
+      if (window.history.replaceState) {
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, cleanUrl);
+      }
     }
     
-    // Initialize onboarding modal for logged-in users with retry logic
-    const initializeOnboarding = async (retryCount = 0, maxRetries = 3) => {
-      try {
-        // Check if user is logged in by checking for user data in the page
-        const userLoggedIn = <%- user ? 'true' : 'false' %>;
-        
-        console.log('Onboarding check attempt', retryCount + 1, '- User logged in (EJS):', userLoggedIn);
-        
-        // Quick localStorage check to avoid unnecessary API calls
-        const onboardingCompleted = localStorage.getItem('onboarding_completed');
-        if (onboardingCompleted === 'true') {
-          console.log('Onboarding already completed (localStorage check)');
-          return;
-        }
-        
-        // If EJS says user not logged in, try checking via API anyway (for post-login timing issues)
-        if (!userLoggedIn && retryCount === 0) {
-          console.log('EJS user state false, but trying API check for post-login timing...');
-        }
-        
-        console.log('Checking onboarding status via API...');
-        
-        // Check onboarding status
-        const response = await fetch('/users/onboarding-status', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include'
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          console.log('Onboarding status response:', data);
-          
-          // Check if onboarding is completed
-          if (data.onboarding?.onboarding_completed) {
-            console.log('User has already completed onboarding (server check)');
-            // Store in localStorage for future quick checks
-            localStorage.setItem('onboarding_completed', 'true');
-            return;
-          }
-          
-          // Show onboarding modal if not completed
-          console.log('User has not completed onboarding, showing modal');
-          
-          // Initialize onboarding modal
-          if (typeof OnboardingModal !== 'undefined') {
-            window.onboardingModal = new OnboardingModal();
-            
-            // Small delay to ensure modal is ready
-            setTimeout(() => {
-              window.onboardingModal.showModal();
-            }, 500);
-          } else {
-            console.error('OnboardingModal class not found');
-          }
-        } else if (response.status === 401) {
-          console.log('User not authenticated (401 response)');
-          
-          // If we got 401 but EJS says user is logged in, there might be a timing issue
-          if (userLoggedIn && retryCount < maxRetries) {
-            console.log(`Auth timing issue detected, retrying in ${(retryCount + 1) * 1000}ms...`);
-            setTimeout(() => {
-              initializeOnboarding(retryCount + 1, maxRetries);
-            }, (retryCount + 1) * 1000);
-            return;
-          }
-          
-          console.log('User not logged in, skipping onboarding');
-        } else {
-          console.warn('Failed to fetch onboarding status:', response.status);
-          
-          // Retry for other errors too, but only if EJS says user is logged in
-          if (userLoggedIn && retryCount < maxRetries) {
-            console.log(`API error, retrying in ${(retryCount + 1) * 1000}ms...`);
-            setTimeout(() => {
-              initializeOnboarding(retryCount + 1, maxRetries);
-            }, (retryCount + 1) * 1000);
-          }
-        }
-      } catch (error) {
-        console.error('Error checking onboarding status:', error);
-        
-        // Retry on network errors if user should be logged in
-        const userLoggedIn = <%- user ? 'true' : 'false' %>;
-        if (userLoggedIn && retryCount < maxRetries) {
-          console.log(`Network error, retrying in ${(retryCount + 1) * 1000}ms...`);
-          setTimeout(() => {
-            initializeOnboarding(retryCount + 1, maxRetries);
-          }, (retryCount + 1) * 1000);
-        }
-      }
-    };
-    
-    // Initialize onboarding after a longer delay to ensure auth is settled after login
-    // Also add a more immediate check for post-login scenarios
-    setTimeout(initializeOnboarding, 2000); // Increased from 1000ms
-    
-    // Additional check for post-login scenarios - run sooner but with retry logic
-    setTimeout(() => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const isPostLogin = urlParams.get('login') === 'success' || 
-                         sessionStorage.getItem('justLoggedIn') === 'true' ||
-                         document.referrer.includes('/login');
-      
-      if (isPostLogin) {
-        console.log('Detected post-login scenario, running immediate onboarding check...');
-        initializeOnboarding(0, 5); // More retries for post-login
-        sessionStorage.removeItem('justLoggedIn'); // Clean up
-      }
-    }, 500);
+    // Clear any old onboarding localStorage
+    localStorage.removeItem('onboarding_completed');
+    sessionStorage.removeItem('justLoggedIn');
   });
 </script>
 
@@ -1197,6 +1135,9 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- Fix filter functionality -->
 <script type="module" src="/js/marketplace.js"></script>
 <script src="/js/filter.js"></script>
+
+<!-- Featured Experts functionality -->
+<script src="/js/featured-experts.js"></script>
 
 <!-- Add this debugging section before closing body tag -->
 <script>

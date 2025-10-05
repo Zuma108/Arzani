@@ -1,0 +1,76 @@
+/* CSS Diagnostic and Override File for Image Heights */
+/* Add this file as the LAST CSS file in your HTML to ensure overrides work */
+
+/* CRITICAL: Remove all conflicting CSS rules and use these consolidated ones */
+
+/* =================================================== */
+/* FINAL IMAGE HEIGHT OVERRIDES - HIGHEST SPECIFICITY */
+/* =================================================== */
+
+/* Regular marketplace layout - 200px height */
+body .card-img-top,
+body .carousel-item img {
+    height: 200px !important;
+    object-fit: cover !important;
+    width: 100% !important;
+    transition: opacity 0.3s ease-in-out !important;
+}
+
+/* Horizontal layout - 150px height */
+body .horizontal-listings-scroll .card-img-top,
+body .horizontal-listings-scroll .carousel-item img {
+    height: 150px !important;
+    object-fit: cover !important;
+    width: 100% !important;
+}
+
+/* Container heights to match images */
+body .card-image-carousel,
+body .carousel-inner,
+body .carousel-item {
+    height: 200px !important;
+}
+
+body .horizontal-listings-scroll .card-image-carousel,
+body .horizontal-listings-scroll .carousel-inner,
+body .horizontal-listings-scroll .carousel-item {
+    height: 150px !important;
+}
+
+/* Image loading states */
+body .card-img-top {
+    opacity: 0 !important;
+}
+
+body .card-img-top.loaded {
+    opacity: 1 !important;
+}
+
+/* Prevent any inline styles from overriding */
+img[style*="height"] {
+    height: inherit !important;
+}
+
+.horizontal-listings-scroll img[style*="height"] {
+    height: 150px !important;
+}
+
+/* Debug helper - uncomment to see which images are affected */
+/*
+.card-img-top::before {
+    content: "Regular: 200px";
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    background: red;
+    color: white;
+    padding: 2px 5px;
+    font-size: 10px;
+    z-index: 1000;
+}
+
+.horizontal-listings-scroll .card-img-top::before {
+    content: "Horizontal: 150px";
+    background: blue;
+}
+*/

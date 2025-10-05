@@ -29,7 +29,7 @@ async function createUserTable() {
           microsoft_id VARCHAR(255) UNIQUE,
           linkedin_id VARCHAR(255) UNIQUE,
           auth_provider VARCHAR(50) NOT NULL DEFAULT 'email',
-          profile_picture VARCHAR(255) DEFAULT '/images/default_profile1.png',
+          profile_picture VARCHAR(255) DEFAULT '/images/default-profile.png',
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           last_login TIMESTAMP

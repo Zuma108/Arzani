@@ -1,84 +1,56 @@
-import { S3Client, PutObjectCommand, GetObjectCommand, ListBucketsCommand, HeadBucketCommand } from '@aws-sdk/client-s3';
-import { getSignedUrl as awsGetSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { Storage } from '@google-cloud/storage';
 import dotenv from 'dotenv';
 import path from 'path';
 
 dotenv.config();
 
-// Create and export a properly configured S3 client
-export const s3Client = new S3Client({
-  region: process.env.AWS_REGION || "eu-west-2",
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  },
+// Create and export a properly configured Google Cloud Storage client
+export const gcsClient = new Storage({
+  projectId: process.env.GOOGLE_CLOUD_PROJECT_ID,
+  keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS,
 });
 
-// Create an S3 client with the specified region
-function getS3Client(region = 'eu-west-2') {
-  return new S3Client({
-    region: region,
-    credentials: {
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-    }
+// Get the configured bucket
+export const gcsBucket = gcsClient.bucket(process.env.GCS_BUCKET_NAME || 'arzani-marketplace-files');
+
+// Create a GCS client instance
+function getGCSClient() {
+  return new Storage({
+    projectId: process.env.GOOGLE_CLOUD_PROJECT_ID,
+    keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS,
   });
 }
 
 /**
  * Validate bucket exists and is accessible
  * @param {String} bucketName - Bucket name to check
- * @param {String} region - AWS region
- * @returns {Promise<Object>} - Result with success flag and region
+ * @returns {Promise<Object>} - Result with success flag
  */
-export async function validateBucket(bucketName, region = 'eu-west-2') {
+export async function validateBucket(bucketName) {
   try {
-    // Ensure region is a valid string
-    if (!region || typeof region !== 'string' || region.includes('/')) {
-      console.warn(`Invalid region format: "${region}", using default eu-west-2`);
-      region = 'eu-west-2';
+    const bucket = gcsClient.bucket(bucketName || process.env.GCS_BUCKET_NAME);
+    const [exists] = await bucket.exists();
+    
+    if (exists) {
+      console.log(`✅ Bucket ${bucketName} is valid and accessible`);
+      return { success: true };
+    } else {
+      console.error(`❌ Bucket ${bucketName} does not exist`);
+      return { success: false, error: 'Bucket does not exist' };
     }
-
-    const s3Client = getS3Client(region);
-    await s3Client.send(new HeadBucketCommand({ Bucket: bucketName }));
-    console.log(`✅ Bucket ${bucketName} in region ${region} is valid and accessible`);
-    return { success: true, region };
   } catch (error) {
-    console.error(`Error validating bucket ${bucketName} in region ${region}:`, error);
-    
-    // Check if the error includes information about the correct region
-    if (error.Code === 'PermanentRedirect' && error.Endpoint) {
-      const correctRegion = extractRegionFromEndpoint(error.Endpoint);
-      console.log(`⚠️ Bucket exists in different region: ${correctRegion}`);
-      
-      // Only return a different region if it's actually different
-      if (correctRegion && correctRegion !== region) {
-        return { success: false, region: correctRegion };
-      }
-    }
-    
-    return { success: false, region, error: error.message };
+    console.error(`Error validating bucket ${bucketName}:`, error);
+    return { success: false, error: error.message };
   }
 }
 
 /**
- * Extract region from S3 endpoint URL
- * @param {String} endpoint - S3 endpoint URL
- * @returns {String} - Region
- */
-function extractRegionFromEndpoint(endpoint) {
-  // Example: arzani-images1.s3.eu-west-2.amazonaws.com
-  const match = endpoint.match(/s3\.([^\.]+)\.amazonaws\.com/);
-  return match ? match[1] : 'eu-west-2'; // Default to London region if can't extract
-}
-
-/**
- * Upload a file to AWS S3
+ * Upload a file to Google Cloud Storage
  * @param {Buffer|Object} fileBuffer - The file buffer to upload or file object
- * @param {string} key - The S3 object key (path)
+ * @param {string} key - The GCS object key (path)
  * @param {string} contentType - The file's mime type
- * @param {string} region - The AWS region
- * @param {string} bucket - The S3 bucket name
+ * @param {string} region - Unused (kept for compatibility)
+ * @param {string} bucket - The GCS bucket name
  * @returns {Promise<string>} - URL of the uploaded file
  */
 export async function uploadToS3(fileBuffer, key, contentType, region, bucket) {
@@ -119,68 +91,31 @@ export async function uploadToS3(fileBuffer, key, contentType, region, bucket) {
       throw new Error('Invalid file buffer provided');
     }
     
-    // Ensure proper region parameter
-    // CRITICAL: Properly separate and validate the region parameter
-    let cleanRegion = 'eu-west-2'; // Default region
-    if (region) {
-      // Handle comma-separated or multiple region values
-      if (typeof region === 'string') {
-        // Take first value before any commas and trim whitespace
-        cleanRegion = region.split(',')[0].trim();
-        
-        // Check if it looks like a bucket name instead of a region
-        if (cleanRegion.includes('arzani') || !cleanRegion.includes('-')) {
-          console.warn(`Region parameter looks like a bucket name: "${cleanRegion}", using default eu-west-2`);
-          cleanRegion = 'eu-west-2';
-        }
-      }
-    }
+    // Use configured bucket or provided bucket name
+    const bucketName = bucket || process.env.GCS_BUCKET_NAME || 'arzani-marketplace-files';
     
-    // Ensure proper bucket parameter
-    // CRITICAL: Properly separate and validate the bucket parameter
-    let cleanBucket = 'arzani-images1'; // Default bucket
-    if (bucket) {
-      // Handle comma-separated or multiple bucket values
-      if (typeof bucket === 'string') {
-        // Take first value before any commas and trim whitespace
-        cleanBucket = bucket.split(',')[0].trim();
-        
-        // Check if it looks like a region instead of a bucket name
-        if (cleanBucket.includes('-') && !cleanBucket.includes('arzani')) {
-          console.warn(`Bucket parameter looks like a region: "${cleanBucket}", using default arzani-images1`);
-          cleanBucket = 'arzani-images1';
-        }
-      }
-    }
+    console.log(`GCS upload parameters: bucket=${bucketName}, key=${key}, size=${processedBuffer ? processedBuffer.length : 'unknown'} bytes`);
     
-    console.log(`S3 upload parameters: region=${cleanRegion}, bucket=${cleanBucket}, key=${key}, size=${processedBuffer ? processedBuffer.length : 'unknown'} bytes`);
+    // Get the bucket instance
+    const gcsBucket = gcsClient.bucket(bucketName);
+    const file = gcsBucket.file(key);
     
-    // Initialize S3 client with the cleaned region
-    const s3Client = new S3Client({
-      region: cleanRegion,
-      credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    // Upload the file (without setting public ACL due to uniform bucket-level access)
+    await file.save(processedBuffer, {
+      metadata: {
+        contentType: contentType,
       },
+      // Remove public: true since uniform bucket-level access is enabled
+      // Files will be accessible based on bucket's IAM policies
     });
-
-    // Upload the file
-    const uploadParams = {
-      Bucket: cleanBucket,
-      Key: key,
-      Body: processedBuffer,
-      ContentType: contentType,
-    };
-
-    const data = await s3Client.send(new PutObjectCommand(uploadParams));
     
-    console.log(`S3 upload successful: ${key}`);
+    console.log(`GCS upload successful: ${key}`);
     
-    // CRITICAL: Construct the URL with the correct format - bucket first, then region
-    return `https://${cleanBucket}.s3.${cleanRegion}.amazonaws.com/${key}`;
+    // Return the public URL
+    return `https://storage.googleapis.com/${bucketName}/${key}`;
   } catch (error) {
-    console.error('S3 upload error:', error);
-    throw new Error(`S3 upload failed: ${error.message || 'Unknown error'}`);
+    console.error('GCS upload error:', error);
+    throw new Error(`GCS upload failed: ${error.message || 'Unknown error'}`);
   }
 }
 
@@ -212,14 +147,14 @@ function getMimeTypeFromExtension(extension) {
 }
 
 /**
- * Upload multiple business images to S3 and return formatted URL array
+ * Upload multiple business images to GCS and return formatted URL array
  * @param {Array<File>} files - Array of multer files
  * @param {String} businessId - Business ID for folder structure
- * @param {String} region - AWS region (defaults to env variable or eu-west-2)
- * @param {String} bucket - S3 bucket name (defaults to env variable or arzani-images1)
- * @returns {Promise<Array<String>>} - Array of S3 URLs in the format needed for DB storage
+ * @param {String} region - Unused (kept for compatibility)
+ * @param {String} bucket - GCS bucket name (defaults to env variable)
+ * @returns {Promise<Array<String>>} - Array of GCS URLs in the format needed for DB storage
  */
-export async function uploadBusinessImages(files, businessId, region = process.env.AWS_REGION, bucket = process.env.AWS_BUCKET_NAME) {
+export async function uploadBusinessImages(files, businessId, region = null, bucket = process.env.GCS_BUCKET_NAME) {
     console.log(`Uploading ${files.length} business images for business ID: ${businessId}`);
     
     if (!files || !files.length) {
@@ -230,9 +165,8 @@ export async function uploadBusinessImages(files, businessId, region = process.e
         throw new Error('Business ID is required for organizing uploads');
     }
     
-    // Set defaults if not provided
-    region = region || 'eu-west-2';
-    bucket = bucket || 'arzani-images1';
+    // Set default bucket if not provided
+    bucket = bucket || 'arzani-marketplace-files';
     
     // Create a timestamp to ensure unique folders
     const timestamp = Date.now();
@@ -245,17 +179,17 @@ export async function uploadBusinessImages(files, businessId, region = process.e
             const sanitizedFilename = sanitizeFilename(file.originalname);
             const key = `${folderPath}${sanitizedFilename}`;
             
-            // Upload to S3
-            await uploadToS3(file, key, region, bucket);
+            // Upload to GCS (using uploadToS3 function for compatibility)
+            await uploadToS3(file, key, file.mimetype, null, bucket);
             
             // Return the full URL in the expected format
-            return `https://${bucket}.s3.${region}.amazonaws.com/${key}`;
+            return `https://storage.googleapis.com/${bucket}/${key}`;
         });
         
         // Wait for all uploads to complete
         const urls = await Promise.all(uploadPromises);
         
-        console.log(`Successfully uploaded ${urls.length} images to S3`);
+        console.log(`Successfully uploaded ${urls.length} images to GCS`);
         return urls;
     } catch (error) {
         console.error('Error uploading business images:', error);
@@ -264,23 +198,22 @@ export async function uploadBusinessImages(files, businessId, region = process.e
 }
 
 /**
- * Upload multiple business images to S3 and return formatted URL array string for PostgreSQL
+ * Upload multiple business images to GCS and return formatted URL array string for PostgreSQL
  * @param {Array<File>} files - Array of multer files
  * @param {String} businessId - Business ID for folder structure
- * @param {String} region - AWS region
- * @param {String} bucket - S3 bucket name
+ * @param {String} region - Unused (kept for compatibility)
+ * @param {String} bucket - GCS bucket name
  * @returns {Promise<String>} - PostgreSQL formatted array string {url1,url2,url3}
  */
-export async function uploadBusinessImagesFormatted(files, businessId, region = process.env.AWS_REGION, bucket = process.env.AWS_BUCKET_NAME) {
+export async function uploadBusinessImagesFormatted(files, businessId, region = null, bucket = process.env.GCS_BUCKET_NAME) {
   if (!files || !files.length) {
     return '{}'; // Empty PostgreSQL array
   }
   
   console.log(`Uploading ${files.length} business images for business ID: ${businessId}`);
   
-  // Set defaults if not provided
-  region = region || 'eu-west-2';
-  bucket = bucket || 'arzani-images1';
+  // Set default bucket if not provided
+  bucket = bucket || 'arzani-marketplace-files';
   
   // Create timestamp-based folder
   const folderPath = `businesses/${businessId}/`;
@@ -289,17 +222,17 @@ export async function uploadBusinessImagesFormatted(files, businessId, region = 
   try {
     // Process files sequentially to avoid race conditions
     for (const file of files) {
-      // Sanitize filename and generate S3 key
+      // Sanitize filename and generate GCS key
       const sanitizedFilename = sanitizeFilename(file.originalname);
       const key = `${folderPath}${sanitizedFilename}`;
       
       console.log(`Uploading file ${file.originalname} to ${key}`);
       
-      // Upload to S3 and get URL
-      await uploadToS3(file, key, region, bucket);
+      // Upload to GCS and get URL
+      await uploadToS3(file, key, file.mimetype, null, bucket);
       
-      // Create and store the S3 URL in the expected format
-      const url = `https://${bucket}.s3.${region}.amazonaws.com/${key}`;
+      // Create and store the GCS URL in the expected format
+      const url = `https://storage.googleapis.com/${bucket}/${key}`;
       urls.push(url);
       
       console.log(`Successfully uploaded to ${url}`);
@@ -351,24 +284,25 @@ export function parsePostgresUrlArray(postgresArray) {
 }
 
 /**
- * Get a pre-signed URL for an S3 object
- * @param {String} key - S3 object key
+ * Get a pre-signed URL for a GCS object
+ * @param {String} key - GCS object key
  * @param {Number} expiresIn - URL expiration time in seconds
- * @param {String} region - AWS region (default: eu-west-2)
- * @param {String} bucketName - S3 bucket name (default: from env or arzani-images1)
+ * @param {String} region - Unused (kept for compatibility)
+ * @param {String} bucketName - GCS bucket name (default: from env)
  * @returns {Promise<String>} - Pre-signed URL
  */
-export async function getPresignedUrl(key, expiresIn = 3600, region = 'eu-west-2', bucketName = null) {
+export async function getPresignedUrl(key, expiresIn = 3600, region = null, bucketName = null) {
   try {
-    const bucket = bucketName || process.env.AWS_BUCKET_NAME || 'arzani-images1';
-    const s3Client = getS3Client(region);
+    const bucket = bucketName || process.env.GCS_BUCKET_NAME || 'arzani-marketplace-files';
+    const gcsBucket = gcsClient.bucket(bucket);
+    const file = gcsBucket.file(key);
     
-    const command = new GetObjectCommand({
-      Bucket: bucket,
-      Key: key
+    const [signedUrl] = await file.getSignedUrl({
+      action: 'read',
+      expires: Date.now() + (expiresIn * 1000), // Convert seconds to milliseconds
     });
     
-    return await awsGetSignedUrl(s3Client, command, { expiresIn });
+    return signedUrl;
   } catch (error) {
     console.error('Error generating pre-signed URL:', error);
     throw error;
@@ -376,40 +310,40 @@ export async function getPresignedUrl(key, expiresIn = 3600, region = 'eu-west-2
 }
 
 /**
- * Get the public URL for an S3 object
- * @param {String} key - S3 object key
- * @param {String} region - AWS region (default: eu-west-2)
- * @param {String} bucketName - S3 bucket name (default: from env or arzani-images1)
+ * Get the public URL for a GCS object
+ * @param {String} key - GCS object key
+ * @param {String} region - Unused (kept for compatibility)
+ * @param {String} bucketName - GCS bucket name (default: from env)
  * @returns {String} - Public URL
  */
-export function getPublicUrl(key, region = 'eu-west-2', bucketName = null) {
-  const bucket = bucketName || process.env.AWS_BUCKET_NAME || 'arzani-images1';
+export function getPublicUrl(key, region = null, bucketName = null) {
+  const bucket = bucketName || process.env.GCS_BUCKET_NAME || 'arzani-marketplace-files';
   
   // Clean the key to remove any double slashes or leading slashes
   const cleanKey = key.startsWith('/') ? key.substring(1) : key;
   
-  // Construct the URL properly
-  return `https://${bucket}.s3.${region}.amazonaws.com/${cleanKey}`;
+  // Construct the GCS public URL
+  return `https://storage.googleapis.com/${bucket}/${cleanKey}`;
 }
 
 /**
  * Generate thumbnail of varying qualities for progressive loading
- * @param {String} key - S3 object key
+ * @param {String} key - GCS object key
  * @param {String} quality - Quality level (low, medium, high)
- * @param {String} region - AWS region (default: eu-west-2)
- * @param {String} bucketName - S3 bucket name (default: from env)
+ * @param {String} region - Unused (kept for compatibility)
+ * @param {String} bucketName - GCS bucket name (default: from env)
  * @returns {Promise<Object>} - URLs for different quality versions
  */
-export async function generateProgressiveImageUrls(key, region = process.env.AWS_REGION, bucketName = process.env.AWS_BUCKET_NAME) {
+export async function generateProgressiveImageUrls(key, region = null, bucketName = process.env.GCS_BUCKET_NAME) {
   try {
     const originalUrl = getPublicUrl(key, region, bucketName);
     
     // For now, we're just returning the original URL since we don't have image processing set up
-    // In a real implementation, you would generate different sizes/qualities
+    // In a real implementation, you would generate different sizes/qualities with GCS
     return {
       thumbnail: originalUrl,
       original: originalUrl,
-      fallbackRegion: region === 'eu-west-2' ? 'eu-north-1' : 'eu-west-2'
+      fallback: originalUrl // GCS doesn't need regional fallbacks like S3
     };
   } catch (error) {
     console.error('Error generating progressive image URLs:', error);
@@ -418,64 +352,59 @@ export async function generateProgressiveImageUrls(key, region = process.env.AWS
 }
 
 /**
- * Try to get an object from multiple regions
- * @param {String} key - S3 object key
- * @param {Array<String>} regions - Array of regions to try
- * @returns {Promise<Object>} - S3 object data
+ * Get an object from GCS
+ * @param {String} key - GCS object key
+ * @param {Array<String>} regions - Unused (kept for compatibility)
+ * @returns {Promise<Object>} - GCS object data
  */
-export async function getObjectMultiRegion(key, regions = ['eu-west-2', 'eu-north-1']) {
-  const bucket = process.env.AWS_BUCKET_NAME || 'arzani-images1';
-  let lastError = null;
+export async function getObjectMultiRegion(key, regions = []) {
+  const bucket = process.env.GCS_BUCKET_NAME || 'arzani-marketplace-files';
   
-  // Try each region in order
-  for (const region of regions) {
-    try {
-      const s3Client = getS3Client(region);
-      const command = new GetObjectCommand({
-        Bucket: bucket,
-        Key: key
-      });
-      
-      return await s3Client.send(command);
-    } catch (error) {
-      console.warn(`Failed to get object from ${region}:`, error.message);
-      lastError = error;
-      // Continue to try the next region
-    }
+  try {
+    const gcsBucket = gcsClient.bucket(bucket);
+    const file = gcsBucket.file(key);
+    
+    const [fileData] = await file.download();
+    const [metadata] = await file.getMetadata();
+    
+    return {
+      Body: fileData,
+      ContentType: metadata.contentType,
+      ContentLength: metadata.size,
+      LastModified: new Date(metadata.timeCreated),
+      ETag: metadata.etag
+    };
+  } catch (error) {
+    console.error(`Failed to get object from GCS:`, error);
+    throw error;
   }
-  
-  // If we get here, all regions failed
-  throw lastError || new Error('Failed to retrieve object from all regions');
 }
 
 /**
- * Check if S3 connection is configured properly and validate both regions
- * @returns {Promise<Object>} Connection status for each region
+ * Check if GCS connection is configured properly
+ * @returns {Promise<Object>} Connection status
  */
 export async function checkS3Connection() {
-  const mainRegion = 'eu-west-2';
-  const fallbackRegion = 'eu-north-1';
-  const bucket = process.env.AWS_BUCKET_NAME || 'arzani-images1';
+  const bucket = process.env.GCS_BUCKET_NAME || 'arzani-marketplace-files';
   
   const results = {
-    mainRegion: { region: mainRegion, success: false, bucket },
-    fallbackRegion: { region: fallbackRegion, success: false, bucket },
+    bucket: bucket,
+    success: false,
     credentials: false
   };
   
   try {
-    // First check if credentials are valid at all
-    const command = new ListBucketsCommand({});
-    await getS3Client(mainRegion).send(command);
+    // Check if we can list buckets (validates credentials)
+    await gcsClient.getBuckets();
     results.credentials = true;
     
-    // Then check each specific bucket
-    results.mainRegion.success = await validateBucket(bucket, mainRegion);
-    results.fallbackRegion.success = await validateBucket(bucket, fallbackRegion);
+    // Check if specific bucket exists and is accessible
+    const bucketValidation = await validateBucket(bucket);
+    results.success = bucketValidation.success;
     
     return results;
   } catch (error) {
-    console.error('S3 connection check failed:', error);
+    console.error('GCS connection check failed:', error);
     results.error = error.message;
     return results;
   }
@@ -524,35 +453,32 @@ export function getMimeTypeFromFilename(filename) {
 }
 
 /**
- * Get the best S3 URL for an image, trying multiple regions if needed
- * @param {String} key - S3 object key
- * @param {Array<String>} regions - Array of regions to try
- * @param {String} bucketName - S3 bucket name
- * @returns {Promise<String>} - The best S3 URL
+ * Get the best GCS URL for an image
+ * @param {String} key - GCS object key
+ * @param {Array<String>} regions - Unused (kept for compatibility)
+ * @param {String} bucketName - GCS bucket name
+ * @returns {Promise<String>} - The GCS URL
  */
-export async function getBestS3Url(key, regions = ['eu-west-2', 'eu-north-1'], bucketName = null) {
-  const bucket = bucketName || process.env.AWS_BUCKET_NAME || 'arzani-images1';
+export async function getBestS3Url(key, regions = [], bucketName = null) {
+  const bucket = bucketName || process.env.GCS_BUCKET_NAME || 'arzani-marketplace-files';
   
-  // First, check if the object exists in any of the regions
-  for (const region of regions) {
-    try {
-      const s3Client = getS3Client(region);
-      const command = new HeadBucketCommand({
-        Bucket: bucket
-      });
-      
-      await s3Client.send(command);
-      // If successful, return this URL
-      return `https://${bucket}.s3.${region}.amazonaws.com/${key}`;
-    } catch (error) {
-      console.log(`Object not found in ${region}, trying next region`);
-      // Continue to next region
+  try {
+    // Check if the object exists in GCS
+    const gcsBucket = gcsClient.bucket(bucket);
+    const file = gcsBucket.file(key);
+    const [exists] = await file.exists();
+    
+    if (exists) {
+      return `https://storage.googleapis.com/${bucket}/${key}`;
+    } else {
+      // Return the URL anyway - let the browser handle the 404
+      return `https://storage.googleapis.com/${bucket}/${key}`;
     }
+  } catch (error) {
+    console.log(`Error checking object existence: ${error.message}`);
+    // Return the URL anyway
+    return `https://storage.googleapis.com/${bucket}/${key}`;
   }
-  
-  // If we can't verify any region, return the URL for the first region
-  // The browser will try to load it and our error handlers will try other regions if needed
-  return `https://${bucket}.s3.${regions[0]}.amazonaws.com/${key}`;
 }
 
 /**
@@ -572,22 +498,11 @@ export function processBusinessImages(images, businessId) {
       return image;
     }
     
-    // Default bucket and region
-    const bucket = process.env.AWS_BUCKET_NAME || 'arzani-images1';
+    // Default bucket
+    const bucket = process.env.GCS_BUCKET_NAME || 'arzani-marketplace-files';
     
-    // Try to determine the best region based on the image path
-    let region = 'eu-west-2'; // Default to London region
-    
-    if (image && typeof image === 'string') {
-      if (image.includes('eu-north-1')) {
-        region = 'eu-north-1';
-      } else if (image.includes('eu-west-2')) {
-        region = 'eu-west-2';
-      }
-    }
-    
-    // Construct the S3 URL with the best region
-    return `https://${bucket}.s3.${region}.amazonaws.com/businesses/${businessId}/${image}`;
+    // Construct the GCS URL
+    return `https://storage.googleapis.com/${bucket}/businesses/${businessId}/${image}`;
   });
 }
 
@@ -596,10 +511,10 @@ export default {
   getPresignedUrl,
   getPublicUrl,
   getObjectMultiRegion,
-  sanitizeFilename,  // Add sanitizeFilename to the default export
+  sanitizeFilename,
   uploadBusinessImages,
   formatUrlsForPostgres,
   parsePostgresUrlArray,
   uploadBusinessImagesFormatted,
-  getS3Client
+  getGCSClient: getGCSClient // Updated from getS3Client
 };

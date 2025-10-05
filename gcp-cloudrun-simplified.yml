@@ -14,7 +14,7 @@ env:
   # Database configuration
   DB_INSTANCE: arzani-marketplace-db-v17
   DB_NAME: arzani_marketplace
-  DB_USER: marketplace_user
+  DB_USER: postgres
   
   # Image configuration
   IMAGE_NAME: arzani-marketplace

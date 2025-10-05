@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Website URL Validation Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 4px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; }
+        .info { background: #e2e3e5; border: 1px solid #d6d8db; }
+    </style>
+</head>
+<body class="p-8">
+    <div class="max-w-2xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6">Website URL Validation Test</h1>
+        
+        <div class="mb-8">
+            <h2 class="text-xl font-semibold mb-4">Test URL Input</h2>
+            <div class="relative w-80">
+                <div class="relative">
+                    <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-light text-base pointer-events-none">https://</span>
+                    <input 
+                        type="text" 
+                        id="testWebsite" 
+                        class="bg-white h-10 w-full rounded border border-gray-400 pl-20 pr-12 py-2 text-gray-800 font-light text-base focus:outline-none focus:border-gray-600 focus:ring-1 focus:ring-gray-600"
+                        placeholder="example.com"
+                    />
+                </div>
+                <div class="field-error text-red-500 text-sm mt-1 hidden"></div>
+            </div>
+            <button onclick="testValidation()" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                Test Validation
+            </button>
+        </div>
+        
+        <div class="mb-8">
+            <h2 class="text-xl font-semibold mb-4">Test Results</h2>
+            <div id="testResults"></div>
+        </div>
+        
+        <div class="mb-8">
+            <h2 class="text-xl font-semibold mb-4">Auto Tests</h2>
+            <button onclick="runAutoTests()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                Run Auto Tests
+            </button>
+            <div id="autoTestResults" class="mt-4"></div>
+        </div>
+        
+        <div class="mb-8">
+            <h2 class="text-xl font-semibold mb-4">Expected Behavior</h2>
+            <ul class="list-disc pl-6 space-y-2">
+                <li><strong>Placeholder:</strong> Shows "example.com" (no www, no protocol)</li>
+                <li><strong>User Input:</strong> Can enter "example.com", "www.example.com", or full URL</li>
+                <li><strong>Processing:</strong> Automatically adds "https://" if missing</li>
+                <li><strong>Validation:</strong> Accepts valid domain names with proper TLD</li>
+                <li><strong>Error Message:</strong> Shows "Please enter a valid website URL (e.g., example.com)"</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // URL validation function (copied from onboarding.js)
+        function validateWebsiteURL(userInput) {
+            if (!userInput || !userInput.trim()) {
+                return { valid: false, error: 'Website URL is required' };
+            }
+            
+            let testUrl = userInput.trim();
+            
+            // Add protocol if missing for validation
+            if (!testUrl.startsWith('http://') && !testUrl.startsWith('https://')) {
+                testUrl = 'https://' + testUrl;
+            }
+            
+            // Basic URL format validation - requires domain with TLD
+            const urlPattern = /^https?:\/\/[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]*\.[a-zA-Z]{2,}([\w\-._~:/?#[\]@!$&'()*+,;=]*)?$/i;
+            if (!urlPattern.test(testUrl)) {
+                return { valid: false, error: 'Please enter a valid website URL (e.g., example.com)' };
+            }
+            
+            return { valid: true, processedUrl: testUrl };
+        }
+        
+        function testValidation() {
+            const input = document.getElementById('testWebsite');
+            const errorDiv = input.parentElement.parentElement.querySelector('.field-error');
+            const results = document.getElementById('testResults');
+            
+            const userInput = input.value;
+            const result = validateWebsiteURL(userInput);
+            
+            // Update UI
+            if (result.valid) {
+                errorDiv.classList.add('hidden');
+                input.classList.remove('border-red-500');
+                input.classList.add('border-green-500');
+                
+                results.innerHTML = `
+                    <div class="test-result success">
+                        <strong>✅ Valid!</strong><br>
+                        Input: "${userInput}"<br>
+                        Processed: "${result.processedUrl}"
+                    </div>
+                `;
+            } else {
+                errorDiv.textContent = result.error;
+                errorDiv.classList.remove('hidden');
+                input.classList.add('border-red-500');
+                input.classList.remove('border-green-500');
+                
+                results.innerHTML = `
+                    <div class="test-result error">
+                        <strong>❌ Invalid!</strong><br>
+                        Input: "${userInput}"<br>
+                        Error: ${result.error}
+                    </div>
+                `;
+            }
+        }
+        
+        function runAutoTests() {
+            const testCases = [
+                // Valid cases
+                { input: 'example.com', expected: true, description: 'Basic domain' },
+                { input: 'www.example.com', expected: true, description: 'Domain with www' },
+                { input: 'subdomain.example.com', expected: true, description: 'Subdomain' },
+                { input: 'https://example.com', expected: true, description: 'Full HTTPS URL' },
+                { input: 'http://example.com', expected: true, description: 'Full HTTP URL' },
+                { input: 'example.co.uk', expected: true, description: 'Multi-part TLD' },
+                { input: 'my-company.com', expected: true, description: 'Domain with hyphen' },
+                { input: 'example123.com', expected: true, description: 'Domain with numbers' },
+                
+                // Invalid cases
+                { input: '', expected: false, description: 'Empty input' },
+                { input: 'example', expected: false, description: 'No TLD' },
+                { input: '.com', expected: false, description: 'No domain' },
+                { input: 'example.', expected: false, description: 'Incomplete TLD' },
+                { input: 'http://', expected: false, description: 'Protocol only' },
+                { input: 'not a url', expected: false, description: 'Invalid format' },
+                { input: '-example.com', expected: false, description: 'Domain starting with hyphen' },
+                { input: 'example-.com', expected: false, description: 'Domain ending with hyphen' }
+            ];
+            
+            const resultsDiv = document.getElementById('autoTestResults');
+            let html = '<h3 class="font-semibold mb-2">Auto Test Results:</h3>';
+            let passed = 0;
+            let total = testCases.length;
+            
+            testCases.forEach((testCase, index) => {
+                const result = validateWebsiteURL(testCase.input);
+                const success = result.valid === testCase.expected;
+                
+                if (success) passed++;
+                
+                html += `
+                    <div class="test-result ${success ? 'success' : 'error'} text-sm">
+                        <strong>${success ? '✅' : '❌'} Test ${index + 1}:</strong> ${testCase.description}<br>
+                        Input: "${testCase.input}" | Expected: ${testCase.expected ? 'Valid' : 'Invalid'} | Got: ${result.valid ? 'Valid' : 'Invalid'}
+                        ${result.error ? `<br>Error: ${result.error}` : ''}
+                        ${result.processedUrl ? `<br>Processed: ${result.processedUrl}` : ''}
+                    </div>
+                `;
+            });
+            
+            html = `
+                <div class="test-result info">
+                    <strong>Summary: ${passed}/${total} tests passed</strong>
+                </div>
+            ` + html;
+            
+            resultsDiv.innerHTML = html;
+        }
+        
+        // Auto-focus on input
+        document.getElementById('testWebsite').addEventListener('input', function() {
+            // Reset styling on input
+            this.classList.remove('border-red-500', 'border-green-500');
+            this.classList.add('border-gray-400');
+            const errorDiv = this.parentElement.parentElement.querySelector('.field-error');
+            errorDiv.classList.add('hidden');
+        });
+    </script>
+</body>
+</html>

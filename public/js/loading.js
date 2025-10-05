@@ -12,6 +12,10 @@ class LoadingManager {
     showLoadingOnInit() {
         // Show loading screen immediately on script load
         if (this.loadingContainer) {
+            // Prevent body scrolling immediately
+            document.documentElement.classList.add('loading-active');
+            document.body.classList.add('loading-active');
+            
             this.loadingContainer.classList.add('active');
             this.isLoading = true;
         }
@@ -92,6 +96,10 @@ class LoadingManager {
                 loadingText.textContent = message;
             }
             
+            // Prevent body scrolling
+            document.documentElement.classList.add('loading-active');
+            document.body.classList.add('loading-active');
+            
             this.loadingContainer.classList.add('active');
             this.isLoading = true;
             this.startTime = Date.now();
@@ -105,6 +113,11 @@ class LoadingManager {
             
             setTimeout(() => {
                 this.loadingContainer.classList.remove('active');
+                
+                // Re-enable body scrolling
+                document.documentElement.classList.remove('loading-active');
+                document.body.classList.remove('loading-active');
+                
                 this.isLoading = false;
             }, remainingTime);
         }

@@ -947,13 +947,13 @@
     text-align: left;
     margin: 1.5rem 0 1rem 0;
     letter-spacing: -0.025em;
-    padding: 0 15px 0 50px; /* Increased left padding to 50px */
+    padding: 0 15px 0 66px; /* Moved additional 8px right from 58px to 66px */
 }
 
 /* Responsive padding to match container at different screen sizes */
 @media (max-width: 768px) {
     .marketplace-heading {
-        padding: 0 10px 0 35px; /* Increased left padding for mobile to 35px */
+        padding: 0 10px 0 51px; /* Moved additional 8px right from 43px to 51px */
     }
 }
 
@@ -1151,15 +1151,7 @@
     transform: translateY(0);
 }
 
-/* Modern card styling */
-.card {
-    border: none;
-    border-radius: 16px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-    transition: all 0.3s ease;
-    background: #ffffff;
-    transition: opacity 0.3s ease-out;
-}
+/* Removed conflicting modern card styling - using consistent card styles from other definitions */
 
 .card:hover {
     transform: translateY(-5px);
@@ -1393,26 +1385,27 @@
 }
 
 .carousel-item {
-    position: absolute;
-    top: 0;
-    left: 0;
+    position: relative;
     width: 100%;
-    height: 100%;
-    opacity: 0;
-    transition: opacity 0.3s ease-in-out;
+    height: 200px;
     display: none;
+    transition: opacity 0.3s ease-in-out;
 }
 
 .carousel-item.active {
-    opacity: 1;
     display: block;
+    opacity: 1;
 }
 
 .carousel-item img {
     width: 100%;
-    height: 100%;
+    height: 200px;
     object-fit: cover;
+    display: block;
+    border-radius: 0.375rem 0.375rem 0 0;
 }
+
+
 
 .carousel-controls {
     position: absolute;
@@ -1491,10 +1484,20 @@
     gap: 0.5rem;
 }
 
-// ...existing code...
+/* Removed duplicate .card-image-carousel definition - keeping the original with proper height and overflow */
 
-.card-image-carousel {
-    position: relative;
+/* Hide browser extension overlays */
+div[data-demoway-ignore="true"],
+div[data-demoway-ignore] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Hide chrome extension shadow DOM overlays */
+template[shadowrootmode] {
+    display: none !important;
 }
 
 .save-business-btn {
@@ -1533,8 +1536,6 @@
 .save-business-btn.saved i {
     color: #fff;
 }
-
-// ...existing code...
 
 /* Professional remove button styling */
 .remove-saved-btn {
@@ -1595,8 +1596,6 @@
     transition: opacity 0.2s ease;
 }
 
-// ...existing code...
-
 /* Style for remove button */
 .remove-saved-btn {
     position: absolute;
@@ -1623,8 +1622,6 @@
 .remove-saved-btn:active {
     transform: scale(0.95);
 }
-
-// ...existing code...
 
 .card-image-wrapper {
     position: relative;
@@ -1804,15 +1801,15 @@ body {
 }
 
 .card-img-top {
-  transition: opacity 0.3s ease-in-out;
-  opacity: 0;
-  object-fit: cover;
-  width: 100%;
-  height: 200px;
+    height: 200px;
+    object-fit: cover;
+    width: 100%;
+    transition: opacity 0.3s ease-in-out;
+    opacity: 1;
 }
 
 .card-img-top.loaded {
-  opacity: 1;
+    opacity: 1;
 }
 
 /* Loading spinner for initial page load */
@@ -2444,6 +2441,46 @@ body {
 }
 
 /* =============================================== */
+/* CONSOLIDATED IMAGE HEIGHT RULES - FIX CONFLICTS */
+/* =============================================== */
+
+/* Default card image heights for regular layout */
+.card-img-top {
+    height: 200px !important;
+    object-fit: cover;
+    width: 100%;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.carousel-item img {
+    height: 200px !important;
+    object-fit: cover;
+    width: 100%;
+}
+
+/* Horizontal layout specific heights - override defaults */
+.horizontal-listings-scroll .card-img-top {
+    height: 150px !important;
+}
+
+.horizontal-listings-scroll .carousel-item img {
+    height: 150px !important;
+}
+
+/* Ensure carousel containers match their respective image heights */
+.card-image-carousel,
+.carousel-inner,
+.carousel-item {
+    height: 200px;
+}
+
+.horizontal-listings-scroll .card-image-carousel,
+.horizontal-listings-scroll .carousel-inner,
+.horizontal-listings-scroll .carousel-item {
+    height: 150px !important;
+}
+
+/* =============================================== */
 /* HORIZONTAL MARKETPLACE STYLES */
 /* =============================================== */
 
@@ -2552,22 +2589,23 @@ body {
 /* Image adjustments for horizontal cards */
 .horizontal-listings-scroll .card-img-top,
 .horizontal-listings-scroll .carousel-item img {
-  height: 130px; /* Adjusted to 130px for better balance */
+  height: 150px !important; /* Consistent height for horizontal layout */
   object-fit: cover;
+  width: 100%;
 }
 
 /* Carousel container height optimization */
 .horizontal-listings-scroll .card-image-carousel {
-  height: 130px;
+  height: 150px;
   overflow: hidden;
 }
 
 .horizontal-listings-scroll .carousel-inner {
-  height: 130px;
+  height: 150px;
 }
 
 .horizontal-listings-scroll .carousel-item {
-  height: 130px;
+  height: 150px;
 }
 
 /* Card content adjustments for smaller cards */

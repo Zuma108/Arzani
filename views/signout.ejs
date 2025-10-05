@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signed Out - Arzani</title>
+    <link href="/css/output.css" rel="stylesheet">
+    <link href="/css/glassmorphism-system.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+
+        .signout-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .signout-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 0.5px solid rgba(255, 255, 255, 0.4);
+            border-radius: 24px;
+            padding: 60px 40px;
+            max-width: 480px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0px 32px 64px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .signout-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            pointer-events: none;
+        }
+
+        .logo {
+            width: 120px;
+            height: auto;
+            margin: 0 auto 30px;
+            display: block;
+            position: relative;
+            z-index: 2;
+        }
+
+        .signout-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 30px;
+            background: linear-gradient(135deg, #28a745, #20c997);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 2;
+            animation: successPulse 2s ease-in-out infinite;
+        }
+
+        .signout-icon svg {
+            width: 40px;
+            height: 40px;
+            color: white;
+        }
+
+        @keyframes successPulse {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4);
+            }
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 0 0 20px rgba(40, 167, 69, 0);
+            }
+        }
+
+        .signout-title {
+            font-size: 32px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin: 0 0 16px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .signout-message {
+            font-size: 18px;
+            color: #6c757d;
+            margin: 0 0 40px;
+            line-height: 1.6;
+            position: relative;
+            z-index: 2;
+        }
+
+        .countdown-text {
+            font-size: 14px;
+            color: #868e96;
+            margin: 20px 0;
+            position: relative;
+            z-index: 2;
+        }
+
+        .countdown-timer {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 30px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .btn {
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 16px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            box-shadow: 0 4px 16px rgba(0, 123, 255, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 123, 255, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(108, 117, 125, 0.1);
+            color: #495057;
+            border: 1px solid rgba(108, 117, 125, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(108, 117, 125, 0.15);
+            transform: translateY(-1px);
+        }
+
+        @media (max-width: 640px) {
+            .signout-card {
+                padding: 40px 24px;
+                margin: 20px;
+            }
+
+            .signout-title {
+                font-size: 28px;
+            }
+
+            .signout-message {
+                font-size: 16px;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* Loading state for buttons */
+        .btn.loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .btn.loading::after {
+            content: '';
+            width: 16px;
+            height: 16px;
+            border: 2px solid transparent;
+            border-top: 2px solid currentColor;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="signout-container">
+        <div class="signout-card">
+            <!-- Logo -->
+            <img src="/images/arzani-logo.png" alt="Arzani" class="logo" onerror="this.style.display='none'">
+            
+            <!-- Success Icon -->
+            <div class="signout-icon">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+            </div>
+
+            <!-- Title and Message -->
+            <h1 class="signout-title">You've been signed out</h1>
+            <p class="signout-message">
+                Thank you for using Arzani. Your session has been securely ended and all authentication data has been cleared.
+            </p>
+
+            <!-- Countdown -->
+            <p class="countdown-text">
+                Redirecting to homepage in <span class="countdown-timer" id="countdown">5</span> seconds...
+            </p>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <a href="/" class="btn btn-primary" id="homepageBtn">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                    </svg>
+                    Go to Homepage
+                </a>
+                <a href="/auth/login" class="btn btn-secondary" id="signInBtn">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+                    </svg>
+                    Sign In Again
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Countdown timer
+        let countdown = 5;
+        const countdownElement = document.getElementById('countdown');
+        const homepageBtn = document.getElementById('homepageBtn');
+        const signInBtn = document.getElementById('signInBtn');
+
+        function updateCountdown() {
+            countdownElement.textContent = countdown;
+            
+            if (countdown <= 0) {
+                // Add loading state to homepage button
+                homepageBtn.classList.add('loading');
+                homepageBtn.innerHTML = `
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                    </svg>
+                    Redirecting...
+                `;
+                
+                // Redirect to homepage
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 500);
+                return;
+            }
+            
+            countdown--;
+            setTimeout(updateCountdown, 1000);
+        }
+
+        // Start countdown
+        updateCountdown();
+
+        // Handle button clicks
+        homepageBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            this.classList.add('loading');
+            this.innerHTML = `
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                </svg>
+                Redirecting...
+            `;
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 300);
+        });
+
+        signInBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            this.classList.add('loading');
+            this.innerHTML = `
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+                </svg>
+                Redirecting...
+            `;
+            setTimeout(() => {
+                window.location.href = '/auth/login';
+            }, 300);
+        });
+
+        // Clear any remaining authentication data from localStorage
+        try {
+            localStorage.removeItem('token');
+            localStorage.removeItem('userId');
+            localStorage.removeItem('user');
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('refreshToken');
+            console.log('Local storage cleared');
+        } catch (error) {
+            console.log('Could not clear localStorage:', error);
+        }
+
+        // Clear any remaining session storage
+        try {
+            sessionStorage.clear();
+            console.log('Session storage cleared');
+        } catch (error) {
+            console.log('Could not clear sessionStorage:', error);
+        }
+    </script>
+</body>
+</html>

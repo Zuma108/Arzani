@@ -2,6 +2,7 @@ import express from 'express';
 import pool from '../db.js'; // Corrected import path
 import jwt from 'jsonwebtoken'; // Import jwt if needed for token generation
 import { adminAuth } from '../middleware/adminAuth.js'; // Import adminAuth middleware
+import { sendVerificationStatusEmail } from '../utils/email.js';
 
 const router = express.Router();
 
@@ -129,9 +130,9 @@ router.post('/verification-requests/:id/approve', async (req, res) => {
             [req.user.userId, id]
         );
 
-        // Get user_id and professional_type from the verification request
+        // Get user_id, professional_type, and profile_data from the verification request
         const requestResult = await pool.query(
-            'SELECT user_id, professional_type FROM professional_verification_requests WHERE id = $1',
+            'SELECT user_id, professional_type, profile_data FROM professional_verification_requests WHERE id = $1',
             [id]
         );
 
@@ -142,7 +143,7 @@ router.post('/verification-requests/:id/approve', async (req, res) => {
             });
         }
 
-        const { user_id, professional_type } = requestResult.rows[0];
+        const { user_id, professional_type, profile_data } = requestResult.rows[0];
 
         // Update user to be verified professional
         await pool.query(
@@ -153,6 +154,69 @@ router.post('/verification-requests/:id/approve', async (req, res) => {
              WHERE id = $2`,
             [professional_type, user_id]
         );
+
+        // Create professional_profiles entry from verification request profile_data
+        if (profile_data) {
+            // Check if professional profile already exists
+            const existingProfile = await pool.query(
+                'SELECT id FROM professional_profiles WHERE user_id = $1',
+                [user_id]
+            );
+
+            if (existingProfile.rows.length === 0) {
+                // Create new professional profile
+                await pool.query(`
+                    INSERT INTO professional_profiles (
+                        user_id, professional_bio, professional_tagline, years_experience,
+                        professional_website, services_offered, industries_serviced, specializations,
+                        professional_contact, availability_schedule, preferred_contact_method,
+                        pricing_info, service_locations, languages_spoken, social_links,
+                        profile_visibility, allow_direct_contact, featured_professional, professional_picture_url
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+                `, [
+                    user_id,
+                    profile_data.bio || profile_data.professional_bio || '',
+                    profile_data.tagline || profile_data.professional_tagline || '',
+                    parseInt(profile_data.yearsExperience || profile_data.years_experience) || 0,
+                    profile_data.website || profile_data.professional_website || '',
+                    JSON.stringify(profile_data.servicesOffered || profile_data.services_offered || []),
+                    JSON.stringify(profile_data.industriesServiced || profile_data.industries_serviced || []),
+                    JSON.stringify(profile_data.specializations || []),
+                    JSON.stringify({ phone: profile_data.phone } || profile_data.professional_contact || {}),
+                    JSON.stringify(profile_data.availability_schedule || {}),
+                    profile_data.preferred_contact_method || 'email',
+                    JSON.stringify(profile_data.pricing_info || {}),
+                    JSON.stringify(profile_data.service_locations || []),
+                    JSON.stringify(profile_data.languages_spoken || ['English']),
+                    JSON.stringify(profile_data.social_links || {}),
+                    profile_data.visibility || 'public',
+                    profile_data.allowDirectContact !== false,
+                    profile_data.featuredProfessional || false,
+                    profile_data.profilePictureUrl || profile_data.professional_picture_url || null
+                ]);
+            }
+        }
+
+        // Get user information for email notification
+        const userInfoQuery = await pool.query(
+            'SELECT email, username FROM users WHERE id = $1',
+            [user_id]
+        );
+        
+        const userData = userInfoQuery.rows[0];
+        
+        // Send approval email to user (async, don't wait for it)
+        if (userData) {
+            sendVerificationStatusEmail(
+                userData.email,
+                userData.username,
+                'approved',
+                professional_type,
+                null
+            ).catch(error => {
+                console.error('Error sending verification approval email:', error);
+            });
+        }
 
         res.json({
             success: true,
@@ -182,6 +246,30 @@ router.post('/verification-requests/:id/reject', async (req, res) => {
              WHERE id = $3`,
             [req.user.userId, notes, id]
         );
+
+        // Get user and request information for email notification
+        const requestInfoQuery = await pool.query(
+            `SELECT pvr.professional_type, u.email, u.username 
+             FROM professional_verification_requests pvr 
+             JOIN users u ON pvr.user_id = u.id 
+             WHERE pvr.id = $1`,
+            [id]
+        );
+        
+        const requestData = requestInfoQuery.rows[0];
+        
+        // Send rejection email to user (async, don't wait for it)
+        if (requestData) {
+            sendVerificationStatusEmail(
+                requestData.email,
+                requestData.username,
+                'rejected',
+                requestData.professional_type,
+                notes
+            ).catch(error => {
+                console.error('Error sending verification rejection email:', error);
+            });
+        }
 
         res.json({
             success: true,

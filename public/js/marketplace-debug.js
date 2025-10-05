@@ -794,31 +794,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // Auto-start debugging
   marketplaceDebugger.start();
   
-  // Add button to DOM for easy access to debug tools
+  // Debug button creation disabled - image issues resolved
   const createDebugButton = () => {
-    const button = document.createElement('button');
-    button.textContent = '🐛 Debug';
-    button.style.position = 'fixed';
-    button.style.bottom = '10px';
-    button.style.left = '10px';
-    button.style.zIndex = '9999';
-    button.style.background = '#007bff';
-    button.style.color = 'white';
-    button.style.border = 'none';
-    button.style.borderRadius = '4px';
-    button.style.padding = '8px 12px';
-    button.style.cursor = 'pointer';
-    button.style.opacity = '0.8';
-    
-    button.addEventListener('click', () => {
-      window.debugTools.summary();
-    });
-    
-    document.body.appendChild(button);
+    // Debug button disabled - no longer needed
+    console.log('Debug button creation disabled - marketplace images fixed');
   };
   
-  // Add debug button after a slight delay to ensure other content loads first
-  setTimeout(createDebugButton, 2000);
+  // Debug button disabled - image issues resolved
+  // setTimeout(createDebugButton, 2000);
 });
 
 // Expose debug tools to global scope for console access

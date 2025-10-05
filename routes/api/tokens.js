@@ -8,6 +8,7 @@ import Stripe from 'stripe';
 import { authenticateToken, requireAuth } from '../../middleware/auth.js';
 import TokenService from '../../services/tokenService.js';
 import rateLimit from 'express-rate-limit';
+import pool from '../../db.js';
 
 const router = express.Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -166,9 +167,11 @@ router.post('/purchase', requireAuth, tokenPurchaseLimit, async (req, res) => {
       price_gbp: selectedPackage.price_gbp || 0
     };
 
-    // Validate environment variables
-    if (!process.env.FRONTEND_URL) {
-      throw new Error('FRONTEND_URL environment variable not set');
+    // Get frontend URL with fallback for development
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5000';
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Using frontend URL:', frontendUrl);
     }
 
     // Create Stripe checkout session
@@ -187,8 +190,8 @@ router.post('/purchase', requireAuth, tokenPurchaseLimit, async (req, res) => {
         quantity: 1,
       }],
       mode: 'payment',
-      success_url: `${process.env.FRONTEND_URL}/tokens/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.FRONTEND_URL}/tokens/purchase`,
+      success_url: `${frontendUrl}/tokens/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${frontendUrl}/tokens/cancelled`,
       client_reference_id: String(userId || 0),
       metadata: {
         package_id: String(packageId || 0),
@@ -394,6 +397,52 @@ router.get('/contact-requirements/:businessId', requireAuth, tokenOperationLimit
 });
 
 /**
+ * POST /api/tokens/initialize
+ * Initialize user token record if it doesn't exist
+ */
+router.post('/initialize', requireAuth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    // Check if user token record exists
+    const existingRecord = await pool.query(
+      'SELECT id, token_balance FROM user_tokens WHERE user_id = $1',
+      [userId]
+    );
+    
+    if (existingRecord.rows.length > 0) {
+      return res.status(409).json({
+        success: false,
+        message: 'User token record already exists',
+        balance: existingRecord.rows[0].token_balance
+      });
+    }
+    
+    // Create new user token record
+    const newRecord = await pool.query(
+      `INSERT INTO user_tokens (user_id, token_balance, tokens_purchased, tokens_consumed, lifetime_purchased)
+       VALUES ($1, 0, 0, 0, 0)
+       RETURNING id, token_balance`,
+      [userId]
+    );
+    
+    res.json({
+      success: true,
+      message: 'User token record initialized',
+      balance: newRecord.rows[0].token_balance,
+      recordId: newRecord.rows[0].id
+    });
+    
+  } catch (error) {
+    console.error('Token initialization error:', error);
+    res.status(500).json({
+      error: 'Failed to initialize user token record',
+      code: 'INITIALIZATION_ERROR'
+    });
+  }
+});
+
+/**
  * POST /api/tokens/verify-purchase
  * Verify Stripe checkout session and update tokens
  */
@@ -521,5 +570,98 @@ router.get('/analytics', requireAuth, async (req, res) => {
     });
   }
 });
+
+/**
+ * Add tokens to a user's account
+ * @param {number} userId - The user ID
+ * @param {number} tokenAmount - Number of tokens to add
+ * @param {object} metadata - Additional metadata (source, package_id, etc.)
+ * @returns {Promise<object>} - Result with new balance
+ */
+export async function addTokensToUser(userId, tokenAmount, metadata = {}) {
+  const client = await pool.connect();
+  
+  try {
+    await client.query('BEGIN');
+    
+    // Get current balance
+    const currentBalanceResult = await client.query(
+      'SELECT token_balance FROM users WHERE id = $1',
+      [userId]
+    );
+    
+    if (currentBalanceResult.rows.length === 0) {
+      throw new Error('User not found');
+    }
+    
+    const currentBalance = currentBalanceResult.rows[0].token_balance || 0;
+    const newBalance = currentBalance + tokenAmount;
+    
+    // Update user's token balance
+    await client.query(
+      'UPDATE users SET token_balance = $1, updated_at = NOW() WHERE id = $2',
+      [newBalance, userId]
+    );
+    
+    // Log the transaction using correct table structure
+    await client.query(
+      `INSERT INTO token_transactions 
+       (user_id, tokens_amount, transaction_type, stripe_payment_intent_id, metadata, created_at) 
+       VALUES ($1, $2, $3, $4, $5, NOW())`,
+      [
+        userId,
+        tokenAmount,
+        'purchase',
+        metadata.stripePaymentIntentId || null,
+        JSON.stringify(metadata)
+      ]
+    );
+    
+    // Update user_tokens table if it exists
+    const userTokensResult = await client.query(
+      'SELECT id FROM user_tokens WHERE user_id = $1',
+      [userId]
+    );
+    
+    if (userTokensResult.rows.length > 0) {
+      // Update existing record
+      await client.query(
+        `UPDATE user_tokens 
+         SET token_balance = token_balance + $1, 
+             tokens_purchased = tokens_purchased + $1,
+             lifetime_purchased = lifetime_purchased + $1,
+             updated_at = NOW()
+         WHERE user_id = $2`,
+        [tokenAmount, userId]
+      );
+    } else {
+      // Create new record
+      await client.query(
+        `INSERT INTO user_tokens (user_id, token_balance, tokens_purchased, lifetime_purchased)
+         VALUES ($1, $2, $2, $2)`,
+        [userId, tokenAmount]
+      );
+    }
+    
+    await client.query('COMMIT');
+    
+    console.log(`Added ${tokenAmount} tokens to user ${userId}. New balance: ${newBalance}`);
+    
+    return {
+      success: true,
+      newBalance,
+      previousBalance: currentBalance,
+      tokensAdded: tokenAmount,
+      metadata
+    };
+    
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Error adding tokens to user:', error);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
 
 export default router;

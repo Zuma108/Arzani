@@ -3,7 +3,7 @@ import Stripe from 'stripe';
 import multer from 'multer';
 import auth from '../middleware/auth.js';
 import pool from '../db.js';
-import { uploadToS3 } from '../utils/s3.js';
+import { uploadProfilePicture } from '../utils/gcs.js';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -56,6 +56,73 @@ router.get('/', async (req, res) => {
 
     const user = result.rows[0];
     console.log('User profile loaded successfully:', user.id);
+
+    // Get token balance
+    let tokenBalance = 0;
+    try {
+      const tokenResult = await pool.query(
+        'SELECT token_balance FROM user_tokens WHERE user_id = $1',
+        [userId]
+      );
+      tokenBalance = tokenResult.rows.length > 0 ? tokenResult.rows[0].token_balance : 0;
+    } catch (error) {
+      console.error('Error fetching token balance:', error);
+    }
+
+    // Get last purchase information
+    let lastPurchase = null;
+    try {
+      const lastPurchaseResult = await pool.query(
+        `SELECT tt.*, tp.name as package_name, tp.price_gbp 
+         FROM token_transactions tt
+         LEFT JOIN token_packages tp ON (tt.metadata->>'package_id')::int = tp.id
+         WHERE tt.user_id = $1 AND tt.transaction_type = 'purchase'
+         ORDER BY tt.created_at DESC
+         LIMIT 1`,
+        [userId]
+      );
+      
+      if (lastPurchaseResult.rows.length > 0) {
+        const purchase = lastPurchaseResult.rows[0];
+        lastPurchase = {
+          date: purchase.created_at,
+          package_name: purchase.package_name || (purchase.metadata && purchase.metadata.package_name) || 'Token Purchase',
+          tokens_purchased: purchase.tokens_amount,
+          amount: purchase.price_gbp || (purchase.metadata && purchase.metadata.amount) || 0
+        };
+      }
+    } catch (error) {
+      console.error('Error fetching last purchase:', error);
+    }
+
+    // Get purchase history
+    let purchaseHistory = [];
+    try {
+      const historyResult = await pool.query(
+        `SELECT tt.*, tp.name as package_name, tp.price_gbp 
+         FROM token_transactions tt
+         LEFT JOIN token_packages tp ON (tt.metadata->>'package_id')::int = tp.id
+         WHERE tt.user_id = $1 AND tt.transaction_type = 'purchase'
+         ORDER BY tt.created_at DESC
+         LIMIT 10`,
+        [userId]
+      );
+      
+      purchaseHistory = historyResult.rows.map(purchase => ({
+        tokens_purchased: purchase.tokens_amount,
+        package_name: purchase.package_name || (purchase.metadata && purchase.metadata.package_name) || 'Token Purchase',
+        created_at: purchase.created_at,
+        amount: purchase.price_gbp || (purchase.metadata && purchase.metadata.amount) || 0,
+        status: 'completed'
+      }));
+    } catch (error) {
+      console.error('Error fetching purchase history:', error);
+    }
+
+    // Add purchase data to user object
+    user.token_balance = tokenBalance;
+    user.last_purchase = lastPurchase;
+    user.purchase_history = purchaseHistory;
     
     // Render the profile page with user data
     res.render('profile', {
@@ -186,7 +253,7 @@ router.post('/update', auth.enhancedAuth, async (req, res) => {
   }
 });
 
-// Update profile picture - use the unified auth system
+// Update profile picture - use Google Cloud Storage with local fallback
 router.post('/update-picture', auth.enhancedAuth, upload.single('profilePicture'), async (req, res) => {
   try {
     if (!req.file) {
@@ -195,20 +262,19 @@ router.post('/update-picture', auth.enhancedAuth, upload.single('profilePicture'
     
     const userId = req.user.userId;
     
-    // Upload file to S3
-    const s3Key = `profiles/${userId}/${Date.now()}-${req.file.originalname}`;
-    const s3Url = await uploadToS3(req.file, s3Key);
+    // Upload to GCS (with automatic local fallback if GCS fails)
+    const profilePictureUrl = await uploadProfilePicture(req.file, userId);
     
-    // Update user profile picture
+    // Update user profile picture in database
     await pool.query(
       'UPDATE users SET profile_picture = $1, updated_at = NOW() WHERE id = $2',
-      [s3Url, userId]
+      [profilePictureUrl, userId]
     );
     
     res.json({ 
       success: true, 
       message: 'Profile picture updated', 
-      profilePicture: s3Url 
+      profilePicture: profilePictureUrl 
     });
     
   } catch (error) {

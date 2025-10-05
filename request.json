@@ -1,0 +1,7 @@
+{
+  "event": {
+    "token": "TOKEN_FROM_FRONTEND",
+    "expectedAction": "ONBOARDING",
+    "siteKey": "6Lfo9NwrAAAAAPrlDclHQbWWIXpipvYksdZ3xNxi"
+  }
+}

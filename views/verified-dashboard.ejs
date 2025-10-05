@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="auth-token" content="<%= locals.token || '' %>">
+    <title>Verified Professional Dashboard</title>
+    <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .dashboard-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .profile-completion-bar {
+            background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+        }
+        
+        .service-tag {
+            background: rgba(59, 130, 246, 0.1);
+            color: #1d4ed8;
+        }
+        
+        .portfolio-item {
+            transition: transform 0.2s ease;
+        }
+        
+        .portfolio-item:hover {
+            transform: translateY(-2px);
+        }
+        
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans antialiased">
+    <div class="flex h-screen overflow-hidden">
+        <!-- Include Unified Sidebar -->
+        <%- include('partials/unified-sidebar') %>
+
+        <!-- Main Content -->
+        <div id="content" class="flex-1 overflow-y-auto">
+            <div class="p-6">
+                <!-- Header -->
+                <div class="mb-8">
+                    <h1 class="text-3xl font-bold text-gray-900 mb-2">Professional Dashboard</h1>
+                    <p class="text-gray-600">Manage your professional profile and track your performance</p>
+                </div>
+
+                <!-- Profile Completion Alert -->
+                <div id="completion-alert" class="mb-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-r-lg hidden">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-exclamation-triangle text-yellow-400"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-yellow-700">
+                                Complete your profile to increase visibility and attract more clients.
+                                <span id="completion-percentage" class="font-semibold"></span>% complete
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div class="stats-card text-white p-6 rounded-lg shadow-lg">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-white opacity-75 text-sm">Profile Views</p>
+                                <p id="profile-views" class="text-2xl font-bold">-</p>
+                            </div>
+                            <i class="fas fa-eye text-2xl opacity-75"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-green-500 text-white p-6 rounded-lg shadow-lg">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-white opacity-75 text-sm">Contact Requests</p>
+                                <p id="contact-requests" class="text-2xl font-bold">-</p>
+                            </div>
+                            <i class="fas fa-envelope text-2xl opacity-75"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-purple-500 text-white p-6 rounded-lg shadow-lg">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-white opacity-75 text-sm">Average Rating</p>
+                                <p id="average-rating" class="text-2xl font-bold">-</p>
+                            </div>
+                            <i class="fas fa-star text-2xl opacity-75"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-orange-500 text-white p-6 rounded-lg shadow-lg">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-white opacity-75 text-sm">Total Reviews</p>
+                                <p id="total-reviews" class="text-2xl font-bold">-</p>
+                            </div>
+                            <i class="fas fa-comment text-2xl opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Content Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Profile Management -->
+                    <div class="lg:col-span-2">
+                        <!-- Profile Information Card -->
+                        <div class="dashboard-card rounded-lg shadow-sm p-6 mb-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h2 class="text-xl font-semibold text-gray-900">Profile Information</h2>
+                                <button id="edit-profile-btn" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                                    <i class="fas fa-edit mr-2"></i>Edit Profile
+                                </button>
+                            </div>
+                            
+                            <!-- Profile Completion Bar -->
+                            <div class="mb-6">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm font-medium text-gray-700">Profile Completion</span>
+                                    <span id="completion-text" class="text-sm font-medium text-gray-700">0%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div id="completion-bar" class="profile-completion-bar h-2 rounded-full" style="width: 0%"></div>
+                                </div>
+                            </div>
+
+                            <!-- Profile Form -->
+                            <form id="profile-form" class="space-y-4">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Professional Tagline</label>
+                                        <input type="text" id="professional-tagline" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., Expert Business Broker with 10+ years experience">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Years of Experience</label>
+                                        <input type="number" id="years-experience" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" min="0" max="50">
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Professional Bio</label>
+                                    <textarea id="professional-bio" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Tell potential clients about your background, expertise, and what makes you unique..."></textarea>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Professional Website</label>
+                                    <input type="url" id="professional-website" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="https://yourwebsite.com">
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Services Offered</label>
+                                    <div id="services-container" class="space-y-2">
+                                        <!-- Services will be populated here -->
+                                    </div>
+                                    <button type="button" id="add-service-btn" class="mt-2 px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors">
+                                        <i class="fas fa-plus mr-1"></i>Add Service
+                                    </button>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Specializations</label>
+                                    <input type="text" id="specializations" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., Manufacturing, SaaS, Healthcare (comma-separated)">
+                                </div>
+
+                                <div class="flex items-center space-x-4">
+                                    <label class="flex items-center">
+                                        <input type="checkbox" id="allow-direct-contact" class="mr-2">
+                                        <span class="text-sm text-gray-700">Allow direct contact from clients</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" id="profile-visibility" class="mr-2">
+                                        <span class="text-sm text-gray-700">Make profile publicly visible</span>
+                                    </label>
+                                </div>
+
+                                <div class="flex justify-end space-x-3">
+                                    <button type="button" id="cancel-edit-btn" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors hidden">
+                                        Cancel
+                                    </button>
+                                    <button type="submit" id="save-profile-btn" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors hidden">
+                                        <i class="fas fa-save mr-2"></i>Save Changes
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Portfolio Management -->
+                        <div class="dashboard-card rounded-lg shadow-sm p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h2 class="text-xl font-semibold text-gray-900">Portfolio</h2>
+                                <button id="add-portfolio-btn" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                                    <i class="fas fa-plus mr-2"></i>Add Item
+                                </button>
+                            </div>
+                            
+                            <div id="portfolio-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <!-- Portfolio items will be populated here -->
+                            </div>
+                            
+                            <div id="no-portfolio" class="text-center py-8 text-gray-500 hidden">
+                                <i class="fas fa-folder-open text-4xl mb-3"></i>
+                                <p>No portfolio items yet. Add your first project to showcase your work.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sidebar -->
+                    <div class="space-y-6">
+                        <!-- Quick Actions -->
+                        <div class="dashboard-card rounded-lg shadow-sm p-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+                            <div class="space-y-3">
+                                <button class="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-left">
+                                    <i class="fas fa-eye mr-2"></i>Preview Profile
+                                </button>
+                                <button class="w-full px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-left">
+                                    <i class="fas fa-share mr-2"></i>Share Profile
+                                </button>
+                                <button class="w-full px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors text-left">
+                                    <i class="fas fa-chart-line mr-2"></i>View Analytics
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Recent Activity -->
+                        <div class="dashboard-card rounded-lg shadow-sm p-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
+                            <div id="recent-activity" class="space-y-3">
+                                <div class="flex items-center space-x-3 text-sm text-gray-600">
+                                    <i class="fas fa-clock text-gray-400"></i>
+                                    <span>Loading activity...</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Reviews Summary -->
+                        <div class="dashboard-card rounded-lg shadow-sm p-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Recent Reviews</h3>
+                            <div id="recent-reviews" class="space-y-4">
+                                <div class="text-center py-4 text-gray-500">
+                                    <i class="fas fa-star text-2xl mb-2"></i>
+                                    <p class="text-sm">No reviews yet</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Portfolio Item Modal -->
+    <div id="portfolio-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold">Add Portfolio Item</h3>
+                <button id="close-portfolio-modal" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <form id="portfolio-form">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Title</label>
+                        <input type="text" id="portfolio-title" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                        <textarea id="portfolio-description" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Type</label>
+                        <select id="portfolio-type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="project">Project</option>
+                            <option value="case_study">Case Study</option>
+                            <option value="certification">Certification</option>
+                            <option value="testimonial">Testimonial</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Image/Document</label>
+                        <input type="file" id="portfolio-file" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" accept="image/*,.pdf,.doc,.docx">
+                    </div>
+                </div>
+                
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" id="cancel-portfolio" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                        Add Item
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/verified-dashboard.js"></script>
+    <script src="/js/unified-sidebar.js"></script>
+</body>
+</html>

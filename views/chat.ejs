@@ -6,6 +6,7 @@
     <meta name="auth-token" content="<%= locals.token || '' %>">
     <!-- Add user ID meta tag for JavaScript usage -->
     <meta name="user-id" content="<%= locals.userId || '' %>">
+    <meta name="conversation-id" content="<%= activeConversationId || '' %>">
     <title><%= (conversation && conversation.recipient) ? conversation.recipient.name : 'Chat' %> | Arzani Marketplace</title>
     <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -262,6 +263,287 @@
             margin: 10px auto;
             text-align: center;
         }
+        
+        /* Quote status badge styles */
+        .quote-status-pending {
+            background-color: #fbbf24;
+            color: #92400e;
+        }
+        
+        .quote-status-accepted {
+            background-color: #34d399;
+            color: #065f46;
+        }
+        
+        .quote-status-declined {
+            background-color: #f87171;
+            color: #991b1b;
+        }
+        
+        .quote-status-paid {
+            background-color: #10b981;
+            color: #064e3b;
+        }
+        
+        /* Quote card hover effects */
+        .quote-card {
+            transition: all 0.2s ease;
+        }
+        
+        .quote-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Quote message styles */
+        .quote-message {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border-left: 4px solid #3b82f6;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 12px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .dark .quote-message {
+            background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
+            border-left-color: #60a5fa;
+        }
+        
+        .quote-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .quote-status-badge {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .quote-status-badge.pending {
+            background-color: #fbbf24;
+            color: #92400e;
+        }
+        
+        .quote-status-badge.accepted {
+            background-color: #34d399;
+            color: #065f46;
+        }
+        
+        .quote-status-badge.declined {
+            background-color: #f87171;
+            color: #991b1b;
+        }
+        
+        .quote-status-badge.paid {
+            background-color: #10b981;
+            color: #064e3b;
+        }
+        
+        .dark .quote-status-badge.pending {
+            background-color: #d97706;
+            color: #fbbf24;
+        }
+        
+        .dark .quote-status-badge.accepted {
+            background-color: #059669;
+            color: #34d399;
+        }
+        
+        .dark .quote-status-badge.declined {
+            background-color: #dc2626;
+            color: #f87171;
+        }
+        
+        .dark .quote-status-badge.paid {
+            background-color: #059669;
+            color: #6ee7b7;
+        }
+        
+        .quote-details {
+            color: #374151;
+        }
+        
+        .dark .quote-details {
+            color: #d1d5db;
+        }
+        
+        .quote-actions button {
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+        
+        .quote-actions button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        /* Quote Modal Styling */
+        #quoteModal {
+            backdrop-filter: blur(4px);
+        }
+        
+        #quoteModal .bg-white {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        #quoteModal input:focus,
+        #quoteModal textarea:focus,
+        #quoteModal select:focus {
+            outline: 2px solid rgb(59 130 246);
+            outline-offset: 2px;
+            border-color: rgb(59 130 246);
+        }
+        
+        #quoteModal label {
+            font-weight: 500;
+        }
+        
+        #quoteModal .grid {
+            gap: 1rem;
+        }
+        
+        @media (max-width: 768px) {
+            #quoteModal .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            #quoteModal .max-w-2xl {
+                max-width: 95vw;
+                margin: 1rem;
+            }
+        }
+        
+        /* Form validation styling */
+        #quoteModal input:invalid,
+        #quoteModal textarea:invalid {
+            border-color: rgb(239 68 68);
+        }
+        
+        #quoteModal input:invalid:focus,
+        #quoteModal textarea:invalid:focus {
+            outline: 2px solid rgb(239 68 68);
+            outline-offset: 2px;
+            border-color: rgb(239 68 68);
+        }
+        
+        /* Button styling improvements */
+        #sendQuote:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        #sendQuote:not(:disabled):hover {
+            background-color: rgb(37 99 235);
+            transform: translateY(-1px);
+        }
+        
+        /* Animation for quote card celebration */
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateY(-10px) scale(0.8); }
+            50% { opacity: 1; transform: translateY(-15px) scale(1.2); }
+            100% { opacity: 0; transform: translateY(-20px) scale(0.8); }
+        }
+        
+        /* Enhanced quote card hover effects */
+        .quote-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .quote-card.payment-processing {
+            border-color: #fbbf24;
+            background: linear-gradient(to right, #fef3c7, #fde68a);
+        }
+        
+        .quote-card.payment-success {
+            border-color: #10b981;
+            background: linear-gradient(to right, #d1fae5, #a7f3d0);
+        }
+        
+        /* Ensure chat interface doesn't overlay */
+        .chat-interface {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .chat-sidebar {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .chat-main {
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Real-time indicators */
+        .typing-dots {
+            display: inline-flex;
+            gap: 2px;
+            margin-left: 8px;
+        }
+        
+        .typing-dots span {
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background-color: #9ca3af;
+            animation: typing 1.5s infinite;
+        }
+        
+        .typing-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.4;
+            }
+            30% {
+                transform: translateY(-10px);
+                opacity: 1;
+            }
+        }
+        
+        /* Toast notifications positioning */
+        #toast-container {
+            pointer-events: none;
+        }
+        
+        #toast-container > div {
+            pointer-events: auto;
+        }
+        
+        /* Real-time indicators */
+        .real-time-indicator {
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+        }
+        
+        .real-time-indicator.hidden {
+            display: none;
+        }
+        
+        /* Prevent modal overlays from interfering with chat */
+        .modal {
+            z-index: 1000;
+        }
+        
+        .chat-layout {
+            z-index: 10;
+        }
     </style>
 
     <!-- Third-party Dependencies -->
@@ -320,192 +602,46 @@
 </head>
 <body class="bg-gray-50 font-sans antialiased dark:bg-gray-900 transition-colors duration-300">
     <div class="flex h-screen overflow-hidden">
-        <!-- Sidebar -->
-        <div id="sidebar" class="bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 h-screen sidebar-transition fixed z-40 w-64 md:w-20 xl:w-64 shadow-lg">
-            <div class="flex flex-col h-full">
-                <!-- Logo -->
-                <div class="flex items-center justify-center h-16 border-b border-gray-200 dark:border-gray-700 px-4">
-                    <a href="/" class="flex items-center justify-center">
-                        <img src="/figma design exports/logos/Arzani-logo.png" alt="Arzani.co.uk" class="logo-img">
-                    </a>
-                    <button id="sidebarCollapse" class="md:hidden xl:flex ml-auto text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-                        </svg>
-                    </button>
-                </div>
-                
-                <!-- Navigation Menu -->
-                <nav class="flex-grow py-6 px-4 overflow-y-auto custom-scrollbar">
-                    <ul class="space-y-2">
-                        <li>
-                            <a href="/marketplace2" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                                <i class="fas fa-store h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
-                                <span class="hidden md:hidden xl:block">Marketplace</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="/market-trends" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                                <i class="fas fa-chart-line h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
-                                <span class="hidden md:hidden xl:block">Market Trends</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="/chat" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors bg-blue-50 dark:bg-blue-900/20">
-                                <i class="fas fa-comments h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
-                                <span class="hidden md:hidden xl:block">Chat</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="/profile" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                                <i class="fas fa-user-circle h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
-                                <span class="hidden md:hidden xl:block">My Profile</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="/saved-searches" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                                <i class="fas fa-bookmark h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
-                                <span class="hidden md:hidden xl:block">Saved Searches</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="/history" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                                <i class="fas fa-history h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
-                                <span class="hidden md:hidden xl:block">History</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="/professional-verification" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                                <i class="fas fa-user-check h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
-                                <span class="hidden md:hidden xl:block">Professional Verification</span>
-                            </a>
-                        </li>
-                        <% if (locals.user && locals.user.is_verified_professional) { %>
-                        <li>
-                            <a href="/professional-dashboard" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                                <i class="fas fa-tachometer-alt h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
-                                <span class="hidden md:hidden xl:block">Professional Dashboard</span>
-                            </a>
-                        </li>
-                        <% } %>
-                        <% if (locals.user && locals.user.role === 'admin') { %>
-                        <li>
-                            <a href="/admin/verification-review" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                                <i class="fas fa-user-shield h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
-                                <span class="hidden md:hidden xl:block">Admin Verification</span>
-                            </a>
-                        </li>
-                        <% } %>
-                    </ul>
-                    
-                    <div class="pt-6 mt-6 border-t border-gray-200 dark:border-gray-700">
-                        <ul class="space-y-2">
-                            <li>
-                                <a href="/pricing" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                                    <i class="fas fa-crown h-6 w-6 mr-3 text-gray-500 dark:text-gray-400"></i>
-                                    <span class="hidden md:hidden xl:block">Upgrade</span>
-                                </a>
-                            </li>
-                            <li>
-                                <button id="themeToggle" class="w-full flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                                    <i id="lightIcon" class="fas fa-sun h-6 w-6 mr-3 text-gray-500 dark:text-gray-400"></i>
-                                    <i id="darkIcon" class="fas fa-moon h-6 w-6 mr-3 text-gray-500 dark:text-gray-400 hidden"></i>
-                                    <span class="hidden md:hidden xl:block">Toggle Theme</span>
-                                </button>
-                            </li>
-                        </ul>
-                    </div>
-                </nav>
-                
-                <!-- User Profile Section -->
-                <div class="border-t border-gray-200 dark:border-gray-700 p-4">
-                    <div class="flex items-center">
-                        <div class="h-10 w-10 rounded-full bg-gradient-to-r from-primary to-secondary flex items-center justify-center text-white font-medium">
-                            <%= (locals.user && locals.user.username) ? locals.user.username.charAt(0).toUpperCase() : 'U' %>
-                        </div>
-                        <div class="ml-3 hidden md:hidden xl:block">
-                            <p class="text-sm font-medium text-gray-700 dark:text-gray-300"><%= (locals.user && locals.user.username) ? locals.user.username : 'User' %></p>
-                            <p class="text-xs text-gray-500 dark:text-gray-400"><%= (locals.user && locals.user.subscription) ? locals.user.subscription : 'Free' %> Plan</p>
-                        </div>
-                        <button id="signOutBtn" class="ml-auto hidden md:hidden xl:block text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400">
-                            <i class="fas fa-sign-out-alt"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <!-- Include Unified Sidebar -->
+        <%- include('partials/unified-sidebar') %>
 
         <!-- Main Content -->
-        <div id="content" class="flex-1 overflow-y-auto content-transition ml-0 md:ml-20 xl:ml-64">
-            <!-- Top Navbar -->
-            <nav class="bg-white dark:bg-gray-800 shadow-md sticky top-0 z-30">
-                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div class="flex items-center justify-between h-16">
-                        <!-- Left side - Hamburger and Page Title -->
-                        <div class="flex items-center">
-                            <button id="sidebarToggle" class="md:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 mr-4">
-                                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                                </svg>
-                            </button>
-                            <h1 class="text-xl font-semibold text-gray-800 dark:text-white">Chat</h1>
-                        </div>
-                        
-                        <!-- Right side - Breadcrumb -->
-                        <nav class="hidden md:flex" aria-label="Breadcrumb">
-                            <ol class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
-                                <li><a href="/marketplace2" class="hover:text-gray-700 dark:hover:text-gray-200">Home</a></li>
-                                <li><i class="fas fa-chevron-right text-xs"></i></li>
-                                <li class="text-gray-700 dark:text-gray-300">Chat</li>
-                            </ol>
-                        </nav>
-                    </div>
-                </div>
-            </nav>
-
+        <div id="content" class="flex-1 overflow-y-auto content-transition transition-all duration-300">
             <!-- Page Content -->
             <div class="flex h-full">
                 <!-- Chat Sidebar -->
                 <div id="chatSidebar" class="w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex-shrink-0 flex flex-col transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out fixed lg:relative left-0 top-0 h-full z-30">
-                    <!-- Sidebar Header -->
-                    <div class="sidebar-header flex justify-between items-center px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-                        <h2 class="text-lg font-semibold text-gray-800 dark:text-white">Conversations</h2>
-                    </div>
+
                     
-                    <!-- User Info Section -->
-                    <div class="user-info p-4 border-b border-gray-200 dark:border-gray-700">
-                        <% if (locals.userId) { %>
-                            <div class="flex items-center" id="profile-container">
-                                <div class="user-avatar w-10 h-10 rounded-full overflow-hidden mr-3">
-                                    <img src="<%= user?.profile_picture || '/images/default-profile.png' %>" 
-                                         alt="Profile" 
-                                         id="sidebar-profile-picture"
-                                         class="w-full h-full object-cover" 
-                                         onerror="this.src='/images/default-profile.png'"/>
-                                </div>
-                                <div>
-                                    <div id="sidebar-username" class="user-name font-medium text-gray-800 dark:text-white"><%= user?.username || 'Loading...' %></div>
-                                    <div id="user-status" class="text-xs text-gray-500 dark:text-gray-400">
-                                        <span class="status-indicator inline-block w-2 h-2 rounded-full bg-gray-400 mr-1"></span>
-                                        <span class="status-text">Offline</span>
-                                    </div>
-                                </div>
-                            </div>
-                        <% } else { %>
-                            <div class="auth-notice text-center">
-                                <a href="/login2?returnTo=<%= encodeURIComponent('/chat' + (activeConversationId ? '?conversation=' + activeConversationId : '')) %>" class="login-btn bg-primary text-white px-4 py-2 rounded hover:bg-primary-dark transition">
-                                    Log in to chat
-                                </a>
-                            </div>
-                        <% } %>
-                    </div>
+
                     
-                    <!-- New Conversation Button -->
-                    <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-                        <h3 class="text-sm font-semibold text-gray-600 dark:text-gray-300">Recent</h3>
-                        <button id="new-conversation-btn" class="bg-primary text-white text-sm px-3 py-1 rounded-md hover:bg-primary-dark transition">
-                            <i class="fas fa-plus mr-1"></i> New
-                        </button>
+                    <!-- Find or Start Conversation -->
+                    <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                        <!-- Search Input -->
+                        <div class="mb-3">
+                            <input type="text" 
+                                   id="conversation-search" 
+                                   class="w-full bg-gray-100 dark:bg-gray-700 border-0 rounded-lg px-4 py-2 text-sm text-gray-800 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                   placeholder="Find or start a conversation">
+                        </div>
+                        
+                        <!-- Tasks Section -->
+                        <div class="flex items-center justify-between py-2 px-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg cursor-pointer transition-colors mb-1">
+                            <div class="flex items-center">
+                                <i class="fas fa-tasks text-gray-600 dark:text-gray-400 mr-3"></i>
+                                <span class="text-sm font-medium text-gray-800 dark:text-white">Tasks</span>
+                            </div>
+                            <span class="bg-red-500 text-white text-xs font-bold rounded-full min-w-5 h-5 flex items-center justify-center px-1.5">2</span>
+                        </div>
+                        
+                        <!-- Message Requests Section -->
+                        <div class="flex items-center justify-between py-2 px-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg cursor-pointer transition-colors">
+                            <div class="flex items-center">
+                                <i class="fas fa-envelope text-gray-600 dark:text-gray-400 mr-3"></i>
+                                <span class="text-sm font-medium text-gray-800 dark:text-white">Message Requests</span>
+                            </div>
+                            <span class="bg-red-500 text-white text-xs font-bold rounded-full min-w-5 h-5 flex items-center justify-center px-1.5">4</span>
+                        </div>
                     </div>
                     
                     <!-- Conversations List -->
@@ -513,25 +649,45 @@
                         <% if (conversations && conversations.length > 0) { %>
                             <% conversations.forEach(function(conversation) { %>
                                 <div class="conversation-item <%= conversation.id === activeConversationId ? 'active bg-blue-50 dark:bg-blue-900/20' : '' %> 
+                                         <%= conversation.unread_count > 0 ? 'has-unread bg-blue-50/50 dark:bg-blue-900/10 border-l-2 border-primary' : '' %>
                                          hover:bg-gray-100 dark:hover:bg-gray-700 p-3 rounded-lg mb-2 cursor-pointer transition-colors" 
                                      data-conversation-id="<%= conversation.id %>">
                                     <div class="flex items-start">
-                                        <div class="conversation-avatar bg-gray-200 dark:bg-gray-600 w-10 h-10 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                                        <div class="conversation-avatar w-10 h-10 rounded-full mr-3 flex-shrink-0 overflow-hidden">
                                             <% if (conversation.is_group_chat) { %>
-                                                <i class="fas fa-users text-gray-500 dark:text-gray-400"></i>
+                                                <div class="bg-gray-200 dark:bg-gray-600 w-full h-full flex items-center justify-center">
+                                                    <i class="fas fa-users text-gray-500 dark:text-gray-400"></i>
+                                                </div>
                                             <% } else if (conversation.is_ai_chat) { %>
-                                                <img src="/figma design exports/images.webp/arzani-icon-nobackground.png" alt="Arzani AI" class="w-4 h-4 object-contain" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/4616/4616734.png';">
+                                                <img src="/figma design exports/images.webp/arzani-icon-nobackground.png" alt="Arzani AI" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/4616/4616734.png';">
+                                            <% } else if (conversation.recipient && conversation.recipient.profile_picture) { %>
+                                                <img src="<%= conversation.recipient.profile_picture %>" 
+                                                     alt="<%= conversation.recipient.username || 'User' %>" 
+                                                     class="w-full h-full object-cover"
+                                                     onerror="this.src='/images/default-profile.png'">
                                             <% } else { %>
-                                                <i class="fas fa-user text-gray-500 dark:text-gray-400"></i>
+                                                <div class="bg-gray-200 dark:bg-gray-600 w-full h-full flex items-center justify-center">
+                                                    <i class="fas fa-user text-gray-500 dark:text-gray-400"></i>
+                                                </div>
                                             <% } %>
                                         </div>
                                         <div class="conversation-details flex-1 min-w-0">
-                                            <div class="conversation-name font-medium text-gray-800 dark:text-white truncate">
-                                                <%= conversation.group_name || 'Conversation ' + conversation.id %>
+                                            <div class="conversation-name <%= conversation.unread_count > 0 ? 'font-semibold' : 'font-medium' %> text-gray-800 dark:text-white truncate">
+                                                <% if (conversation.group_name) { %>
+                                                    <%= conversation.group_name %>
+                                                <% } else if (conversation.is_ai_chat) { %>
+                                                    Arzani AI Assistant
+                                                <% } else if (conversation.recipient) { %>
+                                                    <%= conversation.recipient.first_name && conversation.recipient.last_name ? 
+                                                        conversation.recipient.first_name + ' ' + conversation.recipient.last_name : 
+                                                        conversation.recipient.username || conversation.recipient.email || 'User' %>
+                                                <% } else { %>
+                                                    Unknown User
+                                                <% } %>
                                             </div>
                                             <div class="conversation-last-message flex justify-between items-center mt-1 text-xs">
                                                 <% if (conversation.unread_count > 0) { %>
-                                                    <span class="unread-badge bg-primary text-white rounded-full min-w-5 h-5 flex items-center justify-center px-1.5 text-xs font-medium">
+                                                    <span class="unread-badge bg-primary text-white rounded-full min-w-5 h-5 flex items-center justify-center px-1.5 text-xs font-medium shadow-sm animate-pulse">
                                                         <%= conversation.unread_count %>
                                                     </span>
                                                 <% } %>
@@ -614,6 +770,16 @@
                                 <button type="button" id="attachBtn" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                                     <i class="fas fa-paperclip"></i>
                                 </button>
+                                <!-- Quote Button for Verified Professionals Only -->
+                                <% if (locals.user && locals.user.is_verified_professional) { %>
+                                <button type="button" id="quoteBtn" onclick="console.log('Quote button clicked!'); event.preventDefault(); event.stopPropagation(); try { if (window.QuoteFunctionality && window.QuoteFunctionality.openQuoteModal) { window.QuoteFunctionality.openQuoteModal(); } else { alert('Quote functionality loading...'); } } catch(e) { console.error('Quote error:', e); alert('Error opening quote modal'); } return false;" class="text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-200 p-2 rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors" title="Send Quote">
+                                    <i class="fas fa-file-invoice-dollar"></i>
+                                </button>
+                                <!-- Stripe Connect Dashboard Button for Verified Professionals -->
+                                <button type="button" onclick="window.open('/stripe-connect/dashboard', '_blank')" class="text-green-500 dark:text-green-400 hover:text-green-700 dark:hover:text-green-200 p-2 rounded-full hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors" title="Payment Dashboard">
+                                    <i class="fas fa-credit-card"></i>
+                                </button>
+                                <% } %>
                                 <input type="text" 
                                        id="message-input" 
                                        class="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-800 dark:text-white placeholder-gray-500 dark:placeholder-gray-400" 
@@ -627,24 +793,6 @@
                             </form>
                         </div>
                     <% } else { %>
-                        <!-- No Conversation Selected -->
-                        <div class="flex items-center px-4 py-3 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                            <button id="toggleSidebarBtn2" class="lg:hidden mr-2 flex-shrink-0 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 p-2 rounded-full" title="Toggle Conversations">
-                                <i class="fas fa-comments"></i>
-                            </button>
-                            <h2 class="font-semibold text-gray-800 dark:text-white text-sm sm:text-base truncate max-w-[120px] sm:max-w-xs">Select a conversation</h2>
-                            <div class="ml-auto flex items-center space-x-1 md:space-x-2">
-                                <a href="/marketplace2" class="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium transition-colors flex items-center">
-                                    <i class="fas fa-store mr-1 md:mr-1.5"></i>
-                                    <span class="hidden sm:inline">Marketplace</span>
-                                </a>
-                                <a href="/profile" class="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium transition-colors flex items-center">
-                                    <i class="fas fa-user mr-1 md:mr-1.5"></i>
-                                    <span class="hidden sm:inline">Profile</span>
-                                </a>
-                            </div>
-                        </div>
-                        
                         <!-- Empty State -->
                         <div class="no-active-conversation flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-900">
                             <div class="placeholder-message text-center p-8">
@@ -664,7 +812,101 @@
         </div>
 
     <!-- Add hidden user ID element for easier access in JavaScript -->
-    <div id="current-user-data" data-user-id="<%= locals.userId || '' %>" style="display:none;"></div>
+    <div id="current-user-data" data-user-id="<%= locals.userId || '' %>" data-user-type="<%= locals.userType || '' %>" data-is-professional="<%= (locals.user && locals.user.is_verified_professional) || false %>" style="display:none;"></div>
+
+    <!-- Quote Modal -->
+    <div id="quoteModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                    <i class="fas fa-file-invoice-dollar text-blue-500 mr-2"></i>
+                    Create Quote
+                </h3>
+                <button id="closeQuoteModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <form id="quoteForm" class="p-6 space-y-6">
+                <!-- Quote Details -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="quoteTitle" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Quote Title *
+                        </label>
+                        <input type="text" id="quoteTitle" name="title" required
+                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                               placeholder="e.g., Website Development Project">
+                    </div>
+                    
+                    <div>
+                        <label for="quoteAmount" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Amount (£) *
+                        </label>
+                        <input type="number" id="quoteAmount" name="amount" required min="1" step="0.01"
+                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                               placeholder="0.00">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="quoteDescription" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Description *
+                    </label>
+                    <textarea id="quoteDescription" name="description" required rows="4"
+                              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                              placeholder="Describe the services included in this quote..."></textarea>
+                </div>
+
+                <!-- Additional Details (Optional) -->
+                <div>
+                    <label for="quoteNotes" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Additional Notes (Optional)
+                    </label>
+                    <textarea id="quoteNotes" name="notes" rows="3"
+                              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                              placeholder="Any additional terms, conditions, or notes for this quote..."></textarea>
+                </div>
+
+                <!-- Quote Validity -->
+                <!-- Quote Validity and Payment Terms -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="quoteValidUntil" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Valid Until (Optional)
+                        </label>
+                        <input type="date" id="quoteValidUntil" name="validUntil"
+                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                    </div>
+                    
+                    <div>
+                        <label for="quotePaymentTerms" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Payment Terms
+                        </label>
+                        <select id="quotePaymentTerms" name="paymentTerms"
+                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                            <option value="full_upfront">Full Payment Upfront</option>
+                            <option value="50_50">50% Upfront, 50% on Completion</option>
+                            <option value="30_70">30% Upfront, 70% on Completion</option>
+                            <option value="milestone">Milestone-based Payments</option>
+                            <option value="monthly">Monthly Payments</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <button type="button" id="cancelQuote" class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" id="sendQuote" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition-colors flex items-center justify-center">
+                        <i class="fas fa-paper-plane mr-2"></i>
+                        Send Quote
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <script>
     // Helper function to format time
@@ -697,9 +939,8 @@
             { name: 'image-handler', src: '/js/image-handler.js', loaded: false, required: false },
             { name: 'socket-io', src: '/js/socket-io.js', loaded: false, required: true },
             { name: 'chat', src: '/js/chat.js', loaded: false, required: true },
-            { name: 'chat-interface', src: '/js/chat-interface.js', loaded: false, required: false },
+            { name: 'chat-interface', src: '/js/chat-interface.js', loaded: false, required: true },
             { name: 'chat-activity-tracker', src: '/js/chat-activity-tracker.js', loaded: false, required: false },
-            { name: 'chat-sidebar', src: '/js/chat-sidebar.js', loaded: false, required: false },
             { name: 'scroll', src: '/js/scroll.js', loaded: false, required: false },
             { name: 'message-analyzer', src: '/js/message-analyzer.js', loaded: false, required: false }
         ];
@@ -846,6 +1087,9 @@
     })();
     </script>
 
+    <!-- Quote Functionality Script -->
+    <script src="/js/quote-functionality.js"></script>
+
     <!-- Add Sidebar Toggle Script -->
     <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -888,9 +1132,59 @@
         // Sign out functionality
         const signOutBtn = document.getElementById('signOutBtn');
         if (signOutBtn) {
-            signOutBtn.addEventListener('click', function() {
-                localStorage.removeItem('token');
-                window.location.href = '/login2';
+            signOutBtn.addEventListener('click', async function() {
+                // Load modern modal if not already loaded
+                if (!window.ModernSignOutModal) {
+                    await loadModernModal();
+                }
+                
+                // Show modern confirmation modal
+                const confirmed = await ModernSignOutModal.confirm({
+                    title: 'Sign out of your account?',
+                    message: "You'll be safely signed out and redirected to our homepage. Your data will remain secure."
+                });
+                
+                if (confirmed) {
+                    // Make POST request to logout API endpoint
+                    fetch('/auth/logout', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        credentials: 'include'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        // Clear client-side storage
+                        try {
+                            localStorage.removeItem('token');
+                            localStorage.removeItem('userId');
+                            localStorage.removeItem('user');
+                            localStorage.removeItem('authToken');
+                            localStorage.removeItem('refreshToken');
+                        } catch (error) {
+                            console.log('Could not clear localStorage:', error);
+                        }
+                        
+                        // Redirect to sign-out confirmation page
+                        window.location.href = data.redirectTo || '/auth/logout';
+                    })
+                    .catch(error => {
+                        console.error('Logout request failed:', error);
+                        window.location.href = '/auth/logout';
+                    });
+                }
+            });
+        }
+        
+        // Helper function to load modern modal
+        async function loadModernModal() {
+            return new Promise((resolve) => {
+                const script = document.createElement('script');
+                script.src = '/js/modern-signout-modal.js';
+                script.onload = resolve;
+                script.onerror = resolve; // Continue even if fails to load
+                document.head.appendChild(script);
             });
         }
         
@@ -957,6 +1251,9 @@
         }
     });
     </script>
+    
+    <!-- Unified Sidebar Script -->
+    <script src="/js/unified-sidebar.js"></script>
 
 </body>
 </html>

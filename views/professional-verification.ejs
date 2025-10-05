@@ -177,153 +177,11 @@
 </head>
 <body class="bg-gray-50 font-sans antialiased dark:bg-gray-900 transition-colors duration-300">
     <div class="flex h-screen overflow-hidden">
-        <!-- Sidebar -->
-        <div id="sidebar" class="bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 h-screen sidebar-transition fixed z-40 w-64 md:w-20 xl:w-64 shadow-lg">
-            <div class="flex flex-col h-full">
-                <!-- Logo -->
-                <div class="flex items-center justify-center h-16 border-b border-gray-200 dark:border-gray-700 px-4">
-                    <a href="/" class="flex items-center justify-center">
-                        <img src="/figma design exports/logos/Arzani-logo.png" alt="Arzani.co.uk" class="logo-img">
-                    </a>
-                    <button id="sidebarCollapse" class="md:hidden xl:flex ml-auto text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-                        </svg>
-                    </button>
-                </div>
-                
-                <!-- Navigation Menu -->
-                <nav class="flex-grow py-6 px-4 overflow-y-auto custom-scrollbar">
-                    <ul class="space-y-2">
-                        <li>
-                            <a href="/marketplace2" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                                <i class="fas fa-store h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
-                                <span class="hidden md:hidden xl:block">Marketplace</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="/market-trends" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                                <i class="fas fa-chart-line h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
-                                <span class="hidden md:hidden xl:block">Market Trends</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="/chat" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                                <i class="fas fa-comments h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
-                                <span class="hidden md:hidden xl:block">Chat</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="/profile" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                                <i class="fas fa-user-circle h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
-                                <span class="hidden md:hidden xl:block">My Profile</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="/saved-searches" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                                <i class="fas fa-bookmark h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
-                                <span class="hidden md:hidden xl:block">Saved Searches</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="/history" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                                <i class="fas fa-history h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
-                                <span class="hidden md:hidden xl:block">History</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="/professional-verification" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors bg-blue-50 dark:bg-blue-900/20">
-                                <i class="fas fa-user-check h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
-                                <span class="hidden md:hidden xl:block">Professional Verification</span>
-                            </a>
-                        </li>
-                        <% if (locals.user && locals.user.is_verified_professional) { %>
-                        <li>
-                            <a href="/professional-dashboard" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                                <i class="fas fa-tachometer-alt h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
-                                <span class="hidden md:hidden xl:block">Professional Dashboard</span>
-                            </a>
-                        </li>
-                        <% } %>
-                        <% if (locals.user && locals.user.role === 'admin') { %>
-                        <li>
-                            <a href="/admin/verification-review" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                                <i class="fas fa-user-shield h-6 w-6 mr-3 text-primary dark:text-blue-400"></i>
-                                <span class="hidden md:hidden xl:block">Admin Verification</span>
-                            </a>
-                        </li>
-                        <% } %>
-                    </ul>
-                    
-                    <div class="pt-6 mt-6 border-t border-gray-200 dark:border-gray-700">
-                        <ul class="space-y-2">
-                            <li>
-                                <a href="/pricing" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                                    <i class="fas fa-crown h-6 w-6 mr-3 text-gray-500 dark:text-gray-400"></i>
-                                    <span class="hidden md:hidden xl:block">Upgrade</span>
-                                </a>
-                            </li>
-                            <li>
-                                <button id="themeToggle" class="w-full flex items-center p-3 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                                    <i id="lightIcon" class="fas fa-sun h-6 w-6 mr-3 text-gray-500 dark:text-gray-400"></i>
-                                    <i id="darkIcon" class="fas fa-moon h-6 w-6 mr-3 text-gray-500 dark:text-gray-400 hidden"></i>
-                                    <span class="hidden md:hidden xl:block">Toggle Theme</span>
-                                </button>
-                            </li>
-                        </ul>
-                    </div>
-                </nav>
-                
-                <!-- User Profile Section -->
-                <div class="border-t border-gray-200 dark:border-gray-700 p-4">
-                    <div class="flex items-center">
-                        <div class="h-10 w-10 rounded-full bg-gradient-to-r from-primary to-secondary flex items-center justify-center text-white font-medium">
-                            <%= (locals.user && locals.user.username) ? locals.user.username.charAt(0).toUpperCase() : 'U' %>
-                        </div>
-                        <div class="ml-3 hidden md:hidden xl:block">
-                            <p class="text-sm font-medium text-gray-700 dark:text-gray-300"><%= (locals.user && locals.user.username) ? locals.user.username : 'User' %></p>
-                            <p class="text-xs text-gray-500 dark:text-gray-400"><%= (locals.user && locals.user.subscription) ? locals.user.subscription : 'Free' %> Plan</p>
-                        </div>
-                        <button id="signOutBtn" class="ml-auto hidden md:hidden xl:block text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400">
-                            <i class="fas fa-sign-out-alt"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <!-- Include Unified Sidebar -->
+        <%- include('partials/unified-sidebar') %>
 
         <!-- Main Content -->
-        <div id="content" class="flex-1 overflow-y-auto content-transition ml-0 md:ml-20 xl:ml-64">
-            <!-- Top Navbar -->
-            <nav class="bg-white dark:bg-gray-800 shadow-md sticky top-0 z-30">
-                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div class="flex items-center justify-between h-16">
-                        <!-- Left side - Hamburger and Page Title -->
-                        <div class="flex items-center">
-                            <button id="sidebarToggle" class="md:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 mr-4">
-                                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                                </svg>
-                            </button>
-                            <h1 class="text-xl font-semibold text-gray-800 dark:text-white">Professional Verification</h1>
-                        </div>
-                        
-                        <!-- Right side - Breadcrumb -->
-                        <nav class="hidden md:flex" aria-label="Breadcrumb">
-                            <ol class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
-                                <li><a href="/marketplace2" class="hover:text-gray-700 dark:hover:text-gray-200">Home</a></li>
-                                <li><i class="fas fa-chevron-right text-xs"></i></li>
-                                <li><a href="/profile" class="hover:text-gray-700 dark:hover:text-gray-200">My Profile</a></li>
-                                <li><i class="fas fa-chevron-right text-xs"></i></li>
-                                <li class="text-gray-700 dark:text-gray-300">Professional Verification</li>
-                            </ol>
-                        </nav>
-                    </div>
-                </div>
-            </nav>
-
-            <!-- Page Content -->
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div id="content" class="flex-1 overflow-y-auto content-transition transition-all duration-300">
             <!-- Page Content -->
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <!-- Page Header -->
@@ -554,21 +412,50 @@
 
                                 <div>
                                     <label for="professional-bio" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        Professional Bio <span class="text-red-500">*</span>
+                                        Professional Bio <span class="text-red-500">*</span> <span class="text-xs text-gray-500">(minimum 50 characters)</span>
                                     </label>
                                     <textarea id="professional-bio" name="professionalBio" rows="4" placeholder="Tell potential clients about your background, expertise, and what sets you apart..." class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"></textarea>
+                                    <div class="flex justify-between items-center mt-1">
+                                        <div id="bio-char-count" class="text-xs text-gray-500">0 / 50 characters minimum</div>
+                                        <div id="bio-validation-message" class="text-xs text-red-500 hidden">Bio must be at least 50 characters long</div>
+                                    </div>
                                 </div>
 
                                 <!-- Services and Industries -->
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
                                         <label for="services-offered" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                            Services Offered <span class="text-red-500">*</span>
+                                            Services Offered <span class="text-red-500">*</span> <span class="text-sm text-gray-500">(Minimum 3 required)</span>
                                         </label>
                                         <select id="services-offered" multiple class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white min-h-[120px]">
                                             <!-- Options loaded dynamically -->
                                         </select>
-                                        <p class="text-sm text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple</p>
+                                        <p class="text-sm text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple from the list above</p>
+                                        <div class="flex justify-between items-center mt-1">
+                                            <div id="services-count" class="text-xs text-gray-500">0 / 3 services minimum</div>
+                                            <div id="services-validation-message" class="text-xs text-red-500 hidden">Please select at least 3 services</div>
+                                        </div>
+                                        
+                                        <!-- Custom Services Input -->
+                                        <div class="mt-4">
+                                            <label for="custom-services-input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                Add Custom Services
+                                            </label>
+                                            <div class="flex gap-2">
+                                                <input type="text" id="custom-services-input" placeholder="Enter a custom service..." class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white" onkeypress="handleCustomServiceKeyPress(event)">
+                                                <button type="button" onclick="addCustomService()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                                                    Add
+                                                </button>
+                                            </div>
+                                            <div id="custom-services-list" class="mt-2 flex flex-wrap gap-2"></div>
+                                        </div>
+                                        
+                                        <div class="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded">
+                                            <p class="text-sm text-blue-700 dark:text-blue-300">
+                                                <i class="fas fa-info-circle mr-1"></i>
+                                                Selected services will be displayed on your profile in the Featured Experts section. Choose services that best represent your expertise.
+                                            </p>
+                                        </div>
                                     </div>
                                     <div>
                                         <label for="industries-serviced" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -578,6 +465,10 @@
                                             <!-- Options loaded dynamically -->
                                         </select>
                                         <p class="text-sm text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple</p>
+                                        <div class="flex justify-between items-center mt-1">
+                                            <div id="industries-count" class="text-xs text-gray-500">0 industries selected</div>
+                                            <div id="industries-validation-message" class="text-xs text-red-500 hidden">Please select at least 1 industry</div>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -773,9 +664,59 @@
 
             const signOutBtn = document.getElementById('signOutBtn');
             if (signOutBtn) {
-                signOutBtn.addEventListener('click', () => {
-                    localStorage.removeItem('token');
-                    window.location.href = '/login2';
+                signOutBtn.addEventListener('click', async () => {
+                    // Load modern modal if not already loaded
+                    if (!window.ModernSignOutModal) {
+                        await loadModernModal();
+                    }
+                    
+                    // Show modern confirmation modal
+                    const confirmed = await ModernSignOutModal.confirm({
+                        title: 'Sign out of your account?',
+                        message: "You'll be safely signed out and redirected to our homepage. Your data will remain secure."
+                    });
+                    
+                    if (confirmed) {
+                        // Make POST request to logout API endpoint
+                        fetch('/auth/logout', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            credentials: 'include'
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            // Clear client-side storage
+                            try {
+                                localStorage.removeItem('token');
+                                localStorage.removeItem('userId');
+                                localStorage.removeItem('user');
+                                localStorage.removeItem('authToken');
+                                localStorage.removeItem('refreshToken');
+                            } catch (error) {
+                                console.log('Could not clear localStorage:', error);
+                            }
+                            
+                            // Redirect to sign-out confirmation page
+                            window.location.href = data.redirectTo || '/auth/logout';
+                        })
+                        .catch(error => {
+                            console.error('Logout request failed:', error);
+                            window.location.href = '/auth/logout';
+                        });
+                    }
+                });
+            }
+            
+            // Helper function to load modern modal
+            async function loadModernModal() {
+                return new Promise((resolve) => {
+                    const script = document.createElement('script');
+                    script.src = '/js/modern-signout-modal.js';
+                    script.onload = resolve;
+                    script.onerror = resolve; // Continue even if fails to load
+                    document.head.appendChild(script);
                 });
             }
 
@@ -794,13 +735,19 @@
                 pictureInput.addEventListener('change', handlePictureUpload);
             }
 
-            // Profile form validation
+            // Profile form validation with real-time feedback
             const profileInputs = ['professional-bio', 'professional-tagline', 'services-offered', 'industries-serviced'];
             profileInputs.forEach(inputId => {
                 const input = document.getElementById(inputId);
                 if (input) {
-                    input.addEventListener('input', updateButtonStates);
-                    input.addEventListener('change', updateButtonStates);
+                    input.addEventListener('input', () => {
+                        updateValidationFeedback();
+                        updateButtonStates();
+                    });
+                    input.addEventListener('change', () => {
+                        updateValidationFeedback();
+                        updateButtonStates();
+                    });
                 }
             });
 
@@ -1018,12 +965,168 @@
             updateButtonStates();
         }
 
+        function updateValidationFeedback() {
+            // Bio validation feedback
+            const bioInput = document.getElementById('professional-bio');
+            const bioCharCount = document.getElementById('bio-char-count');
+            const bioValidationMessage = document.getElementById('bio-validation-message');
+            
+            if (bioInput && bioCharCount) {
+                const bioLength = bioInput.value.trim().length;
+                bioCharCount.textContent = `${bioLength} / 50 characters minimum`;
+                
+                if (bioLength < 50) {
+                    bioCharCount.className = 'text-xs text-red-500';
+                    if (bioValidationMessage) {
+                        bioValidationMessage.classList.remove('hidden');
+                    }
+                } else {
+                    bioCharCount.className = 'text-xs text-green-500';
+                    if (bioValidationMessage) {
+                        bioValidationMessage.classList.add('hidden');
+                    }
+                }
+            }
+            
+            // Services validation feedback
+            const servicesSelect = document.getElementById('services-offered');
+            const servicesCount = document.getElementById('services-count');
+            const servicesValidationMessage = document.getElementById('services-validation-message');
+            
+            if (servicesSelect && servicesCount) {
+                const selectedServices = Array.from(servicesSelect.selectedOptions || []);
+                const customServices = getCustomServices();
+                const totalServices = selectedServices.length + customServices.length;
+                
+                servicesCount.textContent = `${totalServices} / 3 services minimum`;
+                
+                if (totalServices < 3) {
+                    servicesCount.className = 'text-xs text-red-500';
+                    if (servicesValidationMessage) {
+                        servicesValidationMessage.classList.remove('hidden');
+                    }
+                } else {
+                    servicesCount.className = 'text-xs text-green-500';
+                    if (servicesValidationMessage) {
+                        servicesValidationMessage.classList.add('hidden');
+                    }
+                }
+            }
+            
+            // Industries validation feedback
+            const industriesSelect = document.getElementById('industries-serviced');
+            const industriesCount = document.getElementById('industries-count');
+            const industriesValidationMessage = document.getElementById('industries-validation-message');
+            
+            if (industriesSelect && industriesCount) {
+                const selectedIndustries = Array.from(industriesSelect.selectedOptions || []);
+                const count = selectedIndustries.length;
+                
+                industriesCount.textContent = count === 1 ? '1 industry selected' : `${count} industries selected`;
+                
+                if (count === 0) {
+                    industriesCount.className = 'text-xs text-red-500';
+                    if (industriesValidationMessage) {
+                        industriesValidationMessage.classList.remove('hidden');
+                    }
+                } else {
+                    industriesCount.className = 'text-xs text-green-500';
+                    if (industriesValidationMessage) {
+                        industriesValidationMessage.classList.add('hidden');
+                    }
+                }
+            }
+        }
+
+        function updateValidationFeedback() {
+            // Bio validation feedback
+            const bioInput = document.getElementById('professional-bio');
+            const bioCharCount = document.getElementById('bio-char-count');
+            const bioValidationMessage = document.getElementById('bio-validation-message');
+            
+            if (bioInput && bioCharCount) {
+                const bioLength = bioInput.value.trim().length;
+                bioCharCount.textContent = `${bioLength} / 50 characters minimum`;
+                
+                if (bioLength < 50) {
+                    bioCharCount.className = 'text-xs text-red-500';
+                    if (bioValidationMessage) {
+                        bioValidationMessage.classList.remove('hidden');
+                    }
+                } else {
+                    bioCharCount.className = 'text-xs text-green-500';
+                    if (bioValidationMessage) {
+                        bioValidationMessage.classList.add('hidden');
+                    }
+                }
+            }
+            
+            // Services validation feedback
+            const servicesSelect = document.getElementById('services-offered');
+            const servicesCount = document.getElementById('services-count');
+            const servicesValidationMessage = document.getElementById('services-validation-message');
+            
+            if (servicesSelect && servicesCount) {
+                const selectedServices = Array.from(servicesSelect.selectedOptions || []);
+                const customServices = getCustomServices();
+                const totalServices = selectedServices.length + customServices.length;
+                
+                servicesCount.textContent = `${totalServices} / 3 services minimum`;
+                
+                if (totalServices < 3) {
+                    servicesCount.className = 'text-xs text-red-500';
+                    if (servicesValidationMessage) {
+                        servicesValidationMessage.classList.remove('hidden');
+                    }
+                } else {
+                    servicesCount.className = 'text-xs text-green-500';
+                    if (servicesValidationMessage) {
+                        servicesValidationMessage.classList.add('hidden');
+                    }
+                }
+            }
+            
+            // Industries validation feedback
+            const industriesSelect = document.getElementById('industries-serviced');
+            const industriesCount = document.getElementById('industries-count');
+            const industriesValidationMessage = document.getElementById('industries-validation-message');
+            
+            if (industriesSelect && industriesCount) {
+                const selectedIndustries = Array.from(industriesSelect.selectedOptions || []);
+                const count = selectedIndustries.length;
+                
+                industriesCount.textContent = count === 1 ? '1 industry selected' : `${count} industries selected`;
+                
+                if (count === 0) {
+                    industriesCount.className = 'text-xs text-red-500';
+                    if (industriesValidationMessage) {
+                        industriesValidationMessage.classList.remove('hidden');
+                    }
+                } else {
+                    industriesCount.className = 'text-xs text-green-500';
+                    if (industriesValidationMessage) {
+                        industriesValidationMessage.classList.add('hidden');
+                    }
+                }
+            }
+        }
+
         function updateButtonStates() {
             nextButton1.disabled = !selectedProfessionalType;
             nextButton2.disabled = uploadedDocuments.length === 0;
             
             if (nextButton3) {
-                nextButton3.disabled = !validateProfileStep();
+                const isValid = validateProfileStep();
+                nextButton3.disabled = !isValid;
+                
+                // Update button text based on validation state
+                if (!isValid) {
+                    nextButton3.innerHTML = 'Complete Required Fields <i class="fas fa-exclamation-triangle ml-2"></i>';
+                    nextButton3.className = 'bg-gray-400 text-white px-6 py-2 rounded-lg cursor-not-allowed';
+                } else {
+                    nextButton3.innerHTML = 'Review & Submit <i class="fas fa-arrow-right ml-2"></i>';
+                    nextButton3.className = 'bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors';
+                }
             }
         }
 
@@ -1031,44 +1134,80 @@
             const bio = document.getElementById('professional-bio')?.value?.trim();
             const tagline = document.getElementById('professional-tagline')?.value?.trim();
             const services = Array.from(document.getElementById('services-offered')?.selectedOptions || []);
+            const customServices = getCustomServices();
+            const totalServices = services.length + customServices.length;
             const industries = Array.from(document.getElementById('industries-serviced')?.selectedOptions || []);
             
-            return bio && bio.length >= 50 && services.length > 0 && industries.length > 0;
+            return bio && bio.length >= 50 && totalServices >= 3 && industries.length > 0;
         }
 
         async function loadServicesAndIndustries() {
             try {
-                // Define services based on professional type
+                // Define services based on professional type with expanded options
                 const allServices = {
                     'business_broker': [
                         'Business Valuation', 'Business Sale Facilitation', 'Buyer Representation',
                         'Seller Representation', 'Due Diligence Support', 'Negotiation Services',
                         'Market Analysis', 'Business Listing Services', 'Confidentiality Management',
-                        'Transaction Coordination', 'Business Exit Planning', 'Acquisition Advisory'
+                        'Transaction Coordination', 'Business Exit Planning', 'Acquisition Advisory',
+                        'Asset Purchase Agreements', 'Stock Purchase Agreements', 'Letter of Intent Drafting',
+                        'Financial Analysis & Modeling', 'Industry Research', 'Competitive Analysis',
+                        'Business Process Documentation', 'Vendor & Supplier Analysis', 'Customer Base Analysis',
+                        'Technology Assessment', 'Legal Structure Review', 'Tax Implication Analysis',
+                        'Earnout Structuring', 'Escrow Management', 'Post-Closing Integration',
+                        'Franchise Brokerage', 'International Business Sales', 'Distressed Business Sales'
                     ],
                     'accountant': [
                         'Tax Preparation', 'Financial Statement Preparation', 'Bookkeeping Services',
                         'Payroll Processing', 'Business Tax Planning', 'Audit Services',
                         'Financial Consulting', 'QuickBooks Setup', 'Cash Flow Analysis',
-                        'Business Formation Advice', 'Tax Compliance', 'Financial Planning'
+                        'Business Formation Advice', 'Tax Compliance', 'Financial Planning',
+                        'Management Accounting', 'Cost Accounting', 'Forensic Accounting',
+                        'Internal Audit Services', 'Budget Planning & Analysis', 'Variance Analysis',
+                        'Financial Forecasting', 'Profitability Analysis', 'Break-even Analysis',
+                        'Working Capital Management', 'Fixed Asset Management', 'Inventory Valuation',
+                        'Tax Resolution Services', 'IRS Representation', 'State Tax Services',
+                        'International Tax Services', 'Estate & Trust Accounting', 'Non-profit Accounting',
+                        'Construction Accounting', 'Real Estate Accounting', 'Healthcare Accounting'
                     ],
                     'lawyer': [
                         'Business Formation', 'Contract Review', 'Legal Compliance',
                         'Intellectual Property', 'Employment Law', 'Real Estate Law',
                         'Corporate Law', 'Litigation Services', 'Mergers & Acquisitions',
-                        'Regulatory Compliance', 'Partnership Agreements', 'Business Dissolution'
+                        'Regulatory Compliance', 'Partnership Agreements', 'Business Dissolution',
+                        'Securities Law', 'Tax Law', 'Environmental Law', 'Data Privacy Law',
+                        'Immigration Law', 'International Trade Law', 'Antitrust Law',
+                        'Banking & Finance Law', 'Insurance Law', 'Healthcare Law',
+                        'Technology Law', 'Cybersecurity Law', 'Franchise Law',
+                        'Non-Disclosure Agreements', 'Licensing Agreements', 'Joint Venture Agreements',
+                        'Arbitration & Mediation', 'Class Action Defense', 'White Collar Defense',
+                        'Bankruptcy & Restructuring', 'Debt Collection', 'Commercial Leasing'
                     ],
                     'business_consultant': [
                         'Strategic Planning', 'Operations Improvement', 'Management Consulting',
                         'Market Research', 'Business Process Optimization', 'Change Management',
                         'Performance Analysis', 'Growth Strategy', 'Digital Transformation',
-                        'Organizational Development', 'Risk Management', 'Project Management'
+                        'Organizational Development', 'Risk Management', 'Project Management',
+                        'Supply Chain Optimization', 'Quality Management', 'Lean Manufacturing',
+                        'Six Sigma Implementation', 'Business Intelligence', 'Customer Experience',
+                        'Sales Strategy', 'Marketing Strategy', 'Brand Development',
+                        'Innovation Management', 'Succession Planning', 'Crisis Management',
+                        'Turnaround Management', 'International Expansion', 'Joint Ventures',
+                        'Due Diligence Support', 'Post-Merger Integration', 'Startup Consulting',
+                        'Franchise Development', 'Exit Strategy Planning', 'Board Advisory'
                     ],
                     'financial_advisor': [
                         'Investment Planning', 'Retirement Planning', 'Wealth Management',
                         'Insurance Planning', 'Estate Planning', 'Tax Planning',
                         'Portfolio Management', 'Financial Planning', 'Risk Assessment',
-                        'Business Financial Planning', 'Succession Planning', 'Asset Protection'
+                        'Business Financial Planning', 'Succession Planning', 'Asset Protection',
+                        'College Planning', '401(k) Planning', 'IRA Management',
+                        'Social Security Optimization', 'Medicare Planning', 'Long-term Care Planning',
+                        'Charitable Giving Strategies', 'Trust Services', 'Executive Compensation',
+                        'Stock Option Planning', 'Business Valuation', 'Cash Flow Management',
+                        'Debt Management', 'Credit Analysis', 'Alternative Investments',
+                        'Real Estate Investment', 'Commodities Investment', 'International Investing',
+                        'ESG Investing', 'Behavioral Finance Coaching', 'Financial Education'
                     ],
                     'other': [
                         'Consulting Services', 'Advisory Services', 'Analysis Services',
@@ -1090,6 +1229,10 @@
 
                 populateSelectOptions('services-offered', servicesOptions);
                 populateSelectOptions('industries-serviced', industriesOptions);
+                
+                // Initialize validation feedback
+                updateValidationFeedback();
+                updateButtonStates();
 
             } catch (error) {
                 console.error('Error loading services and industries:', error);
@@ -1123,16 +1266,23 @@
                 `${document.getElementById('years-experience').value} years` : 'Not specified';
             document.getElementById('review-website').textContent = document.getElementById('professional-website')?.value || 'Not provided';
 
-            // Services
+            // Services - combine predefined and custom
             const servicesSelect = document.getElementById('services-offered');
             const selectedServices = Array.from(servicesSelect?.selectedOptions || []).map(opt => opt.text);
+            const allServices = [...selectedServices, ...customServices];
             const servicesContainer = document.getElementById('review-services');
-            if (selectedServices.length > 0) {
-                servicesContainer.innerHTML = selectedServices.map(service => 
-                    `<span class="inline-block bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200 px-2 py-1 rounded text-xs mr-1 mb-1">${service}</span>`
+            if (allServices.length > 0) {
+                servicesContainer.innerHTML = allServices.map(service => 
+                    `<span class="inline-block bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200 px-2 py-1 rounded text-xs mr-1 mb-1">${escapeHtml(service)}</span>`
                 ).join('');
+                
+                // Add service count indicator
+                const serviceCount = document.createElement('div');
+                serviceCount.className = 'mt-2 text-sm text-gray-600 dark:text-gray-400';
+                serviceCount.textContent = `Total services: ${allServices.length} ${allServices.length >= 3 ? '✓' : '(minimum 3 required)'}`;
+                servicesContainer.appendChild(serviceCount);
             } else {
-                servicesContainer.innerHTML = '<span class="text-gray-500">No services selected</span>';
+                servicesContainer.innerHTML = '<span class="text-gray-500">No services selected (minimum 3 required)</span>';
             }
 
             // Industries
@@ -1190,15 +1340,19 @@
             formData.append('professionalBio', document.getElementById('professional-bio')?.value || '');
             formData.append('professionalTagline', document.getElementById('professional-tagline')?.value || '');
             formData.append('yearsExperience', document.getElementById('years-experience')?.value || '0');
+            
+            // Set as featured professional automatically
+            formData.append('featuredProfessional', 'true');
             formData.append('professionalWebsite', document.getElementById('professional-website')?.value || '');
             formData.append('professionalPhone', document.getElementById('professional-phone')?.value || '');
             formData.append('profileVisibility', document.getElementById('profile-visibility')?.value || 'public');
             formData.append('allowDirectContact', document.getElementById('allow-direct-contact')?.checked || false);
 
-            // Services and industries
+            // Services and industries - combine predefined and custom services
             const selectedServices = Array.from(document.getElementById('services-offered')?.selectedOptions || []).map(opt => opt.value);
+            const allServices = [...selectedServices, ...customServices];
             const selectedIndustries = Array.from(document.getElementById('industries-serviced')?.selectedOptions || []).map(opt => opt.value);
-            formData.append('servicesOffered', JSON.stringify(selectedServices));
+            formData.append('servicesOffered', JSON.stringify(allServices));
             formData.append('industriesServiced', JSON.stringify(selectedIndustries));
 
             // Documents
@@ -1266,6 +1420,70 @@
                 .replace(/'/g, "&#039;");
         }
 
+        // Custom services functionality
+        let customServices = [];
+
+        function addCustomService() {
+            const input = document.getElementById('custom-services-input');
+            const service = input.value.trim();
+            
+            if (!service) {
+                showToast('Please enter a service name', 'error');
+                return;
+            }
+            
+            if (customServices.includes(service)) {
+                showToast('This service has already been added', 'error');
+                return;
+            }
+            
+            if (service.length > 50) {
+                showToast('Service name must be 50 characters or less', 'error');
+                return;
+            }
+            
+            customServices.push(service);
+            renderCustomServices();
+            input.value = '';
+            updateValidationFeedback();
+            updateButtonStates();
+        }
+
+        function removeCustomService(service) {
+            customServices = customServices.filter(s => s !== service);
+            renderCustomServices();
+            updateValidationFeedback();
+            updateButtonStates();
+        }
+
+        function renderCustomServices() {
+            const container = document.getElementById('custom-services-list');
+            container.innerHTML = '';
+            
+            customServices.forEach(service => {
+                const badge = document.createElement('span');
+                badge.className = 'inline-flex items-center bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-200 px-2 py-1 rounded text-sm';
+                badge.innerHTML = `
+                    ${escapeHtml(service)}
+                    <button type="button" onclick="removeCustomService('${escapeHtml(service).replace(/'/g, '\\\'')}')" class="ml-1 text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-200">
+                        &times;
+                    </button>
+                `;
+                container.appendChild(badge);
+            });
+        }
+
+        function getCustomServices() {
+            return customServices;
+        }
+
+        function handleCustomServiceKeyPress(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                addCustomService();
+            }
+        }
+
         function getAuthToken() {
             const metaToken = document.querySelector('meta[name="auth-token"]')?.content;
             return metaToken || localStorage.getItem('token');
@@ -1303,5 +1521,8 @@
             return container;
         }
     </script>
+    
+    <!-- Unified Sidebar Script -->
+    <script src="/js/unified-sidebar.js"></script>
 </body>
 </html>

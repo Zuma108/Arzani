@@ -166,6 +166,23 @@ npm run setup:a2a       # Initialize A2A tables
 
 ## Code Patterns & Conventions
 
+### Module System
+**IMPORTANT:** This project uses **ES Modules exclusively** - NOT CommonJS. Always use:
+- `import` statements instead of `require()`
+- `export` statements instead of `module.exports`
+- File extensions in import paths (`.js`)
+- Proper package.json configuration with `"type": "module"`
+
+```javascript
+// ✅ Correct - ES Modules
+import { requireAuth, authenticateToken } from './middleware/auth.js';
+import pool from './db.js';
+
+// ❌ Wrong - CommonJS (don't use)
+const { requireAuth } = require('./middleware/auth.js');
+const pool = require('./db.js');
+```
+
 ### Authentication Middleware
 Always use the unified auth system from `middleware/auth.js`:
 ```javascript
@@ -241,6 +258,25 @@ A2A_AUTH_ENABLED=      # A2A protocol auth
 - A/B test data: Monitor `/ab-dashboard` or `data/analytics/ab-test-data.jsonl`
 - Database issues: Use `npm run migrate` and check `db.js` connection logs
 - Authentication: Debug with `middleware/auth.js` sanitizeRedirectUrl function
+
+## Platform-Specific Commands
+
+### Windows PowerShell Environment
+When working in Windows environments, use PowerShell syntax instead of curl commands:
+
+```powershell
+# ✅ Correct - PowerShell
+Invoke-RestMethod -Uri "http://localhost:3000/api/endpoint" -Method POST -Body (@{key="value"} | ConvertTo-Json) -ContentType "application/json"
+
+# ❌ Wrong - curl (Unix-style)
+curl -X POST -H "Content-Type: application/json" -d '{"key":"value"}' http://localhost:3000/api/endpoint
+```
+
+**PowerShell HTTP Request Patterns:**
+- GET: `Invoke-RestMethod -Uri "url"`
+- POST: `Invoke-RestMethod -Uri "url" -Method POST -Body $jsonBody -ContentType "application/json"`
+- Headers: `Invoke-RestMethod -Uri "url" -Headers @{"Authorization"="Bearer token"}`
+- File operations: Use `Get-Content`, `Set-Content`, `Test-Path` instead of `cat`, `echo`, `ls`
 
 ## Integration Points
 

@@ -165,6 +165,15 @@
     <!-- Store auth token in hidden input for JavaScript access -->
     <input type="hidden" id="auth-token" value="<%= token %>">
     
+    <!-- Store GCS configuration for JavaScript access -->
+    <script type="application/json" id="gcs-config">
+    {
+        "bucketName": "<%= process.env.GCS_BUCKET_NAME || 'arzani-marketplace-files' %>",
+        "projectId": "<%= process.env.GOOGLE_CLOUD_PROJECT_ID || '' %>",
+        "uploadEndpoint": "/api/gcs-upload"
+    }
+    </script>
+    
     <a href="/marketplace2" class="back-to-marketplace">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
@@ -336,7 +345,13 @@
                         <div class="image-requirement-banner alert alert-info mb-2">
                             <strong>Required:</strong> Upload 3-5 high-quality images of your business
                         </div>
-                        <div class="dropzone" id="imageDropzone"></div>
+                        <div class="dropzone" id="imageDropzone">
+                            <div class="dz-message">
+                                <div class="upload-icon" style="font-size: 48px; color: #6c757d; margin-bottom: 16px;">📸</div>
+                                <span style="display: block; font-weight: 600; color: #495057;">Drop business images here or click to upload</span>
+                                <div style="font-size: 14px; color: #6c757d; margin-top: 8px;">JPEG, PNG, WebP • Max 10MB each • 3-5 images required</div>
+                            </div>
+                        </div>
                         
                         <!-- Upload status area - enhanced for better feedback -->
                         <div class="upload-status mt-3" id="uploadStatus"></div>

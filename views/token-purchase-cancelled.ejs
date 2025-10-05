@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="icon" href="/figma design exports/images.webp/arzani-icon-nobackground.png" type="image/png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #fef7f7 0%, #fee2e2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .cancelled-container {
+            max-width: 600px;
+            padding: 2rem;
+        }
+        
+        .cancelled-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            text-align: center;
+            animation: slideUp 0.6s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .cancelled-header {
+            background: linear-gradient(135deg, #f87171 0%, #dc2626 100%);
+            color: white;
+            padding: 3rem 2rem;
+        }
+        
+        .cancelled-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            animation: bounce 1s ease-in-out;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-20px); }
+            60% { transform: translateY(-10px); }
+        }
+        
+        .cancelled-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .cancelled-subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin: 0;
+        }
+        
+        .cancelled-body {
+            padding: 2rem;
+        }
+        
+        .cancelled-message {
+            font-size: 1.1rem;
+            color: #374151;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+        
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        .btn-primary-custom {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            border: none;
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+        }
+        
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6);
+            color: white;
+        }
+        
+        .btn-secondary-custom {
+            background: rgba(107, 114, 128, 0.1);
+            border: 2px solid #6b7280;
+            color: #374151;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-secondary-custom:hover {
+            background: rgba(107, 114, 128, 0.2);
+            transform: translateY(-2px);
+            color: #374151;
+        }
+        
+        @media (max-width: 768px) {
+            .cancelled-container {
+                margin: 1rem;
+                padding: 1rem;
+            }
+            
+            .cancelled-header {
+                padding: 2rem 1rem;
+            }
+            
+            .cancelled-title {
+                font-size: 2rem;
+            }
+            
+            .cancelled-subtitle {
+                font-size: 1rem;
+            }
+            
+            .action-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="cancelled-container">
+        <div class="cancelled-card">
+            <!-- Cancelled Header -->
+            <div class="cancelled-header">
+                <div class="cancelled-icon">
+                    <i class="bi bi-x-circle-fill"></i>
+                </div>
+                <h1 class="cancelled-title">Purchase Cancelled</h1>
+                <p class="cancelled-subtitle">No charges were made to your account</p>
+            </div>
+            
+            <!-- Cancelled Body -->
+            <div class="cancelled-body">
+                <p class="cancelled-message">
+                    <%= message || "Your token purchase was cancelled. You can try again anytime or browse our marketplace without tokens." %>
+                </p>
+                
+                <div class="cancelled-message">
+                    <strong>What you can do:</strong>
+                    <ul style="text-align: left; margin-top: 1rem;">
+                        <li>Try purchasing tokens again with a different payment method</li>
+                        <li>Browse the marketplace - many features are free</li>
+                        <li>Contact support if you experienced any issues</li>
+                    </ul>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <a href="/tokens/purchase" class="btn-primary-custom">
+                        <i class="bi bi-arrow-clockwise"></i>
+                        Try Again
+                    </a>
+                    <a href="/marketplace2" class="btn-secondary-custom">
+                        <i class="bi bi-shop"></i>
+                        Browse Marketplace
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -69,16 +69,16 @@ class TokenPurchase {
             console.log('displayModal() called');
             
             // Remove existing modal
-            this.closeModal();
+            TokenPurchase.closeModal();
             
             const modal = document.createElement('div');
             modal.className = 'token-purchase-modal';
             modal.innerHTML = `
-                <div class="modal-overlay" onclick="TokenPurchase.closeModal()">
-                    <div class="modal-content" onclick="event.stopPropagation()">
+                <div class="modal-overlay">
+                    <div class="modal-content">
                         <div class="modal-header">
                             <h2><i class="fas fa-coins text-yellow-500"></i> Buy Tokens</h2>
-                            <button onclick="TokenPurchase.closeModal()" class="close-btn">
+                            <button class="close-btn" data-action="close">
                                 <i class="fas fa-times"></i>
                             </button>
                         </div>
@@ -105,6 +105,9 @@ class TokenPurchase {
             this.currentModal = modal;
             
             console.log('Modal created and added to DOM');
+            
+            // Set up event listeners for the modal
+            this.setupModalEventListeners(modal);
             
             // Animate modal in
             requestAnimationFrame(() => {
@@ -234,6 +237,21 @@ class TokenPurchase {
     static closeModal() {
         if (window.tokenPurchaseInstance?.currentModal) {
             const modal = window.tokenPurchaseInstance.currentModal;
+            
+            // Clean up event listeners
+            if (modal._clickHandler) {
+                const modalContent = modal.querySelector('.modal-content');
+                if (modalContent) {
+                    modalContent.removeEventListener('click', modal._clickHandler);
+                }
+            }
+            if (modal._overlayHandler) {
+                const modalOverlay = modal.querySelector('.modal-overlay');
+                if (modalOverlay) {
+                    modalOverlay.removeEventListener('click', modal._overlayHandler);
+                }
+            }
+            
             modal.classList.remove('show');
             setTimeout(() => {
                 modal.remove();
@@ -257,7 +275,7 @@ class TokenPurchase {
                 <div class="no-packages">
                     <i class="fas fa-exclamation-triangle text-yellow-500"></i>
                     <p>No token packages available at the moment.</p>
-                    <button onclick="window.tokenPurchaseInstance.refreshPackages()" class="refresh-btn">
+                    <button class="refresh-btn" type="button">
                         <i class="fas fa-refresh"></i> Try Again
                     </button>
                 </div>
@@ -271,6 +289,10 @@ class TokenPurchase {
         const isRecommended = pkg.recommended;
         const totalTokens = pkg.token_amount + (pkg.bonus_tokens || 0);
         const savings = pkg.bonus_tokens > 0 ? Math.round((pkg.bonus_tokens / pkg.token_amount) * 100) : 0;
+        
+        // Calculate price properly
+        const priceInPounds = (pkg.price_gbp || pkg.price || 0) / 100;
+        const pricePerToken = (priceInPounds / totalTokens).toFixed(3);
         
         return `
             <div class="package-card ${isRecommended ? 'recommended' : ''}" data-package-id="${pkg.id}">
@@ -286,8 +308,8 @@ class TokenPurchase {
                         <span class="total-tokens">${totalTokens} total tokens</span>
                     </div>
                     <div class="package-price">
-                        <span class="price">£${pkg.price_gbp_formatted || (pkg.price_gbp / 100).toFixed(2)}</span>
-                        <span class="price-per-token">£${pkg.value_per_token || (pkg.price_gbp / 100 / totalTokens).toFixed(3)} per token</span>
+                        <span class="price">£${priceInPounds.toFixed(2)}</span>
+                        <span class="price-per-token">£${pricePerToken} per token</span>
                     </div>
                     ${savings > 0 ? `<div class="savings-badge">${savings}% bonus tokens</div>` : ''}
                 </div>
@@ -295,10 +317,10 @@ class TokenPurchase {
                     <button 
                         class="purchase-btn purchase-package-btn ${isRecommended ? 'recommended' : ''}"
                         data-package-id="${pkg.id}"
+                        type="button"
                         ${this.isLoading ? 'disabled' : ''}
                     >
-                        ${this.isLoading ? '<i class="fas fa-spinner fa-spin"></i>' : '<i class="fas fa-shopping-cart"></i>'} 
-                        Buy Now
+                        ${this.isLoading ? '<i class="fas fa-spinner fa-spin"></i> Processing...' : '<i class="fas fa-shopping-cart"></i> Buy Now'}
                     </button>
                 </div>
             </div>
@@ -321,7 +343,97 @@ class TokenPurchase {
         const grid = document.getElementById('token-packages-grid');
         if (grid) {
             grid.innerHTML = this.isLoading ? this.renderLoadingState() : this.renderPackages();
+            // Re-setup event listeners after updating the grid
+            if (this.currentModal) {
+                this.setupModalEventListeners(this.currentModal);
+            }
         }
+    }
+    
+    setupModalEventListeners(modal) {
+        console.log('Setting up modal event listeners');
+        
+        // Remove any existing listeners to prevent duplicates
+        if (modal._clickHandler) {
+            modal.removeEventListener('click', modal._clickHandler);
+        }
+        if (modal._overlayHandler) {
+            modal.removeEventListener('click', modal._overlayHandler);
+        }
+        
+        const modalContent = modal.querySelector('.modal-content');
+        const modalOverlay = modal.querySelector('.modal-overlay');
+        
+        // Handle clicks inside modal content (buttons, etc.)
+        const contentClickHandler = (e) => {
+            // Handle purchase buttons
+            const purchaseBtn = e.target.closest('.purchase-package-btn, .purchase-btn');
+            if (purchaseBtn) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const packageId = parseInt(purchaseBtn.dataset.packageId);
+                if (packageId && !this.isLoading) {
+                    console.log('Purchase button clicked for package:', packageId);
+                    this.purchasePackage(packageId);
+                } else if (this.isLoading) {
+                    console.log('Purchase already in progress, ignoring click');
+                } else {
+                    console.error('No package ID found on button:', purchaseBtn);
+                }
+                return;
+            }
+            
+            // Handle refresh button clicks
+            const refreshBtn = e.target.closest('.refresh-btn');
+            if (refreshBtn) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Refresh button clicked');
+                this.refreshPackages();
+                return;
+            }
+            
+            // Handle close button clicks
+            const closeBtn = e.target.closest('[data-action="close"]');
+            if (closeBtn) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Close button clicked');
+                TokenPurchase.closeModal();
+                return;
+            }
+        };
+        
+        // Handle clicks on modal overlay (to close modal)
+        const overlayClickHandler = (e) => {
+            if (e.target === modalOverlay) {
+                console.log('Modal overlay clicked, closing modal');
+                TokenPurchase.closeModal();
+            }
+        };
+        
+        // Add event listeners
+        if (modalContent) {
+            modalContent.addEventListener('click', contentClickHandler);
+            modal._clickHandler = contentClickHandler;
+        }
+        
+        if (modalOverlay) {
+            modalOverlay.addEventListener('click', overlayClickHandler);
+            modal._overlayHandler = overlayClickHandler;
+        }
+        
+        // Handle escape key to close modal
+        const escapeHandler = (e) => {
+            if (e.key === 'Escape') {
+                TokenPurchase.closeModal();
+                document.removeEventListener('keydown', escapeHandler);
+            }
+        };
+        document.addEventListener('keydown', escapeHandler);
+        
+        console.log('Modal event listeners set up successfully');
     }
     
     async purchasePackage(packageId) {
@@ -344,14 +456,44 @@ class TokenPurchase {
         console.log(`Starting purchase for package ${packageId}`);
         
         try {
+            // Get JWT token for authentication
+            const headers = { 'Content-Type': 'application/json' };
+            
+            // Try to get JWT token from meta tag first
+            const metaToken = document.querySelector('meta[name="auth-token"]')?.content;
+            if (metaToken && metaToken !== '' && metaToken !== 'null') {
+                headers['Authorization'] = `Bearer ${metaToken}`;
+                console.log('Using JWT token from meta tag for authentication');
+            } else {
+                console.log('No JWT token found, using session-only authentication');
+            }
+            
+            console.log('Sending purchase request for package:', packageId);
+            
             const response = await fetch('/api/tokens/purchase', {
                 method: 'POST',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                credentials: 'include', // This ensures session cookies are sent
+                headers: headers,
                 body: JSON.stringify({ packageId })
             });
+            
+            console.log('Purchase response status:', response.status, response.statusText);
+            
+            // Check if response is HTML (login redirect) instead of JSON
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('text/html')) {
+                // User needs to login - redirect to login page
+                console.log('Authentication required, redirecting to login');
+                window.location.href = '/login2?returnTo=' + encodeURIComponent(window.location.pathname);
+                return;
+            }
+            
+            // Handle authentication errors
+            if (response.status === 401) {
+                console.log('Authentication failed, redirecting to login');
+                window.location.href = '/login2?returnTo=' + encodeURIComponent(window.location.pathname);
+                return;
+            }
             
             const data = await response.json();
             console.log('Purchase response:', data);
@@ -373,14 +515,27 @@ class TokenPurchase {
     }
     
     updatePurchaseButtons() {
-        const buttons = document.querySelectorAll('.package-card .purchase-btn');
-        buttons.forEach(btn => {
+        // Update buttons in modal
+        const modalButtons = document.querySelectorAll('.token-purchase-modal .purchase-btn, .token-purchase-modal .purchase-package-btn');
+        modalButtons.forEach(btn => {
             if (this.isLoading) {
                 btn.disabled = true;
                 btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
             } else {
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-shopping-cart"></i> Buy Now';
+            }
+        });
+        
+        // Update buttons in dedicated pages
+        const pageButtons = document.querySelectorAll('.purchase-package-btn');
+        pageButtons.forEach(btn => {
+            if (this.isLoading) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-shopping-cart"></i> Purchase Now';
             }
         });
     }
@@ -484,6 +639,8 @@ class TokenPurchase {
                 z-index: 10000;
                 opacity: 0;
                 transition: opacity 0.3s ease;
+                backdrop-filter: blur(8px);
+                background: rgba(0, 0, 0, 0.6);
             }
             
             .token-purchase-modal.show {
@@ -493,7 +650,6 @@ class TokenPurchase {
             .modal-overlay {
                 width: 100%;
                 height: 100%;
-                background: rgba(0, 0, 0, 0.6);
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -501,28 +657,31 @@ class TokenPurchase {
             }
             
             .modal-content {
-                background: white;
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
                 border-radius: 16px;
                 max-width: 900px;
                 width: 100%;
                 max-height: 90vh;
                 overflow-y: auto;
-                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
                 transform: translateY(20px);
-                transition: transform 0.3s ease;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             }
             
             .token-purchase-modal.show .modal-content {
                 transform: translateY(0);
+                box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
             }
             
             .modal-header {
                 padding: 24px;
-                border-bottom: 1px solid #e5e7eb;
+                border-bottom: 1px solid rgba(229, 231, 235, 0.5);
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+                background: linear-gradient(135deg, #041b76 0%, #064fa3 100%);
                 border-radius: 16px 16px 0 0;
             }
             
@@ -530,29 +689,44 @@ class TokenPurchase {
                 margin: 0;
                 font-size: 24px;
                 font-weight: 700;
-                color: #78350f;
+                color: white;
                 display: flex;
                 align-items: center;
                 gap: 8px;
             }
             
+            .modal-header h2 i {
+                background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                filter: drop-shadow(0 2px 4px rgba(255, 215, 0, 0.5));
+            }
+            
             .close-btn {
-                background: none;
+                background: rgba(255, 255, 255, 0.1);
                 border: none;
                 font-size: 20px;
-                color: #6b7280;
+                color: white;
                 cursor: pointer;
-                padding: 8px;
+                padding: 12px;
                 border-radius: 50%;
-                transition: background 0.2s ease;
+                transition: all 0.2s ease;
+                width: 44px;
+                height: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
             
             .close-btn:hover {
-                background: rgba(107, 114, 128, 0.1);
+                background: rgba(255, 255, 255, 0.2);
+                transform: scale(1.1);
             }
             
             .modal-body {
-                padding: 24px;
+                padding: 32px;
+                background: linear-gradient(135deg, #f7f5f2 0%, #ffffff 100%);
             }
             
             .purchase-intro {
@@ -561,9 +735,10 @@ class TokenPurchase {
             }
             
             .purchase-intro p {
-                color: #6b7280;
+                color: #363309;
                 font-size: 16px;
                 margin: 0;
+                font-weight: 500;
             }
             
             .packages-grid {
@@ -574,67 +749,94 @@ class TokenPurchase {
             }
             
             .package-card {
-                border: 2px solid #e5e7eb;
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(10px);
+                border: 2px solid rgba(4, 27, 118, 0.1);
                 border-radius: 12px;
                 padding: 24px;
-                background: white;
-                transition: all 0.3s ease;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                 position: relative;
                 overflow: hidden;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             }
             
             .package-card:hover {
-                border-color: #f59e0b;
+                border-color: #041b76;
                 transform: translateY(-4px);
-                box-shadow: 0 12px 24px rgba(245, 158, 11, 0.15);
+                box-shadow: 0 12px 40px rgba(4, 27, 118, 0.15);
             }
             
             .package-card.recommended {
-                border-color: #f59e0b;
-                background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+                border-color: #041b76;
+                background: linear-gradient(135deg, rgba(255, 247, 237, 0.9) 0%, rgba(254, 243, 199, 0.9) 100%);
+                position: relative;
+            }
+            
+            .package-card.recommended::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 4px;
+                background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
             }
             
             .recommended-badge {
                 position: absolute;
                 top: -1px;
                 right: 24px;
-                background: #f59e0b;
+                background: linear-gradient(135deg, #041b76 0%, #064fa3 100%);
                 color: white;
-                padding: 6px 16px;
-                border-radius: 0 0 8px 8px;
+                padding: 8px 16px;
+                border-radius: 0 0 12px 12px;
                 font-size: 12px;
                 font-weight: 600;
                 text-transform: uppercase;
+                letter-spacing: 0.5px;
+                box-shadow: 0 4px 8px rgba(4, 27, 118, 0.3);
             }
             
             .package-header h3 {
                 margin: 0 0 8px 0;
                 font-size: 20px;
                 font-weight: 700;
-                color: #111827;
+                background: linear-gradient(135deg, #041b76 0%, #064fa3 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
             }
             
             .package-description {
                 color: #6b7280;
                 font-size: 14px;
                 margin-bottom: 20px;
+                line-height: 1.5;
             }
             
             .token-amount {
                 text-align: center;
                 margin-bottom: 16px;
+                padding: 16px;
+                background: linear-gradient(135deg, #f7f5f2 0%, #ffffff 100%);
+                border-radius: 12px;
+                border: 1px solid rgba(4, 27, 118, 0.1);
             }
             
             .base-tokens {
                 display: block;
-                font-size: 36px;
-                font-weight: 700;
-                color: #78350f;
+                font-size: 42px;
+                font-weight: 800;
+                background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                text-shadow: 0 2px 4px rgba(255, 215, 0, 0.3);
             }
             
             .bonus-tokens {
                 display: block;
-                color: #059669;
+                color: #10b981;
                 font-weight: 600;
                 font-size: 14px;
                 margin-top: 4px;
@@ -642,99 +844,131 @@ class TokenPurchase {
             
             .total-tokens {
                 display: block;
-                color: #6b7280;
+                color: #363309;
                 font-size: 12px;
-                margin-top: 4px;
+                margin-top: 8px;
                 text-transform: uppercase;
                 letter-spacing: 0.5px;
+                font-weight: 600;
             }
             
             .package-price {
                 text-align: center;
-                margin-bottom: 16px;
+                margin-bottom: 20px;
             }
             
             .price {
                 display: block;
-                font-size: 28px;
+                font-size: 32px;
                 font-weight: 700;
-                color: #111827;
+                background: linear-gradient(135deg, #041b76 0%, #064fa3 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                margin-bottom: 4px;
             }
             
             .price-per-token {
                 display: block;
                 color: #6b7280;
                 font-size: 12px;
-                margin-top: 4px;
+                font-weight: 500;
             }
             
             .savings-badge {
-                background: #10b981;
+                background: linear-gradient(135deg, #10b981 0%, #059669 100%);
                 color: white;
-                padding: 4px 12px;
+                padding: 6px 16px;
                 border-radius: 20px;
                 font-size: 12px;
                 font-weight: 600;
                 text-align: center;
                 margin-bottom: 16px;
+                box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
             }
             
             .purchase-btn {
                 width: 100%;
-                padding: 12px 24px;
-                background: #374151;
+                padding: 16px 24px;
+                background: linear-gradient(135deg, #041b76 0%, #064fa3 100%);
                 color: white;
                 border: none;
-                border-radius: 8px;
+                border-radius: 12px;
                 font-weight: 600;
                 cursor: pointer;
-                transition: all 0.2s ease;
+                transition: all 0.3s ease;
                 font-size: 16px;
+                box-shadow: 0 4px 15px rgba(4, 27, 118, 0.4);
+                position: relative;
+                overflow: hidden;
+            }
+            
+            .purchase-btn::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+                transition: left 0.5s;
             }
             
             .purchase-btn:hover:not(:disabled) {
-                background: #1f2937;
-                transform: translateY(-1px);
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(4, 27, 118, 0.6);
+            }
+            
+            .purchase-btn:hover:not(:disabled)::before {
+                left: 100%;
             }
             
             .purchase-btn.recommended {
-                background: #f59e0b;
+                background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+                color: #041b76;
+                box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
             }
             
             .purchase-btn.recommended:hover:not(:disabled) {
-                background: #d97706;
+                box-shadow: 0 6px 20px rgba(255, 215, 0, 0.6);
             }
             
             .purchase-btn:disabled {
                 opacity: 0.6;
                 cursor: not-allowed;
                 transform: none;
+                box-shadow: none;
             }
             
             .purchase-footer {
                 text-align: center;
                 padding-top: 24px;
-                border-top: 1px solid #e5e7eb;
+                border-top: 1px solid rgba(4, 27, 118, 0.1);
             }
             
             .security-notice {
-                color: #6b7280;
+                color: #363309;
                 font-size: 14px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 gap: 8px;
+                font-weight: 500;
+            }
+            
+            .security-notice i {
+                color: #10b981;
             }
             
             .loading-state, .no-packages {
                 text-align: center;
                 padding: 48px 24px;
-                color: #6b7280;
+                color: #363309;
             }
             
             .loading-spinner {
-                border: 3px solid #e5e7eb;
-                border-top: 3px solid #f59e0b;
+                border: 3px solid rgba(4, 27, 118, 0.1);
+                border-top: 3px solid #041b76;
                 border-radius: 50%;
                 width: 40px;
                 height: 40px;
@@ -749,32 +983,42 @@ class TokenPurchase {
             
             .refresh-btn {
                 margin-top: 16px;
-                padding: 8px 16px;
-                background: #f59e0b;
+                padding: 12px 24px;
+                background: linear-gradient(135deg, #041b76 0%, #064fa3 100%);
                 color: white;
                 border: none;
-                border-radius: 6px;
+                border-radius: 8px;
                 cursor: pointer;
                 font-weight: 600;
+                transition: all 0.3s ease;
+                box-shadow: 0 4px 15px rgba(4, 27, 118, 0.4);
+            }
+            
+            .refresh-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(4, 27, 118, 0.6);
             }
             
             .purchase-error {
-                background: #fef2f2;
+                background: rgba(254, 242, 242, 0.9);
                 border: 1px solid #fecaca;
                 color: #dc2626;
-                padding: 12px 16px;
-                border-radius: 8px;
+                padding: 16px 20px;
+                border-radius: 12px;
                 margin-bottom: 24px;
                 display: flex;
                 align-items: center;
-                gap: 8px;
+                gap: 12px;
+                backdrop-filter: blur(10px);
+                font-weight: 500;
             }
             
             .purchase-success-notification {
                 position: fixed;
                 top: 20px;
                 right: 20px;
-                background: white;
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(10px);
                 border: 1px solid #d1fae5;
                 border-radius: 12px;
                 padding: 16px;
@@ -808,6 +1052,46 @@ class TokenPurchase {
                 font-size: 14px;
             }
             
+            /* Dark mode support */
+            .dark .modal-content {
+                background: rgba(31, 41, 55, 0.95);
+                border: 1px solid rgba(75, 85, 99, 0.3);
+            }
+            
+            .dark .modal-body {
+                background: linear-gradient(135deg, rgba(31, 41, 55, 0.9) 0%, rgba(17, 24, 39, 0.9) 100%);
+            }
+            
+            .dark .purchase-intro p {
+                color: #d1d5db;
+            }
+            
+            .dark .package-card {
+                background: rgba(31, 41, 55, 0.95);
+                border-color: rgba(75, 85, 99, 0.3);
+            }
+            
+            .dark .package-description {
+                color: #9ca3af;
+            }
+            
+            .dark .token-amount {
+                background: rgba(17, 24, 39, 0.5);
+                border-color: rgba(75, 85, 99, 0.3);
+            }
+            
+            .dark .total-tokens {
+                color: #d1d5db;
+            }
+            
+            .dark .security-notice {
+                color: #d1d5db;
+            }
+            
+            .dark .loading-state, .dark .no-packages {
+                color: #d1d5db;
+            }
+            
             @media (max-width: 768px) {
                 .packages-grid {
                     grid-template-columns: 1fr;
@@ -819,7 +1103,15 @@ class TokenPurchase {
                 }
                 
                 .modal-header, .modal-body {
-                    padding: 16px;
+                    padding: 20px;
+                }
+                
+                .base-tokens {
+                    font-size: 36px;
+                }
+                
+                .price {
+                    font-size: 28px;
                 }
             }
         `;

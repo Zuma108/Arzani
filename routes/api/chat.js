@@ -148,6 +148,8 @@ const chatController = {
           m.content,
           m.sender_id,
           m.created_at,
+          m.message_type,
+          m.quote_id,
           u.username as sender_name,
           u.profile_picture as sender_profile_pic,
           m.is_system_message
@@ -736,6 +738,8 @@ router.get('/messages', authenticateToken, async (req, res) => {
         m.content,
         m.sender_id,
         m.created_at,
+        m.message_type,
+        m.quote_id,
         COALESCE(m.is_system_message, false) as is_system_message,
         COALESCE(m.attachment_url, '') as attachment_url,
         COALESCE(m.voice_url, '') as voice_url,
@@ -1090,6 +1094,64 @@ router.get('/auth-debug', authenticateToken, (req, res) => {
   });
 });
 
+// Get profile picture for conversation participant
+router.get('/conversations/:conversationId/profile-picture', authenticateToken, async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    const userId = req.user.userId;
+
+    // Verify user has access to this conversation
+    const accessCheck = await pool.query(
+      `SELECT 1 FROM conversation_participants WHERE conversation_id = $1 AND user_id = $2`,
+      [conversationId, userId]
+    );
+
+    if (accessCheck.rows.length === 0) {
+      return res.status(403).json({ error: 'Access denied to this conversation' });
+    }
+
+    // Get the other participant's profile picture with professional fallback logic
+    const profileQuery = `
+      SELECT 
+        u.id,
+        u.username,
+        COALESCE(
+          pp.professional_picture_url,
+          u.profile_picture,
+          '/images/default-profile.png'
+        ) as profile_picture
+      FROM conversation_participants cp
+      JOIN users u ON cp.user_id = u.id
+      LEFT JOIN professional_profiles pp ON u.id = pp.user_id
+      WHERE cp.conversation_id = $1 AND cp.user_id != $2
+      LIMIT 1
+    `;
+
+    const result = await pool.query(profileQuery, [conversationId, userId]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'No other participant found in this conversation' });
+    }
+
+    const participant = result.rows[0];
+
+    res.json({
+      success: true,
+      conversation_id: conversationId,
+      participant: {
+        id: participant.id,
+        username: participant.username,
+        profile_picture: participant.profile_picture
+      },
+      profile_picture: participant.profile_picture
+    });
+
+  } catch (error) {
+    console.error('Error fetching conversation profile picture:', error);
+    res.status(500).json({ error: 'Failed to fetch profile picture' });
+  }
+});
+
 export default router;
 
 // Configure multer for memory storage with improved error handling
@@ -1217,6 +1279,56 @@ router.post('/upload-file', authenticateToken, (req, res) => {
       });
     }
   });
+});
+
+// Get conversation participants
+router.get('/conversation-participants/:id', authenticateToken, async (req, res) => {
+  try {
+    const conversationId = req.params.id;
+    const userId = req.user.userId;
+    
+    if (!conversationId) {
+      return res.status(400).json({ success: false, error: 'Conversation ID is required' });
+    }
+    
+    // Check if user has access to this conversation
+    const accessQuery = `
+      SELECT 1 FROM conversation_participants 
+      WHERE conversation_id = $1 AND user_id = $2
+    `;
+    
+    const accessResult = await pool.query(accessQuery, [conversationId, userId]);
+    
+    if (accessResult.rows.length === 0) {
+      return res.status(403).json({ success: false, error: 'Access denied to this conversation' });
+    }
+    
+    // Get all participants
+    const participantsQuery = `
+      SELECT 
+        cp.user_id,
+        cp.joined_at,
+        cp.is_admin,
+        cp.role,
+        u.username,
+        u.profile_picture,
+        u.email
+      FROM conversation_participants cp
+      JOIN users u ON cp.user_id = u.id
+      WHERE cp.conversation_id = $1
+      ORDER BY cp.joined_at ASC
+    `;
+    
+    const participantsResult = await pool.query(participantsQuery, [conversationId]);
+    
+    res.json({
+      success: true,
+      participants: participantsResult.rows
+    });
+  } catch (error) {
+    console.error('Error getting conversation participants:', error);
+    res.status(500).json({ success: false, error: 'Failed to get conversation participants' });
+  }
 });
 
 // Add debug endpoint to test file uploads without authentication
