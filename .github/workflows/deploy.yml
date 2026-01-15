@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  PROJECT_ID: cool-mile-437217-s2
+  PROJECT_ID: unique-apricot-484415-m0
   REGION: europe-west2
   SERVICE_NAME: arzani-marketplace
   NODE_VERSION: '20.x'
