@@ -1,26 +1,61 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+@theme {
+  --color-background: #ffffff;
+  --color-foreground: #111827;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+:root {
+  --background: #ffffff;
+  --foreground: #111827;
+  --primary: #171717; /* Near black for primary buttons */
+  --surface: #f9fafb; /* Light gray for secondary buttons */
+  --surface-border: #f3f4f6;
+  --accent: #2563eb;
 }
 
 body {
-  background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--background);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
 }
+
+/* Base interactive elements */
+.btn-primary {
+  background: var(--primary);
+  color: #ffffff;
+  transition: all 0.2s ease;
+  font-weight: 600;
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+
+.btn-secondary {
+  background: var(--surface);
+  color: var(--foreground);
+  border: 1px solid var(--surface-border);
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.btn-secondary:active,
+.btn-secondary.selected {
+  border-color: #d1d5db;
+  background: #f3f4f6;
+}
+
+.btn-secondary.selected-dark {
+  background: #1f2937;
+  color: white;
+  border-color: #111827;
+}
+
+/* Remove old glassmorphism/dark tech classes below */
+

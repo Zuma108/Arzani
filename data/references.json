@@ -1,0 +1,10 @@
+{
+  "deadlift": {
+    "name": "Conventional Deadlift",
+    "embedding": [],
+    "source_video": "PLACEHOLDER — run embed_reference.ts with your video",
+    "embedded_at": null,
+    "model": "gemini-embedding-2-preview",
+    "dimensions": 3072
+  }
+}
